@@ -85,7 +85,7 @@ SOURCES += fsstorageplugin_test.cpp \
            ../../../platform/deviceinfo/deviceinfoprovider.cpp \
            ../../../platform/deviceinfo/deviceinfo.cpp
 
-target.path = /usr/share/libmeegomtp-tests
+target.path = /usr/bin
 INSTALLS += target
 
 #clean

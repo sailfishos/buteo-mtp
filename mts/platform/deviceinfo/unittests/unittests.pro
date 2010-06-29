@@ -33,7 +33,7 @@ SOURCES += deviceinfoprovider_test.cpp \
         ../contextsubscriber.cpp \
         ../xmlhandler.cpp
 
-target.path = /usr/share/libmeegomtp-tests
+target.path = /usr/bin
 INSTALLS += target
 
 data.path = /usr/share/libmeegomtp-tests

@@ -78,7 +78,7 @@ SOURCES += mtpresponder_test.cpp \
            ../../transport/dummy/mtptransporterdummy.cpp \
 	   ../../mts.cpp
 
-target.path = /usr/share/libmeegomtp-tests
+target.path = /usr/bin
 INSTALLS += target
 
 #clean

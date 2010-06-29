@@ -43,7 +43,7 @@ SOURCES += fsstorageplugin.cpp \
            storageitem.cpp
 
 #install
-target.path = /usr/share/mtp
+target.path = /usr/lib/mtp
 INSTALLS += target
 
 #clean
