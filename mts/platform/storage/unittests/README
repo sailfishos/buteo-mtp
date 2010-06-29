@@ -1,0 +1,2 @@
+This UT is not meant for CI. Just adding to check if StorageFactory can load
+ storage plug-ins without issues.

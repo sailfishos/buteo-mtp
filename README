@@ -1,0 +1,50 @@
+This file is meant to contain up-to-date information about
+MTP stack & its dependencies
+
+----------------------------------------------
+
+It Contains the following sections
+
+1. Running the stack in device
+
+2. GadgetFS
+
+-----------------------------------------------
+
+1. Running the stack in device
+------------------------------
+
+When running the test application in the device
+
+run: source /tmp/session_bus_address.user
+
+Otherwise it will crash.
+
+2. GadgetFS
+----------------------------
+
+Here's the full procedure to build the gadgetfs module:
+$ apt-get source kernel-source
+$ cd kernel-<version>
+$ make -C /usr/src/kernel-headers CONFIG_USB_GADGETFS=m M=`pwd`/drivers/usb/gad$
+
+The result is drivers/usb/gadget/gadgetfs.ko
+
+Copy this file to the device to /lib/modules/current/
+
+Type 'depmod -a'
+
+Type 'lsof | grep ttyG may help'
+Kill all processes which are displayed.
+
+Then type lsof etc. again.
+If there are some processed displayed
+rename /lib/modules/current/g_nokia to something else and
+kill the process again.
+
+Do 'mkdir dev/gadget'
+'rmmod g_nokia'
+'rmmod g_file_storage'
+'modprobe gadgetfs'
+'mount -t gadgetfs none /dev/gadget'
+

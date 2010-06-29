@@ -1,0 +1,80 @@
+<!--
+/*
+* This file is part of libmeegomtp package
+*
+* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+*
+* Contact: Santosh Puranik <santosh.puranik@nokia.com>
+*
+* Redistribution and use in source and binary forms, with or without modification,
+* are permitted provided that the following conditions are met:
+*
+* Redistributions of source code must retain the above copyright notice, this list
+* of conditions and the following disclaimer. Redistributions in binary form must
+* reproduce the above copyright notice, this list of conditions and the following
+* disclaimer in the documentation and/or other materials provided with the distribution.
+* Neither the name of Nokia Corporation nor the names of its contributors may be
+* used to endorse or promote products derived from this software without specific
+* prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+* BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+* LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+* OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+* OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+*/
+-->
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/org/freedesktop/thumbnails/Thumbnailer1">
+    <interface name="org.freedesktop.thumbnails.Thumbnailer1">
+        <method name="Queue">
+            <arg type="as" name="uris" direction="in" />
+            <arg type="as" name="mime_types" direction="in" />
+            <arg type="s" name="flavor" direction="in" />
+            <arg type="s" name="scheduler" direction="in" />
+            <arg type="u" name="handle_to_dequeue" direction="in" />
+            <arg type="u" name="handle" direction="out" />
+        </method>
+        <method name="Dequeue">
+            <arg type="u" name="handle" direction="in" />
+        </method>
+        <signal name="Ready">
+            <arg type="u" name="handle" />
+            <arg type="as" name="uris" />
+        </signal>
+        <signal name="Started">
+            <arg type="u" name="handle" />
+        </signal>
+        <signal name="Finished">
+            <arg type="u" name="handle" />
+        </signal>
+        <signal name="Error">
+            <arg type="u" name="handle" />
+            <arg type="as" name="failed_uris" />
+            <arg type="i" name="error_code" />
+            <arg type="s" name="message" />
+        </signal>
+        <method name="GetSupported">
+            <annotation name="org.freedesktop.DBus.GLib.Async" value="true" />
+            <arg type="as" name="uri_schemes" direction="out" />
+            <arg type="as" name="mime_types" direction="out" />
+        </method>
+        <method name="GetFlavors">
+            <annotation name="org.freedesktop.DBus.GLib.Async" value="true" />
+            <arg type="as" name="flavors" direction="out" />
+        </method>
+        <method name="GetSchedulers">
+            <annotation name="org.freedesktop.DBus.GLib.Async" value="true" />
+            <arg type="as" name="schedulers" direction="out" />
+        </method>
+    </interface>
+</node> 
+
