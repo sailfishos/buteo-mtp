@@ -1521,7 +1521,6 @@ bool StorageTracker::isPlaylistExisting(const QString &path)
 {
     bool ret = false;
     QString iri = generateIriForTracker(path);
-    iri.truncate(iri.lastIndexOf(QString(".pla")));
     QString query = QString("SELECT ?f WHERE {?f a nmm:Playlist ; nie:url '") + iri + QString("'}");
     QVector<QStringList> resultSet;
     trackerQuery(query, resultSet);
