@@ -33,6 +33,7 @@
 #include "mtptypes.h"
 #include "mtpresponder.h"
 #include "mtptxcontainer.h"
+#include "trace.h"
 
 using namespace meegomtp1dot0;
 
@@ -79,6 +80,9 @@ void MTPEvent::dispatchEvent()
         // property
         MTPResponder::instance()->invalidatePropertyCache(m_eventParams[0], m_eventParams[1]);
     }
-    MTPResponder::instance()->sendContainer(eventContainer);
+    bool sent = MTPResponder::instance()->sendContainer(eventContainer);
+    if( !sent )
+    {
+        MTP_LOG_CRITICAL("Couldn't dispatch event " << m_eventCode);
+    }
 }
-

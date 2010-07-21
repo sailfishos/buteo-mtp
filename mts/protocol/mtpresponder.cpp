@@ -701,10 +701,6 @@ void MTPResponder::getDeviceInfoReq()
     dataContainer << evsSupported;
     dataContainer << propsSupported;
     dataContainer << captureFormatsNumElem;
-    for(quint32 i = 0; i < captureFormatsNumElem; i++)
-    {
-        dataContainer << captureFormats[i];
-    }
     dataContainer << imageFormats;
 
     dataContainer << manufacturer << model << devVersion
