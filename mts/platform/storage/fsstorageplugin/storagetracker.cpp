@@ -1498,7 +1498,7 @@ void StorageTracker::getPlaylists(QStringList &playlistPaths, QList<QStringList>
             {
                 // Add a new item to the playlist path
                 thisPlaylistUrl.replace(QRegExp("%20"), " ");
-                playlistPaths.append(thisPlaylistUrl.remove("file://") + QString(".pla"));
+                playlistPaths.append(thisPlaylistUrl.remove("file://"));
             }
             else
             {
@@ -1567,21 +1567,45 @@ static void deletePlaylistByIri(const QString &playlistUri)
     trackerUpdateQuery(deletePlaylist);
 }
 
+void StorageTracker::movePlaylist(const QString &fromPath, const QString &toPath)
+{
+    // Move the nie:url of the playlist fromPath --> toPath
+    QString fromIri = generateIriForTracker(fromPath);
+    QString toIri = generateIriForTracker(toPath);
+    QVector<QStringList> resultSet;
+
+    // Get the tracker URN for the from IRI
+    trackerQuery(QString("SELECT ?f WHERE{?f a nmm:Playlist ; nie:url '" + fromIri + QString("'}")), resultSet);
+    if(0 == resultSet.size() || 0 == resultSet[0].size())
+    {
+        MTP_LOG_CRITICAL("Failed query for tracker URN" << fromPath);
+        return;
+    }
+    QString urn = resultSet[0][0];
+    // Delete the old nie:url and insert a new one
+    QString query = QString("DELETE {<") + urn + QString("> nie:url ?f} WHERE {<") + urn + QString("> nie:url ?f}");
+    trackerUpdateQuery(query);
+    query = QString("INSERT {<") + urn + ("> a nie:DataObject ; nie:url '") + toIri + ("'}");
+    trackerUpdateQuery(query);
+    // Update nie:title as well
+    QStringList list;
+    QString temp;
+    QString title = toPath.mid(toPath.lastIndexOf('/') + 1);
+    setName(toIri, title, list, temp);
+}
+
 void StorageTracker::move(const QString &fromPath, const QString &toPath)
 {
     // Move the nie:url of the file fromPath --> toPath
     QString fromIri = generateIriForTracker(fromPath);
     QString toIri = generateIriForTracker(toPath);
     QVector<QStringList> resultSet;
-    QStringList iriList;
-    iriList.append(fromIri);
-    iriList.append(toIri);
 
     // Get the tracker URN for the from IRI
-    trackerQuery(QString("SELECT ?f WHERE{?f a nie:DataObject ; nie:url '" + fromIri + QString("'}")), resultSet);
+    trackerQuery(QString("SELECT ?f WHERE{?f a nfo:FileDataObject ; nie:url '" + fromIri + QString("'}")), resultSet);
     if(0 == resultSet.size() || 0 == resultSet[0].size())
     {
-        MTP_LOG_CRITICAL("Failed query for tracker URN" << fromPath);
+        MTP_LOG_CRITICAL("Failed query for tracker URN for playlist" << fromPath);
         return;
     }
     QString urn = resultSet[0][0];

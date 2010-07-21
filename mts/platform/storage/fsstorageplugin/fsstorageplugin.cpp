@@ -1276,7 +1276,7 @@ MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle, const ObjH
     // Apply metadata for the destination path
     m_tracker->copy(sourcePath, destinationPath);
     // Ask tracker to ignore the next update on the destination path
-    m_tracker->ignoreNextUpdate(QStringList(m_tracker->generateIri(destinationPath)));
+    //m_tracker->ignoreNextUpdate(QStringList(m_tracker->generateIri(destinationPath)));
 
     // If this is a directory, copy recursively.
     if( MTP_OBF_FORMAT_Association == objectInfo.mtpObjectFormat )
@@ -1363,6 +1363,13 @@ void FSStoragePlugin::adjustMovedItemsPath( QString newAncestorPath, StorageItem
     {
         // Move the URI in tracker too
         m_tracker->move(movedItem->m_path, destinationPath);
+        
+        if(movedItem->m_objectInfo &&
+                MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == movedItem->m_objectInfo->mtpObjectFormat)
+        {
+            // If this is a playlist, also need to update the playlist URL
+            m_tracker->movePlaylist(movedItem->m_path, destinationPath);
+        }
     }
     movedItem->m_path = destinationPath;
     m_pathNamesMap[movedItem->m_path] = movedItem->m_handle;
@@ -1423,7 +1430,7 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle, const ObjH
     getFileListRecursively(storageItem, destinationPath, fileList);
 
     // Call IgnoreNextUpdate for all of the above IRIs
-    m_tracker->ignoreNextUpdate(fileList);
+    //m_tracker->ignoreNextUpdate(fileList);
 
     // Do the move.
     if( movePhysically )
@@ -1449,6 +1456,14 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle, const ObjH
     //storageItem->m_nextSibling = 0;
     // Reset URI in tracker and ask it to ignore
     m_tracker->move(storageItem->m_path, destinationPath);
+    
+    if(storageItem->m_objectInfo &&
+            MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == storageItem->m_objectInfo->mtpObjectFormat)
+    {
+        // If this is a playlist, also need to update the playlist URL
+        m_tracker->movePlaylist(storageItem->m_path, destinationPath);
+    }
+
     // update it's path and parent object.
     storageItem->m_path = destinationPath;
     storageItem->m_objectInfo->mtpParentObject = parentHandle;
@@ -2618,12 +2633,20 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
             // Get file list to call IgnoreNextUpdate on tracker
             QStringList fileList;
             getFileListRecursively(storageItem, path, fileList);
-            m_tracker->ignoreNextUpdate(fileList);
+            //m_tracker->ignoreNextUpdate(fileList);
             m_pathNamesMap.remove(storageItem->m_path);
             m_puoidsMap.remove(storageItem->m_path);
             dir.rename( storageItem->m_path, path);
             // Adjust path in tracker
             m_tracker->move(storageItem->m_path, path);
+            
+            if(storageItem->m_objectInfo &&
+                    MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == storageItem->m_objectInfo->mtpObjectFormat)
+            {
+                // If this is a playlist, also need to update the playlist URL
+                m_tracker->movePlaylist(storageItem->m_path, path);
+            }
+
             storageItem->m_path = path;
             storageItem->m_objectInfo->mtpFileName = newName;
             m_pathNamesMap[storageItem->m_path] = handle;

@@ -1392,7 +1392,9 @@ void MTPResponder::moveObjectReq()
             code = m_storageServer->moveObject(params[0], params[2], params[1]);
             if( MTP_RESP_OK == code )
             {
-                m_propCache->removeFromCache( params[0] );
+                // Invalidate the parent handle property from the cache. The
+                // other properties do not change
+                m_propCache->removeFromCache( params[0], MTP_OBJ_PROP_Parent_Obj );
             }
         }
     }

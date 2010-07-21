@@ -62,6 +62,7 @@ friend class FSStoragePlugin_test;
         bool isPlaylistExisting(const QString &path);
         void setPlaylistPath(const QString &name, const QString &path);
         void deletePlaylist(const QString &path);
+        void movePlaylist(const QString &fromPath, const QString &toPath);
         void move(const QString &fromPath, const QString &toPath);
         void copy(const QString &fromPath, const QString &toPath);
         QString generateIri(const QString &path);
