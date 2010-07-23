@@ -320,7 +320,7 @@ void FSStoragePlugin::assignPlaylistReferences()
                 }
             }
             m_objectReferencesMap[newHandle] = references;
-            // Set the nie:url field in the playlist to "sync" our pla file with tracker
+            // Set the nie:identifier field in the playlist to "sync" our pla file with tracker
             m_tracker->setPlaylistPath(playlistName, playlistPath);
         }
     }
@@ -1422,15 +1422,6 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle, const ObjH
     removeWatchDescriptorRecursively( storageItem );
     // unlink this item from it's current parent;
     unlinkChildStorageItem( storageItem );
-
-    // Get a list of all paths that are going to be moved. This is needed to
-    // tell tracker not to index these files.
-    QStringList fileList;
-
-    getFileListRecursively(storageItem, destinationPath, fileList);
-
-    // Call IgnoreNextUpdate for all of the above IRIs
-    //m_tracker->ignoreNextUpdate(fileList);
 
     // Do the move.
     if( movePhysically )
@@ -2630,10 +2621,6 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
                 return MTP_RESP_Invalid_ObjectProp_Value;
             }
             path += newName;
-            // Get file list to call IgnoreNextUpdate on tracker
-            QStringList fileList;
-            getFileListRecursively(storageItem, path, fileList);
-            //m_tracker->ignoreNextUpdate(fileList);
             m_pathNamesMap.remove(storageItem->m_path);
             m_puoidsMap.remove(storageItem->m_path);
             dir.rename( storageItem->m_path, path);
