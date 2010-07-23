@@ -1414,7 +1414,7 @@ QString StorageTracker::savePlaylist(const QString &playlistPath, QStringList &e
     playlistUuid.remove(QRegExp("[-{}]"));
     playlistId += playlistUuid;
     QString createPlaylist = QString("INSERT {<") + playlistId +
-                             QString("> a nmm:Playlist, nie:DataObject ; nie:url '") +
+                             QString("> a nmm:Playlist ; nie:identifier '") +
                              playlistUri + QString("'; nie:title '") + playlistTitle + ("'}");
     trackerUpdateQuery(createPlaylist);
     // Add entries to the playlist
@@ -1471,12 +1471,12 @@ void StorageTracker::getPlaylists(QStringList &playlistPaths, QList<QStringList>
     if(true == getExisting)
     {
         // Query for all "existing" playlists, i.e, all those with valid url's
-        query = QString("SELECT ?f1 ?f2 WHERE{?f a nmm:Playlist . OPTIONAL{?f nie:url ?f1} . ?f nfo:hasMediaFileListEntry ?fld . ?fld nfo:entryContent ?fld1 . ?fld1 nie:url ?f2 . FILTER (bound(?f1))} ORDER BY ?f1");
+        query = QString("SELECT ?f1 ?f2 WHERE{?f a nmm:Playlist . OPTIONAL{?f nie:identifier ?f1} . ?f nfo:hasMediaFileListEntry ?fld . ?fld nfo:entryContent ?fld1 . ?fld1 nie:url ?f2 . FILTER (bound(?f1))} ORDER BY ?f1");
     }
     else
     {
         // Query for all "new" playlists, that is those that were added on the device
-        query = QString("SELECT ?f3 ?f2 WHERE{?f a nmm:Playlist ; nie:title ?f3 . OPTIONAL{?f nie:url ?f1} . ?f nfo:hasMediaFileListEntry ?fld . ?fld nfo:entryContent ?fld1 . ?fld1 nie:url ?f2 . FILTER (! bound(?f1))} ORDER BY ?f1");
+        query = QString("SELECT ?f3 ?f2 WHERE{?f a nmm:Playlist ; nie:title ?f3 . OPTIONAL{?f nie:identifier ?f1} . ?f nfo:hasMediaFileListEntry ?fld . ?fld nfo:entryContent ?fld1 . ?fld1 nie:url ?f2 . FILTER (! bound(?f1))} ORDER BY ?f1");
     }
     trackerQuery(query, resultSet);
     QString lastPlaylistUrl;
@@ -1521,7 +1521,7 @@ bool StorageTracker::isPlaylistExisting(const QString &path)
 {
     bool ret = false;
     QString iri = generateIriForTracker(path);
-    QString query = QString("SELECT ?f WHERE {?f a nmm:Playlist ; nie:url '") + iri + QString("'}");
+    QString query = QString("SELECT ?f WHERE {?f a nmm:Playlist ; nie:identifier '") + iri + QString("'}");
     QVector<QStringList> resultSet;
     trackerQuery(query, resultSet);
     if(resultSet.size() > 0)
@@ -1536,33 +1536,26 @@ void StorageTracker::setPlaylistPath(const QString &name, const QString &path)
     // Set the nie:url for this playlist
     // INSERT{?f a nmm:Playlist, nie:DataObject ; nie:url <file:///home/puranik/MyDocs/pl3>} WHERE{?f a nmm:Playlist ; nie:title 'pl3'}
     QString iri = generateIriForTracker(path);
-    int idx = iri.lastIndexOf(".pla");
-    if(-1 != idx)
-    {
-        iri.truncate(idx);
-    }
-    QString query = QString("INSERT{?f a nmm:Playlist, nie:DataObject ; nie:url '") + iri +
+    QString query = QString("INSERT{?f a nmm:Playlist ; nie:identifier '") + iri +
                     QString("'} WHERE{?f a nmm:Playlist ; nie:title '") + name + QString("'}");
     trackerUpdateQuery(query);
 }
 
 void StorageTracker::deletePlaylist(const QString &path)
 {
-    // Delete, first the entries from the playlist, and then the playlist itself
     QString iri = generateIriForTracker(path);
-    iri.truncate(iri.lastIndexOf(QString(".pla")));
     deletePlaylistByIri(iri);
 }
 
 static void deletePlaylistByIri(const QString &playlistUri)
 {
     // Delete playlist entries, if any
-    QString deleteEntries = QString("DELETE {?f a rdfs:Resource} WHERE {?fld a nmm:Playlist; nie:url '") +
+    QString deleteEntries = QString("DELETE {?f a rdfs:Resource} WHERE {?fld a nmm:Playlist; nie:identifier '") +
                             playlistUri +
                             QString("' ; nfo:hasMediaFileListEntry ?f}");
     trackerUpdateQuery(deleteEntries);
     // Delete the old playlist, if any
-    QString deletePlaylist = QString("DELETE {?f a rdfs:Resource} WHERE {?f a nmm:Playlist, nie:DataObject ; nie:url '")
+    QString deletePlaylist = QString("DELETE {?f a rdfs:Resource} WHERE {?f a nmm:Playlist ; nie:identifier '")
                           + playlistUri + QString("'}");
     trackerUpdateQuery(deletePlaylist);
 }
@@ -1575,7 +1568,7 @@ void StorageTracker::movePlaylist(const QString &fromPath, const QString &toPath
     QVector<QStringList> resultSet;
 
     // Get the tracker URN for the from IRI
-    trackerQuery(QString("SELECT ?f WHERE{?f a nmm:Playlist ; nie:url '" + fromIri + QString("'}")), resultSet);
+    trackerQuery(QString("SELECT ?f WHERE{?f a nmm:Playlist ; nie:identifier '" + fromIri + QString("'}")), resultSet);
     if(0 == resultSet.size() || 0 == resultSet[0].size())
     {
         MTP_LOG_CRITICAL("Failed query for tracker URN" << fromPath);
@@ -1583,9 +1576,9 @@ void StorageTracker::movePlaylist(const QString &fromPath, const QString &toPath
     }
     QString urn = resultSet[0][0];
     // Delete the old nie:url and insert a new one
-    QString query = QString("DELETE {<") + urn + QString("> nie:url ?f} WHERE {<") + urn + QString("> nie:url ?f}");
+    QString query = QString("DELETE {<") + urn + QString("> nie:identifier ?f} WHERE {<") + urn + QString("> nie:identifier ?f}");
     trackerUpdateQuery(query);
-    query = QString("INSERT {<") + urn + ("> a nie:DataObject ; nie:url '") + toIri + ("'}");
+    query = QString("INSERT {<") + urn + ("> a nie:DataObject ; nie:identifier '") + toIri + ("'}");
     trackerUpdateQuery(query);
     // Update nie:title as well
     QStringList list;
