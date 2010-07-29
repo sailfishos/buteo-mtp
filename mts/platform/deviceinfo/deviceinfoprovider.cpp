@@ -31,6 +31,7 @@
 
 #include "deviceinfoprovider.h"
 #include "contextsubscriber.h"
+#include "trace.h"
 #include <QDBusInterface>
 #include <QDBusReply>
 #include <QVariant>
@@ -50,6 +51,10 @@ using namespace meegomtp1dot0;
 #define SYSINFOD_GET_VALUE "GetConfigValue"
 #define SYSINFOD_KEY_SWVERSION "/device/sw-release-ver"
 #define SYSINFOD_KEY_SERIALNO "/device/production-sn"
+#define CSD_DEST "com.nokia.csd.Info"
+#define CSD_INTF "com.nokia.csd.Info"
+#define CSD_PATH "/com/nokia/csd/info"
+#define CSD_GET_IMEI "GetIMEINumber"
 
 /**********************************************
  * DeviceInfoProvider::DeviceInfoProvider
@@ -90,37 +95,43 @@ void DeviceInfoProvider::getSystemInfo()
 {
     // Get the DBUS interface for sysinfod.
     QDBusInterface sysinfoInterface( SYSINFOD_DEST, SYSINFOD_PATH, SYSINFOD_INTF, QDBusConnection::systemBus() );
-    if( !sysinfoInterface.isValid() )
-    {
-        return;
-    }
-
+    QDBusInterface csdInterface( CSD_DEST, CSD_PATH, CSD_INTF, QDBusConnection::systemBus() );
     QDBusReply<QByteArray> value;
+    QDBusReply<QString> valueIMEI;
     QByteArray propVal;
-
-    // Set the software version obtained from sysinfod, obtained by calling the appropriate method.
-    value  = sysinfoInterface.call( QLatin1String(SYSINFOD_GET_VALUE), QLatin1String(SYSINFOD_KEY_SWVERSION) );
-    if( value.isValid() )
+    if( sysinfoInterface.isValid() )
     {
-        propVal = value;
-        m_deviceVersion = propVal.constData();
+        // Set the software version obtained from sysinfod, obtained by calling the appropriate method.
+        value  = sysinfoInterface.call( QLatin1String(SYSINFOD_GET_VALUE), QLatin1String(SYSINFOD_KEY_SWVERSION) );
+        if( value.isValid() )
+        {
+            propVal = value;
+            m_deviceVersion = propVal.constData();
+        }
     }
 
-    // Set the serial number obtained from sysinfod, obtained by calling the appropriate method.
-    value  = sysinfoInterface.call( QLatin1String(SYSINFOD_GET_VALUE), QLatin1String(SYSINFOD_KEY_SERIALNO) );
-    if( value.isValid() )
-    {
-        propVal = value;
-        QString serialNumber, tmp = propVal.constData();
 
-        //The serial number MUST be a 32 characters long string, with leading 0's,
-        //if required, to make the string 32 characters long.
-        for( int i = 0; i < 32 - tmp.size(); i++)
+    if( csdInterface.isValid() )
+    {
+        // Set the serial number obtained from sysinfod, obtained by calling the appropriate method.
+        valueIMEI  = csdInterface.call( QLatin1String(CSD_GET_IMEI) );
+        if( valueIMEI.isValid() )
         {
-            serialNumber += "0";
+            QString imei = valueIMEI;
+#if 0
+            //Ovi Suite expects the IMEI to match exactly with the device IMEI.
+            //Hence, we do not append leading zeroes anymore
+            //The serial number MUST be a 32 characters long string, with leading 0's,
+            //if required, to make the string 32 characters long.
+            for( int i = 0; i < 32 - tmp.size(); i++)
+            {
+                serialNumber += "0";
+            }
+            serialNumber += tmp;
+#endif
+            MTP_LOG_WARNING("*************IMEI Number::**********" << imei);
+            m_serialNo = imei;
         }
-        serialNumber += tmp;
-        m_serialNo = serialNumber;
     }
 }
 
