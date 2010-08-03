@@ -1407,6 +1407,12 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle, const ObjH
         return MTP_RESP_GeneralError;
     }
 
+    if( storageItem->m_path == m_playlistPath )
+    {
+        MTP_LOG_WARNING("Don't play around with the Playlists directory!");
+        return MTP_RESP_AccessDenied;
+    }
+
     QString destinationPath = parentItem->m_path + "/" + storageItem->m_objectInfo->mtpFileName;
 
     // If this is a directory already exists, don't overwrite it.
