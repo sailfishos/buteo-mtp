@@ -219,8 +219,10 @@ void MTPTransporterUSB::resume()
     {
         MTP_LOG_CRITICAL(" Failed ioctl for sending device status OK \n");
     }
-
-    m_ioState = ACTIVE;
+    else
+    {
+        m_ioState = ACTIVE;
+    }
 }
 
 void MTPTransporterUSB::sendDeviceOK()
