@@ -251,7 +251,7 @@ void StorageTracker::populateFunctionMap()
     m_trackerPropertyTable.insert(QString("nfo:height"), 0);
     m_trackerPropertyTable.insert(QString("nfo:duration"), 0);
     m_trackerPropertyTable.insert(QString("nmm:trackNumber"), 0);
-    m_trackerPropertyTable.insert(QString("nmm:genre"), 0);
+    m_trackerPropertyTable.insert(QString("nfo:genre"), 0);
     m_trackerPropertyTable.insert(QString("nmm:musicAlbum"), 0);
     m_trackerPropertyTable.insert(QString("nfo:bitrateType"), 0);
     m_trackerPropertyTable.insert(QString("nfo:sampleRate"), 0);
@@ -877,12 +877,12 @@ QString getGenre (const QString& iri)
 {
     if(iri.isNull())
     {
-        return QString("nmm:genre");
+        return QString("nfo:genre");
     }
     QVector<QStringList> res;
     QString ret;
 
-    QString query = QString("SELECT ?fld WHERE{?f a nie:InformationElement ; nie:url '") + iri + QString("' ; nmm:genre ?fld}");
+    QString query = QString("SELECT ?fld WHERE{?f a nie:InformationElement ; nie:url '") + iri + QString("' ; nfo:genre ?fld}");
     trackerQuery(query, res);
 
     if((1 == res.size()) && (1 == res[0].size()))
@@ -1218,12 +1218,12 @@ void setGenre (const QString& iri, QString& val, QStringList& domains, QString &
 {
     if(iri.isNull())
     {
-        val = QString("nmm:genre");
+        val = QString("nfo:genre");
         domains.append("nfo:Media");
     }
     else
     {
-        QString query = QString("DELETE{?f nmm:genre ?fld} WHERE{?f nie:url '") + iri + QString("' ; nmm:genre ?fld} INSERT{?f nmm:genre '") + val + QString("'} WHERE{?f a nfo:Media; nie:url '") + iri + QString("'}");
+        QString query = QString("DELETE{?f nfo:genre ?fld} WHERE{?f nie:url '") + iri + QString("' ; nfo:genre ?fld} INSERT{?f nfo:genre '") + val + QString("'} WHERE{?f a nfo:Media; nie:url '") + iri + QString("'}");
         return trackerUpdateQuery(query);
     }
 }
