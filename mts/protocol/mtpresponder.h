@@ -142,14 +142,20 @@ class MTPResponder : public QObject
         ObjectPropertyCache*                            m_propCache;
         MTPExtensionManager*                            m_extensionManager; ///< Pointer to the MTP extension manager class
         ObjHandle                                       m_copiedObjHandle;  ///< Stored in case the copied object needs to be deleted due to cancel tx
+        bool                                            m_containerToBeResent;
+        bool                                            m_isLastPacket;
+        MTPTxContainer                                  m_resendContainer;
 
         enum ResponderState
         {
             RESPONDER_IDLE = 0,                                             ///< Responder is idle, meaning it is ready to receive a new request
             RESPONDER_WAIT_DATA = 1,                                        ///< Responder has received a request, and is now waiting for the data phase
             RESPONDER_WAIT_RESP = 2,                                        ///< Responder is waiting for the response phase
-            RESPONDER_TX_CANCEL = 3                                         ///< A transaction got cancelled
+            RESPONDER_TX_CANCEL = 3,                                        ///< A transaction got cancelled
+            RESPONDER_SUSPEND = 4                                           ///< A suspended session
         }m_state;                                                           ///< Responder state
+
+        ResponderState                                  m_prevState;
 
         struct ObjPropListInfo
         {

@@ -64,7 +64,8 @@ MTPResponder* MTPResponder::instance()
 }
 
 MTPResponder::MTPResponder() : m_storageServer(0), m_transporter(0), m_copiedObjHandle(0),
-                               m_state(RESPONDER_IDLE), m_objPropListInfo(0), m_sendObjectSequencePtr(0)
+                               m_state(RESPONDER_IDLE), m_objPropListInfo(0), m_sendObjectSequencePtr(0),
+                               m_prevState(RESPONDER_IDLE), m_isLastPacket(false), m_containerToBeResent(false)
                                
 {
     MTP_FUNC_TRACE();
@@ -99,6 +100,8 @@ bool MTPResponder::initTransport( TransportType transport )
             QObject::connect(this, SIGNAL(deviceStatusTxCancelled()), m_transporter, SLOT(sendDeviceTxCancelled()));
             QObject::connect(m_transporter, SIGNAL(cancelTransaction()), this, SLOT(handleCancelTransaction()));
             QObject::connect(m_transporter, SIGNAL(deviceReset()), this, SLOT(handleDeviceReset()));
+            QObject::connect(m_transporter, SIGNAL(suspend()), this, SLOT(handleSuspend()));
+            QObject::connect(m_transporter, SIGNAL(resume()), this, SLOT(handleResume()));
         }
     }
     else if (DUMMY == transport)
@@ -229,13 +232,24 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
     MTP_LOG_WARNING("Sending container of type:: " << QString("0x%1").arg(container.containerType(), 0, 16));
     MTP_LOG_WARNING("Code:: " << QString("0x%1").arg(container.code(), 0, 16));
 
-    if(MTP_CONTAINER_TYPE_RESPONSE == container.containerType() || MTP_CONTAINER_TYPE_DATA == container.containerType())
+    if(MTP_CONTAINER_TYPE_RESPONSE == container.containerType() || MTP_CONTAINER_TYPE_DATA == container.containerType() ||
+       MTP_CONTAINER_TYPE_EVENT == container.containerType() )
     {
         m_transporter->disableRW();
         QCoreApplication::processEvents();
         m_transporter->enableRW();
-        if( RESPONDER_TX_CANCEL == m_state )
+        if( RESPONDER_TX_CANCEL == m_state && MTP_CONTAINER_TYPE_EVENT != container.containerType())
         {
+            return false;
+        }
+        if( RESPONDER_SUSPEND == m_state )
+        {
+            if( MTP_CONTAINER_TYPE_EVENT != container.containerType() )
+            {
+                m_containerToBeResent = true;
+                m_resendContainer = container;
+                m_isLastPacket = isLastPacket;
+            }
             return false;
         }
     }
@@ -2637,6 +2651,21 @@ void MTPResponder::fetchObjectSize(const quint8* data, quint64* objectSize)
     }
 }
 
+void MTPResponder::handleSuspend()
+{
+    m_prevState = m_state;
+    m_state = RESPONDER_SUSPEND;
+}
+
+void MTPResponder::handleResume()
+{
+    m_state = m_prevState;
+    if( m_containerToBeResent )
+    {
+        m_containerToBeResent = false;
+        sendContainer( m_resendContainer, m_isLastPacket );
+    }
+}
 void MTPResponder::handleCancelTransaction()
 {
     if( !m_transactionSequence->reqContainer )
