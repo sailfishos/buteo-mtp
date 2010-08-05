@@ -129,6 +129,9 @@ class MTPResponder : public QObject
 
         /// This slot provides information about transport events ( cancel as of now ) to interested parties.
         void processTransportEvents( bool &txCancelled );
+
+        void handleSuspend();
+        void handleResume();
         
 
     private:
@@ -144,7 +147,8 @@ class MTPResponder : public QObject
         ObjHandle                                       m_copiedObjHandle;  ///< Stored in case the copied object needs to be deleted due to cancel tx
         bool                                            m_containerToBeResent;
         bool                                            m_isLastPacket;
-        MTPTxContainer                                  m_resendContainer;
+        quint8                                          *m_resendBuffer;
+        quint32                                         m_resendBufferSize;
 
         enum ResponderState
         {

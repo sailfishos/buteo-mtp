@@ -203,13 +203,13 @@ void MTPTransporterUSB::handleHighPriorityData()
 
 void MTPTransporterUSB::suspend()
 {
-    emit suspend();
+    emit suspendSignal();
     sendDeviceBusy();
 }
 
 void MTPTransporterUSB::resume()
 {
-    emit resume();
+    emit resumeSignal();
     int status = -1;
     struct ptp_device_status_data data;
     MTPContainer::putl16( &data.wLength,0x0004 );

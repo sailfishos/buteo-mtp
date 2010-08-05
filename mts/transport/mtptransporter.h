@@ -121,10 +121,10 @@ class MTPTransporter : public QObject
 	void deviceReset();
 
         /// This signal is emitted by the transporter to indicate a suspend
-	void suspend();
+	void suspendSignal();
 
         /// This signal is emitted by the transporter to resume the suspended session
-	void resume();
+	void resumeSignal();
 
     public Q_SLOTS:
         /// A transporter uses this slot to catch the ok state signal from responder and transports it to the host if required.

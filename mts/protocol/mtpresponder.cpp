@@ -100,8 +100,8 @@ bool MTPResponder::initTransport( TransportType transport )
             QObject::connect(this, SIGNAL(deviceStatusTxCancelled()), m_transporter, SLOT(sendDeviceTxCancelled()));
             QObject::connect(m_transporter, SIGNAL(cancelTransaction()), this, SLOT(handleCancelTransaction()));
             QObject::connect(m_transporter, SIGNAL(deviceReset()), this, SLOT(handleDeviceReset()));
-            QObject::connect(m_transporter, SIGNAL(suspend()), this, SLOT(handleSuspend()));
-            QObject::connect(m_transporter, SIGNAL(resume()), this, SLOT(handleResume()));
+            QObject::connect(m_transporter, SIGNAL(suspendSignal()), this, SLOT(handleSuspend()));
+            QObject::connect(m_transporter, SIGNAL(resumeSignal()), this, SLOT(handleResume()));
         }
     }
     else if (DUMMY == transport)
@@ -244,10 +244,14 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
         }
         if( RESPONDER_SUSPEND == m_state )
         {
+            MTP_LOG_WARNING("Received suspend while sending");
             if( MTP_CONTAINER_TYPE_EVENT != container.containerType() )
             {
+                MTP_LOG_WARNING("Received suspend while sending data/response, wait for resume");
                 m_containerToBeResent = true;
-                m_resendContainer = container;
+                m_resendBuffer = new quint8[container.bufferSize()];
+                memcpy( m_resendBuffer, container.buffer(), container.bufferSize() );
+                m_resendBufferSize = container.bufferSize();
                 m_isLastPacket = isLastPacket;
             }
             return false;
@@ -282,6 +286,7 @@ void MTPResponder::receiveContainer(quint8* data, quint32 dataLen, bool isFirstP
     {
         case RESPONDER_IDLE:
         case RESPONDER_TX_CANCEL:
+        case RESPONDER_SUSPEND:
             {
                 m_state = RESPONDER_IDLE;
                 // Delete any old request, just in case
@@ -2653,19 +2658,30 @@ void MTPResponder::fetchObjectSize(const quint8* data, quint64* objectSize)
 
 void MTPResponder::handleSuspend()
 {
+    MTP_LOG_WARNING("Received suspend");
     m_prevState = m_state;
     m_state = RESPONDER_SUSPEND;
 }
 
 void MTPResponder::handleResume()
 {
+    MTP_LOG_WARNING("Received resume");
     m_state = m_prevState;
     if( m_containerToBeResent )
     {
         m_containerToBeResent = false;
-        sendContainer( m_resendContainer, m_isLastPacket );
+        m_transporter->disableRW();
+        QCoreApplication::processEvents();
+        m_transporter->enableRW();
+        if( RESPONDER_TX_CANCEL != m_state )
+        {
+            MTP_LOG_WARNING("Resume sending");
+            m_transporter->sendData( m_resendBuffer, m_resendBufferSize, m_isLastPacket );
+        }
+        delete[] m_resendBuffer;
     }
 }
+
 void MTPResponder::handleCancelTransaction()
 {
     if( !m_transactionSequence->reqContainer )
