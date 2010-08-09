@@ -85,6 +85,13 @@ class MTPTransporterUSB : public MTPTransporter
 
         /// Disable the transport from reading/writing.
         void disableRW();
+
+        /// Suspend the transport channel
+        void suspend();
+
+        /// Resume the suspended channel
+        void resume();
+
     private:
 
         /// Opens and sets up the USB driver file descriptor
@@ -119,7 +126,8 @@ class MTPTransporterUSB : public MTPTransporter
     
         enum IOState{
             ACTIVE,
-            EXCEPTION
+            EXCEPTION,
+            SUSPENDED
         };
         
         const char*             MTP_DEVICE_PORT; ///< The path of the device driver file

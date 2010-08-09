@@ -138,7 +138,7 @@ bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLa
 
 void MTPTransporterUSB::handleRead()
 {
-    if( EXCEPTION != m_ioState )
+    if( EXCEPTION != m_ioState && SUSPENDED != m_ioState )
     {
         char* inbuf = new char[MAX_DATA_IN_SIZE];
         int bytesRead = -1;
@@ -156,7 +156,7 @@ void MTPTransporterUSB::handleRead()
     }
     else
     {
-        MTP_LOG_CRITICAL("trying to read while in an exception");
+        //MTP_LOG_CRITICAL("trying to read while in an exception");
     }
 }
 
@@ -201,24 +201,18 @@ void MTPTransporterUSB::handleHighPriorityData()
     }
 }
 
-void MTPTransporterUSB::sendDeviceOK()
+void MTPTransporterUSB::suspend()
+{
+    m_ioState = SUSPENDED;
+    sendDeviceBusy();
+}
+
+void MTPTransporterUSB::resume()
 {
     int status = -1;
-    m_containerReadLen = 0;
-
     struct ptp_device_status_data data;
     MTPContainer::putl16( &data.wLength,0x0004 );
     MTPContainer::putl16( &data.Code,PTP_RC_OK );
-
-    if( EXCEPTION == m_ioState )
-    {
-        MTP_LOG_CRITICAL("IOCTL for BUFFER CLEAR");
-        status = ioctl( m_usbFd, MTP_IOCTL_RESET_BUFFERS );
-        if(status < 0)
-        {
-            MTP_LOG_CRITICAL("IOCTL for BUFFER CLEAR FAILURE");
-        }
-    }
 
     status = ioctl(m_usbFd, MTP_IOCTL_SET_DEVICE_STATUS, &data);
     if(status < 0)
@@ -227,6 +221,37 @@ void MTPTransporterUSB::sendDeviceOK()
     }
 
     m_ioState = ACTIVE;
+}
+
+void MTPTransporterUSB::sendDeviceOK()
+{
+    if( SUSPENDED != m_ioState )
+    {
+        int status = -1;
+        m_containerReadLen = 0;
+
+        struct ptp_device_status_data data;
+        MTPContainer::putl16( &data.wLength,0x0004 );
+        MTPContainer::putl16( &data.Code,PTP_RC_OK );
+
+        if( EXCEPTION == m_ioState )
+        {
+            MTP_LOG_CRITICAL("IOCTL for BUFFER CLEAR");
+            status = ioctl( m_usbFd, MTP_IOCTL_RESET_BUFFERS );
+            if(status < 0)
+            {
+                MTP_LOG_CRITICAL("IOCTL for BUFFER CLEAR FAILURE");
+            }
+        }
+
+        status = ioctl(m_usbFd, MTP_IOCTL_SET_DEVICE_STATUS, &data);
+        if(status < 0)
+        {
+            MTP_LOG_CRITICAL(" Failed ioctl for sending device status OK \n");
+        }
+
+        m_ioState = ACTIVE;
+    }
 }
 
 void MTPTransporterUSB::sendDeviceBusy()
