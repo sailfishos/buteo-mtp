@@ -73,6 +73,18 @@ void MtpServer::stopListen()
     Mts::destroyInstance();
 }
 
+void MtpServer::suspend()
+{
+    MTP_LOG_INFO(__PRETTY_FUNCTION__);
+    Mts::getInstance()->suspend();
+}
+
+void MtpServer::resume()
+{
+    MTP_LOG_INFO(__PRETTY_FUNCTION__);
+    Mts::getInstance()->resume();
+}
+
 void MtpServer::connectivityStateChanged( Sync::ConnectivityType /*aType*/, bool /*aState*/ )
 {
     MTP_LOG_INFO(__PRETTY_FUNCTION__);

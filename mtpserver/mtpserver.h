@@ -64,6 +64,12 @@ public:
     /// \brief Stops listening for sync requests
     void stopListen();
 
+    /// \suspend ongoing MTP session
+    void suspend();
+
+    /// \resume suspended MTP session
+    void resume();
+
 public slots:
      void connectivityStateChanged( Sync::ConnectivityType aType, bool aState );
 };
