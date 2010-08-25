@@ -66,6 +66,8 @@ public:
     void reset(){}
     void disableRW(){}
     void enableRW(){}
+    void suspend(){}
+    void resume(){}
 
 private:
     /// Checks if the mtp header received in sendData/Event is ok.

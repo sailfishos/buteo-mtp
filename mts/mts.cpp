@@ -88,3 +88,12 @@ bool Mts::debugLogsEnabled()
     return m_debugLogsEnabled;
 }
 
+void Mts::suspend()
+{
+    m_MTPResponder->suspend();
+}
+
+void Mts::resume()
+{
+    m_MTPResponder->resume();
+}

@@ -92,6 +92,12 @@ class MTPTransporter : public QObject
         /// Flush out all data
         virtual bool flushData() = 0;
 
+        /// Suspend the transport
+        virtual void suspend() = 0;
+
+        /// Resume the suspended transport channel
+        virtual void resume() = 0;
+
     Q_SIGNALS:
         /// The transporter must emit this signal when data is received from the initiator
         /// \param data [in] The data received from the underlying transport

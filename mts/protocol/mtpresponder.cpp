@@ -2961,6 +2961,16 @@ void MTPResponder::processTransportEvents( bool &txCancelled )
     }
 }
 
+void MTPResponder::suspend()
+{
+    m_transporter->suspend();
+}
+
+void MTPResponder::resume()
+{
+    m_transporter->resume();
+}
+
 #if 0
 // This was added as a workaround for the QMetaType bug in QT (NB #169065)
 // However, the workaround for it is now also in sync-fw. So this unregistartion

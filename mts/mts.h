@@ -51,6 +51,8 @@ public:
     bool deactivate();
     void toggleDebugLogs();
     static bool debugLogsEnabled();
+    void suspend();
+    void resume();
 
 public slots:
     static void destroyInstance();

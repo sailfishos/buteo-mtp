@@ -92,6 +92,12 @@ class MTPResponder : public QObject
 	/// Call this method after construction the responder.
 	bool initStorages();
   
+        /// Suspends the MTP session at the transport layer
+        void suspend();
+
+        /// Resumes the suspended MTP session
+        void resume();
+
     Q_SIGNALS:
         /// This signal is emitted by the mtpresponder to indicate that the responder is an OK state. 
 	void deviceStatusOK();
