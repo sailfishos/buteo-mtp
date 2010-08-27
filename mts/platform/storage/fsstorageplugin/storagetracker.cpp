@@ -627,9 +627,7 @@ QString StorageTracker::buildUpdateQuery(const QString &filePath, QList<MTPObjPr
         pFunc(QString(), trackerName, domains, propInsert);
         props += QString("; ") + trackerName;
         propVal = getValAsString(i->propVal, i->propDesc->uDataType, propCode);
-        propValEncoded = propVal;
-
-        propValEncoded.replace(QRegExp(" "), "%20");
+        propValEncoded = QUrl(propVal).toEncoded();
 
         if(false == propInsert.isNull())
         {
@@ -705,8 +703,8 @@ static void trackerUpdateQuery(const QString& query)
 
 static QString generateIriForTracker(const QString& path)
 {
-    QString iri = IRI_PREFIX + path;
-    iri.replace(QRegExp(" "), "%20");
+    QUrl url(IRI_PREFIX + path);
+    QString iri = url.toEncoded();
     iri.replace(QRegExp("'"), "\\'");
     return iri;
 }
@@ -753,7 +751,7 @@ QString getName (const QString& iri)
             // Empty title? return name...
             int idx = iri.lastIndexOf(QChar('/'));
             ret = iri.mid(idx + 1);
-            ret.replace(QRegExp("%20"), " ");
+            ret = QUrl::fromEncoded(ret.toAscii()).toString();
         }
     }
     return ret;
@@ -1497,7 +1495,7 @@ void StorageTracker::getPlaylists(QStringList &playlistPaths, QList<QStringList>
             if(true == getExisting)
             {
                 // Add a new item to the playlist path
-                thisPlaylistUrl.replace(QRegExp("%20"), " ");
+                thisPlaylistUrl = QUrl::fromEncoded(thisPlaylistUrl.toAscii()).toString();
                 playlistPaths.append(thisPlaylistUrl.remove("file://"));
             }
             else
@@ -1508,7 +1506,7 @@ void StorageTracker::getPlaylists(QStringList &playlistPaths, QList<QStringList>
             j++;
         }
         QString entryUrl = resultRow.at(1);
-        entryUrl.replace(QRegExp("%20"), " ");
+        entryUrl = QUrl::fromEncoded(entryUrl.toAscii()).toString();
         if(-1 != j)
         {
             // Append the entry URL to the list of entries
