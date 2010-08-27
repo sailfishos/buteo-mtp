@@ -36,7 +36,7 @@
 #include <QDBusPendingReply>
 #include <QDBusConnection>
 #include <QtTracker/Tracker>
-#include <SyncDBusConnection.h>
+#include <libsynccommon/SyncDBusConnection.h>
 // Local headers
 #include "storagetracker.h"
 #include "trace.h"

@@ -33,9 +33,7 @@ INCLUDEPATH += . \
                platform/deviceinfo \
                transport \
                transport/dummy \
-               transport/usb \
-	       /usr/include/libsynccommon/ 
-
+               transport/usb 
 
 # Input
 

@@ -33,8 +33,7 @@ INCLUDEPATH += . \
 	       ../../../../transport/usb \
 	       ../../../../platform \
 	       ../../../../platform/deviceinfo\
-	       ../../../../common \
-	       /usr/include/libsynccommon 
+	       ../../../../common 
 
 # Input
 HEADERS += fsstorageplugin_test.h \

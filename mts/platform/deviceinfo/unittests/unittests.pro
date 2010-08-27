@@ -17,8 +17,7 @@ INCLUDEPATH += . \
 ../../ \
 ../../../ \
 ../../../protocol/ \
-../../../common/ \
-/usr/include/libsynccommon 
+../../../common/ 
 
 
 # Input

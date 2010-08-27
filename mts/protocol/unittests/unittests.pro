@@ -33,8 +33,7 @@ INCLUDEPATH += . \
                ../../transport \
                ../../transport/dummy \
                ../../transport/usb \
-               ../../common \
-	       /usr/include/libsynccommon 
+               ../../common 
 
 # Input
 HEADERS += mtpresponder_test.h \

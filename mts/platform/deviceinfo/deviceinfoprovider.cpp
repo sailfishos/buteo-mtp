@@ -37,7 +37,7 @@
 #include <QVariant>
 #include <QMap>
 
-#include <SyncDBusConnection.h>
+#include <libsynccommon/SyncDBusConnection.h>
 
 using namespace meegomtp1dot0;
 

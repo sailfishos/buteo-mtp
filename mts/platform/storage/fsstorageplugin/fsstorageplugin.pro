@@ -24,7 +24,6 @@ INCLUDEPATH += . \
                ../../../protocol \
                ../../../transport \
                ../../../common \
-	       /usr/include/libsynccommon 
 
 # Input
 HEADERS += fsstorageplugin.h \
