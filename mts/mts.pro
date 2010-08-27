@@ -8,6 +8,8 @@ QT -= gui
 CONFIG += link_pkgconfig debug
 #QMAKE_CXXFLAGS += -O0 -Werror
 LIBS += -lcontextsubscriber
+#to be removed later when QtDBus makes it calls thread safe 
+LIBS += -lsynccommon 
 
 TEMPLATE = lib
 TARGET = meegomtp
@@ -31,7 +33,9 @@ INCLUDEPATH += . \
                platform/deviceinfo \
                transport \
                transport/dummy \
-               transport/usb
+               transport/usb \
+	       /usr/include/libsynccommon/ 
+
 
 # Input
 

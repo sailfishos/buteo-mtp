@@ -36,7 +36,7 @@
 #include <QDBusPendingReply>
 #include <QDBusConnection>
 #include <QtTracker/Tracker>
-
+#include <SyncDBusConnection>
 // Local headers
 #include "storagetracker.h"
 #include "trace.h"
@@ -100,7 +100,7 @@ static const QString MINER_DEST("org.freedesktop.Tracker1.Miner.Files");
 static const QString MINER_PATH("/org/freedesktop/Tracker1/Miner/Files");
 static const QString MINER_IF("org.freedesktop.Tracker1.Miner");
 
-StorageTracker::StorageTracker() : m_minerInterface(MINER_DEST, MINER_PATH, MINER_IF, QDBusConnection::sessionBus())
+StorageTracker::StorageTracker() : m_minerInterface(MINER_DEST, MINER_PATH, MINER_IF, SyncDBusConnection::sessionBus())
 {
     populateFunctionMap();
 }

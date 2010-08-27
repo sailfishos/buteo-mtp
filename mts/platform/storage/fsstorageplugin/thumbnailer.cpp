@@ -33,6 +33,7 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
+#include <SyncDBusConnection.h>
 #include "thumbnailer.h"
 #include "trace.h"
 
@@ -48,7 +49,7 @@ static const QString THUMB_DIR = "/.thumbnails";
 
 
 Thumbnailer::Thumbnailer() : 
-    ThumbnailerProxy(THUMBNAILER_SERVICE, THUMBNAILER_GENERIC_PATH, QDBusConnection::sessionBus()), MAX_REQ_MAP_SIZE(50),
+    ThumbnailerProxy(THUMBNAILER_SERVICE, THUMBNAILER_GENERIC_PATH, SyncDBusConnection::sessionBus()), MAX_REQ_MAP_SIZE(50),
     m_scheduler("foreground"), m_flavor("normal")
 {
     QString thumbBaseDir = QDir::homePath() + THUMB_DIR;
