@@ -197,6 +197,7 @@ typedef quint16 MTPResponseCode;
 #define MTP_EV_ObjectPropDescChanged        0xC802
 
 typedef quint16 MTPEventCode;
+Q_DECLARE_METATYPE(MTPEventCode);
     
 
 /* container types */

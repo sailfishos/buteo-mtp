@@ -2982,6 +2982,7 @@ void MTPResponder::unregisterMetaTypes()
     QMetaType::unregisterType("MtpEnumForm");
     QMetaType::unregisterType("MtpRangeForm");
     QMetaType::unregisterType("MtpInt128");
+    QMetaType::unregisterType("MTPEventCode");
     QMetaType::unregisterType("char");
     QMetaType::unregisterType("QVector<char>");
     QMetaType::unregisterType("QVector<qint8>");
