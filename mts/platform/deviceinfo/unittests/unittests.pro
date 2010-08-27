@@ -7,7 +7,7 @@ QT += dbus xml
 CONFIG += qtestlib warn_off debug_and_release
 TEMPLATE = app
 TARGET = deviceinfo-test
-LIBS += -lcontextsubscriber
+LIBS += -lcontextsubscriber -lsynccommon 
 DEFINES += UT_ON
 #QMAKE_CXXFLAGS += -ftest-coverage -fprofile-arcs
 #QMAKE_LFLAGS += -fprofile-arcs -ftest-coverage
@@ -17,7 +17,8 @@ INCLUDEPATH += . \
 ../../ \
 ../../../ \
 ../../../protocol/ \
-../../../common/
+../../../common/ \
+/usr/include/libsynccommon 
 
 
 # Input
