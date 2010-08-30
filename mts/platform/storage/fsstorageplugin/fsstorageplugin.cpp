@@ -1364,8 +1364,7 @@ void FSStoragePlugin::adjustMovedItemsPath( QString newAncestorPath, StorageItem
         // Move the URI in tracker too
         m_tracker->move(movedItem->m_path, destinationPath);
         
-        if(movedItem->m_objectInfo &&
-                MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == movedItem->m_objectInfo->mtpObjectFormat)
+        if( MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == movedItem->m_objectInfo->mtpObjectFormat )
         {
             // If this is a playlist, also need to update the playlist URL
             m_tracker->movePlaylist(movedItem->m_path, destinationPath);
@@ -2627,32 +2626,33 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
                 return MTP_RESP_Invalid_ObjectProp_Value;
             }
             path += newName;
-            m_pathNamesMap.remove(storageItem->m_path);
-            m_puoidsMap.remove(storageItem->m_path);
-            dir.rename( storageItem->m_path, path);
-            // Adjust path in tracker
-            m_tracker->move(storageItem->m_path, path);
+            if( dir.rename( storageItem->m_path, path ) )
+            {
+                m_pathNamesMap.remove(storageItem->m_path);
+                m_puoidsMap.remove(storageItem->m_path);
+                // Adjust path in tracker
+                m_tracker->move(storageItem->m_path, path);
             
-            if(storageItem->m_objectInfo &&
-                    MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == storageItem->m_objectInfo->mtpObjectFormat)
-            {
-                // If this is a playlist, also need to update the playlist URL
-                m_tracker->movePlaylist(storageItem->m_path, path);
-            }
+                if( MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == storageItem->m_objectInfo->mtpObjectFormat )
+                {
+                    // If this is a playlist, also need to update the playlist URL
+                    m_tracker->movePlaylist(storageItem->m_path, path);
+                }
 
-            storageItem->m_path = path;
-            storageItem->m_objectInfo->mtpFileName = newName;
-            m_pathNamesMap[storageItem->m_path] = handle;
-            m_puoidsMap[storageItem->m_path] = storageItem->m_puoid;
-            removeWatchDescriptorRecursively( storageItem );
-            addWatchDescriptorRecursively( storageItem );
-            StorageItem *itr = storageItem->m_firstChild;
-            while( itr )
-            {
-                adjustMovedItemsPath( path, itr, true );
-                itr = itr->m_nextSibling;
+                storageItem->m_path = path;
+                storageItem->m_objectInfo->mtpFileName = newName;
+                m_pathNamesMap[storageItem->m_path] = handle;
+                m_puoidsMap[storageItem->m_path] = storageItem->m_puoid;
+                removeWatchDescriptorRecursively( storageItem );
+                addWatchDescriptorRecursively( storageItem );
+                StorageItem *itr = storageItem->m_firstChild;
+                while( itr )
+                {
+                    adjustMovedItemsPath( path, itr, true );
+                    itr = itr->m_nextSibling;
+                }
+                code = MTP_RESP_OK;
             }
-            code = MTP_RESP_OK;
         }
         else if((false == sendObjectPropList) && (false == storageItem->m_path.isEmpty()))
         {

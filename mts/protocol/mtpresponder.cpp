@@ -2583,33 +2583,34 @@ MTPResponseCode MTPResponder::sendObjectCheck( ObjHandle handle, const quint32 d
                 response = MTP_RESP_Undefined;
             }
         }
-        return response;
     }
-
-    // SendObjectInfo case
-    quint32 bytesWritten = m_sendObjectSequencePtr->sendObjBytesWritten;
-    // update the total amount of written bytes */
-    m_sendObjectSequencePtr->sendObjBytesWritten = bytesWritten + dataLen;
-        
-    // check if all parts of the object have been received
-    if( m_sendObjectSequencePtr->objInfo->mtpObjectCompressedSize >
-        m_sendObjectSequencePtr->sendObjBytesWritten )
+    else if( m_sendObjectSequencePtr )
     {
-        // check if there is an error in the container/data phase
-        if( isLastPacket )
+        // SendObjectInfo case
+        quint32 bytesWritten = m_sendObjectSequencePtr->sendObjBytesWritten;
+        // update the total amount of written bytes */
+        m_sendObjectSequencePtr->sendObjBytesWritten = bytesWritten + dataLen;
+        
+        // check if all parts of the object have been received
+        if( m_sendObjectSequencePtr->objInfo->mtpObjectCompressedSize >
+            m_sendObjectSequencePtr->sendObjBytesWritten )
         {
-            // although not all bytes of the Object were sent, the container is indicated
-            // to be the last. Initiate the disposal of the data that has been written so far,
-            // so that the Initiator may resend the Object with a new SendObject operation.
-            //writing will start then from the beginning of the file
-            m_storageServer->truncateItem( handle, 0 );
-            // end the whole operation by responding with an error code
-            response =  MTP_RESP_IncompleteTransfer;
-        }
-        else
-        {
-            // leave here to receive the next part
-            response = MTP_RESP_Undefined;
+            // check if there is an error in the container/data phase
+            if( isLastPacket )
+            {
+                // although not all bytes of the Object were sent, the container is indicated
+                // to be the last. Initiate the disposal of the data that has been written so far,
+                // so that the Initiator may resend the Object with a new SendObject operation.
+                //writing will start then from the beginning of the file
+                m_storageServer->truncateItem( handle, 0 );
+                // end the whole operation by responding with an error code
+                response =  MTP_RESP_IncompleteTransfer;
+            }
+            else
+            {
+                // leave here to receive the next part
+                response = MTP_RESP_Undefined;
+            }
         }
     }
     return response;

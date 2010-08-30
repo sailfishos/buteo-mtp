@@ -1,3 +1,10 @@
+libmaemomtp (1.0.13) unstable; urgency=low
+
+  * TODO : PR
+  * Fixes: NB#187905 -  <Coverity> defects for sync
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Mon, 30 Aug 2010 14:54:29 +0530
+
 libmaemomtp (1.0.12) unstable; urgency=low
 
   * Made private connections to bus for system and session bus  
