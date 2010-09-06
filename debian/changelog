@@ -1,3 +1,9 @@
+libmaemomtp (1.0.14) unstable; urgency=low
+
+  * Fixes: NB#188992 - Unknown albums and artists are duplicated.
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Mon, 06 Sep 2010 17:50:29 +0300
+
 libmaemomtp (1.0.13) unstable; urgency=low
 
   * TODO : PR

@@ -620,31 +620,34 @@ QString StorageTracker::buildUpdateQuery(const QString &filePath, QList<MTPObjPr
             // Silently ignore properties that we don't handle
             continue;
         }
-        count++;
-        // Only consider properties whose variants are invalid, i.e, they
-        // have not yet been populated
-        fpTrackerUpdateQueryHandler pFunc = m_handlerTableUpdate[propCode];
-        pFunc(QString(), trackerName, domains, propInsert);
-        props += QString("; ") + trackerName;
         propVal = getValAsString(i->propVal, i->propDesc->uDataType, propCode);
-        propValEncoded = QUrl(propVal).toEncoded();
+        if(!propVal.isEmpty() && ! propVal.isNull())
+        {
+            count++;
+            // Only consider properties whose variants are invalid, i.e, they
+            // have not yet been populated
+            fpTrackerUpdateQueryHandler pFunc = m_handlerTableUpdate[propCode];
+            pFunc(QString(), trackerName, domains, propInsert);
+            props += QString("; ") + trackerName;
+            propValEncoded = QUrl(propVal).toEncoded();
 
-        if(false == propInsert.isNull())
-        {
-            propInsert = propInsert.arg(propValEncoded, propVal);
-            extraInserts += propInsert;
-        }
+            if(false == propInsert.isNull())
+            {
+                propInsert = propInsert.arg(propValEncoded, propVal);
+                extraInserts += propInsert;
+            }
 
-        if(trackerName.contains(QChar('<')))
-        {
-            props += propValEncoded;
-            props += QString(">");
-        }
-        else
-        {
-            props += QString(" '");
-            props += propVal;
-            props += QString("' ");
+            if(trackerName.contains(QChar('<')))
+            {
+                props += propValEncoded;
+                props += QString(">");
+            }
+            else
+            {
+                props += QString(" '");
+                props += propVal;
+                props += QString("' ");
+            }
         }
     }
     if(domains.size() > 0)
