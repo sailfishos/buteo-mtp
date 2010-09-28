@@ -2862,7 +2862,7 @@ void MTPResponder::sendObjectSegmented()
         {
             // This the first segment, thus it needs to have the MTP container header
             bool extraLargeContainer = ((m_segmentedSender.totalDataLen + MTP_HEADER_SIZE) > 0xFFFFFFFF);
-            MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, opCode, reqContainer->transactionId(), segPayloadLength);
+            MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, opCode, reqContainer->transactionId(), m_segmentedSender.totalDataLen );
             dataContainer.setExtraLargeContainer(extraLargeContainer);
             qint32 bytesRead = segPayloadLength;
 

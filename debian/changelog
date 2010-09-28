@@ -1,3 +1,36 @@
+=======
+libmaemomtp (1.0.19) unstable; urgency=low
+
+  * Fixed an error in the getObject's data container header for the segmented
+    case. 
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Tue, 28 Sep 2010 16:22:48 +0530
+
+libmaemomtp (1.0.18) unstable; urgency=low
+
+  * Rebuild
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Mon, 27 Sep 2010 12:27:00 +0530
+
+libmaemomtp (1.0.17) unstable; urgency=low
+
+  * Use global tokens provided by tracker in the Aegis manifest.
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Thu, 23 Sep 2010 10:54:00 +0530
+
+libmaemomtp (1.0.16) unstable; urgency=low
+
+  * Added Aegis manifest file to request for tracker read and write access.
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Tue, 21 Sep 2010 13:00:00 +0530
+
+libmaemomtp (1.0.15) unstable; urgency=low
+
+  * Bumped up version to fix 191605.
+  * Fixes: NB#191605 -  DUT is not connected in MTP mode 
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Mon, 13 Sep 2010 14:00:04 +0530
+
 libmaemomtp (1.0.14) unstable; urgency=low
 
   * Fixes: NB#188992 - Unknown albums and artists are duplicated.
