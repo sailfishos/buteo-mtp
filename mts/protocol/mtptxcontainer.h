@@ -158,7 +158,13 @@ namespace meegomtp1dot0
         /// \param type [in] The MTP type of the value to be serialized
         /// \param d [in] The value to serialize
         void serializeVariantByType(MTPDataType type, const QVariant &d);
+        ///< Provide a container length and prevent MTPTxContainer from determining the same
+        void setContainerLength(quint32 containerLength);
+        ///< Allow MTPTxContainer to determine container length ( the default )
+        void resetContainerLength();
+
         private:
+
         ///< Serializes into the internal buffer, elements of the given size and
         /// number
         void serialize(const void *source, quint32 elementSize, quint32 numberOfElements);
@@ -167,6 +173,8 @@ namespace meegomtp1dot0
         void serializeFormField(MTPDataType type, MtpFormFlag formFlag, const QVariant &formField);
         ///< Expands the class's internal buffer by the required capacity
         void expandBuffer(quint32 requiredSpace);
+
+        bool m_computeContainerLength; ///< if true, allow MTPTxContainer to determine container length ( the default )
     };
 }
 

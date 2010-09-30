@@ -47,6 +47,7 @@ MTPTxContainer::MTPTxContainer(MTPContainerType type, quint16 code, quint32 tran
     putl32(&m_container->transactionID, transactionID);
     m_offset = MTP_HEADER_SIZE;
     m_bufferCapacity = MTP_HEADER_SIZE + bufferEstimate;
+    m_computeContainerLength = true;
 }
 
 MTPTxContainer::~MTPTxContainer()
@@ -58,16 +59,30 @@ MTPTxContainer::~MTPTxContainer()
     }
 }
 
+void MTPTxContainer::setContainerLength(quint32 containerLength)
+{
+    putl32(&m_container->containerLength, containerLength);
+    m_computeContainerLength = false;
+}
+
+void MTPTxContainer::resetContainerLength()
+{
+    m_computeContainerLength = true;
+}
+
 const quint8* MTPTxContainer::buffer()
 {
     // Populate the container length
-    if(m_extraLargeContainer)
+    if( m_computeContainerLength )
     {
-        putl32(&m_container->containerLength, 0XFFFFFFFF);
-    }
-    else
-    {
-        putl32(&m_container->containerLength, m_offset);
+        if(m_extraLargeContainer)
+        {
+            putl32(&m_container->containerLength, 0XFFFFFFFF);
+        }
+        else
+        {
+            putl32(&m_container->containerLength, m_offset);
+        }
     }
     return m_buffer;
 }

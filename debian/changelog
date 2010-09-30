@@ -1,4 +1,9 @@
-=======
+libmaemomtp (1.0.20) unstable; urgency=low
+
+  * Fixes: NB#195158 -  mtp-getfile does not work 
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Thu, 30 Sep 2010 09:06:48 +0530
+
 libmaemomtp (1.0.19) unstable; urgency=low
 
   * Fixed an error in the getObject's data container header for the segmented
