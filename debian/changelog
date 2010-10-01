@@ -1,3 +1,11 @@
+libmaemomtp (1.0.21) unstable; urgency=low
+
+  * Fixes: NB#195658 - Synced playlist uses deprecated property
+    nfo:entryContent in playlists' entries.
+  * Fixes: NB#191786 - msyncd outputs excessively when USB connected to Windows
+
+ -- Santosh Puranik <santosh.puranik@nokia.com>  Fri, 01 Oct 2010 12:36:00 +0530
+
 libmaemomtp (1.0.20) unstable; urgency=low
 
   * Fixes: NB#195158 -  mtp-getfile does not work 

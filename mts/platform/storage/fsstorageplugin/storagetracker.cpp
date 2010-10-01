@@ -693,7 +693,7 @@ bool StorageTracker::setObjectProperty(const QString& path, MTPObjPropertyCode e
 
 static void trackerQuery(const QString& query, QVector<QStringList> &res)
 {
-    MTP_LOG_WARNING(query);
+    MTP_LOG_INFO(query);
     res = ::tracker()->rawSparqlQuery(query.toUtf8().data());
 }
 
@@ -701,7 +701,7 @@ static void trackerUpdateQuery(const QString& query)
 {
     // Ignore result for now...
     ::tracker()->rawSparqlUpdateQuery(query);
-    MTP_LOG_WARNING(query);
+    MTP_LOG_INFO(query);
 }
 
 static QString generateIriForTracker(const QString& path)
@@ -1446,8 +1446,8 @@ QString StorageTracker::savePlaylist(const QString &playlistPath, QStringList &e
         insertEntries += QString("<") + playlistId + QString("> nfo:hasMediaFileListEntry <") +
                          listEntryUri + QString("> . ");
         insertEntries += QString("<") + listEntryUri + QString("> a nfo:MediaFileListEntry . ");
-        insertEntries += QString("<") + listEntryUri + QString("> nfo:entryContent <") +
-                         allEntries[i][0] + QString("> . ");
+        insertEntries += QString("<") + listEntryUri + QString("> nfo:entryUrl '") +
+                         generateIriForTracker(entries[i]) + QString("' . ");
         insertEntries += QString("<") + listEntryUri + QString("> nfo:listPosition \'") +
                          QString::number(i) + QString("\' . ");
         entryDuration = entryDuration.section('.', 0, 0);
@@ -1472,12 +1472,12 @@ void StorageTracker::getPlaylists(QStringList &playlistPaths, QList<QStringList>
     if(true == getExisting)
     {
         // Query for all "existing" playlists, i.e, all those with valid url's
-        query = QString("SELECT ?f1 ?f2 WHERE{?f a nmm:Playlist . OPTIONAL{?f nie:identifier ?f1} . ?f nfo:hasMediaFileListEntry ?fld . ?fld nfo:entryContent ?fld1 . ?fld1 nie:url ?f2 . FILTER (bound(?f1))} ORDER BY ?f1");
+        query = QString("SELECT ?f1 ?fld1 WHERE{?f a nmm:Playlist . OPTIONAL{?f nie:identifier ?f1} . ?f nfo:hasMediaFileListEntry ?fld . ?fld nfo:entryUrl ?fld1 . FILTER (bound(?f1))} ORDER BY ?f1");
     }
     else
     {
         // Query for all "new" playlists, that is those that were added on the device
-        query = QString("SELECT ?f3 ?f2 WHERE{?f a nmm:Playlist ; nie:title ?f3 . OPTIONAL{?f nie:identifier ?f1} . ?f nfo:hasMediaFileListEntry ?fld . ?fld nfo:entryContent ?fld1 . ?fld1 nie:url ?f2 . FILTER (! bound(?f1))} ORDER BY ?f1");
+        query = QString("SELECT ?f3 ?fld1 WHERE{?f a nmm:Playlist ; nie:title ?f3 . OPTIONAL{?f nie:identifier ?f1} . ?f nfo:hasMediaFileListEntry ?fld . ?fld nfo:entryUrl ?fld1 . FILTER (! bound(?f1))} ORDER BY ?f1");
     }
     trackerQuery(query, resultSet);
     QString lastPlaylistUrl;

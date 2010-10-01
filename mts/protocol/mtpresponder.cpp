@@ -229,8 +229,8 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
 {
     MTP_FUNC_TRACE();
     
-    MTP_LOG_WARNING("Sending container of type:: " << QString("0x%1").arg(container.containerType(), 0, 16));
-    MTP_LOG_WARNING("Code:: " << QString("0x%1").arg(container.code(), 0, 16));
+    MTP_LOG_INFO("Sending container of type:: " << QString("0x%1").arg(container.containerType(), 0, 16));
+    MTP_LOG_INFO("Code:: " << QString("0x%1").arg(container.code(), 0, 16));
 
     if(MTP_CONTAINER_TYPE_RESPONSE == container.containerType() || MTP_CONTAINER_TYPE_DATA == container.containerType() ||
        MTP_CONTAINER_TYPE_EVENT == container.containerType() )
@@ -365,13 +365,13 @@ void MTPResponder::commandHandler()
      
     bool waitForDataPhase = false;
 
-    MTP_LOG_WARNING("MTP OPERATION:::: " << QString("0x%1").arg(reqContainer->code(), 0, 16));
+    MTP_LOG_INFO("MTP OPERATION:::: " << QString("0x%1").arg(reqContainer->code(), 0, 16));
 
     reqContainer->params(params);
 
     foreach(quint32 param, params)
     {
-        MTP_LOG_WARNING("Param = " << QString("0x%1").arg(param, 0, 16));
+        MTP_LOG_INFO("Param = " << QString("0x%1").arg(param, 0, 16));
     }
 
     // preset the response code - to be changed if the handler of the operation
@@ -2803,7 +2803,7 @@ bool MTPResponder::serializePropListQuantum(ObjHandle currentObj, QList<MTPObjPr
         // Not cached yet
         else
         {
-            MTP_LOG_WARNING("All properties not cached yet, fetch from tracker");
+            MTP_LOG_INFO("All properties not cached yet, fetch from tracker");
             MTPResponseCode code = m_storageServer->getObjectPropertyValue(currentObj, notFoundList, false, true);
             if( MTP_RESP_OK == code )
             {
@@ -2822,7 +2822,7 @@ bool MTPResponder::serializePropListQuantum(ObjHandle currentObj, QList<MTPObjPr
         // Not cached yet
         else
         {
-            MTP_LOG_WARNING("Property not cached yet, fetch from storage/tracker");
+            MTP_LOG_INFO("Property not cached yet, fetch from storage/tracker");
             MTPResponseCode code = m_storageServer->getObjectPropertyValue(currentObj, propValList);
             if( MTP_RESP_OK == code )
             {
