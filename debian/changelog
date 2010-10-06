@@ -1,3 +1,12 @@
+libmaemomtp (1.0.23) unstable; urgency=low
+
+  * Fixes: NB#195753 -  msyncd takes 20% of CPU when recording video in OVI
+    suite mode + USB cable
+  * Using IN_CLOSE_WRITE inotify event instead of IN_MODIFY to send a modify
+    event once for files that are modified many times before a close.
+
+ -- Deepak Kodihalli <deepak.kodihalli@nokia.com>  Wed, 06 Oct 2010 14:24:29 +0530
+
 libmaemomtp (1.0.22) unstable; urgency=low
 
   * Fixes: NB#196346 -  MTP copy fails for files greater than 4GB

@@ -49,7 +49,7 @@ class FSInotify : public QObject
 public:
     /// Constructor.
     /// \param mask [in] indicates what to watch for.
-    FSInotify( uint32_t theMask = IN_MOVE | IN_CREATE | IN_DELETE | IN_MODIFY );
+    FSInotify( uint32_t theMask = IN_MOVE | IN_CREATE | IN_DELETE | IN_CLOSE_WRITE );
 
     /// Desctructor.
     ~FSInotify();

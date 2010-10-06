@@ -119,7 +119,7 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
     m_tracker = new StorageTracker();
     m_thumbnailer = new Thumbnailer();
     QObject::connect( m_thumbnailer, SIGNAL( thumbnailReady( const QString& ) ), this, SLOT( receiveThumbnail( const QString& ) ) );
-    m_inotify = new FSInotify( IN_MOVE | IN_CREATE | IN_DELETE | IN_MODIFY );
+    m_inotify = new FSInotify( IN_MOVE | IN_CREATE | IN_DELETE | IN_CLOSE_WRITE );
     QObject::connect( m_inotify, SIGNAL(inotifyEventSignal( struct inotify_event* )), this, SLOT(inotifyEventSlot( struct inotify_event* )) );
 }
 
@@ -2052,7 +2052,7 @@ void FSStoragePlugin::inotifyEventSlot( struct inotify_event *event )
         cacheInotifyEvent( event, name );
     }
 
-    if( event->mask & IN_MODIFY )
+    if( event->mask & IN_CLOSE_WRITE )
     {
         handleFSModify( event, name );
     }
@@ -2837,7 +2837,7 @@ void FSStoragePlugin::handleFSMove(const struct inotify_event *fromEvent, const 
 
 void FSStoragePlugin::handleFSModify(const struct inotify_event *event, const char* name)
 {
-    if(event->mask & IN_MODIFY)
+    if(event->mask & IN_CLOSE_WRITE)
     {
         ObjHandle parent = m_watchDescriptorMap.value(event->wd);
         StorageItem *parentNode = m_objectHandlesMap.value(parent);
