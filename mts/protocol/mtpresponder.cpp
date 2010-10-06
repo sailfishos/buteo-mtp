@@ -1964,17 +1964,26 @@ void MTPResponder::sendObjectPropListReq()
                 // Get the object size
                 quint64 msb = params[3];
                 quint64 lsb = params[4];
-                objectSize = (msb << (sizeof(quint32) * 8)) | (lsb);
 
-                // If there's an existing object prop list info, free that
-                freeObjproplistInfo();
+                // Indicates that object is >= 4GB, we don't support this
+                if( msb )
+                {
+                   *respCode = MTP_RESP_Object_Too_Large;
+                }
+                else
+                {
+                    // If there's an existing object prop list info, free that
+                    freeObjproplistInfo();
 
-                // Populate whatever we can now, rest will be populated in the data phase
-                m_objPropListInfo = new ObjPropListInfo;
-                m_objPropListInfo->storageId = storageID;
-                m_objPropListInfo->parentHandle = parentHandle;
-                m_objPropListInfo->objectSize = objectSize;
-                m_objPropListInfo->objectFormatCode = format;
+                    objectSize = (msb << (sizeof(quint32) * 8)) | (lsb);
+
+                    // Populate whatever we can now, rest will be populated in the data phase
+                    m_objPropListInfo = new ObjPropListInfo;
+                    m_objPropListInfo->storageId = storageID;
+                    m_objPropListInfo->parentHandle = parentHandle;
+                    m_objPropListInfo->objectSize = objectSize;
+                    m_objPropListInfo->objectFormatCode = format;
+                }
             }
         }
     }
@@ -2074,13 +2083,22 @@ void MTPResponder::sendObjectInfoData()
         // De-serialize the object info
         *recvContainer >> objectInfo;
 
-        // get the requested StorageId 
-        responseParams[0] = params[0];
-        // get the requested Parent ObjectHandle 
-        responseParams[1] = params[1];
-        // trigger creation of a file in Storage Server 
-        response = m_storageServer->addItem(responseParams[0], responseParams[1], responseParams[2],
-                                         &objectInfo);
+        // Indicates that object is >= 4GB, we don't support this
+        if( 0xFFFFFFFF == objectInfo.mtpObjectCompressedSize )
+        {
+            response = MTP_RESP_Object_Too_Large;
+        }
+        else
+        {
+            // get the requested StorageId 
+            responseParams[0] = params[0];
+            // get the requested Parent ObjectHandle 
+            responseParams[1] = params[1];
+            // trigger creation of a file in Storage Server 
+            response = m_storageServer->addItem(responseParams[0], responseParams[1], responseParams[2],
+                                                &objectInfo);
+        }
+
         // creation of file was successful store information which are needed later temporarly
         if( MTP_RESP_OK == response )
         {
@@ -2092,9 +2110,8 @@ void MTPResponder::sendObjectInfoData()
         }
         else
         {
-            // free memory reserved for the SendObject sequence 
-            delete m_sendObjectSequencePtr->objInfo;
-            m_sendObjectSequencePtr->objInfo = 0;
+            delete m_sendObjectSequencePtr;
+            m_sendObjectSequencePtr = 0;
             // return parameters shall not be used 
             memset(&responseParams[0],0, sizeof(responseParams));
         }
@@ -2299,9 +2316,10 @@ void MTPResponder::sendObjectPropListData()
     MTPRxContainer *recvContainer = m_transactionSequence->dataContainer;
     bool sent = true;
 
-    if(0 == m_objPropListInfo)
+    if(0 == m_objPropListInfo || MTP_RESP_OK != m_transactionSequence->mtpResp)
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, MTP_RESP_GeneralError, reqContainer->transactionId());
+        respCode = 0 == m_objPropListInfo ? MTP_RESP_GeneralError : m_transactionSequence->mtpResp;
+        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
         sent = sendContainer(respContainer);
         if( false == sent )
         {
