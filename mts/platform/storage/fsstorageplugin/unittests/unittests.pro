@@ -3,11 +3,7 @@
 ######################################################################
 
 CONFIG += qtestlib warn_off debug_and_release
-<<<<<<< HEAD:mts/platform/storage/fsstorageplugin/unittests/unittests.pro
 LIBS += -lqttracker -lcontextsubscriber
-=======
-LIBS += -lqttracker -lcontextsubscriber -lmtp-playready0 -ldrm-playready0 -lsynccommon 
->>>>>>> abd0c66... fixed compilation issues:mts/platform/storage/fsstorageplugin/unittests/unittests.pro
 TEMPLATE = app
 TARGET = storage-test
 QT += dbus xml
