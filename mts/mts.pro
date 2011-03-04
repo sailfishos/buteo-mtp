@@ -9,7 +9,7 @@ CONFIG += link_pkgconfig debug
 #QMAKE_CXXFLAGS += -O0 -Werror
 LIBS += -lcontextsubscriber
 #to be removed later when QtDBus makes it calls thread safe 
-LIBS += -lsynccommon 
+LIBS += -lsynccommon -L./transport/usb/mtpfsdriver -lmtpfsdriver
 
 TEMPLATE = lib
 TARGET = meegomtp
@@ -20,6 +20,7 @@ DEPENDPATH += . \
               platform \
               transport \
               transport/usb \
+              transport/usb/mtpfsdriver \
               transport/dummy \
               platform/storage \
               platform/deviceinfo
@@ -33,6 +34,7 @@ INCLUDEPATH += . \
                platform/deviceinfo \
                transport \
                transport/dummy \
+               transport/usb/mtpfsdriver \
                transport/usb 
 
 # Input
@@ -57,6 +59,7 @@ HEADERS += mts.h \
            platform/deviceinfo/xmlhandler.h \
            transport/mtptransporter.h \
            transport/usb/mtptransporterusb.h \
+           transport/usb/mtpfsdriver/mtpfsdriver.h \
            transport/dummy/mtptransporterdummy.h \
            platform/storage/storagefactory.h \
            platform/storage/storageplugin.h
@@ -91,6 +94,10 @@ data.path = /usr/share/mtp
 data.files = deviceInfo.xml
 
 INSTALLS += data
+
+tmp.path = /usr/bin
+tmp.files = mtpfs
+INSTALLS += tmp
 
 #clean
 QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)

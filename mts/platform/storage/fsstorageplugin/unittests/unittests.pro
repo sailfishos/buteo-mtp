@@ -4,6 +4,7 @@
 
 CONFIG += qtestlib warn_off debug_and_release
 LIBS += -lqttracker -lcontextsubscriber
+LIBS += -lsynccommon -L../../../../transport/usb/mtpfsdriver -lmtpfsdriver
 TEMPLATE = app
 TARGET = storage-test
 QT += dbus xml
@@ -27,6 +28,7 @@ INCLUDEPATH += . \
 	       ../../../../transport \
 	       ../../../../transport/dummy \
 	       ../../../../transport/usb \
+	       ../../../../transport/usb/mtpfsdriver \
 	       ../../../../platform \
 	       ../../../../platform/deviceinfo\
 	       ../../../../common 
@@ -54,6 +56,7 @@ HEADERS += fsstorageplugin_test.h \
            ../../../../protocol/extensions/mtpextension.h \
            ../../../../transport/mtptransporter.h \
            ../../../../transport/usb/mtptransporterusb.h \
+           ../../../../transport/usb/mtpfsdriver/mtpfsdriver.h \
            ../../../../transport/dummy/mtptransporterdummy.h \
            ../../../platform/deviceinfo/xmlhandler.h \
            ../../../platform/deviceinfo/contextsubscriber.h \

@@ -235,9 +235,9 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
     if(MTP_CONTAINER_TYPE_RESPONSE == container.containerType() || MTP_CONTAINER_TYPE_DATA == container.containerType() ||
        MTP_CONTAINER_TYPE_EVENT == container.containerType() )
     {
-        m_transporter->disableRW();
-        QCoreApplication::processEvents();
-        m_transporter->enableRW();
+        //m_transporter->disableRW();
+        //QCoreApplication::processEvents();
+        //m_transporter->enableRW();
         if( RESPONDER_TX_CANCEL == m_state && MTP_CONTAINER_TYPE_EVENT != container.containerType())
         {
             return false;
@@ -2689,9 +2689,9 @@ void MTPResponder::handleResume()
     if( m_containerToBeResent )
     {
         m_containerToBeResent = false;
-        m_transporter->disableRW();
-        QCoreApplication::processEvents();
-        m_transporter->enableRW();
+        //m_transporter->disableRW();
+        //QCoreApplication::processEvents();
+        //m_transporter->enableRW();
         if( RESPONDER_TX_CANCEL != m_state )
         {
             MTP_LOG_WARNING("Resume sending");
