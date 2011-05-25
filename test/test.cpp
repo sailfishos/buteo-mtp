@@ -27,6 +27,7 @@
 #include <QCoreApplication>
 #include <QObject>
 #include <QEventLoop>
+#include <QTimer>
 #include "mts.h"
 
 using namespace meegomtp1dot0;

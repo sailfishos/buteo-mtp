@@ -95,11 +95,6 @@ class MTPTransporterUSB : public MTPTransporter
 
     private:
 
-        /// Opens and sets up the USB driver file descriptor
-        /// \param fileName [in] The path of the USB device driver file
-        /// \return Returns the file descriptor (> 0) if success, else -1
-        int openUsbFd(const char* fileName);
-
         /// Internal function to send data and event packets
         bool sendDataOrEvent(const quint8* data, quint32 dataLen, bool isEvent, bool sendZeroPacket);
         /// Internal function that does the actual data write to the USB FD
@@ -114,29 +109,17 @@ class MTPTransporterUSB : public MTPTransporter
         /// \return Returns true if data write succeeded, else false
         bool sendEventInternal(const quint8* data, quint32 len);
 
-        /// Retrieves the max data packet size for the USB driver
-        /// \return Returns the max data size in bytes
-        quint32 getMaxDataPacketSize();
-
-        /// Retrieves the max event packet size for the USB driver
-        /// \return Returns the max event size in bytes
-        quint32 getMaxEventPacketSize();
-
         /// Private function to process data received from the USB driver
         void processReceivedData(quint8* data, quint32 dataLen);
-    
+
         enum IOState{
             ACTIVE,
             EXCEPTION,
             SUSPENDED
         };
-        
-        const char*             MTP_DEVICE_PORT; ///< The path of the device driver file
-        
+
         IOState                 m_ioState; ///< The current state of the IO device
 
-        int                     m_usbFd; ///< The USB TTY file descriptor
-        
         QSocketNotifier*        m_readSocket; ///< The socket notifier for data read/written to the USB fd
 
         QSocketNotifier*        m_excpSocket; ///< The socket notifier for exception, errors and hangups on the USB fd
@@ -144,10 +127,15 @@ class MTPTransporterUSB : public MTPTransporter
         QSocketNotifier*        m_ctrlSocket;
 
         quint32                  m_maxDataSize; ///< The maximum size, in bytes, of the data packet size of the USB layer
-        
+
         quint32                  m_maxEventSize; ///< The maximum size, in bytes, of the event packet size of the USB layer
 
         quint64                  m_containerReadLen; ///< The data, in bytes remaining to be received for a data packet
+
+        int                      m_ctrlFd;
+        int                      m_intrFd;
+        int                      m_inFd;
+        int                      m_outFd;
 
         MTPFSDriver              m_driver;
     public Q_SLOTS:

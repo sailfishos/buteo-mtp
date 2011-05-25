@@ -39,7 +39,8 @@ enum packet_type
 class MTPFSDriver : public QObject {
     Q_OBJECT
 public:
-    MTPFSDriver(enum version mtpversion, enum verbosity_level verbosity);
+    MTPFSDriver();
+    ~MTPFSDriver();
 /* \brief Call this to setup the mtp functionfs driver
  *
  * @param mtpversion setup MTP1 or MTP2
@@ -48,11 +49,11 @@ public:
  * @return -1 if setup failed, 0 otherwise
  *
  */
-    int mtpfs_setup(enum version mtpversion, enum verbosity_level verbosity);
+    int setup(enum version mtpversion, enum verbosity_level verbosity);
 
 /* \brief Call this for cleanup once done
  */
-    void mtpfs_close();
+    void closedev();
 
 /* \brief Get handle to control ep file
  *

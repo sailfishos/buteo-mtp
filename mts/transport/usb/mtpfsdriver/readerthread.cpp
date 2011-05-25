@@ -1,11 +1,13 @@
-#include <QDebug>
-
 #include "readerthread.h"
 #include "functionfs.h"
 
+#include <QDebug>
 #include <errno.h>
+#include <sys/ioctl.h>
+#include "functionfs.h"
 
-#define MAX_DATA_IN_SIZE 64 * 1024
+//#define MAX_DATA_IN_SIZE (64 * 1024)
+#define MAX_DATA_IN_SIZE (64 * 256)
 
 static const char *const event_names[] = {
 "BIND",
@@ -18,7 +20,7 @@ static const char *const event_names[] = {
 };
 
 ControlReaderThread::ControlReaderThread(int fd, QObject *parent)
-    : QThread(parent), fd(fd)
+    : QThread(parent), fd(fd), state(0)
 {
 }
 
@@ -26,7 +28,8 @@ ControlReaderThread::~ControlReaderThread()
 {
 }
 
-void ControlReaderThread::run() {
+void ControlReaderThread::run()
+{
     struct usb_functionfs_event event[1];
     int readSize;
 
@@ -38,20 +41,23 @@ void ControlReaderThread::run() {
     qDebug() << "FIXME: Breaking away, not event size: " << readSize;
 }
 
-void ControlReaderThread::handleEvent(struct usb_functionfs_event *event) {
+void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
+{
     switch(event->type) {
         case FUNCTIONFS_ENABLE:
         case FUNCTIONFS_RESUME:
-            qDebug() << "Event: ENABLE";
-            emit startIO();
+            if(!state)
+                emit startIO();
+            state = 1;
             break;
         case FUNCTIONFS_DISABLE:
         case FUNCTIONFS_SUSPEND:
-            qDebug() << "Event: DISABLE";
-            emit stopIO();
+            if(state)
+                emit stopIO();
+            state = 0;
             break;
         default:
-            qDebug() << "FIXME: Event: " << event_names[event->type];
+            qDebug() << "FIXME: Event" << event_names[event->type] << "not implemented";
             break;
     }
 }
@@ -65,7 +71,10 @@ OutReaderThread::~OutReaderThread()
 {
 }
 
-void OutReaderThread::run() {
+#define INITIAL_SIZE MAX_DATA_IN_SIZE
+
+void OutReaderThread::run()
+{
     struct usb_functionfs_event event[1];
     int readSize, cntSize;
 
@@ -73,25 +82,14 @@ void OutReaderThread::run() {
 
     // FIXME: This is a bit hacky
     char* inbuf = new char[MAX_DATA_IN_SIZE];
-    readSize = read(fd, inbuf, 12); // Read Header
+    readSize = read(fd, inbuf, INITIAL_SIZE); // Read Header
     qDebug() << "Readsize: " << readSize << errno;
     while(readSize != -1) {
-#if 0
-        quint32 size = *(quint32 *)inbuf;
-        qDebug() << "Read: " << readSize << "Attempting to read: " << size;
-        cntSize = read(fd, inbuf+12, (size<MAX_DATA_IN_SIZE?size:MAX_DATA_IN_SIZE)-12);
-        if(cntSize == -1) {
-            qDebug() << "cntSize -1";
-            break;
-        }
-        readSize += cntSize;
-        qDebug() << "******* Read: " << readSize;
-#endif
         emit dataRead(inbuf, readSize);
         inbuf = new char[MAX_DATA_IN_SIZE];
-        readSize = read(fd, inbuf, 12); // Read Header
+        readSize = read(fd, inbuf, INITIAL_SIZE); // Read Header
     }
 
     perror("OutReaderThread");
-    qDebug() << "FIXME: Breaking away, error set: " << readSize;
+    qDebug() << "Exiting data thread";
 }

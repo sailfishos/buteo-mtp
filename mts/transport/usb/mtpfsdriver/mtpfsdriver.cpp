@@ -7,8 +7,6 @@
 #include "mtpfsdriver.h"
 #include "mtp1descriptors.h"
 
-#include <QDebug>
-
 static char err_string[50] = "No errors";
 static enum verbosity_level verbose = VERBOSE_OFF;
 
@@ -20,20 +18,17 @@ static void debug(const char* str)
     }
 }
 
-MTPFSDriver::MTPFSDriver(enum version mtpversion, enum verbosity_level verbosity)
+MTPFSDriver::MTPFSDriver()
     :  control_fd(-1), in_fd(-1), out_fd(-1), interrupt_fd(-1), outThread(NULL)
 {
-    mtpfs_setup(mtpversion, verbosity);
-
-    ctrlThread = new ControlReaderThread(control_fd, this);
-
-    QObject::connect(ctrlThread, SIGNAL(startIO()), this, SLOT(startIO()));
-    QObject::connect(ctrlThread, SIGNAL(stopIO()), this, SLOT(stopIO()));
-
-    ctrlThread->start();
 }
 
-int MTPFSDriver::mtpfs_setup(enum version mtpversion, enum verbosity_level verbosity)
+MTPFSDriver::~MTPFSDriver()
+{
+    closedev();
+}
+
+int MTPFSDriver::setup(enum version mtpversion, enum verbosity_level verbosity)
 {
     int success = -1;
 
@@ -79,10 +74,18 @@ int MTPFSDriver::mtpfs_setup(enum version mtpversion, enum verbosity_level verbo
             }
         }
     }
+
+    ctrlThread = new ControlReaderThread(control_fd, this);
+
+    QObject::connect(ctrlThread, SIGNAL(startIO()), this, SLOT(startIO()));
+    QObject::connect(ctrlThread, SIGNAL(stopIO()), this, SLOT(stopIO()));
+
+    ctrlThread->start();
+
     return success;
 }
 
-void MTPFSDriver::mtpfs_close()
+void MTPFSDriver::closedev()
 {
     close(control_fd);
     close(in_fd);
@@ -125,8 +128,6 @@ void MTPFSDriver::mtpfs_send_reset( int fd )
 
 void MTPFSDriver::startIO()
 {
-    qDebug() << "Starting IO";
-
     in_fd = open(in_file, O_WRONLY);
     if(-1 == in_fd)
     {
@@ -136,22 +137,24 @@ void MTPFSDriver::startIO()
     }
     emit inFdChanged(in_fd);
 
-    out_fd = open(out_file, O_RDONLY);
+    out_fd = open(out_file, O_RDONLY | O_NONBLOCK);
     if(-1 == out_fd)
     {
         snprintf(err_string, sizeof err_string, \
                "Couldn't open IN endpoint file %s",out_file);
         debug(err_string);
     }
+#if 0
     if(outThread != NULL)
         delete outThread;
     outThread = new OutReaderThread(out_fd, this);
     QObject::connect(outThread, SIGNAL(dataRead(char*,int)),
         this, SIGNAL(dataRead(char*,int)));
     outThread->start();
+#endif
     emit outFdChanged(out_fd);
 
-    interrupt_fd = open(interrupt_file, O_WRONLY);
+    interrupt_fd = open(interrupt_file, O_WRONLY | O_NONBLOCK);
     if(-1 == interrupt_fd)
     {
         snprintf(err_string, sizeof err_string, \
@@ -163,10 +166,11 @@ void MTPFSDriver::startIO()
 
 void MTPFSDriver::stopIO()
 {
-    qDebug() << "Stopping IO";
     // FIXME: this probably won't exit properly?
+#if 0
     delete outThread;
     outThread = NULL;
+#endif
     if(out_fd != -1) {
         close(out_fd);
         out_fd = -1;

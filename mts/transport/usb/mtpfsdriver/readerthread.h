@@ -13,6 +13,7 @@ public:
 private:
     void handleEvent(struct usb_functionfs_event *event);
     int fd;
+    int state;
 
 signals:
     void startIO();
