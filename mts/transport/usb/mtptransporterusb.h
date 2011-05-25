@@ -126,18 +126,19 @@ class MTPTransporterUSB : public MTPTransporter
 
         QSocketNotifier*        m_ctrlSocket;
 
-        quint32                  m_maxDataSize; ///< The maximum size, in bytes, of the data packet size of the USB layer
+        quint32                 m_maxDataSize; ///< The maximum size, in bytes, of the data packet size of the USB layer
 
-        quint32                  m_maxEventSize; ///< The maximum size, in bytes, of the event packet size of the USB layer
+        quint32                 m_maxEventSize; ///< The maximum size, in bytes, of the event packet size of the USB layer
 
-        quint64                  m_containerReadLen; ///< The data, in bytes remaining to be received for a data packet
+        quint64                 m_containerReadLen; ///< The data, in bytes remaining to be received for a data packet
 
-        int                      m_ctrlFd;
-        int                      m_intrFd;
-        int                      m_inFd;
-        int                      m_outFd;
+        int                     m_ctrlFd;
+        int                     m_intrFd;
+        int                     m_inFd;
+        int                     m_outFd;
 
-        ControlReaderThread      *m_ctrlThread;
+        ControlReaderThread     *m_ctrlThread;
+        OutReaderThread         *m_outThread;
 
     public Q_SLOTS:
         /// The usb transporter catches the device ok status signal from the responder and informs the driver about the same.

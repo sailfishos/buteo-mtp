@@ -50,6 +50,9 @@
 #include "readerthread.h"
 #include "mtp1descriptors.h"
 
+// This should be moved elsewhere, or the toggle removed
+#define ENABLE_OUT_THREAD
+
 using namespace meegomtp1dot0;
 
 #define MAX_DATA_IN_SIZE 64 * 256
@@ -103,6 +106,9 @@ bool MTPTransporterUSB::activate()
 
 bool MTPTransporterUSB::deactivate()
 {
+    delete m_outThread;
+    delete m_ctrlThread;
+
     close(m_intrFd);
     close(m_outFd);
     close(m_inFd);
@@ -154,6 +160,7 @@ bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLa
 
 void MTPTransporterUSB::handleDataRead(char* buffer, int size)
 {
+    // TODO: Merge this with processReceivedData
     if(size > 0) {
         processReceivedData((quint8 *)buffer, size);
     }
@@ -327,8 +334,12 @@ void MTPTransporterUSB::startIO()
     }
 
     if(-1 != m_outFd) {
+#ifdef ENABLE_OUT_THREAD
+        delete m_outThread;
+#else
         delete m_readSocket;
         delete m_excpSocket;
+#endif
     }
 
     m_outFd = open(out_file, O_RDONLY | O_NONBLOCK);
@@ -336,21 +347,21 @@ void MTPTransporterUSB::startIO()
     {
         MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << out_file);
     } else {
+#ifdef ENABLE_OUT_THREAD
+        m_outThread = new OutReaderThread(m_outFd, this);
+        QObject::connect(m_outThread, SIGNAL(dataRead(char*,int)),
+            this, SLOT(handleDataRead(char*,int)));
+        m_outThread->start();
+#else
         m_readSocket = new QSocketNotifier(m_outFd, QSocketNotifier::Read);
         m_excpSocket = new QSocketNotifier(m_outFd, QSocketNotifier::Exception);
 
         // Connect our slots to listen to data and exception events on the USB FD
         QObject::connect(m_readSocket, SIGNAL(activated(int)), this, SLOT(handleRead()));
         QObject::connect(m_excpSocket, SIGNAL(activated(int)), this, SLOT(handleHangup()));
-    }
-#if 0
-    if(outThread != NULL)
-        delete outThread;
-    outThread = new OutReaderThread(m_outFd, this);
-    QObject::connect(outThread, SIGNAL(dataRead(char*,int)),
-        this, SIGNAL(dataRead(char*,int)));
-    outThread->start();
 #endif
+    }
+
 
     m_intrFd = open(interrupt_file, O_WRONLY | O_NONBLOCK);
     if(-1 == m_intrFd)
@@ -362,13 +373,13 @@ void MTPTransporterUSB::startIO()
 void MTPTransporterUSB::stopIO()
 {
     // FIXME: this probably won't exit properly?
-#if 0
-    delete outThread;
-    outThread = NULL;
-#endif
     if(m_outFd != -1) {
+#ifdef ENABLE_OUT_THREAD
+        delete m_outThread;
+#else
         delete m_readSocket;
         delete m_excpSocket;
+#endif
         close(m_outFd);
         m_outFd = -1;
     }
