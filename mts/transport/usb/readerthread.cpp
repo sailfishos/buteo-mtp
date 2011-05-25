@@ -1,10 +1,10 @@
 #include "readerthread.h"
-#include "functionfs.h"
+#include <linux/usb/functionfs.h>
 
 #include <QDebug>
 #include <errno.h>
 #include <sys/ioctl.h>
-#include "functionfs.h"
+#include <linux/usb/functionfs.h>
 
 //#define MAX_DATA_IN_SIZE (64 * 1024)
 #define MAX_DATA_IN_SIZE (64 * 256)
@@ -30,11 +30,11 @@ ControlReaderThread::~ControlReaderThread()
 
 void ControlReaderThread::run()
 {
-    struct usb_functionfs_event event[1];
+    struct usb_functionfs_event event;
     int readSize;
 
-    while(read(fd, event, sizeof(event)) == sizeof(*event)) {
-        handleEvent(event);
+    while(read(fd, &event, sizeof(event)) == sizeof(event)) {
+        handleEvent(&event);
     }
 
     perror("ControlReaderThread::run");
@@ -43,6 +43,7 @@ void ControlReaderThread::run()
 
 void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
 {
+    qDebug() << "Event: " << event_names[event->type];
     switch(event->type) {
         case FUNCTIONFS_ENABLE:
         case FUNCTIONFS_RESUME:
@@ -55,6 +56,9 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
             if(state)
                 emit stopIO();
             state = 0;
+            break;
+        case FUNCTIONFS_SETUP:
+            emit setupRequest((void*)event);
             break;
         default:
             qDebug() << "FIXME: Event" << event_names[event->type] << "not implemented";
@@ -77,8 +81,6 @@ void OutReaderThread::run()
 {
     struct usb_functionfs_event event[1];
     int readSize, cntSize;
-
-    qDebug() << "Read thread START";
 
     // FIXME: This is a bit hacky
     char* inbuf = new char[MAX_DATA_IN_SIZE];

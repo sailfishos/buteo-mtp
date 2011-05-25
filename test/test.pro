@@ -18,6 +18,7 @@ contains( DRIVER, gadgetfs ) {
 
 contains( DRIVER, nogadgetfs ) {
     SOURCES += test.cpp
+    HEADERS += ptest.h
 }
 
 #install

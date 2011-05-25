@@ -33,7 +33,7 @@
 #define MTPTTRANSPORTERUSB_H
 
 #include "mtptransporter.h"
-#include "mtpfsdriver.h"
+#include "readerthread.h"
 
 class QSocketNotifier;
 
@@ -137,7 +137,8 @@ class MTPTransporterUSB : public MTPTransporter
         int                      m_inFd;
         int                      m_outFd;
 
-        MTPFSDriver              m_driver;
+        ControlReaderThread      *m_ctrlThread;
+
     public Q_SLOTS:
         /// The usb transporter catches the device ok status signal from the responder and informs the driver about the same.
         void sendDeviceOK();
@@ -151,11 +152,10 @@ class MTPTransporterUSB : public MTPTransporter
 	/// This slot listens for usb ptp class requests from the driver.
         void handleHighPriorityData();
 
-        void handleInFd(int);
-        void handleOutFd(int);
-        void handleIntrFd(int);
-
     private Q_SLOTS:
+        void stopIO();
+        void startIO();
+        void setupRequest(void*);
 
         // The slot handles incoming data on the USB fd that was alrady read
         void handleDataRead(char*, int);

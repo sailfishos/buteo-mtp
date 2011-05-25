@@ -20,7 +20,6 @@ DEPENDPATH += . \
               platform \
               transport \
               transport/usb \
-              transport/usb/mtpfsdriver \
               transport/dummy \
               platform/storage \
               platform/deviceinfo
@@ -34,7 +33,6 @@ INCLUDEPATH += . \
                platform/deviceinfo \
                transport \
                transport/dummy \
-               transport/usb/mtpfsdriver \
                transport/usb 
 
 # Input
@@ -59,8 +57,7 @@ HEADERS += mts.h \
            platform/deviceinfo/xmlhandler.h \
            transport/mtptransporter.h \
            transport/usb/mtptransporterusb.h \
-           transport/usb/mtpfsdriver/mtpfsdriver.h \
-           transport/usb/mtpfsdriver/readerthread.h \
+           transport/usb/readerthread.h \
            transport/dummy/mtptransporterdummy.h \
            platform/storage/storagefactory.h \
            platform/storage/storageplugin.h
@@ -82,9 +79,8 @@ SOURCES += mts.cpp \
            platform/deviceinfo/deviceinfoprovider.cpp \
            platform/deviceinfo/xmlhandler.cpp \
            platform/storage/storagefactory.cpp \
-           transport/usb/mtpfsdriver/mtpfsdriver.cpp \
-           transport/usb/mtpfsdriver/descriptor.c \
-           transport/usb/mtpfsdriver/readerthread.cpp
+           transport/usb/descriptor.c \
+           transport/usb/readerthread.cpp
 
 target.path = /usr/lib/
 INSTALLS += target

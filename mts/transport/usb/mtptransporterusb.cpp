@@ -44,9 +44,11 @@
 #include "mtptransporterusb.h"
 #include "mtpcontainer.h"
 // FIXME include ptp.h when the new driver gets integrated
+#include <linux/usb/functionfs.h>
 #include "ptp.h"
 #include "trace.h"
-#include "mtpfsdriver.h"
+#include "readerthread.h"
+#include "mtp1descriptors.h"
 
 using namespace meegomtp1dot0;
 
@@ -56,25 +58,55 @@ using namespace meegomtp1dot0;
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(ACTIVE), m_containerReadLen(0),
     m_inFd(-1), m_outFd(-1), m_intrFd(-1), m_ctrlFd(-1)
 {
-    QObject::connect(&m_driver, SIGNAL(inFdChanged(int)), this, SLOT(handleInFd(int)));
-    QObject::connect(&m_driver, SIGNAL(outFdChanged(int)), this, SLOT(handleOutFd(int)));
-    QObject::connect(&m_driver, SIGNAL(intrFdChanged(int)), this, SLOT(handleIntrFd(int)));
-
-    QObject::connect(&m_driver, SIGNAL(dataRead(char*,int)),
-        this, SLOT(handleDataRead(char*,int)), Qt::UniqueConnection);
 }
 
 bool MTPTransporterUSB::activate()
 {
     MTP_LOG_CRITICAL("MTPTransporterUSB::activate");
-    m_driver.setup(MTP1, VERBOSE_ON);
+    int success = false;
 
-    return true;
+    m_ctrlFd = open(control_file, O_RDWR);
+    if(-1 == m_ctrlFd)
+    {
+        MTP_LOG_CRITICAL("Couldn't open control endpoint file " << control_file);
+    }
+    else
+    {
+        if(-1 == write(m_ctrlFd, &mtp1descriptors, sizeof mtp1descriptors))
+        {
+            MTP_LOG_CRITICAL("Couldn't write descriptors to control endpoint file "
+                << control_file);
+        }
+        else
+        {
+            if(-1 == write(m_ctrlFd, &mtp1strings, sizeof(mtp1strings)))
+            {
+                MTP_LOG_CRITICAL("Couldn't write strings to control endpoint file "
+                    << control_file);
+            }
+            else
+            {
+                success = true;
+                MTP_LOG_INFO("mtp function set up");
+            }
+        }
+    }
+
+    m_ctrlThread = new ControlReaderThread(m_ctrlFd, this);
+
+    QObject::connect(m_ctrlThread, SIGNAL(startIO()), this, SLOT(startIO()));
+    QObject::connect(m_ctrlThread, SIGNAL(stopIO()), this, SLOT(stopIO()));
+
+    m_ctrlThread->start();
+    return success;
 }
 
 bool MTPTransporterUSB::deactivate()
 {
-    m_driver.closedev();
+    close(m_intrFd);
+    close(m_outFd);
+    close(m_inFd);
+    close(m_ctrlFd);
     return true;
 }
 
@@ -107,7 +139,7 @@ void MTPTransporterUSB::reset()
 
 MTPTransporterUSB::~MTPTransporterUSB()
 {
-    m_driver.closedev();
+    deactivate();
 }
 
 bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLastPacket)
@@ -158,31 +190,6 @@ void MTPTransporterUSB::handleRead()
 void MTPTransporterUSB::handleHighPriorityData()
 {
 }
-
-void MTPTransporterUSB::handleInFd(int fd)
-{
-    m_inFd = fd;
-}
-
-void MTPTransporterUSB::handleOutFd(int fd)
-{
-    if(m_outFd == -1 && fd != -1) {
-        // Create socket notifiers over the USB FD
-        m_readSocket = new QSocketNotifier(fd, QSocketNotifier::Read);
-        m_excpSocket = new QSocketNotifier(fd, QSocketNotifier::Exception);
-
-        // Connect our slots to listen to data and exception events on the USB FD
-        QObject::connect(m_readSocket, SIGNAL(activated(int)), this, SLOT(handleRead()));
-        QObject::connect(m_excpSocket, SIGNAL(activated(int)), this, SLOT(handleHangup()));
-    }
-    m_outFd = fd;
-}
-
-void MTPTransporterUSB::handleIntrFd(int fd)
-{
-    m_intrFd = fd;
-}
-
 
 void MTPTransporterUSB::suspend()
 {
@@ -311,3 +318,79 @@ bool MTPTransporterUSB::sendEventInternal(const quint8* data, quint32 len)
     return true;
 }
 
+void MTPTransporterUSB::startIO()
+{
+    m_inFd = open(in_file, O_WRONLY);
+    if(-1 == m_inFd)
+    {
+        MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << in_file);
+    }
+
+    if(-1 != m_outFd) {
+        delete m_readSocket;
+        delete m_excpSocket;
+    }
+
+    m_outFd = open(out_file, O_RDONLY | O_NONBLOCK);
+    if(-1 == m_outFd)
+    {
+        MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << out_file);
+    } else {
+        m_readSocket = new QSocketNotifier(m_outFd, QSocketNotifier::Read);
+        m_excpSocket = new QSocketNotifier(m_outFd, QSocketNotifier::Exception);
+
+        // Connect our slots to listen to data and exception events on the USB FD
+        QObject::connect(m_readSocket, SIGNAL(activated(int)), this, SLOT(handleRead()));
+        QObject::connect(m_excpSocket, SIGNAL(activated(int)), this, SLOT(handleHangup()));
+    }
+#if 0
+    if(outThread != NULL)
+        delete outThread;
+    outThread = new OutReaderThread(m_outFd, this);
+    QObject::connect(outThread, SIGNAL(dataRead(char*,int)),
+        this, SIGNAL(dataRead(char*,int)));
+    outThread->start();
+#endif
+
+    m_intrFd = open(interrupt_file, O_WRONLY | O_NONBLOCK);
+    if(-1 == m_intrFd)
+    {
+        MTP_LOG_CRITICAL("Couldn't open INTR endpoint file " << interrupt_file);
+    }
+}
+
+void MTPTransporterUSB::stopIO()
+{
+    // FIXME: this probably won't exit properly?
+#if 0
+    delete outThread;
+    outThread = NULL;
+#endif
+    if(m_outFd != -1) {
+        delete m_readSocket;
+        delete m_excpSocket;
+        close(m_outFd);
+        m_outFd = -1;
+    }
+    if(m_inFd != -1) {
+        close(m_inFd);
+        m_inFd = -1;
+    }
+    if(m_intrFd != -1) {
+        close(m_intrFd);
+        m_intrFd = -1;
+    }
+}
+
+void MTPTransporterUSB::setupRequest(void *data)
+{
+    struct usb_functionfs_event *e = (struct usb_functionfs_event *)data;
+    switch(e->u.setup.bRequest) {
+        case PTP_REQ_CANCEL:
+        case PTP_REQ_DEVICE_RESET:
+        case PTP_REQ_GET_DEVICE_STATUS:
+        default:
+            qDebug() << "Hello World";
+            break;
+    }
+}

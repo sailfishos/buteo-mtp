@@ -21,6 +21,8 @@
 #ifndef __LINUX_USB_PTP_H
 #define __LINUX_USB_PTP_H
 
+#include <qglobal.h>
+
 /* device or driver specific */
 #define PTP_HS_DATA_PKT_SIZE	512
 #define PTP_HS_EVENT_PKT_SIZE	64

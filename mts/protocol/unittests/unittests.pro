@@ -22,7 +22,6 @@ DEPENDPATH += . \
               ../../transport \
               ../../transport/dummy \
               ../../transport/usb \
-              ../../transport/usb/mtpfsdriver \
               ../../common
 
 INCLUDEPATH += . \
@@ -35,7 +34,6 @@ INCLUDEPATH += . \
                ../../transport \
                ../../transport/dummy \
                ../../transport/usb \
-               ../../transport/usb/mtpfsdriver \
                ../../common 
 
 # Input
@@ -59,8 +57,7 @@ HEADERS += mtpresponder_test.h \
            ../../platform/deviceinfo/deviceinfo.h \
            ../../transport/mtptransporter.h \
            ../../transport/usb/mtptransporterusb.h \
-           ../../transport/usb/mtpfsdriver/mtpfsdriver.h \
-           ../../transport/usb/mtpfsdriver/readerthread.h \
+           ../../transport/usb/readerthread.h \
            ../../transport/dummy/mtptransporterdummy.h \
 	       ../../mts.h
 
@@ -80,9 +77,8 @@ SOURCES += mtpresponder_test.cpp \
            ../../platform/deviceinfo/deviceinfoprovider.cpp \
            ../../platform/deviceinfo/deviceinfo.cpp \
            ../../transport/usb/mtptransporterusb.cpp \
-           ../../transport/usb/mtpfsdriver/mtpfsdriver.cpp \
-           ../../transport/usb/mtpfsdriver/descriptor.c \
-           ../../transport/usb/mtpfsdriver/readerthread.cpp \
+           ../../transport/usb/descriptor.c \
+           ../../transport/usb/readerthread.cpp \
            ../../transport/dummy/mtptransporterdummy.cpp \
 	       ../../mts.cpp
 

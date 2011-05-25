@@ -18,6 +18,7 @@ private:
 signals:
     void startIO();
     void stopIO();
+    void setupRequest(void *data); // This needs to be connected with BlockingQueuedConnection
 };
 
 class OutReaderThread : public QThread {

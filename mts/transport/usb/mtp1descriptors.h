@@ -1,8 +1,8 @@
 #ifndef MTP1DESCRIPTORS_H
 #define MTP1DESCRIPTORS_H
 
-#include <linux/usb/ptp.h>
 #include <linux/usb/functionfs.h>
+#include "ptp.h"
 
 #define cpu_to_le16(x)  htole16(x)
 #define cpu_to_le32(x)  htole32(x)
