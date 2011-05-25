@@ -84,13 +84,16 @@ void OutReaderThread::run()
 
     // FIXME: This is a bit hacky
     char* inbuf = new char[MAX_DATA_IN_SIZE];
-    readSize = read(fd, inbuf, INITIAL_SIZE); // Read Header
-    qDebug() << "Readsize: " << readSize << errno;
-    while(readSize != -1) {
-        emit dataRead(inbuf, readSize);
-        inbuf = new char[MAX_DATA_IN_SIZE];
-        readSize = read(fd, inbuf, INITIAL_SIZE); // Read Header
-    }
+
+    do {
+        readSize = read(fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
+        while(readSize != -1) {
+            emit dataRead(inbuf, readSize);
+            inbuf = new char[MAX_DATA_IN_SIZE];
+            readSize = read(fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
+        }
+    } while(errno == EINTR || errno == ESHUTDOWN);
+    // TODO: Handle the exceptions above properly.
 
     perror("OutReaderThread");
     qDebug() << "Exiting data thread";

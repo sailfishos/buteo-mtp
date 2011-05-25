@@ -26,6 +26,7 @@ class OutReaderThread : public QThread {
 public:
     OutReaderThread(int fd, QObject *parent);
     ~OutReaderThread();
+
     void run();
 
 signals:

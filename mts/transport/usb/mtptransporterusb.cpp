@@ -401,7 +401,7 @@ void MTPTransporterUSB::setupRequest(void *data)
         case PTP_REQ_DEVICE_RESET:
         case PTP_REQ_GET_DEVICE_STATUS:
         default:
-            qDebug() << "Hello World";
+            qDebug() << "SETUP has no handling yet";
             break;
     }
 }
