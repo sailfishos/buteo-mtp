@@ -163,6 +163,7 @@ class MTPTransporterUSB : public MTPTransporter
         void stopIO();
         void startIO();
         void setupRequest(void*);
+        void clearHaltIO();
 
         // The slot handles incoming data on the USB fd that was alrady read
         void handleDataRead(char*, int);

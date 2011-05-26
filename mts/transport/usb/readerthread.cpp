@@ -48,15 +48,12 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
     switch(event->type) {
         case FUNCTIONFS_ENABLE:
         case FUNCTIONFS_RESUME:
-            if(!m_state)
-                emit startIO();
-            m_state = 1;
+            emit startIO();
             break;
         case FUNCTIONFS_DISABLE:
+             //emit clearHalt();
         case FUNCTIONFS_SUSPEND:
-            if(m_state)
-                emit stopIO();
-            m_state = 0;
+            emit stopIO();
             break;
         case FUNCTIONFS_SETUP:
             emit setupRequest((void*)event);
@@ -67,8 +64,8 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
     }
 }
 
-OutReaderThread::OutReaderThread(int fd, QObject *parent, QMutex *mutex)
-    : QThread(parent), m_fd(fd), m_lock(mutex)
+OutReaderThread::OutReaderThread(QMutex *mutex, QObject *parent)
+    : QThread(parent), m_lock(mutex)
 {
 }
 
@@ -77,19 +74,26 @@ OutReaderThread::~OutReaderThread()
 }
 
 #define INITIAL_SIZE MAX_DATA_IN_SIZE
+void OutReaderThread::setFd(int fd)
+{
+    m_fd = fd;
+}
 
 void OutReaderThread::run()
 {
     int readSize;
+    qDebug() << "Entering data reader thread";
 
-    // FIXME: This is a bit hacky
     char* inbuf = new char[MAX_DATA_IN_SIZE];
     m_lock->lock();
+
+    qDebug() << "Got lock";
 
     do {
         readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         while(readSize != -1) {
             emit dataRead(inbuf, readSize);
+            qDebug() << "Sent data: " << readSize;
             // This will wait until it's released in the main thread
             m_lock->lock();
             inbuf = new char[MAX_DATA_IN_SIZE];
@@ -99,7 +103,7 @@ void OutReaderThread::run()
     // TODO: Handle the exceptions above properly.
 
     perror("OutReaderThread");
-    qDebug() << "Exiting data thread";
+    qDebug() << "Exiting data reader thread";
 }
 
 InWriterThread::InWriterThread(QObject *parent) : QThread(parent)

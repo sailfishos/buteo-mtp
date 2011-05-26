@@ -21,14 +21,16 @@ signals:
     void startIO();
     void stopIO();
     void setupRequest(void *data); // This needs to be connected with BlockingQueuedConnection
+    void clearHalt();
 };
 
 class OutReaderThread : public QThread {
     Q_OBJECT
 public:
-    OutReaderThread(int fd, QObject *parent, QMutex *mutex);
+    OutReaderThread(QMutex *mutex, QObject *parent);
     ~OutReaderThread();
 
+    void setFd(int fd);
     void run();
 
 signals:

@@ -67,15 +67,22 @@ using namespace meegomtp1dot0;
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(ACTIVE), m_containerReadLen(0),
     m_inFd(-1), m_outFd(-1), m_intrFd(-1), m_ctrlFd(-1)
 {
+#ifdef ENABLE_IN_THREAD
+    m_inThread = new InWriterThread(this);
+#endif
+#ifdef ENABLE_OUT_THREAD
+    m_outThread = new OutReaderThread(&m_responderMutex, this);
+    qDebug() << "Connecting m_outThread to handleDataRead";
+    QObject::connect(m_outThread, SIGNAL(dataRead(char*,int)),
+        this, SLOT(handleDataRead(char*,int)), Qt::QueuedConnection);
+#endif
 }
 
 bool MTPTransporterUSB::activate()
 {
     MTP_LOG_CRITICAL("MTPTransporterUSB::activate");
     int success = false;
-#ifdef ENABLE_IN_THREAD
-    m_inThread = new InWriterThread(this);
-#endif
+
 
     m_ctrlFd = open(control_file, O_RDWR);
     if(-1 == m_ctrlFd)
@@ -106,8 +113,8 @@ bool MTPTransporterUSB::activate()
 
     m_ctrlThread = new ControlReaderThread(m_ctrlFd, this);
 
-    QObject::connect(m_ctrlThread, SIGNAL(startIO()), this, SLOT(startIO()));
-    QObject::connect(m_ctrlThread, SIGNAL(stopIO()), this, SLOT(stopIO()));
+    QObject::connect(m_ctrlThread, SIGNAL(startIO()), this, SLOT(startIO()), Qt::QueuedConnection);
+    QObject::connect(m_ctrlThread, SIGNAL(stopIO()), this, SLOT(stopIO()), Qt::QueuedConnection);
 
     m_ctrlThread->start();
     return success;
@@ -115,18 +122,12 @@ bool MTPTransporterUSB::activate()
 
 bool MTPTransporterUSB::deactivate()
 {
-#ifdef ENABLE_IN_THREAD
-    delete m_inThread;
-#endif
-#ifdef ENABLE_OUT_THREAD
-    delete m_outThread;
-#endif
+    close(m_ctrlFd);
+    //m_ctrlThread->wait();
     delete m_ctrlThread;
 
-    close(m_intrFd);
-    close(m_outFd);
-    close(m_inFd);
-    close(m_ctrlFd);
+    stopIO();
+
     return true;
 }
 
@@ -160,6 +161,12 @@ void MTPTransporterUSB::reset()
 MTPTransporterUSB::~MTPTransporterUSB()
 {
     deactivate();
+#ifdef ENABLE_IN_THREAD
+    delete m_inThread;
+#endif
+#ifdef ENABLE_OUT_THREAD
+    delete m_outThread;
+#endif
 }
 
 bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLastPacket)
@@ -174,6 +181,7 @@ bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLa
 
 void MTPTransporterUSB::handleDataRead(char* buffer, int size)
 {
+    qDebug() << "Got data: " << size;
     // TODO: Merge this with processReceivedData
     if(size > 0) {
         processReceivedData((quint8 *)buffer, size);
@@ -365,6 +373,7 @@ bool MTPTransporterUSB::sendEventInternal(const quint8* data, quint32 len)
 
 void MTPTransporterUSB::startIO()
 {
+    qDebug() << "Main starting IO";
     m_inFd = open(in_file, O_WRONLY);
     if(-1 == m_inFd)
     {
@@ -373,7 +382,8 @@ void MTPTransporterUSB::startIO()
 
     if(-1 != m_outFd) {
 #ifdef ENABLE_OUT_THREAD
-        delete m_outThread;
+        close(m_outFd);
+        //m_outThread->wait();
 #else
         delete m_readSocket;
         delete m_excpSocket;
@@ -386,9 +396,7 @@ void MTPTransporterUSB::startIO()
         MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << out_file);
     } else {
 #ifdef ENABLE_OUT_THREAD
-        m_outThread = new OutReaderThread(m_outFd, this, &m_responderMutex);
-        QObject::connect(m_outThread, SIGNAL(dataRead(char*,int)),
-            this, SLOT(handleDataRead(char*,int)));
+        m_outThread->setFd(m_outFd);
         m_outThread->start();
 #else
         m_readSocket = new QSocketNotifier(m_outFd, QSocketNotifier::Read);
@@ -410,19 +418,25 @@ void MTPTransporterUSB::startIO()
 
 void MTPTransporterUSB::stopIO()
 {
+    qDebug() << "Main stopping IO";
     // FIXME: this probably won't exit properly?
     if(m_outFd != -1) {
 #ifdef ENABLE_OUT_THREAD
-        delete m_outThread;
+        m_responderMutex.unlock();
+        close(m_outFd);
+        //m_outThread->wait();
 #else
         delete m_readSocket;
         delete m_excpSocket;
-#endif
         close(m_outFd);
+#endif
         m_outFd = -1;
     }
     if(m_inFd != -1) {
         close(m_inFd);
+#ifdef ENABLE_IN_THREAD
+        m_sendMutex.unlock();
+#endif
         m_inFd = -1;
     }
     if(m_intrFd != -1) {
@@ -442,4 +456,11 @@ void MTPTransporterUSB::setupRequest(void *data)
             qDebug() << "SETUP has no handling yet";
             break;
     }
+}
+
+void MTPTransporterUSB::clearHaltIO()
+{
+    ioctl(m_inFd, FUNCTIONFS_CLEAR_HALT);
+    ioctl(m_outFd, FUNCTIONFS_CLEAR_HALT);
+    ioctl(m_intrFd, FUNCTIONFS_CLEAR_HALT);
 }
