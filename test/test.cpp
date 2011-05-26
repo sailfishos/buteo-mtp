@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     PTest ptest;
 
     QObject::connect(&timer, SIGNAL(timeout()), &ptest, SLOT(print()));
-    timer.start(1000);
+    timer.start(10000);
 
     bool ok = Mts::getInstance()->activate();
     if( ok )
