@@ -2,6 +2,7 @@
 #include <linux/usb/functionfs.h>
 
 #include <QDebug>
+#include <QMutex>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <linux/usb/functionfs.h>
@@ -20,7 +21,7 @@ static const char *const event_names[] = {
 };
 
 ControlReaderThread::ControlReaderThread(int fd, QObject *parent)
-    : QThread(parent), fd(fd), state(0)
+    : QThread(parent), m_fd(fd), m_state(0)
 {
 }
 
@@ -33,7 +34,7 @@ void ControlReaderThread::run()
     struct usb_functionfs_event event;
     int readSize;
 
-    while(read(fd, &event, sizeof(event)) == sizeof(event)) {
+    while(read(m_fd, &event, sizeof(event)) == sizeof(event)) {
         handleEvent(&event);
     }
 
@@ -47,15 +48,15 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
     switch(event->type) {
         case FUNCTIONFS_ENABLE:
         case FUNCTIONFS_RESUME:
-            if(!state)
+            if(!m_state)
                 emit startIO();
-            state = 1;
+            m_state = 1;
             break;
         case FUNCTIONFS_DISABLE:
         case FUNCTIONFS_SUSPEND:
-            if(state)
+            if(m_state)
                 emit stopIO();
-            state = 0;
+            m_state = 0;
             break;
         case FUNCTIONFS_SETUP:
             emit setupRequest((void*)event);
@@ -66,8 +67,8 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
     }
 }
 
-OutReaderThread::OutReaderThread(int fd, QObject *parent)
-    : QThread(parent), fd(fd)
+OutReaderThread::OutReaderThread(int fd, QObject *parent, QMutex *mutex)
+    : QThread(parent), m_fd(fd), m_lock(mutex)
 {
 }
 
@@ -79,22 +80,63 @@ OutReaderThread::~OutReaderThread()
 
 void OutReaderThread::run()
 {
-    struct usb_functionfs_event event[1];
-    int readSize, cntSize;
+    int readSize;
 
     // FIXME: This is a bit hacky
     char* inbuf = new char[MAX_DATA_IN_SIZE];
+    m_lock->lock();
 
     do {
-        readSize = read(fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
+        readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         while(readSize != -1) {
             emit dataRead(inbuf, readSize);
+            // This will wait until it's released in the main thread
+            m_lock->lock();
             inbuf = new char[MAX_DATA_IN_SIZE];
-            readSize = read(fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
+            readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         }
     } while(errno == EINTR || errno == ESHUTDOWN);
     // TODO: Handle the exceptions above properly.
 
     perror("OutReaderThread");
     qDebug() << "Exiting data thread";
+}
+
+InWriterThread::InWriterThread(QObject *parent) : QThread(parent)
+{
+}
+
+void InWriterThread::setData(int fd, const quint8 *buffer, quint32 dataLen, bool isLastPacket, QMutex *sendLock)
+{
+    m_buffer = buffer;
+    m_dataLen = dataLen;
+    m_lock = sendLock;
+    m_isLastPacket = isLastPacket;
+    m_fd = fd;
+    m_result = false;
+}
+
+void InWriterThread::run()
+{
+    int bytesWritten = 0;
+    char *dataptr = (char*)m_buffer;
+
+    do {
+        bytesWritten = write(m_fd, dataptr, m_dataLen);
+        if(bytesWritten == -1)
+        {
+            m_result = false;
+            return;
+        }
+        dataptr += bytesWritten;
+        m_dataLen -= bytesWritten;
+    } while(m_dataLen);
+    m_result = true;
+
+    m_lock->unlock();
+}
+
+bool InWriterThread::getResult()
+{
+    return m_result;
 }

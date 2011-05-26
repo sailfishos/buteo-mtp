@@ -32,6 +32,8 @@
 #ifndef MTPTTRANSPORTERUSB_H
 #define MTPTTRANSPORTERUSB_H
 
+#include <QMutex>
+
 #include "mtptransporter.h"
 #include "readerthread.h"
 
@@ -139,6 +141,10 @@ class MTPTransporterUSB : public MTPTransporter
 
         ControlReaderThread     *m_ctrlThread;
         OutReaderThread         *m_outThread;
+        InWriterThread          *m_inThread;
+
+        QMutex                  m_sendMutex;
+        QMutex                  m_responderMutex;
 
     public Q_SLOTS:
         /// The usb transporter catches the device ok status signal from the responder and informs the driver about the same.

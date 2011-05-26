@@ -52,6 +52,12 @@
 
 // This should be moved elsewhere, or the toggle removed
 #define ENABLE_OUT_THREAD
+#define ENABLE_IN_THREAD
+
+#ifdef ENABLE_IN_THREAD
+#include <QMutex>
+#include <QCoreApplication>
+#endif
 
 using namespace meegomtp1dot0;
 
@@ -67,6 +73,9 @@ bool MTPTransporterUSB::activate()
 {
     MTP_LOG_CRITICAL("MTPTransporterUSB::activate");
     int success = false;
+#ifdef ENABLE_IN_THREAD
+    m_inThread = new InWriterThread(this);
+#endif
 
     m_ctrlFd = open(control_file, O_RDWR);
     if(-1 == m_ctrlFd)
@@ -106,7 +115,12 @@ bool MTPTransporterUSB::activate()
 
 bool MTPTransporterUSB::deactivate()
 {
+#ifdef ENABLE_IN_THREAD
+    delete m_inThread;
+#endif
+#ifdef ENABLE_OUT_THREAD
     delete m_outThread;
+#endif
     delete m_ctrlThread;
 
     close(m_intrFd);
@@ -165,6 +179,8 @@ void MTPTransporterUSB::handleDataRead(char* buffer, int size)
         processReceivedData((quint8 *)buffer, size);
     }
     delete buffer;
+
+    m_responderMutex.unlock();
 }
 
 void MTPTransporterUSB::handleRead()
@@ -267,8 +283,30 @@ void MTPTransporterUSB::handleHangup()
 
 bool MTPTransporterUSB::sendDataOrEvent(const quint8* data, quint32 dataLen, bool isEvent, bool isLastPacket)
 {
-    typedef bool (MTPTransporterUSB::*pIntDataSender)(const quint8*, quint32);
     bool r = false;
+#ifdef ENABLE_IN_THREAD
+    // TODO: Re-entrancy, probably needs to be done earlier in the chain
+
+    m_sendMutex.lock();
+
+    if(isEvent) {
+        m_inThread->setData(m_intrFd, data, dataLen, isLastPacket, &m_sendMutex);
+    } else {
+        m_inThread->setData(m_inFd, data, dataLen, isLastPacket, &m_sendMutex);
+    }
+
+    m_inThread->start();
+
+    // TODO: Check if this causes excessive load-->add a wait into it
+    while(!m_sendMutex.tryLock()) {
+        QCoreApplication::processEvents();
+    }
+    r = m_inThread->getResult();
+
+    m_sendMutex.unlock();
+#else
+    typedef bool (MTPTransporterUSB::*pIntDataSender)(const quint8*, quint32);
+
     pIntDataSender senderFunc = (isEvent ? &MTPTransporterUSB::sendEventInternal : &MTPTransporterUSB::sendDataInternal)
 
     MTP_HEX_TRACE(data, dataLen);
@@ -281,6 +319,7 @@ bool MTPTransporterUSB::sendDataOrEvent(const quint8* data, quint32 dataLen, boo
         perror("MTPTransporterUSB::sendDataOrEvent");
         return r;
     }
+#endif
 
     return true;
 }
@@ -293,7 +332,6 @@ bool MTPTransporterUSB::sendDataInternal(const quint8* data, quint32 len)
     do
     {
         bytesWritten = write(m_inFd, dataptr, len);
-        qDebug() << "Wrote bytes: " << bytesWritten;
         if(bytesWritten == -1)
         {
             return false;
@@ -348,7 +386,7 @@ void MTPTransporterUSB::startIO()
         MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << out_file);
     } else {
 #ifdef ENABLE_OUT_THREAD
-        m_outThread = new OutReaderThread(m_outFd, this);
+        m_outThread = new OutReaderThread(m_outFd, this, &m_responderMutex);
         QObject::connect(m_outThread, SIGNAL(dataRead(char*,int)),
             this, SLOT(handleDataRead(char*,int)));
         m_outThread->start();
