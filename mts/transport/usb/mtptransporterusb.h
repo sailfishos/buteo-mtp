@@ -149,9 +149,6 @@ class MTPTransporterUSB : public MTPTransporter
 
         QMutex                  m_sendMutex;
         QMutex                  m_responderMutex;
-
-        enum mtpfs_state        m_deviceState;
-
     public Q_SLOTS:
         /// The usb transporter catches the device ok status signal from the responder and informs the driver about the same.
         void sendDeviceOK();
@@ -168,7 +165,6 @@ class MTPTransporterUSB : public MTPTransporter
     private Q_SLOTS:
         void stopIO();
         void startIO();
-        void setupRequest(void*);
         void clearHaltIO();
 
         // The slot handles incoming data on the USB fd that was alrady read

@@ -68,8 +68,7 @@ using namespace meegomtp1dot0;
 #define DEFAULT_MAX_PACKET_SIZE 64
 
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
-    m_inFd(-1), m_outFd(-1), m_intrFd(-1), m_ctrlFd(-1),
-    m_deviceState(MTPFS_STATUS_OK)
+    m_inFd(-1), m_outFd(-1), m_intrFd(-1), m_ctrlFd(-1)
 {
 #ifdef ENABLE_IN_THREAD
     m_inThread = new InWriterThread(this);
@@ -248,6 +247,7 @@ void MTPTransporterUSB::resume()
 
 void MTPTransporterUSB::sendDeviceOK()
 {
+#if 0
     m_deviceStatus = MTPFS_STATUS_OK;
     if(ACTIVE == m_ioState) {
         interruptCtrl();
@@ -255,10 +255,12 @@ void MTPTransporterUSB::sendDeviceOK()
         m_ctrlThread->sendStatus(MTPFS_STATUS_OK);
         m_ctrlThread->start();
     }
+#endif
 }
 
 void MTPTransporterUSB::sendDeviceBusy()
 {
+#if 0
     m_deviceStatus = MTPFS_STATUS_BUSY;
     if(ACTIVE == m_ioState) {
         interruptCtrl();
@@ -266,10 +268,12 @@ void MTPTransporterUSB::sendDeviceBusy()
         m_ctrlThread->sendStatus(MTPFS_STATUS_BUSY);
         m_ctrlThread->start();
     }
+#endif
 }
 
 void MTPTransporterUSB::sendDeviceTxCancelled()
 {
+#if 0
     m_deviceStatus = MTPFS_STATUS_TXCANCEL;
     if(ACTIVE == m_ioState) {
         interruptCtrl();
@@ -277,6 +281,7 @@ void MTPTransporterUSB::sendDeviceTxCancelled()
         m_ctrlThread->sendStatus(MTPFS_STATUS_TXCANCEL);
         m_ctrlThread->start();
     }
+#endif
 }
 
 void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
@@ -506,19 +511,6 @@ void MTPTransporterUSB::stopIO()
     if(m_intrFd != -1) {
         close(m_intrFd);
         m_intrFd = -1;
-    }
-}
-
-void MTPTransporterUSB::setupRequest(void *data)
-{
-    struct usb_functionfs_event *e = (struct usb_functionfs_event *)data;
-    switch(e->u.setup.bRequest) {
-        case PTP_REQ_CANCEL:
-        case PTP_REQ_DEVICE_RESET:
-        case PTP_REQ_GET_DEVICE_STATUS:
-        default:
-            qDebug() << "SETUP has no handling yet";
-            break;
     }
 }
 

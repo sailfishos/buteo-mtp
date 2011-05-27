@@ -73,6 +73,11 @@ void ControlReaderThread::sendStatus(enum mtpfs_status status)
     } while(dataLen);
 }
 
+void ControlReaderThread::setStatus(enum mtpfs_status status)
+{
+    m_status = status;
+}
+
 void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
 {
     qDebug() << "Event: " << event_names[event->type];
@@ -88,13 +93,35 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
             emit stopIO();
             break;
         case FUNCTIONFS_SETUP:
-            emit setupRequest((void*)event);
+            setupRequest((void*)event);
             break;
         default:
             qDebug() << "FIXME: Event" << event_names[event->type] << "not implemented";
             break;
     }
 }
+
+void ControlReaderThread::setupRequest(void *data)
+{
+    struct usb_functionfs_event *e = (struct usb_functionfs_event *)data;
+    int ret;
+    switch(e->u.setup.bRequest) {
+        case PTP_REQ_GET_DEVICE_STATUS:
+            sendStatus(m_status);
+            break;
+        case PTP_REQ_CANCEL:
+            emit transferCancel();
+            break;
+        case PTP_REQ_DEVICE_RESET:
+            emit deviceReset();
+            break;
+        default:
+
+            qDebug() << "SETUP has no handling yet";
+            break;
+    }
+}
+
 
 OutReaderThread::OutReaderThread(QMutex *mutex, QObject *parent)
     : QThread(parent), m_lock(mutex), m_handle(0)

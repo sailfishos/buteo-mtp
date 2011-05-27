@@ -21,18 +21,22 @@ public:
 
     pthread_t m_handle;
 public slots:
-    void sendStatus(enum mtpfs_status);
+    void setStatus(enum mtpfs_status status);
 
 private:
     void handleEvent(struct usb_functionfs_event *event);
+    void setupRequest(void *data);
+    void sendStatus(enum mtpfs_status status);
+
     int m_fd;
     int m_state;
-
+    enum mtpfs_status m_status;
 signals:
     void startIO();
     void stopIO();
-    void setupRequest(void *data); // This needs to be connected with BlockingQueuedConnection
     void clearHalt();
+    void deviceReset();
+    void transferCancel();
 };
 
 class OutReaderThread : public QThread {
