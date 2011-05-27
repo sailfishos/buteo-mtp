@@ -1,9 +1,9 @@
 #ifndef MTPFSDRIVER_H
 #define MTPFSDRIVER_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <QObject>
+
+#include "readerthread.h"
 
 /*! \brief Verbosity level
  */
@@ -36,6 +36,10 @@ enum packet_type
     EVENT
 };
 
+class MTPFSDriver : public QObject {
+    Q_OBJECT
+public:
+    MTPFSDriver(enum version mtpversion, enum verbosity_level verbosity);
 /* \brief Call this to setup the mtp functionfs driver
  *
  * @param mtpversion setup MTP1 or MTP2
@@ -44,11 +48,11 @@ enum packet_type
  * @return -1 if setup failed, 0 otherwise
  *
  */
-int mtpfs_setup(enum version mtpversion, enum verbosity_level verbosity);
+    int mtpfs_setup(enum version mtpversion, enum verbosity_level verbosity);
 
 /* \brief Call this for cleanup once done
  */
-void mtpfs_close();
+    void mtpfs_close();
 
 /* \brief Get handle to control ep file
  *
@@ -56,28 +60,28 @@ void mtpfs_close();
  * or-1 if the file isn't open
  *
  */
-int mtpfs_get_control_fd();
+    int mtpfs_get_control_fd();
 /* \brief Get handle to control ep file
  *
  * @return the IN ep file fd
  * or-1 if the file isn't open
  *
  */
-int mtpfs_get_in_fd();
+    int mtpfs_get_in_fd();
 /* \brief Get handle to control ep file
  *
  * @return the OUT ep file fd
  * or-1 if the file isn't open
  *
  */
-int mtpfs_get_out_fd();
+    int mtpfs_get_out_fd();
 /* \brief Get handle to control ep file
  *
  * @return the INT ep file fd
  * or-1 if the file isn't open
  *
  */
-int mtpfs_get_interrupt_fd();
+    int mtpfs_get_interrupt_fd();
 
 /* \brief Call this method to send data/events/setup packets
  * over the corresponding ep file
@@ -91,22 +95,44 @@ int mtpfs_get_interrupt_fd();
  * @return -1 for failure, 0 for success
  *
  */
-int mtpfs_send(int fd, const char* data, unsigned int len,
-               enum packet_type type, unsigned short is_last_packet);
+    int mtpfs_send(int fd, const char* data, unsigned int len,
+                   enum packet_type type, unsigned short is_last_packet);
 
 /* \brief Call this to flush any buffered data
  */
-void mtpfs_flush();
+    void mtpfs_flush();
 
 /* \brief description of the last error
  *
  * @return pointer to error string
  *
  */
-const char* mtpfs_last_error();
+    const char* mtpfs_last_error();
 
-#ifdef __cplusplus
-}
-#endif
+    void mtpfs_send_reset( int fd );
+
+signals:
+    void linkEnabled();
+    void linkDisabled();
+
+    void outFdChanged(int fd);
+    void inFdChanged(int fd);
+    void intrFdChanged(int fd);
+
+    void dataRead(char *buffer, int size);
+
+public slots:
+    void startIO();
+    void stopIO();
+
+private:
+    ControlReaderThread *ctrlThread;
+    OutReaderThread *outThread;
+
+    int control_fd;
+    int in_fd;
+    int out_fd;
+    int interrupt_fd;
+};
 
 #endif

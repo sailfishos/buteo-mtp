@@ -9,7 +9,7 @@ CONFIG += link_pkgconfig debug
 #QMAKE_CXXFLAGS += -O0 -Werror
 LIBS += -lcontextsubscriber
 #to be removed later when QtDBus makes it calls thread safe 
-LIBS += -lsynccommon -L./transport/usb/mtpfsdriver -lmtpfsdriver
+LIBS += -lsynccommon
 
 TEMPLATE = lib
 TARGET = meegomtp
@@ -60,6 +60,7 @@ HEADERS += mts.h \
            transport/mtptransporter.h \
            transport/usb/mtptransporterusb.h \
            transport/usb/mtpfsdriver/mtpfsdriver.h \
+           transport/usb/mtpfsdriver/readerthread.h \
            transport/dummy/mtptransporterdummy.h \
            platform/storage/storagefactory.h \
            platform/storage/storageplugin.h
@@ -81,7 +82,9 @@ SOURCES += mts.cpp \
            platform/deviceinfo/deviceinfoprovider.cpp \
            platform/deviceinfo/xmlhandler.cpp \
            platform/storage/storagefactory.cpp \
-
+           transport/usb/mtpfsdriver/mtpfsdriver.cpp \
+           transport/usb/mtpfsdriver/descriptor.c \
+           transport/usb/mtpfsdriver/readerthread.cpp
 
 target.path = /usr/lib/
 INSTALLS += target

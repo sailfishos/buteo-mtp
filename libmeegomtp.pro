@@ -11,5 +11,5 @@ SUBDIRS += mts \
 citests.path = /usr/share/libmeegomtp-tests/
 citests.files = tests.xml
 INSTALLS += citests
-HEADERS = mts/common/mtp_dbus.h
-SOURCES = mts/common/mtp_dbus.cpp
+#HEADERS = mts/common/mtp_dbus.h
+#SOURCES = mts/common/mtp_dbus.cpp

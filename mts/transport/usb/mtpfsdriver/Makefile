@@ -8,11 +8,11 @@ mtpfs : main.o mtpfsdriver.o
 libmtpfsdriver.a : mtpfsdriver.o
 	ar rcs libmtpfsdriver.a mtpfsdriver.o
 
-main.o : main.c
-	gcc -I /usr/src/kernel-headers/include -Wall -fPIC -c main.c
+main.o : main.cpp
+	gcc -I /usr/src/kernel-headers/include -Wall -fPIC -c main.cpp
 
-mtpfsdriver.o : mtpfsdriver.c
-	gcc -I /usr/src/kernel-headers/include -Wall -fPIC -c mtpfsdriver.c
+mtpfsdriver.o : mtpfsdriver.cpp
+	gcc -I /usr/src/kernel-headers/include -Wall -fPIC -c mtpfsdriver.cpp
 
 clean :
 	rm -f *.o *.so mtpfs *~

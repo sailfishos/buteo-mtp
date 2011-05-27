@@ -4,7 +4,7 @@
 
 CONFIG += qtestlib warn_off debug_and_release
 LIBS += -lcontextsubscriber
-LIBS += -lsynccommon -L../../transport/usb/mtpfsdriver -lmtpfsdriver
+LIBS += -lsynccommon
 TEMPLATE = app
 TARGET = protocol-test
 QT -= gui
@@ -60,8 +60,9 @@ HEADERS += mtpresponder_test.h \
            ../../transport/mtptransporter.h \
            ../../transport/usb/mtptransporterusb.h \
            ../../transport/usb/mtpfsdriver/mtpfsdriver.h \
+           ../../transport/usb/mtpfsdriver/readerthread.h \
            ../../transport/dummy/mtptransporterdummy.h \
-	   ../../mts.h
+	       ../../mts.h
 
 SOURCES += mtpresponder_test.cpp \
            ../mtpresponder.cpp \
@@ -79,8 +80,11 @@ SOURCES += mtpresponder_test.cpp \
            ../../platform/deviceinfo/deviceinfoprovider.cpp \
            ../../platform/deviceinfo/deviceinfo.cpp \
            ../../transport/usb/mtptransporterusb.cpp \
+           ../../transport/usb/mtpfsdriver/mtpfsdriver.cpp \
+           ../../transport/usb/mtpfsdriver/descriptor.c \
+           ../../transport/usb/mtpfsdriver/readerthread.cpp \
            ../../transport/dummy/mtptransporterdummy.cpp \
-	   ../../mts.cpp
+	       ../../mts.cpp
 
 target.path = /usr/bin
 INSTALLS += target

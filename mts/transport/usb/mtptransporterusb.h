@@ -33,6 +33,7 @@
 #define MTPTTRANSPORTERUSB_H
 
 #include "mtptransporter.h"
+#include "mtpfsdriver.h"
 
 class QSocketNotifier;
 
@@ -140,12 +141,15 @@ class MTPTransporterUSB : public MTPTransporter
 
         QSocketNotifier*        m_excpSocket; ///< The socket notifier for exception, errors and hangups on the USB fd
 
+        QSocketNotifier*        m_ctrlSocket;
+
         quint32                  m_maxDataSize; ///< The maximum size, in bytes, of the data packet size of the USB layer
         
         quint32                  m_maxEventSize; ///< The maximum size, in bytes, of the event packet size of the USB layer
 
         quint64                  m_containerReadLen; ///< The data, in bytes remaining to be received for a data packet
-        
+
+        MTPFSDriver              m_driver;
     public Q_SLOTS:
         /// The usb transporter catches the device ok status signal from the responder and informs the driver about the same.
         void sendDeviceOK();
@@ -159,13 +163,21 @@ class MTPTransporterUSB : public MTPTransporter
 	/// This slot listens for usb ptp class requests from the driver.
         void handleHighPriorityData();
 
+        void handleInFd(int);
+        void handleOutFd(int);
+        void handleIntrFd(int);
+
     private Q_SLOTS:
+
+        // The slot handles incoming data on the USB fd that was alrady read
+        void handleDataRead(char*, int);
 
         /// The slot handles incoming data on the USB fd
         void handleRead();
 
         /// This slot handles exceptions (considered hangups for now) on the USB fd
         void handleHangup();
+
 };
 }
 #endif

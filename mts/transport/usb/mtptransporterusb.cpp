@@ -53,30 +53,30 @@ using namespace meegomtp1dot0;
 #define MAX_DATA_IN_SIZE 64 * 1024
 #define DEFAULT_MAX_PACKET_SIZE 64
 
-static int inFd = -1, outFd = -1, intrFd = -1;
+static int inFd = -1, outFd = -1, intrFd = -1, ctrlFd = -1;
 
-MTPTransporterUSB::MTPTransporterUSB() : /*MTP_DEVICE_PORT("/dev/mtp0"), */m_ioState(ACTIVE)/*, m_usbFd(-1)*/, m_containerReadLen(0)
+MTPTransporterUSB::MTPTransporterUSB() : /*MTP_DEVICE_PORT("/dev/mtp0"), */m_ioState(ACTIVE)/*, m_usbFd(-1)*/, m_containerReadLen(0), m_driver(MTP1, VERBOSE_ON)
 {
-    mtpfs_setup(MTP1, VERBOSE_ON);
-    inFd = mtpfs_get_in_fd();
-    outFd = mtpfs_get_out_fd();
-    intrFd = mtpfs_get_interrupt_fd();
+    QObject::connect(&m_driver, SIGNAL(inFdChanged(int)), this, SLOT(handleInFd(int)));
+    QObject::connect(&m_driver, SIGNAL(outFdChanged(int)), this, SLOT(handleOutFd(int)));
+    QObject::connect(&m_driver, SIGNAL(intrFdChanged(int)), this, SLOT(handleIntrFd(int)));
 
-    // Create socket notifiers over the USB FD
-    m_readSocket = new QSocketNotifier(outFd, QSocketNotifier::Read);
-
-    // Connect our slots to listen to data and exception events on the USB FD
-    QObject::connect(m_readSocket, SIGNAL(activated(int)), this, SLOT(handleRead()));
+    QObject::connect(&m_driver, SIGNAL(dataRead(char*,int)),
+        this, SLOT(handleDataRead(char*,int)), Qt::UniqueConnection);
 }
 
 bool MTPTransporterUSB::activate()
 {
+    MTP_LOG_CRITICAL("MTPTransporterUSB::activate");
+    MTP_LOG_CRITICAL("activate");
+
     return true;
 }
 
 bool MTPTransporterUSB::deactivate()
 {
     //TODO
+    MTP_LOG_CRITICAL("deactivate");
     return true;
 }
 
@@ -84,26 +84,31 @@ bool MTPTransporterUSB::flushData()
 {
     bool result = true;
 
+    MTP_LOG_CRITICAL("flushData");
+
     return result;
 }
 
 void MTPTransporterUSB::disableRW()
 {
+    MTP_LOG_CRITICAL("disableRW");
 }
 
 void MTPTransporterUSB::enableRW()
 {
+    MTP_LOG_CRITICAL("enableRW");
 }
 
 void MTPTransporterUSB::reset()
 {
     m_ioState = ACTIVE;
     m_containerReadLen = 0;
+    MTP_LOG_CRITICAL("reset");
 }
 
 MTPTransporterUSB::~MTPTransporterUSB()
 {
-    mtpfs_close();
+    m_driver.mtpfs_close();
 }
 
 bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLastPacket)
@@ -116,15 +121,26 @@ bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLa
     return sendDataOrEvent(data, dataLen, true, isLastPacket);
 }
 
+void MTPTransporterUSB::handleDataRead(char* buffer, int size)
+{
+    if(size > 0) {
+        processReceivedData((quint8 *)buffer, size);
+    }
+    delete buffer;
+    qDebug() << "**** processedData";
+}
+
 void MTPTransporterUSB::handleRead()
 {
     if( EXCEPTION != m_ioState )
     {
-        char* inbuf = new char[MAX_DATA_IN_SIZE];
+        //char* inbuf = new char[MAX_DATA_IN_SIZE];
+        char* inbuf = new char[12];
         int bytesRead = -1;
 
         LOG_DEBUG("read req");
-        bytesRead = read(outFd, inbuf, MAX_DATA_IN_SIZE);
+        //bytesRead = read(outFd, inbuf, MAX_DATA_IN_SIZE);
+        bytesRead = read(outFd, inbuf, 12);
         LOG_DEBUG("read done");
         if(0 < bytesRead)
         {
@@ -132,6 +148,7 @@ void MTPTransporterUSB::handleRead()
         }
         if(bytesRead == -1)
         {
+            perror("MTPTransporterUSB::handleRead");
             MTP_LOG_CRITICAL("Read failed !!");
         }
         delete[] inbuf;
@@ -145,6 +162,33 @@ void MTPTransporterUSB::handleRead()
 void MTPTransporterUSB::handleHighPriorityData()
 {
 }
+
+void MTPTransporterUSB::handleInFd(int fd)
+{
+    inFd = fd;
+}
+
+void MTPTransporterUSB::handleOutFd(int fd)
+{
+#if 0
+    if(outFd == -1 && fd != -1) {
+        // Create socket notifiers over the USB FD
+        m_readSocket = new QSocketNotifier(fd, QSocketNotifier::Read);
+        m_excpSocket = new QSocketNotifier(fd, QSocketNotifier::Exception);
+
+        // Connect our slots to listen to data and exception events on the USB FD
+        QObject::connect(m_readSocket, SIGNAL(activated(int)), this, SLOT(handleRead()));
+        QObject::connect(m_excpSocket, SIGNAL(activated(int)), this, SLOT(handleHangup()));
+    }
+#endif
+    outFd = fd;
+}
+
+void MTPTransporterUSB::handleIntrFd(int fd)
+{
+    intrFd = fd;
+}
+
 
 void MTPTransporterUSB::suspend()
 {
@@ -198,7 +242,7 @@ void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
             isFirstPacket = true;
             //MTP_LOG_INFO("start container m_containerReadLen=" << m_containerReadLen << "dataLen=" << dataLen);
         }
-        
+
         chunkLen = (dataLen < m_containerReadLen) ? dataLen : m_containerReadLen;
         m_containerReadLen -= chunkLen;
 
@@ -206,6 +250,7 @@ void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
 
         data += chunkLen;
         dataLen  -= chunkLen;
+        qDebug() << "Processed: " << chunkLen << " leftover: " <<  dataLen;
     }
 }
 
@@ -227,12 +272,13 @@ bool MTPTransporterUSB::sendDataOrEvent(const quint8* data, quint32 dataLen, boo
     pIntDataSender senderFunc = (isEvent ? &MTPTransporterUSB::sendEventInternal : &MTPTransporterUSB::sendDataInternal)
 
     MTP_HEX_TRACE(data, dataLen);
-    
+
     r = (this->*senderFunc)(data, dataLen);
 
     if(!r)
     {
         MTP_LOG_CRITICAL("Failure in sending data");
+        perror("MTPTransporterUSB::sendDataOrEvent");
         return r;
     }
 
@@ -244,16 +290,25 @@ bool MTPTransporterUSB::sendDataInternal(const quint8* data, quint32 len)
     int bytesWritten = 0;
     char *dataptr = (char*)data;
 
+    qDebug() << "Writing: " << len;
+
+    for( int i = 0; i < len; i++ ) {
+        printf("%.2x ", data[i]);
+    }
+    printf("\n");
+
     do
     {
         bytesWritten = write(inFd, dataptr, len);
+        qDebug() << "Wrote bytes: " << bytesWritten;
         if(bytesWritten == -1)
         {
             return false;
         }
         dataptr += bytesWritten;
         len -= bytesWritten;
-    }while(len);
+    } while(len);
+    qDebug() << "Wrote: " << (quint32)(dataptr - (char*)data);
 
     return true;
 }
