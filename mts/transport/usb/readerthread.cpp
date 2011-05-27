@@ -37,6 +37,7 @@ ControlReaderThread::~ControlReaderThread()
 
 void ControlReaderThread::run()
 {
+    qDebug() << "Entering control thread";
     struct usb_functionfs_event event;
     int readSize;
 
@@ -49,8 +50,10 @@ void ControlReaderThread::run()
     }
 
     m_handle = 0;
-    if(errno != EINTR) {
+    if(errno != EINTR)
         perror("ControlReaderThread::run");
+
+    qDebug() << "Exiting from control thread";
 }
 
 void ControlReaderThread::sendStatus(enum mtpfs_status status)
@@ -76,11 +79,12 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
     switch(event->type) {
         case FUNCTIONFS_ENABLE:
         case FUNCTIONFS_RESUME:
+            qDebug() << "emit startio";
             emit startIO();
             break;
         case FUNCTIONFS_DISABLE:
-             //emit clearHalt();
         case FUNCTIONFS_SUSPEND:
+            qDebug() << "emit stopio";
             emit stopIO();
             break;
         case FUNCTIONFS_SETUP:
@@ -125,13 +129,14 @@ void OutReaderThread::run()
         readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         while(readSize != -1) {
             emit dataRead(inbuf, readSize);
-            qDebug() << "Sent data: " << readSize;
+            qDebug() << "Read data: " << readSize;
             // This will wait until it's released in the main thread
             m_lock->lock();
             inbuf = new char[MAX_DATA_IN_SIZE];
             readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         }
-    } while(errno == EINTR || errno == ESHUTDOWN);
+    } while(errno == ESHUTDOWN);
+    //} while(errno == EINTR || errno == ESHUTDOWN);
     // TODO: Handle the exceptions above properly.
 
     m_handle = 0;
@@ -140,7 +145,8 @@ void OutReaderThread::run()
     qDebug() << "Exiting data reader thread";
 }
 
-InWriterThread::InWriterThread(QObject *parent) : QThread(parent), m_handle(0)
+InWriterThread::InWriterThread(QObject *parent)
+    : QThread(parent), m_handle(0)
 {
 }
 

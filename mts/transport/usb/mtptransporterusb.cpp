@@ -67,8 +67,9 @@ using namespace meegomtp1dot0;
 #define MAX_DATA_IN_SIZE 64 * 256
 #define DEFAULT_MAX_PACKET_SIZE 64
 
-MTPTransporterUSB::MTPTransporterUSB() : m_ioState(ACTIVE), m_containerReadLen(0),
-    m_inFd(-1), m_outFd(-1), m_intrFd(-1), m_ctrlFd(-1)
+MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
+    m_inFd(-1), m_outFd(-1), m_intrFd(-1), m_ctrlFd(-1),
+    m_deviceState(MTPFS_STATUS_OK)
 {
 #ifdef ENABLE_IN_THREAD
     m_inThread = new InWriterThread(this);
@@ -85,7 +86,6 @@ bool MTPTransporterUSB::activate()
 {
     MTP_LOG_CRITICAL("MTPTransporterUSB::activate");
     int success = false;
-
 
     m_ctrlFd = open(control_file, O_RDWR);
     if(-1 == m_ctrlFd)
@@ -115,10 +115,8 @@ bool MTPTransporterUSB::activate()
     }
 
     m_ctrlThread = new ControlReaderThread(m_ctrlFd, this);
-
     QObject::connect(m_ctrlThread, SIGNAL(startIO()), this, SLOT(startIO()), Qt::QueuedConnection);
     QObject::connect(m_ctrlThread, SIGNAL(stopIO()), this, SLOT(stopIO()), Qt::QueuedConnection);
-
     m_ctrlThread->start();
 
     return success;
@@ -126,12 +124,12 @@ bool MTPTransporterUSB::activate()
 
 bool MTPTransporterUSB::deactivate()
 {
+    stopIO();
+
     interruptCtrl();
     m_ctrlThread->wait();
     delete m_ctrlThread;
     close(m_ctrlFd);
-
-    stopIO();
 
     return true;
 }
@@ -159,6 +157,17 @@ void MTPTransporterUSB::reset()
 {
     m_ioState = ACTIVE;
     m_containerReadLen = 0;
+
+    interruptOut();
+    interruptIn();
+    m_outThread->wait();
+    m_inThread->wait();
+
+    m_sendMutex.unlock();
+    m_responderMutex.unlock();
+
+    m_outThread->start();
+    m_inThread->start();
 
     MTP_LOG_CRITICAL("reset");
 }
@@ -236,18 +245,40 @@ void MTPTransporterUSB::suspend()
 void MTPTransporterUSB::resume()
 {
     emit resumeSignal();
+    sendDeviceOK();
 }
 
 void MTPTransporterUSB::sendDeviceOK()
 {
+    m_deviceStatus = MTPFS_STATUS_OK;
+    if(ACTIVE == m_ioState) {
+        interruptCtrl();
+        m_ctrlThread->wait();
+        m_ctrlThread->sendStatus(MTPFS_STATUS_OK);
+        m_ctrlThread->start();
+    }
 }
 
 void MTPTransporterUSB::sendDeviceBusy()
 {
+    m_deviceStatus = MTPFS_STATUS_BUSY;
+    if(ACTIVE == m_ioState) {
+        interruptCtrl();
+        m_ctrlThread->wait();
+        m_ctrlThread->sendStatus(MTPFS_STATUS_BUSY);
+        m_ctrlThread->start();
+    }
 }
 
 void MTPTransporterUSB::sendDeviceTxCancelled()
 {
+    m_deviceStatus = MTPFS_STATUS_TXCANCEL;
+    if(ACTIVE == m_ioState) {
+        interruptCtrl();
+        m_ctrlThread->wait();
+        m_ctrlThread->sendStatus(MTPFS_STATUS_TXCANCEL);
+        m_ctrlThread->start();
+    }
 }
 
 void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
@@ -399,7 +430,28 @@ bool MTPTransporterUSB::sendEventInternal(const quint8* data, quint32 len)
 
 void MTPTransporterUSB::startIO()
 {
-    qDebug() << "Main starting IO";
+    qDebug() << "Starting IO";
+
+    m_ioState = ACTIVE;
+
+    m_sendMutex.unlock();
+
+    bool lock;
+    lock = m_sendMutex.tryLock();
+    if(lock) {
+        m_sendMutex.unlock();
+        qDebug() << "sM: Not Locked";
+    } else {
+        qDebug() << "sM: Locked";
+    }
+    lock = m_responderMutex.tryLock();
+    if(lock) {
+        m_responderMutex.unlock();
+        qDebug() << "rM: Not Locked";
+    } else {
+        qDebug() << "rM: Locked";
+    }
+
     m_inFd = open(in_file, O_WRONLY);
     if(-1 == m_inFd)
     {
@@ -440,11 +492,18 @@ void MTPTransporterUSB::startIO()
     {
         MTP_LOG_CRITICAL("Couldn't open INTR endpoint file " << interrupt_file);
     }
+
 }
 
 void MTPTransporterUSB::stopIO()
 {
     qDebug() << "Main stopping IO";
+
+    m_ioState = SUSPENDED;
+
+    interruptIn();
+    interruptOut();
+
     // FIXME: this probably won't exit properly?
     if(m_outFd != -1) {
 #ifdef ENABLE_OUT_THREAD
