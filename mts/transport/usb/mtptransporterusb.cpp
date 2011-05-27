@@ -76,7 +76,6 @@ MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLe
 #endif
 #ifdef ENABLE_OUT_THREAD
     m_outThread = new OutReaderThread(&m_responderMutex, this);
-    qDebug() << "Connecting m_outThread to handleDataRead";
     QObject::connect(m_outThread, SIGNAL(dataRead(char*,int)),
         this, SLOT(handleDataRead(char*,int)), Qt::QueuedConnection);
 #endif
@@ -195,7 +194,6 @@ bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLa
 
 void MTPTransporterUSB::handleDataRead(char* buffer, int size)
 {
-    qDebug() << "Got data: " << size;
     // TODO: Merge this with processReceivedData
     if(size > 0) {
         processReceivedData((quint8 *)buffer, size);
@@ -351,6 +349,8 @@ bool MTPTransporterUSB::sendDataOrEvent(const quint8* data, quint32 dataLen, boo
     bool r = false;
 #ifdef ENABLE_IN_THREAD
     // TODO: Re-entrancy, probably needs to be done earlier in the chain
+    // ++ Should we be able to interrupt while sending normal data...
+    // Aka, do we want a separate thread for Interrupts
 
     m_sendMutex.lock();
 
@@ -430,27 +430,8 @@ bool MTPTransporterUSB::sendEventInternal(const quint8* data, quint32 len)
 
 void MTPTransporterUSB::startIO()
 {
-    qDebug() << "Starting IO";
-
     m_ioState = ACTIVE;
-
     m_sendMutex.unlock();
-
-    bool lock;
-    lock = m_sendMutex.tryLock();
-    if(lock) {
-        m_sendMutex.unlock();
-        qDebug() << "sM: Not Locked";
-    } else {
-        qDebug() << "sM: Locked";
-    }
-    lock = m_responderMutex.tryLock();
-    if(lock) {
-        m_responderMutex.unlock();
-        qDebug() << "rM: Not Locked";
-    } else {
-        qDebug() << "rM: Locked";
-    }
 
     m_inFd = open(in_file, O_WRONLY);
     if(-1 == m_inFd)
@@ -497,8 +478,6 @@ void MTPTransporterUSB::startIO()
 
 void MTPTransporterUSB::stopIO()
 {
-    qDebug() << "Main stopping IO";
-
     m_ioState = SUSPENDED;
 
     interruptIn();
