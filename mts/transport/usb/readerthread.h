@@ -1,7 +1,14 @@
 #ifndef READERTHREAD_H
 #define READERTHREAD_H
 
+#include "ptp.h"
 #include <QThread>
+
+enum mtpfs_status {
+    MTPFS_STATUS_OK,
+    MTPFS_STATUS_BUSY,
+    MTPFS_STATUS_TXCANCEL
+};
 
 class QMutex;
 
@@ -11,6 +18,10 @@ public:
     ControlReaderThread(int fd, QObject *parent);
     ~ControlReaderThread();
     void run();
+
+    pthread_t m_handle;
+public slots:
+    void sendStatus(enum mtpfs_status);
 
 private:
     void handleEvent(struct usb_functionfs_event *event);
@@ -33,6 +44,7 @@ public:
     void setFd(int fd);
     void run();
 
+    pthread_t m_handle;
 signals:
     void dataRead(char *buffer, int size);
 
@@ -50,6 +62,7 @@ public:
     void run();
     bool getResult();
 
+    pthread_t m_handle;
 private:
     const quint8 *m_buffer;
     quint32 m_dataLen;

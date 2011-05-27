@@ -114,6 +114,10 @@ class MTPTransporterUSB : public MTPTransporter
         /// Private function to process data received from the USB driver
         void processReceivedData(quint8* data, quint32 dataLen);
 
+        void interruptCtrl();
+        void interruptOut();
+        void interruptIn();
+
         enum IOState{
             ACTIVE,
             EXCEPTION,

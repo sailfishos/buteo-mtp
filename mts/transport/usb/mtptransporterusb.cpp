@@ -50,6 +50,9 @@
 #include "readerthread.h"
 #include "mtp1descriptors.h"
 
+#include <pthread.h>
+#include <signal.h>
+
 // This should be moved elsewhere, or the toggle removed
 #define ENABLE_OUT_THREAD
 #define ENABLE_IN_THREAD
@@ -117,14 +120,16 @@ bool MTPTransporterUSB::activate()
     QObject::connect(m_ctrlThread, SIGNAL(stopIO()), this, SLOT(stopIO()), Qt::QueuedConnection);
 
     m_ctrlThread->start();
+
     return success;
 }
 
 bool MTPTransporterUSB::deactivate()
 {
-    close(m_ctrlFd);
-    //m_ctrlThread->wait();
+    interruptCtrl();
+    m_ctrlThread->wait();
     delete m_ctrlThread;
+    close(m_ctrlFd);
 
     stopIO();
 
@@ -283,6 +288,27 @@ void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
         data += chunkLen;
         dataLen  -= chunkLen;
     }
+}
+
+void MTPTransporterUSB::interruptCtrl()
+{
+    // TODO: This is a hack.
+    if(m_ctrlThread->m_handle)
+        pthread_kill(m_ctrlThread->m_handle, SIGUSR1);
+}
+
+void MTPTransporterUSB::interruptOut()
+{
+    // TODO: This is a hack.
+    if(m_outThread->m_handle)
+        pthread_kill(m_outThread->m_handle, SIGUSR1);
+}
+
+void MTPTransporterUSB::interruptIn()
+{
+    // TODO: This is a hack.
+    if(m_inThread->m_handle)
+        pthread_kill(m_inThread->m_handle, SIGUSR1);
 }
 
 void MTPTransporterUSB::handleHangup()

@@ -10,6 +10,12 @@
 //#define MAX_DATA_IN_SIZE (64 * 1024)
 #define MAX_DATA_IN_SIZE (64 * 256)
 
+const struct ptp_device_status_data status_data[] = {
+    /* OK     */ { 0x0004, PTP_RC_OK, 0, 0 },
+    /* BUSY   */ { 0x0004, PTP_RC_DEVICE_BUSY, 0, 0 },
+    /* CANCEL */ { 0x0004, PTP_RC_TRANSACTION_CANCELLED, 0, 0 }
+};
+
 static const char *const event_names[] = {
 "BIND",
 "UNBIND",
@@ -21,7 +27,7 @@ static const char *const event_names[] = {
 };
 
 ControlReaderThread::ControlReaderThread(int fd, QObject *parent)
-    : QThread(parent), m_fd(fd), m_state(0)
+    : QThread(parent), m_fd(fd), m_state(0), m_handle(0)
 {
 }
 
@@ -34,12 +40,34 @@ void ControlReaderThread::run()
     struct usb_functionfs_event event;
     int readSize;
 
+    // This is a nasty hack for pthread kill use
+    // Qt documentation says not to use it
+    m_handle = QThread::currentThreadId();
+
     while(read(m_fd, &event, sizeof(event)) == sizeof(event)) {
         handleEvent(&event);
     }
 
-    perror("ControlReaderThread::run");
-    qDebug() << "FIXME: Breaking away, not event size: " << readSize;
+    m_handle = 0;
+    if(errno != EINTR) {
+        perror("ControlReaderThread::run");
+}
+
+void ControlReaderThread::sendStatus(enum mtpfs_status status)
+{
+    int bytesWritten = 0;
+    int dataLen = 0x0004; /* TODO: If status size is ever above 0x4 */
+    char *dataptr = (char*)&status_data[status];
+
+    do {
+        bytesWritten = write(m_fd, dataptr, dataLen);
+        if(bytesWritten == -1)
+        {
+            return;
+        }
+        dataptr += bytesWritten;
+        dataLen -= bytesWritten;
+    } while(dataLen);
 }
 
 void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
@@ -65,7 +93,7 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
 }
 
 OutReaderThread::OutReaderThread(QMutex *mutex, QObject *parent)
-    : QThread(parent), m_lock(mutex)
+    : QThread(parent), m_lock(mutex), m_handle(0)
 {
 }
 
@@ -83,6 +111,10 @@ void OutReaderThread::run()
 {
     int readSize;
     qDebug() << "Entering data reader thread";
+
+    // This is a nasty hack for pthread kill use
+    // Qt documentation says not to use it
+    m_handle = QThread::currentThreadId();
 
     char* inbuf = new char[MAX_DATA_IN_SIZE];
     m_lock->lock();
@@ -102,11 +134,13 @@ void OutReaderThread::run()
     } while(errno == EINTR || errno == ESHUTDOWN);
     // TODO: Handle the exceptions above properly.
 
+    m_handle = 0;
+
     perror("OutReaderThread");
     qDebug() << "Exiting data reader thread";
 }
 
-InWriterThread::InWriterThread(QObject *parent) : QThread(parent)
+InWriterThread::InWriterThread(QObject *parent) : QThread(parent), m_handle(0)
 {
 }
 
@@ -125,6 +159,10 @@ void InWriterThread::run()
     int bytesWritten = 0;
     char *dataptr = (char*)m_buffer;
 
+    // This is a nasty hack for pthread kill use
+    // Qt documentation says not to use it
+    m_handle = QThread::currentThreadId();
+
     do {
         bytesWritten = write(m_fd, dataptr, m_dataLen);
         if(bytesWritten == -1)
@@ -136,6 +174,8 @@ void InWriterThread::run()
         m_dataLen -= bytesWritten;
     } while(m_dataLen);
     m_result = true;
+
+    m_handle = 0;
 
     m_lock->unlock();
 }
