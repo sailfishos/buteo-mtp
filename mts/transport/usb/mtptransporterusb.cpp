@@ -425,3 +425,7 @@ void MTPTransporterUSB::stopRead()
     m_bulkRead.m_lock.unlock();
     m_bulkWrite.m_lock.unlock();
 }
+void MTPTransporterUSB::handleHighPriorityData()
+{
+    MTP_LOG_CRITICAL("handleHighPriorityData");
+}

@@ -147,9 +147,6 @@ class MTPTransporterUSB : public MTPTransporter
         /// The usb transporter catches the tx cancelled signal from the responder and informs the driver about the same.
         void sendDeviceTxCancelled();
 
-	/// This slot listens for usb ptp class requests from the driver.
-        void handleHighPriorityData();
-
     private Q_SLOTS:
         void closeDevices();
         void openDevices();
@@ -159,7 +156,11 @@ class MTPTransporterUSB : public MTPTransporter
 
         // The slot handles incoming data on the USB fd that was alrady read
         void handleDataRead(char*, int);
+
+        /// Handle high priority requests from the underlying transport driver.
+        void handleHighPriorityData();
 };
+
 }
 #endif
 
