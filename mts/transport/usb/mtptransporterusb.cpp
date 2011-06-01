@@ -265,23 +265,28 @@ bool MTPTransporterUSB::sendDataOrEvent(const quint8* data, quint32 dataLen, boo
     // ++ Should we be able to interrupt while sending normal data...
     // Aka, do we want a separate thread for Interrupts
 
-    m_bulkWrite.m_lock.lock();
-
     if(isEvent) {
-        m_bulkWrite.setData(m_intrFd, data, dataLen, isLastPacket);
+        m_intrWrite.setData(m_intrFd, data, dataLen, isLastPacket);
+        m_intrWrite.start();
+
+        while(!m_intrWrite.m_lock.tryLock()) {
+            QCoreApplication::processEvents();
+        }
+        r = m_bulkWrite.getResult();
+
+        m_bulkWrite.m_lock.unlock();
     } else {
         m_bulkWrite.setData(m_inFd, data, dataLen, isLastPacket);
+        m_bulkWrite.start();
+
+        while(!m_bulkWrite.m_lock.tryLock()) {
+            QCoreApplication::processEvents();
+        }
+        r = m_bulkWrite.getResult();
+
+        m_bulkWrite.m_lock.unlock();
     }
 
-    m_bulkWrite.start();
-
-    // TODO: Check if this causes excessive load-->add a wait into it
-    while(!m_bulkWrite.m_lock.tryLock()) {
-        QCoreApplication::processEvents();
-    }
-    r = m_bulkWrite.getResult();
-
-    m_bulkWrite.m_lock.unlock();
 #if 0
     if(!isEvent && isLastPacket)
     {
@@ -291,7 +296,7 @@ bool MTPTransporterUSB::sendDataOrEvent(const quint8* data, quint32 dataLen, boo
         }
     }
 #endif
-    return true;
+    return r;
 }
 
 bool MTPTransporterUSB::sendDataInternal(const quint8* data, quint32 len)
@@ -364,7 +369,6 @@ void MTPTransporterUSB::openDevices()
     {
         MTP_LOG_CRITICAL("Couldn't open INTR endpoint file " << interrupt_file);
     }
-
 }
 
 void MTPTransporterUSB::closeDevices()
@@ -403,6 +407,7 @@ void MTPTransporterUSB::stopRead()
     m_bulkRead.m_lock.unlock();
     m_bulkWrite.m_lock.unlock();
 }
+
 void MTPTransporterUSB::handleHighPriorityData()
 {
     MTP_LOG_CRITICAL("handleHighPriorityData");

@@ -68,16 +68,20 @@ void ControlReaderThread::run()
     // This is a nasty hack for pthread kill use
     // Qt documentation says not to use it
     m_handle = QThread::currentThreadId();
+    do {
+        while((readSize = read(m_fd, readBuffer, MAX_CONTROL_IN_SIZE)) > 0) {
+            count = readSize/(sizeof(struct usb_functionfs_event));
+            event = (struct usb_functionfs_event*)readBuffer;
+            for(int i = 0; i < count; i++ )
+                handleEvent(event + i);
+        }
+        perror("ControlReaderThread");
+    } while(errno != EINTR);
 
-    while((readSize = read(m_fd, readBuffer, MAX_CONTROL_IN_SIZE)) > 0) {
-        count = readSize/(sizeof(struct usb_functionfs_event));
-        event = (struct usb_functionfs_event*)readBuffer;
-        for(int i = 0; i < count; i++ )
-            handleEvent(event + i);
-    }
 
     m_handle = 0;
     if(errno != EINTR) {
+        perror("run");
         MTP_LOG_CRITICAL("ControlReaderThread exited: " << errno);
     }
 }
