@@ -151,22 +151,14 @@ class MTPTransporterUSB : public MTPTransporter
         void handleHighPriorityData();
 
     private Q_SLOTS:
-        void stopIO();
-        void startIO();
-        void clearHaltIO();
+        void closeDevices();
+        void openDevices();
 
         void startRead();
         void stopRead();
 
         // The slot handles incoming data on the USB fd that was alrady read
         void handleDataRead(char*, int);
-
-        /// The slot handles incoming data on the USB fd
-        void handleRead();
-
-        /// This slot handles exceptions (considered hangups for now) on the USB fd
-        void handleHangup();
-
 };
 }
 #endif

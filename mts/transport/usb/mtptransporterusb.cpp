@@ -62,7 +62,7 @@ using namespace meegomtp1dot0;
 #define DEFAULT_MAX_PACKET_SIZE 64
 
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
-    m_inFd(-1), m_outFd(-1), m_intrFd(-1), m_ctrlFd(-1)
+    m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1)
 {
     QObject::connect(&m_bulkRead, SIGNAL(dataRead(char*,int)),
         this, SLOT(handleDataRead(char*,int)), Qt::QueuedConnection);
@@ -100,13 +100,16 @@ bool MTPTransporterUSB::activate()
         }
     }
 
-    startIO(); // TODO: trigger with Bind?
-
+    openDevices(); // TODO: trigger with Bind?
     m_ctrl.setFd(m_ctrlFd);
-
-    QObject::connect(&m_ctrl, SIGNAL(startIO()), this, SLOT(startRead()), Qt::QueuedConnection);
-    QObject::connect(&m_ctrl, SIGNAL(stopIO()), this, SLOT(stopRead()), Qt::QueuedConnection);
-
+    QObject::connect(&m_ctrl, SIGNAL(startIO()),
+        this, SLOT(startRead()), Qt::QueuedConnection);
+    QObject::connect(&m_ctrl, SIGNAL(stopIO()),
+        this, SLOT(stopRead()), Qt::QueuedConnection);
+    QObject::connect(&m_ctrl, SIGNAL(deviceReset()),
+        this, SIGNAL(deviceReset()), Qt::QueuedConnection);
+    QObject::connect(&m_ctrl, SIGNAL(cancelTransaction()),
+        this, SIGNAL(cancelTransaction()), Qt::QueuedConnection);
     m_ctrl.start();
 
     return success;
@@ -114,7 +117,7 @@ bool MTPTransporterUSB::activate()
 
 bool MTPTransporterUSB::deactivate()
 {
-    stopIO();
+    closeDevices();
 
     interruptCtrl();
     m_ctrl.wait();
@@ -134,11 +137,13 @@ bool MTPTransporterUSB::flushData()
 
 void MTPTransporterUSB::disableRW()
 {
+    interruptOut();
     MTP_LOG_CRITICAL("disableRW");
 }
 
 void MTPTransporterUSB::enableRW()
 {
+    m_bulkRead.start();
     MTP_LOG_CRITICAL("enableRW");
 }
 
@@ -187,37 +192,6 @@ void MTPTransporterUSB::handleDataRead(char* buffer, int size)
     m_bulkRead.m_lock.unlock();
 }
 
-void MTPTransporterUSB::handleRead()
-{
-    if( EXCEPTION != m_ioState )
-    {
-        char* inbuf = new char[MAX_DATA_IN_SIZE];
-        int bytesRead = -1;
-
-        LOG_DEBUG("read req");
-        bytesRead = read(m_outFd, inbuf, MAX_DATA_IN_SIZE);
-        LOG_DEBUG("read done");
-        if(0 < bytesRead)
-        {
-            processReceivedData((quint8*)inbuf, bytesRead);
-        }
-        if(bytesRead == -1)
-        {
-            perror("MTPTransporterUSB::handleRead");
-            MTP_LOG_CRITICAL("Read failed !!");
-        }
-        delete[] inbuf;
-    }
-    else
-    {
-        //MTP_LOG_CRITICAL("trying to read while in an exception");
-    }
-}
-
-void MTPTransporterUSB::handleHighPriorityData()
-{
-}
-
 void MTPTransporterUSB::suspend()
 {
     sendDeviceBusy();
@@ -232,41 +206,17 @@ void MTPTransporterUSB::resume()
 
 void MTPTransporterUSB::sendDeviceOK()
 {
-#if 0
-    m_deviceStatus = MTPFS_STATUS_OK;
-    if(ACTIVE == m_ioState) {
-        interruptCtrl();
-        m_ctrl->wait();
-        m_ctrl->sendStatus(MTPFS_STATUS_OK);
-        m_ctrl->start();
-    }
-#endif
+    m_ctrl.setStatus(MTPFS_STATUS_OK);
 }
 
 void MTPTransporterUSB::sendDeviceBusy()
 {
-#if 0
-    m_deviceStatus = MTPFS_STATUS_BUSY;
-    if(ACTIVE == m_ioState) {
-        interruptCtrl();
-        m_ctrl->wait();
-        m_ctrl->sendStatus(MTPFS_STATUS_BUSY);
-        m_ctrl->start();
-    }
-#endif
+    m_ctrl.setStatus(MTPFS_STATUS_BUSY);
 }
 
 void MTPTransporterUSB::sendDeviceTxCancelled()
 {
-#if 0
-    m_deviceStatus = MTPFS_STATUS_TXCANCEL;
-    if(ACTIVE == m_ioState) {
-        interruptCtrl();
-        m_ctrl->wait();
-        m_ctrl->sendStatus(MTPFS_STATUS_TXCANCEL);
-        m_ctrl->start();
-    }
-#endif
+    m_ctrl.setStatus(MTPFS_STATUS_TXCANCEL);
 }
 
 void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
@@ -328,10 +278,6 @@ void MTPTransporterUSB::interruptIn()
     // TODO: This is a hack.
     if(m_bulkWrite.m_handle)
         pthread_kill(m_bulkWrite.m_handle, SIGUSR1);
-}
-
-void MTPTransporterUSB::handleHangup()
-{
 }
 
 bool MTPTransporterUSB::sendDataOrEvent(const quint8* data, quint32 dataLen, bool isEvent, bool isLastPacket)
@@ -409,7 +355,7 @@ bool MTPTransporterUSB::sendEventInternal(const quint8* data, quint32 len)
     return true;
 }
 
-void MTPTransporterUSB::startIO()
+void MTPTransporterUSB::openDevices()
 {
     m_ioState = ACTIVE;
     m_bulkWrite.m_lock.unlock();
@@ -443,7 +389,7 @@ void MTPTransporterUSB::startIO()
 
 }
 
-void MTPTransporterUSB::stopIO()
+void MTPTransporterUSB::closeDevices()
 {
     m_ioState = SUSPENDED;
 
@@ -465,13 +411,6 @@ void MTPTransporterUSB::stopIO()
         close(m_intrFd);
         m_intrFd = -1;
     }
-}
-
-void MTPTransporterUSB::clearHaltIO()
-{
-    ioctl(m_inFd, FUNCTIONFS_CLEAR_HALT);
-    ioctl(m_outFd, FUNCTIONFS_CLEAR_HALT);
-    ioctl(m_intrFd, FUNCTIONFS_CLEAR_HALT);
 }
 
 void MTPTransporterUSB::startRead()

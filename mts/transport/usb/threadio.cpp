@@ -10,7 +10,9 @@
 
 //#define MAX_DATA_IN_SIZE (64 * 1024)
 #define MAX_DATA_IN_SIZE (64 * 256)
+#define MAX_CONTROL_IN_SIZE 64
 
+// TODO: Endianness..
 const struct ptp_device_status_data status_data[] = {
     /* OK     */ { 0x0004, PTP_RC_OK, 0, 0 },
     /* BUSY   */ { 0x0004, PTP_RC_DEVICE_BUSY, 0, 0 },
@@ -44,15 +46,19 @@ void ControlReaderThread::setFd(int fd)
 
 void ControlReaderThread::run()
 {
-    struct usb_functionfs_event event;
-    int readSize;
+    char readBuffer[MAX_CONTROL_IN_SIZE];
+    struct usb_functionfs_event *event;
+    int readSize, count;
 
     // This is a nasty hack for pthread kill use
     // Qt documentation says not to use it
     m_handle = QThread::currentThreadId();
 
-    while(read(m_fd, &event, sizeof(event)) == sizeof(event)) {
-        handleEvent(&event);
+    while((readSize = read(m_fd, readBuffer, MAX_CONTROL_IN_SIZE)) > 0) {
+        count = readSize/(sizeof(struct usb_functionfs_event));
+        event = (struct usb_functionfs_event*)readBuffer;
+        for(int i = 0; i < count; i++ )
+            handleEvent(event + i);
     }
 
     m_handle = 0;
@@ -109,13 +115,12 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
 void ControlReaderThread::setupRequest(void *data)
 {
     struct usb_functionfs_event *e = (struct usb_functionfs_event *)data;
-    int ret;
     switch(e->u.setup.bRequest) {
         case PTP_REQ_GET_DEVICE_STATUS:
             sendStatus(m_status);
             break;
         case PTP_REQ_CANCEL:
-            emit transferCancel();
+            emit cancelTransaction();
             break;
         case PTP_REQ_DEVICE_RESET:
             emit deviceReset();

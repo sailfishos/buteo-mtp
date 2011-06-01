@@ -39,9 +39,8 @@ private:
 signals:
     void startIO();
     void stopIO();
-    void clearHalt();
     void deviceReset();
-    void transferCancel();
+    void cancelTransaction();
 };
 
 class BulkReaderThread : public QThread {
