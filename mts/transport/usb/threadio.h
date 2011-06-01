@@ -24,7 +24,6 @@ public:
     void run();
 
     pthread_t m_handle;
-public slots:
     void setStatus(enum mtpfs_status status);
 
 private:
@@ -32,9 +31,11 @@ private:
     void setupRequest(void *data);
     void sendStatus(enum mtpfs_status status);
 
+    QMutex m_statusLock;
     int m_fd;
     int m_state;
     enum mtpfs_status m_status;
+
 signals:
     void startIO();
     void stopIO();

@@ -1,11 +1,12 @@
 #include "threadio.h"
 #include <linux/usb/functionfs.h>
 
-#include <QDebug>
 #include <QMutex>
+#include <QMutexLocker>
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <linux/usb/functionfs.h>
+#include "trace.h"
 
 //#define MAX_DATA_IN_SIZE (64 * 1024)
 #define MAX_DATA_IN_SIZE (64 * 256)
@@ -27,8 +28,9 @@ static const char *const event_names[] = {
 };
 
 ControlReaderThread::ControlReaderThread(QObject *parent)
-    : QThread(parent), m_state(0), m_handle(0)
+    : QThread(parent), m_handle(0), m_state(0)
 {
+
 }
 
 ControlReaderThread::~ControlReaderThread()
@@ -42,7 +44,6 @@ void ControlReaderThread::setFd(int fd)
 
 void ControlReaderThread::run()
 {
-    qDebug() << "Entering control thread";
     struct usb_functionfs_event event;
     int readSize;
 
@@ -55,14 +56,15 @@ void ControlReaderThread::run()
     }
 
     m_handle = 0;
-    if(errno != EINTR)
-        perror("ControlReaderThread::run");
-
-    qDebug() << "Exiting from control thread";
+    if(errno != EINTR) {
+        MTP_LOG_CRITICAL("ControlReaderThread exited: " << errno);
+    }
 }
 
 void ControlReaderThread::sendStatus(enum mtpfs_status status)
 {
+    QMutexLocker locker(&m_statusLock);
+
     int bytesWritten = 0;
     int dataLen = 0x0004; /* TODO: If status size is ever above 0x4 */
     char *dataptr = (char*)&status_data[status];
@@ -80,28 +82,26 @@ void ControlReaderThread::sendStatus(enum mtpfs_status status)
 
 void ControlReaderThread::setStatus(enum mtpfs_status status)
 {
+    m_statusLock.lock();
     m_status = status;
+    m_statusLock.unlock();
 }
 
 void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
 {
-    qDebug() << "Event: " << event_names[event->type];
     switch(event->type) {
         case FUNCTIONFS_ENABLE:
         case FUNCTIONFS_RESUME:
-            qDebug() << "emit startio";
             emit startIO();
             break;
         case FUNCTIONFS_DISABLE:
         case FUNCTIONFS_SUSPEND:
-            qDebug() << "emit stopio";
             emit stopIO();
             break;
         case FUNCTIONFS_SETUP:
             setupRequest((void*)event);
             break;
         default:
-            qDebug() << "FIXME: Event" << event_names[event->type] << "not implemented";
             break;
     }
 }
@@ -121,8 +121,6 @@ void ControlReaderThread::setupRequest(void *data)
             emit deviceReset();
             break;
         default:
-
-            qDebug() << "SETUP has no handling yet";
             break;
     }
 }
@@ -146,7 +144,6 @@ void BulkReaderThread::setFd(int fd)
 void BulkReaderThread::run()
 {
     int readSize;
-    qDebug() << "Entering data reader thread";
 
     // This is a nasty hack for pthread kill use
     // Qt documentation says not to use it
@@ -158,7 +155,6 @@ void BulkReaderThread::run()
         readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         while(readSize != -1) {
             emit dataRead(inbuf, readSize);
-            qDebug() << "***************** Read data: " << readSize;
             // This will wait until it's released in the main thread
             m_lock.tryLock();
             m_lock.lock();
@@ -171,8 +167,9 @@ void BulkReaderThread::run()
 
     m_handle = 0;
 
-    perror("BulkReaderThread");
-    qDebug() << "******************** Exiting data reader thread";
+    if(errno != EINTR) {
+        MTP_LOG_CRITICAL("BulkReaderThread exited: " << errno);
+    }
 }
 
 BulkWriterThread::BulkWriterThread(QObject *parent)
