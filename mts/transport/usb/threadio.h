@@ -14,16 +14,25 @@ enum mtpfs_status {
 
 class QMutex;
 
-class ControlReaderThread : public QThread {
+class IOThread : public QThread {
+public:
+    explicit IOThread(QObject *parent = 0);
+    void setFd(int fd);
+    void interrupt();
+
+    QMutex m_lock;
+protected:
+    pthread_t m_handle;
+    int m_fd;
+};
+
+class ControlReaderThread : public IOThread {
     Q_OBJECT
 public:
-    ControlReaderThread(QObject *parent = 0);
+    explicit ControlReaderThread(QObject *parent = 0);
     ~ControlReaderThread();
 
-    void setFd(int fd);
     void run();
-
-    pthread_t m_handle;
     void setStatus(enum mtpfs_status status);
 
 private:
@@ -32,7 +41,6 @@ private:
     void sendStatus(enum mtpfs_status status);
 
     QMutex m_statusLock;
-    int m_fd;
     int m_state;
     enum mtpfs_status m_status;
 
@@ -43,41 +51,31 @@ signals:
     void cancelTransaction();
 };
 
-class BulkReaderThread : public QThread {
+class BulkReaderThread : public IOThread {
     Q_OBJECT
 public:
-    BulkReaderThread(QObject *parent = 0);
+    explicit BulkReaderThread(QObject *parent = 0);
     ~BulkReaderThread();
 
-    void setFd(int fd);
     void run();
 
-    pthread_t m_handle;
     QMutex m_lock;
 signals:
     void dataRead(char *buffer, int size);
-
-private:
-    int m_fd;
 };
 
-class BulkWriterThread : public QThread {
+class BulkWriterThread : public IOThread {
     Q_OBJECT
 public:
-    BulkWriterThread(QObject *parent = 0);
+    explicit BulkWriterThread(QObject *parent = 0);
 
     void setData(int fd, const quint8 *buffer, quint32 dataLen, bool isLastPacket);
     void run();
     bool getResult();
-    bool isWriting;
 
-    QMutex m_lock;
-    pthread_t m_handle;
-private:
-    bool m_isTaken;
+    private:
     const quint8 *m_buffer;
     quint32 m_dataLen;
-    int m_fd;
     bool m_isLastPacket;
     bool m_result;
 };

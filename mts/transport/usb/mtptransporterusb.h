@@ -114,10 +114,6 @@ class MTPTransporterUSB : public MTPTransporter
         /// Private function to process data received from the USB driver
         void processReceivedData(quint8* data, quint32 dataLen);
 
-        void interruptCtrl();
-        void interruptOut();
-        void interruptIn();
-
         enum IOState{
             ACTIVE,
             EXCEPTION,
@@ -133,9 +129,10 @@ class MTPTransporterUSB : public MTPTransporter
         int                     m_inFd;
         int                     m_outFd;
 
-        ControlReaderThread     m_ctrl;
-        BulkReaderThread        m_bulkRead;
-        BulkWriterThread        m_bulkWrite;
+        ControlReaderThread     m_ctrl;         ///< Threaded IO for Control EP
+        BulkReaderThread        m_bulkRead;     ///< Threaded Reader for Bulk Out EP
+        BulkWriterThread        m_bulkWrite;    ///< Threaded Writer for Bulk In EP
+        BulkWriterThread        m_intrWrite;    ///< Threaded Writer for Interrupt EP
 
     public Q_SLOTS:
         /// The usb transporter catches the device ok status signal from the responder and informs the driver about the same.
@@ -148,10 +145,14 @@ class MTPTransporterUSB : public MTPTransporter
         void sendDeviceTxCancelled();
 
     private Q_SLOTS:
+        /// Close the Bulk and Interrupt devices
         void closeDevices();
+        /// Open the Bulk and Interrupt devices
         void openDevices();
 
+        /// Initialize the reader thread
         void startRead();
+        /// Stop the reader thread
         void stopRead();
 
         // The slot handles incoming data on the USB fd that was alrady read

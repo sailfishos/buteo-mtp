@@ -5,8 +5,13 @@
 #include <QMutexLocker>
 #include <errno.h>
 #include <sys/ioctl.h>
-#include <linux/usb/functionfs.h>
+
+#include <pthread.h>
+#include <signal.h>
+
 #include "trace.h"
+
+#include <assert.h>
 
 //#define MAX_DATA_IN_SIZE (64 * 1024)
 #define MAX_DATA_IN_SIZE (64 * 256)
@@ -29,19 +34,29 @@ static const char *const event_names[] = {
 "RESUME"
 };
 
+IOThread::IOThread(QObject *parent)
+    : QThread(parent), m_handle(0), m_fd(0)
+{}
+
+void IOThread::setFd(int fd)
+{
+    m_fd = fd;
+}
+
+void IOThread::interrupt()
+{
+    if(m_handle)
+        pthread_kill(m_handle, SIGUSR1);
+}
+
 ControlReaderThread::ControlReaderThread(QObject *parent)
-    : QThread(parent), m_handle(0), m_state(0)
+    : IOThread(parent),  m_state(0)
 {
 
 }
 
 ControlReaderThread::~ControlReaderThread()
 {
-}
-
-void ControlReaderThread::setFd(int fd)
-{
-    m_fd = fd;
 }
 
 void ControlReaderThread::run()
@@ -75,6 +90,8 @@ void ControlReaderThread::sendStatus(enum mtpfs_status status)
     int dataLen = 0x0004; /* TODO: If status size is ever above 0x4 */
     char *dataptr = (char*)&status_data[status];
 
+    qDebug() << "Sending status on control";
+
     do {
         bytesWritten = write(m_fd, dataptr, dataLen);
         if(bytesWritten == -1)
@@ -84,6 +101,8 @@ void ControlReaderThread::sendStatus(enum mtpfs_status status)
         dataptr += bytesWritten;
         dataLen -= bytesWritten;
     } while(dataLen);
+
+    qDebug() << "Status sent";
 }
 
 void ControlReaderThread::setStatus(enum mtpfs_status status)
@@ -95,6 +114,7 @@ void ControlReaderThread::setStatus(enum mtpfs_status status)
 
 void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
 {
+    qDebug() << "Event: " << event_names[event->type];
     switch(event->type) {
         case FUNCTIONFS_ENABLE:
         case FUNCTIONFS_RESUME:
@@ -115,14 +135,24 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
 void ControlReaderThread::setupRequest(void *data)
 {
     struct usb_functionfs_event *e = (struct usb_functionfs_event *)data;
+
+    qDebug() << "bRequestType:" << e->u.setup.bRequestType;
+    qDebug() << "bRequest:" << e->u.setup.bRequest;
+    qDebug() << "wValue:" << e->u.setup.wValue;
+    qDebug() << "wIndex:" << e->u.setup.wIndex;
+    qDebug() << "wLength:" << e->u.setup.wLength;
+
     switch(e->u.setup.bRequest) {
         case PTP_REQ_GET_DEVICE_STATUS:
+            qDebug() << "Get Device Status";
             sendStatus(m_status);
             break;
         case PTP_REQ_CANCEL:
+            qDebug() << "Cancel Transaction";
             emit cancelTransaction();
             break;
         case PTP_REQ_DEVICE_RESET:
+            qDebug() << "Device Reset";
             emit deviceReset();
             break;
         default:
@@ -132,18 +162,12 @@ void ControlReaderThread::setupRequest(void *data)
 
 
 BulkReaderThread::BulkReaderThread(QObject *parent)
-    : QThread(parent), m_handle(0)
+    : IOThread(parent)
 {
 }
 
 BulkReaderThread::~BulkReaderThread()
 {
-}
-
-#define INITIAL_SIZE MAX_DATA_IN_SIZE
-void BulkReaderThread::setFd(int fd)
-{
-    m_fd = fd;
 }
 
 void BulkReaderThread::run()
@@ -178,7 +202,7 @@ void BulkReaderThread::run()
 }
 
 BulkWriterThread::BulkWriterThread(QObject *parent)
-    : QThread(parent), m_handle(0)
+    : IOThread(parent)
 {
 }
 

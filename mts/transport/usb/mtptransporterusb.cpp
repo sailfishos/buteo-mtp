@@ -49,10 +49,6 @@
 #include "trace.h"
 #include "threadio.h"
 #include "mtp1descriptors.h"
-
-#include <pthread.h>
-#include <signal.h>
-
 #include <QMutex>
 #include <QCoreApplication>
 
@@ -72,6 +68,8 @@ bool MTPTransporterUSB::activate()
 {
     MTP_LOG_CRITICAL("MTPTransporterUSB::activate");
     int success = false;
+
+    qDebug() << "Registering device:" << mtp1strings.lang0.str1;
 
     m_ctrlFd = open(control_file, O_RDWR);
     if(-1 == m_ctrlFd)
@@ -119,7 +117,7 @@ bool MTPTransporterUSB::deactivate()
 {
     closeDevices();
 
-    interruptCtrl();
+    m_ctrl.interrupt();
     m_ctrl.wait();
     close(m_ctrlFd);
 
@@ -137,7 +135,7 @@ bool MTPTransporterUSB::flushData()
 
 void MTPTransporterUSB::disableRW()
 {
-    interruptOut();
+    m_bulkRead.interrupt();
     MTP_LOG_CRITICAL("disableRW");
 }
 
@@ -152,8 +150,9 @@ void MTPTransporterUSB::reset()
     m_ioState = ACTIVE;
     m_containerReadLen = 0;
 
-    interruptOut();
-    interruptIn();
+    m_bulkRead.interrupt();
+    m_bulkWrite.interrupt();
+
     m_bulkRead.wait();
     m_bulkWrite.wait();
 
@@ -257,27 +256,6 @@ void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
         data += chunkLen;
         dataLen  -= chunkLen;
     }
-}
-
-void MTPTransporterUSB::interruptCtrl()
-{
-    // TODO: This is a hack.
-    if(m_ctrl.m_handle)
-        pthread_kill(m_ctrl.m_handle, SIGUSR1);
-}
-
-void MTPTransporterUSB::interruptOut()
-{
-    // TODO: This is a hack.
-    if(m_bulkRead.m_handle)
-        pthread_kill(m_bulkRead.m_handle, SIGUSR1);
-}
-
-void MTPTransporterUSB::interruptIn()
-{
-    // TODO: This is a hack.
-    if(m_bulkWrite.m_handle)
-        pthread_kill(m_bulkWrite.m_handle, SIGUSR1);
 }
 
 bool MTPTransporterUSB::sendDataOrEvent(const quint8* data, quint32 dataLen, bool isEvent, bool isLastPacket)
@@ -393,8 +371,8 @@ void MTPTransporterUSB::closeDevices()
 {
     m_ioState = SUSPENDED;
 
-    interruptIn();
-    interruptOut();
+    m_bulkWrite.interrupt();
+    m_bulkWrite.interrupt();
 
     // FIXME: this probably won't exit properly?
     if(m_outFd != -1) {
