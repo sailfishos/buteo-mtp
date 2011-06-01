@@ -1,4 +1,4 @@
-#include "readerthread.h"
+#include "threadio.h"
 #include <linux/usb/functionfs.h>
 
 #include <QDebug>

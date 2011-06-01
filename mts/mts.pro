@@ -57,7 +57,7 @@ HEADERS += mts.h \
            platform/deviceinfo/xmlhandler.h \
            transport/mtptransporter.h \
            transport/usb/mtptransporterusb.h \
-           transport/usb/readerthread.h \
+           transport/usb/threadio.h \
            transport/dummy/mtptransporterdummy.h \
            platform/storage/storagefactory.h \
            platform/storage/storageplugin.h
@@ -80,7 +80,7 @@ SOURCES += mts.cpp \
            platform/deviceinfo/xmlhandler.cpp \
            platform/storage/storagefactory.cpp \
            transport/usb/descriptor.c \
-           transport/usb/readerthread.cpp
+           transport/usb/threadio.cpp
 
 target.path = /usr/lib/
 INSTALLS += target

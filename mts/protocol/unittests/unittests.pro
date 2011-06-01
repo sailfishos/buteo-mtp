@@ -57,7 +57,7 @@ HEADERS += mtpresponder_test.h \
            ../../platform/deviceinfo/deviceinfo.h \
            ../../transport/mtptransporter.h \
            ../../transport/usb/mtptransporterusb.h \
-           ../../transport/usb/readerthread.h \
+           ../../transport/usb/threadio.h \
            ../../transport/dummy/mtptransporterdummy.h \
 	       ../../mts.h
 
@@ -78,7 +78,7 @@ SOURCES += mtpresponder_test.cpp \
            ../../platform/deviceinfo/deviceinfo.cpp \
            ../../transport/usb/mtptransporterusb.cpp \
            ../../transport/usb/descriptor.c \
-           ../../transport/usb/readerthread.cpp \
+           ../../transport/usb/threadio.cpp \
            ../../transport/dummy/mtptransporterdummy.cpp \
 	       ../../mts.cpp
 

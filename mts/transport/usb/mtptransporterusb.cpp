@@ -47,7 +47,7 @@
 #include <linux/usb/functionfs.h>
 #include "ptp.h"
 #include "trace.h"
-#include "readerthread.h"
+#include "threadio.h"
 #include "mtp1descriptors.h"
 
 #include <pthread.h>

@@ -35,7 +35,7 @@
 #include <QMutex>
 
 #include "mtptransporter.h"
-#include "readerthread.h"
+#include "threadio.h"
 
 class QSocketNotifier;
 

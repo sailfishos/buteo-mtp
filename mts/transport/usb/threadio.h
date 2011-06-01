@@ -1,5 +1,5 @@
-#ifndef READERTHREAD_H
-#define READERTHREAD_H
+#ifndef THREADIO_H
+#define THREADIO_H
 
 #include "ptp.h"
 

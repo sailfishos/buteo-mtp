@@ -55,7 +55,7 @@ HEADERS += fsstorageplugin_test.h \
            ../../../../protocol/extensions/mtpextension.h \
            ../../../../transport/mtptransporter.h \
            ../../../../transport/usb/mtptransporterusb.h \
-           ../../../../transport/usb/readerthread.h \
+           ../../../../transport/usb/threadio.h \
            ../../../../transport/dummy/mtptransporterdummy.h \
            ../../../platform/deviceinfo/xmlhandler.h \
            ../../../platform/deviceinfo/contextsubscriber.h \
@@ -81,7 +81,7 @@ SOURCES += fsstorageplugin_test.cpp \
            ../../../../protocol/objectpropertycache.cpp \
            ../../../../protocol/mtpextensionmanager.cpp \
            ../../../../transport/usb/mtptransporterusb.cpp \
-           ../../../../transport/usb/readerthread.cpp \
+           ../../../../transport/usb/threadio.cpp \
            ../../../../transport/usb/descriptor.c \
            ../../../../transport/dummy/mtptransporterdummy.cpp \
            ../../../platform/deviceinfo/xmlhandler.cpp \
