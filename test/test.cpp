@@ -30,8 +30,6 @@
 #include <QTimer>
 #include "mts.h"
 
-#include "ptest.h"
-
 using namespace meegomtp1dot0;
 
 void signalHandler(int /*signum*/)
@@ -54,12 +52,6 @@ int main(int argc, char** argv)
     signal(SIGALRM, &signalHandler);
     signal(SIGUSR1, &sigUsr1Handler);
     QObject::connect(&app,SIGNAL(aboutToQuit()),Mts::getInstance(),SLOT(destroyInstance()));
-
-    QTimer timer;
-    PTest ptest;
-
-    QObject::connect(&timer, SIGNAL(timeout()), &ptest, SLOT(print()));
-    timer.start(10000);
 
     bool ok = Mts::getInstance()->activate();
     if( ok )

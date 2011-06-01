@@ -126,16 +126,6 @@ class MTPTransporterUSB : public MTPTransporter
 
         IOState                 m_ioState; ///< The current state of the IO device
 
-        QSocketNotifier*        m_readSocket; ///< The socket notifier for data read/written to the USB fd
-
-        QSocketNotifier*        m_excpSocket; ///< The socket notifier for exception, errors and hangups on the USB fd
-
-        QSocketNotifier*        m_ctrlSocket;
-
-        quint32                 m_maxDataSize; ///< The maximum size, in bytes, of the data packet size of the USB layer
-
-        quint32                 m_maxEventSize; ///< The maximum size, in bytes, of the event packet size of the USB layer
-
         quint64                 m_containerReadLen; ///< The data, in bytes remaining to be received for a data packet
 
         int                     m_ctrlFd;
@@ -143,12 +133,10 @@ class MTPTransporterUSB : public MTPTransporter
         int                     m_inFd;
         int                     m_outFd;
 
-        ControlReaderThread     *m_ctrlThread;
-        OutReaderThread         *m_outThread;
-        InWriterThread          *m_inThread;
+        ControlReaderThread     m_ctrl;
+        BulkReaderThread        m_bulkRead;
+        BulkWriterThread        m_bulkWrite;
 
-        QMutex                  m_sendMutex;
-        QMutex                  m_responderMutex;
     public Q_SLOTS:
         /// The usb transporter catches the device ok status signal from the responder and informs the driver about the same.
         void sendDeviceOK();
@@ -166,6 +154,9 @@ class MTPTransporterUSB : public MTPTransporter
         void stopIO();
         void startIO();
         void clearHaltIO();
+
+        void startRead();
+        void stopRead();
 
         // The slot handles incoming data on the USB fd that was alrady read
         void handleDataRead(char*, int);

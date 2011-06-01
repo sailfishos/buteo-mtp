@@ -53,14 +53,8 @@
 #include <pthread.h>
 #include <signal.h>
 
-// This should be moved elsewhere, or the toggle removed
-#define ENABLE_OUT_THREAD
-#define ENABLE_IN_THREAD
-
-#ifdef ENABLE_IN_THREAD
 #include <QMutex>
 #include <QCoreApplication>
-#endif
 
 using namespace meegomtp1dot0;
 
@@ -70,14 +64,8 @@ using namespace meegomtp1dot0;
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
     m_inFd(-1), m_outFd(-1), m_intrFd(-1), m_ctrlFd(-1)
 {
-#ifdef ENABLE_IN_THREAD
-    m_inThread = new InWriterThread(this);
-#endif
-#ifdef ENABLE_OUT_THREAD
-    m_outThread = new OutReaderThread(&m_responderMutex, this);
-    QObject::connect(m_outThread, SIGNAL(dataRead(char*,int)),
+    QObject::connect(&m_bulkRead, SIGNAL(dataRead(char*,int)),
         this, SLOT(handleDataRead(char*,int)), Qt::QueuedConnection);
-#endif
 }
 
 bool MTPTransporterUSB::activate()
@@ -112,10 +100,14 @@ bool MTPTransporterUSB::activate()
         }
     }
 
-    m_ctrlThread = new ControlReaderThread(m_ctrlFd, this);
-    QObject::connect(m_ctrlThread, SIGNAL(startIO()), this, SLOT(startIO()), Qt::QueuedConnection);
-    QObject::connect(m_ctrlThread, SIGNAL(stopIO()), this, SLOT(stopIO()), Qt::QueuedConnection);
-    m_ctrlThread->start();
+    startIO(); // TODO: trigger with Bind?
+
+    m_ctrl.setFd(m_ctrlFd);
+
+    QObject::connect(&m_ctrl, SIGNAL(startIO()), this, SLOT(startRead()), Qt::QueuedConnection);
+    QObject::connect(&m_ctrl, SIGNAL(stopIO()), this, SLOT(stopRead()), Qt::QueuedConnection);
+
+    m_ctrl.start();
 
     return success;
 }
@@ -125,8 +117,7 @@ bool MTPTransporterUSB::deactivate()
     stopIO();
 
     interruptCtrl();
-    m_ctrlThread->wait();
-    delete m_ctrlThread;
+    m_ctrl.wait();
     close(m_ctrlFd);
 
     return true;
@@ -158,14 +149,14 @@ void MTPTransporterUSB::reset()
 
     interruptOut();
     interruptIn();
-    m_outThread->wait();
-    m_inThread->wait();
+    m_bulkRead.wait();
+    m_bulkWrite.wait();
 
-    m_sendMutex.unlock();
-    m_responderMutex.unlock();
+    m_bulkWrite.m_lock.unlock();
+    m_bulkRead.m_lock.unlock();
 
-    m_outThread->start();
-    m_inThread->start();
+    m_bulkRead.start();
+    m_bulkWrite.start();
 
     MTP_LOG_CRITICAL("reset");
 }
@@ -173,12 +164,6 @@ void MTPTransporterUSB::reset()
 MTPTransporterUSB::~MTPTransporterUSB()
 {
     deactivate();
-#ifdef ENABLE_IN_THREAD
-    delete m_inThread;
-#endif
-#ifdef ENABLE_OUT_THREAD
-    delete m_outThread;
-#endif
 }
 
 bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLastPacket)
@@ -199,7 +184,7 @@ void MTPTransporterUSB::handleDataRead(char* buffer, int size)
     }
     delete buffer;
 
-    m_responderMutex.unlock();
+    m_bulkRead.m_lock.unlock();
 }
 
 void MTPTransporterUSB::handleRead()
@@ -251,9 +236,9 @@ void MTPTransporterUSB::sendDeviceOK()
     m_deviceStatus = MTPFS_STATUS_OK;
     if(ACTIVE == m_ioState) {
         interruptCtrl();
-        m_ctrlThread->wait();
-        m_ctrlThread->sendStatus(MTPFS_STATUS_OK);
-        m_ctrlThread->start();
+        m_ctrl->wait();
+        m_ctrl->sendStatus(MTPFS_STATUS_OK);
+        m_ctrl->start();
     }
 #endif
 }
@@ -264,9 +249,9 @@ void MTPTransporterUSB::sendDeviceBusy()
     m_deviceStatus = MTPFS_STATUS_BUSY;
     if(ACTIVE == m_ioState) {
         interruptCtrl();
-        m_ctrlThread->wait();
-        m_ctrlThread->sendStatus(MTPFS_STATUS_BUSY);
-        m_ctrlThread->start();
+        m_ctrl->wait();
+        m_ctrl->sendStatus(MTPFS_STATUS_BUSY);
+        m_ctrl->start();
     }
 #endif
 }
@@ -277,9 +262,9 @@ void MTPTransporterUSB::sendDeviceTxCancelled()
     m_deviceStatus = MTPFS_STATUS_TXCANCEL;
     if(ACTIVE == m_ioState) {
         interruptCtrl();
-        m_ctrlThread->wait();
-        m_ctrlThread->sendStatus(MTPFS_STATUS_TXCANCEL);
-        m_ctrlThread->start();
+        m_ctrl->wait();
+        m_ctrl->sendStatus(MTPFS_STATUS_TXCANCEL);
+        m_ctrl->start();
     }
 #endif
 }
@@ -327,22 +312,22 @@ void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
 void MTPTransporterUSB::interruptCtrl()
 {
     // TODO: This is a hack.
-    if(m_ctrlThread->m_handle)
-        pthread_kill(m_ctrlThread->m_handle, SIGUSR1);
+    if(m_ctrl.m_handle)
+        pthread_kill(m_ctrl.m_handle, SIGUSR1);
 }
 
 void MTPTransporterUSB::interruptOut()
 {
     // TODO: This is a hack.
-    if(m_outThread->m_handle)
-        pthread_kill(m_outThread->m_handle, SIGUSR1);
+    if(m_bulkRead.m_handle)
+        pthread_kill(m_bulkRead.m_handle, SIGUSR1);
 }
 
 void MTPTransporterUSB::interruptIn()
 {
     // TODO: This is a hack.
-    if(m_inThread->m_handle)
-        pthread_kill(m_inThread->m_handle, SIGUSR1);
+    if(m_bulkWrite.m_handle)
+        pthread_kill(m_bulkWrite.m_handle, SIGUSR1);
 }
 
 void MTPTransporterUSB::handleHangup()
@@ -352,45 +337,36 @@ void MTPTransporterUSB::handleHangup()
 bool MTPTransporterUSB::sendDataOrEvent(const quint8* data, quint32 dataLen, bool isEvent, bool isLastPacket)
 {
     bool r = false;
-#ifdef ENABLE_IN_THREAD
     // TODO: Re-entrancy, probably needs to be done earlier in the chain
     // ++ Should we be able to interrupt while sending normal data...
     // Aka, do we want a separate thread for Interrupts
 
-    m_sendMutex.lock();
+    m_bulkWrite.m_lock.lock();
 
     if(isEvent) {
-        m_inThread->setData(m_intrFd, data, dataLen, isLastPacket, &m_sendMutex);
+        m_bulkWrite.setData(m_intrFd, data, dataLen, isLastPacket);
     } else {
-        m_inThread->setData(m_inFd, data, dataLen, isLastPacket, &m_sendMutex);
+        m_bulkWrite.setData(m_inFd, data, dataLen, isLastPacket);
     }
 
-    m_inThread->start();
+    m_bulkWrite.start();
 
     // TODO: Check if this causes excessive load-->add a wait into it
-    while(!m_sendMutex.tryLock()) {
+    while(!m_bulkWrite.m_lock.tryLock()) {
         QCoreApplication::processEvents();
     }
-    r = m_inThread->getResult();
+    r = m_bulkWrite.getResult();
 
-    m_sendMutex.unlock();
-#else
-    typedef bool (MTPTransporterUSB::*pIntDataSender)(const quint8*, quint32);
-
-    pIntDataSender senderFunc = (isEvent ? &MTPTransporterUSB::sendEventInternal : &MTPTransporterUSB::sendDataInternal)
-
-    MTP_HEX_TRACE(data, dataLen);
-
-    r = (this->*senderFunc)(data, dataLen);
-
-    if(!r)
+    m_bulkWrite.m_lock.unlock();
+#if 0
+    if(!isEvent && isLastPacket)
     {
-        MTP_LOG_CRITICAL("Failure in sending data");
-        perror("MTPTransporterUSB::sendDataOrEvent");
-        return r;
+        if( 0 > fsync(m_usbFd) )
+        {
+            r = false;
+        }
     }
 #endif
-
     return true;
 }
 
@@ -436,7 +412,7 @@ bool MTPTransporterUSB::sendEventInternal(const quint8* data, quint32 len)
 void MTPTransporterUSB::startIO()
 {
     m_ioState = ACTIVE;
-    m_sendMutex.unlock();
+    m_bulkWrite.m_lock.unlock();
 
     m_inFd = open(in_file, O_WRONLY);
     if(-1 == m_inFd)
@@ -445,13 +421,8 @@ void MTPTransporterUSB::startIO()
     }
 
     if(-1 != m_outFd) {
-#ifdef ENABLE_OUT_THREAD
         close(m_outFd);
-        //m_outThread->wait();
-#else
-        delete m_readSocket;
-        delete m_excpSocket;
-#endif
+        //m_bulkRead.wait();
     }
 
     m_outFd = open(out_file, O_RDONLY | O_NONBLOCK);
@@ -459,17 +430,8 @@ void MTPTransporterUSB::startIO()
     {
         MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << out_file);
     } else {
-#ifdef ENABLE_OUT_THREAD
-        m_outThread->setFd(m_outFd);
-        m_outThread->start();
-#else
-        m_readSocket = new QSocketNotifier(m_outFd, QSocketNotifier::Read);
-        m_excpSocket = new QSocketNotifier(m_outFd, QSocketNotifier::Exception);
-
-        // Connect our slots to listen to data and exception events on the USB FD
-        QObject::connect(m_readSocket, SIGNAL(activated(int)), this, SLOT(handleRead()));
-        QObject::connect(m_excpSocket, SIGNAL(activated(int)), this, SLOT(handleHangup()));
-#endif
+        m_bulkRead.setFd(m_outFd);
+        m_bulkRead.start();
     }
 
 
@@ -490,22 +452,13 @@ void MTPTransporterUSB::stopIO()
 
     // FIXME: this probably won't exit properly?
     if(m_outFd != -1) {
-#ifdef ENABLE_OUT_THREAD
-        m_responderMutex.unlock();
+        m_bulkRead.m_lock.unlock();
         close(m_outFd);
-        //m_outThread->wait();
-#else
-        delete m_readSocket;
-        delete m_excpSocket;
-        close(m_outFd);
-#endif
+        //m_bulkRead.wait();
         m_outFd = -1;
     }
     if(m_inFd != -1) {
         close(m_inFd);
-#ifdef ENABLE_IN_THREAD
-        m_sendMutex.unlock();
-#endif
         m_inFd = -1;
     }
     if(m_intrFd != -1) {
@@ -519,4 +472,17 @@ void MTPTransporterUSB::clearHaltIO()
     ioctl(m_inFd, FUNCTIONFS_CLEAR_HALT);
     ioctl(m_outFd, FUNCTIONFS_CLEAR_HALT);
     ioctl(m_intrFd, FUNCTIONFS_CLEAR_HALT);
+}
+
+void MTPTransporterUSB::startRead()
+{
+    m_bulkRead.start();
+}
+
+void MTPTransporterUSB::stopRead()
+{
+    emit cleanup();
+
+    m_bulkRead.m_lock.unlock();
+    m_bulkWrite.m_lock.unlock();
 }

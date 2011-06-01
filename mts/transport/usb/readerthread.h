@@ -2,7 +2,9 @@
 #define READERTHREAD_H
 
 #include "ptp.h"
+
 #include <QThread>
+#include <QMutex>
 
 enum mtpfs_status {
     MTPFS_STATUS_OK,
@@ -15,8 +17,10 @@ class QMutex;
 class ControlReaderThread : public QThread {
     Q_OBJECT
 public:
-    ControlReaderThread(int fd, QObject *parent);
+    ControlReaderThread(QObject *parent = 0);
     ~ControlReaderThread();
+
+    void setFd(int fd);
     void run();
 
     pthread_t m_handle;
@@ -39,38 +43,40 @@ signals:
     void transferCancel();
 };
 
-class OutReaderThread : public QThread {
+class BulkReaderThread : public QThread {
     Q_OBJECT
 public:
-    OutReaderThread(QMutex *mutex, QObject *parent);
-    ~OutReaderThread();
+    BulkReaderThread(QObject *parent = 0);
+    ~BulkReaderThread();
 
     void setFd(int fd);
     void run();
 
     pthread_t m_handle;
+    QMutex m_lock;
 signals:
     void dataRead(char *buffer, int size);
 
 private:
-    QMutex *m_lock;
     int m_fd;
 };
 
-class InWriterThread : public QThread {
+class BulkWriterThread : public QThread {
     Q_OBJECT
 public:
-    InWriterThread(QObject *parent);
+    BulkWriterThread(QObject *parent = 0);
 
-    void setData(int fd, const quint8 *buffer, quint32 dataLen, bool isLastPacket, QMutex *sendLock);
+    void setData(int fd, const quint8 *buffer, quint32 dataLen, bool isLastPacket);
     void run();
     bool getResult();
+    bool isWriting;
 
+    QMutex m_lock;
     pthread_t m_handle;
 private:
+    bool m_isTaken;
     const quint8 *m_buffer;
     quint32 m_dataLen;
-    QMutex *m_lock;
     int m_fd;
     bool m_isLastPacket;
     bool m_result;

@@ -26,13 +26,18 @@ static const char *const event_names[] = {
 "RESUME"
 };
 
-ControlReaderThread::ControlReaderThread(int fd, QObject *parent)
-    : QThread(parent), m_fd(fd), m_state(0), m_handle(0)
+ControlReaderThread::ControlReaderThread(QObject *parent)
+    : QThread(parent), m_state(0), m_handle(0)
 {
 }
 
 ControlReaderThread::~ControlReaderThread()
 {
+}
+
+void ControlReaderThread::setFd(int fd)
+{
+    m_fd = fd;
 }
 
 void ControlReaderThread::run()
@@ -123,22 +128,22 @@ void ControlReaderThread::setupRequest(void *data)
 }
 
 
-OutReaderThread::OutReaderThread(QMutex *mutex, QObject *parent)
-    : QThread(parent), m_lock(mutex), m_handle(0)
+BulkReaderThread::BulkReaderThread(QObject *parent)
+    : QThread(parent), m_handle(0)
 {
 }
 
-OutReaderThread::~OutReaderThread()
+BulkReaderThread::~BulkReaderThread()
 {
 }
 
 #define INITIAL_SIZE MAX_DATA_IN_SIZE
-void OutReaderThread::setFd(int fd)
+void BulkReaderThread::setFd(int fd)
 {
     m_fd = fd;
 }
 
-void OutReaderThread::run()
+void BulkReaderThread::run()
 {
     int readSize;
     qDebug() << "Entering data reader thread";
@@ -148,17 +153,15 @@ void OutReaderThread::run()
     m_handle = QThread::currentThreadId();
 
     char* inbuf = new char[MAX_DATA_IN_SIZE];
-    m_lock->lock();
-
-    qDebug() << "Got lock";
 
     do {
         readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         while(readSize != -1) {
             emit dataRead(inbuf, readSize);
-            qDebug() << "Read data: " << readSize;
+            qDebug() << "***************** Read data: " << readSize;
             // This will wait until it's released in the main thread
-            m_lock->lock();
+            m_lock.tryLock();
+            m_lock.lock();
             inbuf = new char[MAX_DATA_IN_SIZE];
             readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         }
@@ -168,26 +171,25 @@ void OutReaderThread::run()
 
     m_handle = 0;
 
-    perror("OutReaderThread");
-    qDebug() << "Exiting data reader thread";
+    perror("BulkReaderThread");
+    qDebug() << "******************** Exiting data reader thread";
 }
 
-InWriterThread::InWriterThread(QObject *parent)
+BulkWriterThread::BulkWriterThread(QObject *parent)
     : QThread(parent), m_handle(0)
 {
 }
 
-void InWriterThread::setData(int fd, const quint8 *buffer, quint32 dataLen, bool isLastPacket, QMutex *sendLock)
+void BulkWriterThread::setData(int fd, const quint8 *buffer, quint32 dataLen, bool isLastPacket)
 {
     m_buffer = buffer;
     m_dataLen = dataLen;
-    m_lock = sendLock;
     m_isLastPacket = isLastPacket;
     m_fd = fd;
     m_result = false;
 }
 
-void InWriterThread::run()
+void BulkWriterThread::run()
 {
     int bytesWritten = 0;
     char *dataptr = (char*)m_buffer;
@@ -210,10 +212,10 @@ void InWriterThread::run()
 
     m_handle = 0;
 
-    m_lock->unlock();
+    m_lock.unlock();
 }
 
-bool InWriterThread::getResult()
+bool BulkWriterThread::getResult()
 {
     return m_result;
 }
