@@ -99,17 +99,6 @@ class MTPTransporterUSB : public MTPTransporter
 
         /// Internal function to send data and event packets
         bool sendDataOrEvent(const quint8* data, quint32 dataLen, bool isEvent, bool sendZeroPacket);
-        /// Internal function that does the actual data write to the USB FD
-        /// \param data [in] The data to be written
-        /// \param len [in] The length, in bytes, of the data buffer
-        /// \return Returns true if data write succeeded, else false
-        bool sendDataInternal(const quint8* data, quint32 len);
-
-        /// Internal function that does the actual data write to the USB FD
-        /// \param data [in] The data to be written
-        /// \param len [in] The length, in bytes, of the data buffer
-        /// \return Returns true if data write succeeded, else false
-        bool sendEventInternal(const quint8* data, quint32 len);
 
         /// Private function to process data received from the USB driver
         void processReceivedData(quint8* data, quint32 dataLen);

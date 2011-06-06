@@ -149,7 +149,9 @@ void ControlReaderThread::setupRequest(void *data)
     switch(e->u.setup.bRequest) {
         case PTP_REQ_GET_DEVICE_STATUS:
             qDebug() << "Get Device Status";
-            sendStatus(m_status);
+            if(e->u.setup.bRequestType & USB_DIR_IN) {
+                sendStatus(m_status);
+            }
             break;
         case PTP_REQ_CANCEL:
             qDebug() << "Cancel Transaction";

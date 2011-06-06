@@ -299,45 +299,6 @@ bool MTPTransporterUSB::sendDataOrEvent(const quint8* data, quint32 dataLen, boo
     return r;
 }
 
-bool MTPTransporterUSB::sendDataInternal(const quint8* data, quint32 len)
-{
-    int bytesWritten = 0;
-    char *dataptr = (char*)data;
-
-    do
-    {
-        bytesWritten = write(m_inFd, dataptr, len);
-        if(bytesWritten == -1)
-        {
-            return false;
-        }
-        dataptr += bytesWritten;
-        len -= bytesWritten;
-    } while(len);
-
-    return true;
-}
-
-bool MTPTransporterUSB::sendEventInternal(const quint8* data, quint32 len)
-{
-    int bytesWritten = 0;
-    char *dataptr = (char*)data;
-
-    do
-    {
-        bytesWritten = write(m_intrFd, dataptr, len);
-        if(bytesWritten == -1)
-        {
-            MTP_LOG_CRITICAL("Write failed::" << errno << strerror(errno));
-            return false;
-        }
-        dataptr += bytesWritten;
-        len -= bytesWritten;
-    }while(len);
-
-    return true;
-}
-
 void MTPTransporterUSB::openDevices()
 {
     m_ioState = ACTIVE;
