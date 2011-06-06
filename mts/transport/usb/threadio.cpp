@@ -19,9 +19,12 @@
 
 // TODO: Endianness..
 const struct ptp_device_status_data status_data[] = {
-    /* OK     */ { 0x0004, PTP_RC_OK, 0, 0 },
-    /* BUSY   */ { 0x0004, PTP_RC_DEVICE_BUSY, 0, 0 },
-    /* CANCEL */ { 0x0004, PTP_RC_TRANSACTION_CANCELLED, 0, 0 }
+/* OK     */ { cpu_to_le16(0x0004),
+               cpu_to_le16(PTP_RC_OK), 0, 0 },
+/* BUSY   */ { cpu_to_le16(0x0004),
+               cpu_to_le16(PTP_RC_DEVICE_BUSY), 0, 0 },
+/* CANCEL */ { cpu_to_le16(0x0004),
+               cpu_to_le16(PTP_RC_TRANSACTION_CANCELLED), 0, 0 }
 };
 
 static const char *const event_names[] = {
@@ -91,10 +94,8 @@ void ControlReaderThread::sendStatus(enum mtpfs_status status)
     QMutexLocker locker(&m_statusLock);
 
     int bytesWritten = 0;
-    int dataLen = 0x0004; /* TODO: If status size is ever above 0x4 */
+    int dataLen = 4; /* TODO: If status size is ever above 0x4 */
     char *dataptr = (char*)&status_data[status];
-
-    qDebug() << "Sending status on control";
 
     do {
         bytesWritten = write(m_fd, dataptr, dataLen);
@@ -105,8 +106,6 @@ void ControlReaderThread::sendStatus(enum mtpfs_status status)
         dataptr += bytesWritten;
         dataLen -= bytesWritten;
     } while(dataLen);
-
-    qDebug() << "Status sent";
 }
 
 void ControlReaderThread::setStatus(enum mtpfs_status status)
