@@ -175,8 +175,10 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
     // TODO: Re-entrancy, probably needs to be done earlier in the chain
     // ++ Should we be able to interrupt while sending normal data...
     // Aka, do we want a separate thread for Interrupts
-
     bool r;
+
+    // NOTE: This doesn't solve re-entrancy, as it's used for flow
+    m_bulkWrite.m_lock.lock();
 
     m_bulkWrite.setData(m_inFd, data, dataLen, isLastPacket);
     m_bulkWrite.start();
@@ -187,6 +189,7 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
     r = m_bulkWrite.getResult();
 
     m_bulkWrite.m_lock.unlock();
+
 #if 0
     if(!isEvent && isLastPacket)
     {
@@ -207,15 +210,18 @@ bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLa
     // Aka, do we want a separate thread for Interrupts
     bool r;
 
+    // NOTE: This doesn't solve re-entrancy
+    m_intrWrite.m_lock.lock();
+
     m_intrWrite.setData(m_intrFd, data, dataLen, isLastPacket);
     m_intrWrite.start();
 
     while(!m_intrWrite.m_lock.tryLock()) {
         QCoreApplication::processEvents();
     }
-    r = m_bulkWrite.getResult();
+    r = m_intrWrite.getResult();
 
-    m_bulkWrite.m_lock.unlock();
+    m_intrWrite.m_lock.unlock();
 
     return r;
 }
