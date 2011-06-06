@@ -96,10 +96,6 @@ class MTPTransporterUSB : public MTPTransporter
         void resume();
 
     private:
-
-        /// Internal function to send data and event packets
-        bool sendDataOrEvent(const quint8* data, quint32 dataLen, bool isEvent, bool sendZeroPacket);
-
         /// Private function to process data received from the USB driver
         void processReceivedData(quint8* data, quint32 dataLen);
 

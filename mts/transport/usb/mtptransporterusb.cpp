@@ -172,12 +172,52 @@ MTPTransporterUSB::~MTPTransporterUSB()
 
 bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLastPacket)
 {
-    return sendDataOrEvent(data, dataLen, false, isLastPacket);
+    // TODO: Re-entrancy, probably needs to be done earlier in the chain
+    // ++ Should we be able to interrupt while sending normal data...
+    // Aka, do we want a separate thread for Interrupts
+
+    bool r;
+
+    m_bulkWrite.setData(m_inFd, data, dataLen, isLastPacket);
+    m_bulkWrite.start();
+
+    while(!m_bulkWrite.m_lock.tryLock()) {
+        QCoreApplication::processEvents();
+    }
+    r = m_bulkWrite.getResult();
+
+    m_bulkWrite.m_lock.unlock();
+#if 0
+    if(!isEvent && isLastPacket)
+    {
+        if( 0 > fsync(m_usbFd) )
+        {
+            r = false;
+        }
+    }
+#endif
+
+    return r;
 }
 
 bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLastPacket)
 {
-    return sendDataOrEvent(data, dataLen, true, isLastPacket);
+    // TODO: Re-entrancy, probably needs to be done earlier in the chain
+    // ++ Should we be able to interrupt while sending normal data...
+    // Aka, do we want a separate thread for Interrupts
+    bool r;
+
+    m_intrWrite.setData(m_intrFd, data, dataLen, isLastPacket);
+    m_intrWrite.start();
+
+    while(!m_intrWrite.m_lock.tryLock()) {
+        QCoreApplication::processEvents();
+    }
+    r = m_bulkWrite.getResult();
+
+    m_bulkWrite.m_lock.unlock();
+
+    return r;
 }
 
 void MTPTransporterUSB::handleDataRead(char* buffer, int size)
@@ -256,47 +296,6 @@ void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
         data += chunkLen;
         dataLen  -= chunkLen;
     }
-}
-
-bool MTPTransporterUSB::sendDataOrEvent(const quint8* data, quint32 dataLen, bool isEvent, bool isLastPacket)
-{
-    bool r = false;
-    // TODO: Re-entrancy, probably needs to be done earlier in the chain
-    // ++ Should we be able to interrupt while sending normal data...
-    // Aka, do we want a separate thread for Interrupts
-
-    if(isEvent) {
-        m_intrWrite.setData(m_intrFd, data, dataLen, isLastPacket);
-        m_intrWrite.start();
-
-        while(!m_intrWrite.m_lock.tryLock()) {
-            QCoreApplication::processEvents();
-        }
-        r = m_bulkWrite.getResult();
-
-        m_bulkWrite.m_lock.unlock();
-    } else {
-        m_bulkWrite.setData(m_inFd, data, dataLen, isLastPacket);
-        m_bulkWrite.start();
-
-        while(!m_bulkWrite.m_lock.tryLock()) {
-            QCoreApplication::processEvents();
-        }
-        r = m_bulkWrite.getResult();
-
-        m_bulkWrite.m_lock.unlock();
-    }
-
-#if 0
-    if(!isEvent && isLastPacket)
-    {
-        if( 0 > fsync(m_usbFd) )
-        {
-            r = false;
-        }
-    }
-#endif
-    return r;
 }
 
 void MTPTransporterUSB::openDevices()
