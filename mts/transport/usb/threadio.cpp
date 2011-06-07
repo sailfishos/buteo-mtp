@@ -12,12 +12,17 @@
 #include "trace.h"
 
 #include <assert.h>
+#include <endian.h>
+
+#define cpu_to_le16(x)  htole16(x)
+#define cpu_to_le32(x)  htole32(x)
+#define le32_to_cpu(x)  le32toh(x)
+#define le16_to_cpu(x)  le16toh(x)
 
 //#define MAX_DATA_IN_SIZE (64 * 1024)
 #define MAX_DATA_IN_SIZE (64 * 256)
 #define MAX_CONTROL_IN_SIZE 64
 
-// TODO: Endianness..
 const struct ptp_device_status_data status_data[] = {
 /* OK     */ { cpu_to_le16(0x0004),
                cpu_to_le16(PTP_RC_OK), 0, 0 },

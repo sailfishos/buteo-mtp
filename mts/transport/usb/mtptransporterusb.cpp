@@ -98,17 +98,19 @@ bool MTPTransporterUSB::activate()
         }
     }
 
-    openDevices(); // TODO: trigger with Bind?
-    m_ctrl.setFd(m_ctrlFd);
-    QObject::connect(&m_ctrl, SIGNAL(startIO()),
-        this, SLOT(startRead()), Qt::QueuedConnection);
-    QObject::connect(&m_ctrl, SIGNAL(stopIO()),
-        this, SLOT(stopRead()), Qt::QueuedConnection);
-    QObject::connect(&m_ctrl, SIGNAL(deviceReset()),
-        this, SIGNAL(deviceReset()), Qt::QueuedConnection);
-    QObject::connect(&m_ctrl, SIGNAL(cancelTransaction()),
-        this, SIGNAL(cancelTransaction()), Qt::QueuedConnection);
-    m_ctrl.start();
+    if(success) {
+        openDevices(); // TODO: trigger with Bind?
+        m_ctrl.setFd(m_ctrlFd);
+        QObject::connect(&m_ctrl, SIGNAL(startIO()),
+            this, SLOT(startRead()), Qt::QueuedConnection);
+        QObject::connect(&m_ctrl, SIGNAL(stopIO()),
+            this, SLOT(stopRead()), Qt::QueuedConnection);
+        QObject::connect(&m_ctrl, SIGNAL(deviceReset()),
+            this, SIGNAL(deviceReset()), Qt::QueuedConnection);
+        QObject::connect(&m_ctrl, SIGNAL(cancelTransaction()),
+            this, SIGNAL(cancelTransaction()), Qt::QueuedConnection);
+        m_ctrl.start();
+    }
 
     return success;
 }
