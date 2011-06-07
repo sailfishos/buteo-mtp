@@ -154,15 +154,17 @@ void MTPTransporterUSB::reset()
 
     m_bulkRead.interrupt();
     m_bulkWrite.interrupt();
+    m_intrWrite.interrupt();
 
     m_bulkRead.wait();
     m_bulkWrite.wait();
+    m_intrWrite.wait();
 
     m_bulkWrite.m_lock.unlock();
     m_bulkRead.m_lock.unlock();
+    m_intrWrite.m_lock.unlock();
 
     m_bulkRead.start();
-    m_bulkWrite.start();
 
     MTP_LOG_CRITICAL("reset");
 }
@@ -309,13 +311,20 @@ void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
 void MTPTransporterUSB::openDevices()
 {
     m_ioState = ACTIVE;
+
     m_bulkWrite.m_lock.unlock();
+    m_intrWrite.m_lock.unlock();
 
     m_inFd = open(in_file, O_WRONLY);
     if(-1 == m_inFd)
     {
         MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << in_file);
     }
+
+    // TODO: Read state might lock due to the manner of operation,
+    // but we should ensure that it doesn't stick around, it wouldn't
+    // really be nessesary to stop the thread, but make sure it's in the
+    // correct operation state. (The read() will terminate once it's closed)
 
     if(-1 != m_outFd) {
         close(m_outFd);
@@ -344,9 +353,10 @@ void MTPTransporterUSB::closeDevices()
     m_ioState = SUSPENDED;
 
     m_bulkWrite.interrupt();
-    m_bulkWrite.interrupt();
+    m_intrWrite.interrupt();
 
     // FIXME: this probably won't exit properly?
+    // -- It doesn't, fixit
     if(m_outFd != -1) {
         m_bulkRead.m_lock.unlock();
         close(m_outFd);
