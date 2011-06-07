@@ -57,6 +57,30 @@ void IOThread::interrupt()
         pthread_kill(m_handle, SIGUSR1);
 }
 
+bool IOThread::stallWrite()
+{
+    int err;
+    err = write(m_fd, &err, 0);
+    if(err == -1 && errno == EL2HLT) {
+        return true;
+    } else {
+        MTP_LOG_CRITICAL("Unable to halt endpoint");
+        return false;
+    }
+}
+
+bool IOThread::stallRead()
+{
+    int err;
+    err = read(m_fd, &err, 0);
+    if(err == -1 && errno == EL2HLT) {
+        return true;
+    } else {
+        MTP_LOG_CRITICAL("Unable to halt endpoint");
+        return false;
+    }
+}
+
 ControlReaderThread::ControlReaderThread(QObject *parent)
     : IOThread(parent),  m_state(0)
 {

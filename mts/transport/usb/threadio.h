@@ -20,6 +20,9 @@ public:
     void setFd(int fd);
     void interrupt();
 
+    bool stallWrite();
+    bool stallRead();
+
     QMutex m_lock;
 protected:
     pthread_t m_handle;
