@@ -37,8 +37,6 @@
 #include "mtptransporter.h"
 #include "threadio.h"
 
-class QSocketNotifier;
-
 /// \brief The MTPTransporterUSB class implements the transport layer for USB over MTP.
 ///
 /// The MTPTransporterUSB class implements the transport layer for MTP over USB protocol.

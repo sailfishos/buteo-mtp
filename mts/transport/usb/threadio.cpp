@@ -177,8 +177,13 @@ void ControlReaderThread::setupRequest(void *data)
     switch(e->u.setup.bRequest) {
         case PTP_REQ_GET_DEVICE_STATUS:
             qDebug() << "Get Device Status";
-            if(e->u.setup.bRequestType & USB_DIR_IN) {
+            if(e->u.setup.bRequestType == 0xa1) {
                 sendStatus(m_status);
+            } else {
+                if(e->u.setup.bRequestType & USB_DIR_IN)
+                    stallRead();
+                else
+                    stallWrite();
             }
             break;
         case PTP_REQ_CANCEL:
@@ -230,6 +235,10 @@ void BulkReaderThread::run()
 
     m_handle = 0;
 
+    // Known errors to exit here:
+    //   EAGAIN 11 Try Again ** Seems to be triggered from DISABLE/ENABLE
+    //   EINTR   4 Interrupt ** Triggered from SIGUSR1
+
     if(errno != EINTR) {
         MTP_LOG_CRITICAL("BulkReaderThread exited: " << errno);
     }
@@ -279,3 +288,80 @@ bool BulkWriterThread::getResult()
 {
     return m_result;
 }
+
+InterruptWriterThread::InterruptWriterThread(QObject *parent)
+    : IOThread(parent)
+{
+}
+
+InterruptWriterThread::~InterruptWriterThread()
+{
+    QPair<quint8*,int> item;
+    foreach(item, m_buffers) {
+        delete item.first;
+    }
+}
+
+void InterruptWriterThread::setFd(int fd)
+{
+    m_fd = fd;
+}
+
+void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
+{
+    QMutexLocker locker(&m_bufferLock);
+
+    quint8 *copy = (quint8*)malloc(dataLen);
+    if(copy == NULL) {
+        MTP_LOG_CRITICAL("Couldn't allocate memory for events");
+        return;
+    }
+    memcpy(copy, buffer, dataLen);
+
+    m_buffers.append(QPair<quint8*,int>(copy, dataLen));
+
+    qDebug() << "::: New feed: Events in queue: " << m_buffers.length();
+
+    // Incase the event system is waiting empty
+    m_lock.unlock();
+}
+
+void InterruptWriterThread::run()
+{
+    // This is a nasty hack for pthread kill use
+    // Qt documentation says not to use it
+    m_handle = QThread::currentThreadId();
+
+    bool running = true;
+
+    while(running) {
+        if(m_buffers.isEmpty()) {
+            m_lock.tryLock();
+            m_lock.lock();
+        } else {
+            m_bufferLock.lock();
+
+            QPair<quint8*,int> pair = m_buffers.first();
+            m_buffers.removeFirst();
+
+            m_bufferLock.unlock();
+
+            quint8 *dataptr = pair.first;
+            int dataLen = pair.second;
+
+            do {
+                int bytesWritten = write(m_fd, dataptr, dataLen);
+                if(bytesWritten == -1)
+                {
+                    running = false;
+                }
+                dataptr += bytesWritten;
+                dataLen -= bytesWritten;
+            } while(dataLen);
+            qDebug() << "::: Consumed: Events in queue: " << m_buffers.length();
+        }
+    }
+
+    m_handle = 0;
+}
+

@@ -5,6 +5,8 @@
 
 #include <QThread>
 #include <QMutex>
+#include <QPair>
+#include <QList>
 
 enum mtpfs_status {
     MTPFS_STATUS_OK,
@@ -81,6 +83,23 @@ public:
     quint32 m_dataLen;
     bool m_isLastPacket;
     bool m_result;
+};
+
+class InterruptWriterThread : public IOThread {
+    Q_OBJECT
+public:
+    explicit InterruptWriterThread(QObject *parent = 0);
+    ~InterruptWriterThread();
+
+    void setFd(int fd);
+    void addData(const quint8 *buffer, quint32 dataLen);
+    void run();
+
+private:
+    QMutex m_lock;
+
+    QMutex m_bufferLock;
+    QList<QPair<quint8 *,int> > m_buffers;
 };
 
 #endif

@@ -39,7 +39,6 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <sys/ioctl.h>
-#include <QSocketNotifier>
 // FIXME: Change the ioctl header below to a system header inclusion
 #include "mtptransporterusb.h"
 #include "mtpcontainer.h"
@@ -209,6 +208,8 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
 
 bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLastPacket)
 {
+    return true;
+
     // TODO: Re-entrancy, probably needs to be done earlier in the chain
     // ++ Should we be able to interrupt while sending normal data...
     // Aka, do we want a separate thread for Interrupts
@@ -315,7 +316,7 @@ void MTPTransporterUSB::openDevices()
     m_bulkWrite.m_lock.unlock();
     m_intrWrite.m_lock.unlock();
 
-    m_inFd = open(in_file, O_WRONLY);
+    m_inFd = open(in_file, O_RDWR);
     if(-1 == m_inFd)
     {
         MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << in_file);
@@ -331,7 +332,7 @@ void MTPTransporterUSB::openDevices()
         //m_bulkRead.wait();
     }
 
-    m_outFd = open(out_file, O_RDONLY | O_NONBLOCK);
+    m_outFd = open(out_file, O_RDWR);
     if(-1 == m_outFd)
     {
         MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << out_file);
@@ -340,8 +341,7 @@ void MTPTransporterUSB::openDevices()
         m_bulkRead.start();
     }
 
-
-    m_intrFd = open(interrupt_file, O_WRONLY | O_NONBLOCK);
+    m_intrFd = open(interrupt_file, O_RDWR);
     if(-1 == m_intrFd)
     {
         MTP_LOG_CRITICAL("Couldn't open INTR endpoint file " << interrupt_file);
