@@ -94,6 +94,7 @@ public:
     void setFd(int fd);
     void addData(const quint8 *buffer, quint32 dataLen);
     void run();
+    void reset();
 
 private:
     QMutex m_lock;

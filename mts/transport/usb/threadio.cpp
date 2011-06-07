@@ -296,10 +296,7 @@ InterruptWriterThread::InterruptWriterThread(QObject *parent)
 
 InterruptWriterThread::~InterruptWriterThread()
 {
-    QPair<quint8*,int> item;
-    foreach(item, m_buffers) {
-        delete item.first;
-    }
+    reset();
 }
 
 void InterruptWriterThread::setFd(int fd)
@@ -320,7 +317,7 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 
     m_buffers.append(QPair<quint8*,int>(copy, dataLen));
 
-    qDebug() << "::: New feed: Events in queue: " << m_buffers.length();
+    qDebug() << "::: New feed: Events in queue: " << m_buffers.count();
 
     // Incase the event system is waiting empty
     m_lock.unlock();
@@ -333,6 +330,7 @@ void InterruptWriterThread::run()
     m_handle = QThread::currentThreadId();
 
     bool running = true;
+    int readLen, readBuf;
 
     while(running) {
         if(m_buffers.isEmpty()) {
@@ -365,3 +363,13 @@ void InterruptWriterThread::run()
     m_handle = 0;
 }
 
+void InterruptWriterThread::reset()
+{
+    QMutexLocker locker(&m_bufferLock);
+
+    QPair<quint8*,int> item;
+    foreach(item, m_buffers) {
+        delete item.first;
+    }
+    m_buffers.clear();
+}

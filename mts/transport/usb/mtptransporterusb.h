@@ -115,7 +115,7 @@ class MTPTransporterUSB : public MTPTransporter
         ControlReaderThread     m_ctrl;         ///< Threaded IO for Control EP
         BulkReaderThread        m_bulkRead;     ///< Threaded Reader for Bulk Out EP
         BulkWriterThread        m_bulkWrite;    ///< Threaded Writer for Bulk In EP
-        BulkWriterThread        m_intrWrite;    ///< Threaded Writer for Interrupt EP
+        InterruptWriterThread   m_intrWrite;    ///< Threaded Writer for Interrupt EP
 
     public Q_SLOTS:
         /// The usb transporter catches the device ok status signal from the responder and informs the driver about the same.
