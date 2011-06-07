@@ -22,6 +22,7 @@
 //#define MAX_DATA_IN_SIZE (64 * 1024)
 #define MAX_DATA_IN_SIZE (64 * 256)
 #define MAX_CONTROL_IN_SIZE 64
+#define MAX_EVENTS_STORED 16
 
 const struct ptp_device_status_data status_data[] = {
 /* OK     */ { cpu_to_le16(0x0004),
@@ -315,6 +316,14 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
     }
     memcpy(copy, buffer, dataLen);
 
+    if(m_buffers.count() > MAX_EVENTS_STORED) {
+        // TODO: This isn't exactly perfect, the event
+        // that was added the first is in the write block
+        QPair<quint8*,int> pair = m_buffers.first();
+        m_buffers.removeFirst();
+        delete pair.first;
+    }
+
     m_buffers.append(QPair<quint8*,int>(copy, dataLen));
 
     qDebug() << "::: New feed: Events in queue: " << m_buffers.count();
@@ -330,7 +339,6 @@ void InterruptWriterThread::run()
     m_handle = QThread::currentThreadId();
 
     bool running = true;
-    int readLen, readBuf;
 
     while(running) {
         if(m_buffers.isEmpty()) {
@@ -356,6 +364,9 @@ void InterruptWriterThread::run()
                 dataptr += bytesWritten;
                 dataLen -= bytesWritten;
             } while(dataLen);
+
+            free(pair.first);
+
             qDebug() << "::: Consumed: Events in queue: " << m_buffers.length();
         }
     }
