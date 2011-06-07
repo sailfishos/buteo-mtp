@@ -177,7 +177,6 @@ void ControlReaderThread::setupRequest(void *data)
 
     switch(e->u.setup.bRequest) {
         case PTP_REQ_GET_DEVICE_STATUS:
-            qDebug() << "Get Device Status";
             if(e->u.setup.bRequestType == 0xa1) {
                 sendStatus(m_status);
             } else {
@@ -188,11 +187,9 @@ void ControlReaderThread::setupRequest(void *data)
             }
             break;
         case PTP_REQ_CANCEL:
-            qDebug() << "Cancel Transaction";
             emit cancelTransaction();
             break;
         case PTP_REQ_DEVICE_RESET:
-            qDebug() << "Device Reset";
             emit deviceReset();
             break;
         default:
@@ -326,8 +323,6 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 
     m_buffers.append(QPair<quint8*,int>(copy, dataLen));
 
-    qDebug() << "::: New feed: Events in queue: " << m_buffers.count();
-
     // Incase the event system is waiting empty
     m_lock.unlock();
 }
@@ -366,8 +361,6 @@ void InterruptWriterThread::run()
             } while(dataLen);
 
             free(pair.first);
-
-            qDebug() << "::: Consumed: Events in queue: " << m_buffers.length();
         }
     }
 
