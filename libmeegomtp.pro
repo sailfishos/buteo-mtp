@@ -5,7 +5,8 @@ SUBDIRS += mts \
     mts/platform/storage/fsstorageplugin/unittests \
     mts/platform/deviceinfo/unittests \
     mts/platform/storage/fsstorageplugin \
-    mts/protocol/unittests
+    mts/protocol/unittests \
+    service
 
 # install additional files for the CI Integration tests
 citests.path = /usr/share/libmeegomtp-tests/
