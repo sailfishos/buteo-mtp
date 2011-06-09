@@ -12,7 +12,10 @@ SOURCES += service.cpp
 
 #install
 target.path += /usr/bin/
-INSTALLS += target
+target.files = start-mtp.sh mtp_service
+desktop.path = /etc/xdg/autostart
+desktop.files = buteo-mtp.desktop
+INSTALLS += target desktop
 
 #clean
 QMAKE_CLEAN += $(TARGET)
