@@ -57,7 +57,8 @@ static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x0000-\\x
 
 extern "C" StoragePlugin* createStoragePlugin( const quint32& storageId )
 {
-    return new FSStoragePlugin( storageId, MTP_STORAGE_TYPE_FixedRAM, "/home/user/MyDocs", "media", "Phone Memory" );
+    QString storagePath = QDir::homePath() + "/.config/mtpstorage";
+    return new FSStoragePlugin( storageId, MTP_STORAGE_TYPE_FixedRAM, storagePath, "media", "Phone Memory" );
 }
 
 extern "C" void destroyStoragePlugin( StoragePlugin* storagePlugin )
