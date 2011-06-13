@@ -304,6 +304,11 @@ bool BulkWriterThread::getResult()
     return m_result;
 }
 
+void BulkWriterThread::exitThread()
+{
+    interrupt();
+}
+
 InterruptWriterThread::InterruptWriterThread(QObject *parent)
     : IOThread(parent), m_running(false)
 {

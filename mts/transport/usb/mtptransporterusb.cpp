@@ -137,8 +137,7 @@ void MTPTransporterUSB::reset()
     m_containerReadLen = 0;
 
     m_bulkRead.exitThread();
-
-    m_bulkWrite.interrupt();
+    m_bulkWrite.exitThread();
     m_intrWrite.exitThread();
 
     m_bulkRead.wait();
@@ -323,7 +322,7 @@ void MTPTransporterUSB::closeDevices()
     m_ioState = SUSPENDED;
 
     m_bulkRead.exitThread();
-    m_bulkWrite.interrupt();
+    m_bulkWrite.exitThread();
     m_intrWrite.exitThread();
 
     // FIXME: this probably won't exit properly?
