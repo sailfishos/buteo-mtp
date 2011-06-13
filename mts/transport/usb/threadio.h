@@ -63,8 +63,11 @@ public:
     ~BulkReaderThread();
 
     void run();
+    void exitThread();
 
     QMutex m_lock;
+private:
+    bool m_threadRunning;
 signals:
     void dataRead(char *buffer, int size);
 };
@@ -78,7 +81,7 @@ public:
     void run();
     bool getResult();
 
-    private:
+private:
     const quint8 *m_buffer;
     quint32 m_dataLen;
     bool m_isLastPacket;

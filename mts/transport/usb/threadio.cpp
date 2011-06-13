@@ -214,6 +214,7 @@ void BulkReaderThread::run()
     // This is a nasty hack for pthread kill use
     // Qt documentation says not to use it
     m_handle = QThread::currentThreadId();
+    m_threadRunning = true;
 
     char* inbuf = new char[MAX_DATA_IN_SIZE];
 
@@ -223,11 +224,13 @@ void BulkReaderThread::run()
             emit dataRead(inbuf, readSize);
             // This will wait until it's released in the main thread
             m_lock.tryLock();
+            if(!m_threadRunning) break;
             m_lock.lock();
+            if(!m_threadRunning) break;
             inbuf = new char[MAX_DATA_IN_SIZE];
             readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         }
-    } while(errno == ESHUTDOWN);
+    } while(errno == ESHUTDOWN && m_threadRunning);
     //} while(errno == EINTR || errno == ESHUTDOWN);
     // TODO: Handle the exceptions above properly.
 
@@ -240,6 +243,16 @@ void BulkReaderThread::run()
     if(errno != EINTR) {
         MTP_LOG_CRITICAL("BulkReaderThread exited: " << errno);
     }
+}
+
+void BulkReaderThread::exitThread()
+{
+    // Executed in main thread
+    m_threadRunning = false;
+    // TODO: Not 100% reliable operation
+    usleep(10);
+    interrupt();
+    m_lock.unlock();
 }
 
 BulkWriterThread::BulkWriterThread(QObject *parent)

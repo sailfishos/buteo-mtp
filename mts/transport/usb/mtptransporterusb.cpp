@@ -136,14 +136,12 @@ bool MTPTransporterUSB::flushData()
 
 void MTPTransporterUSB::disableRW()
 {
-    m_bulkRead.interrupt();
-    MTP_LOG_CRITICAL("disableRW");
+    m_bulkRead.exitThread();
 }
 
 void MTPTransporterUSB::enableRW()
 {
     m_bulkRead.start();
-    MTP_LOG_CRITICAL("enableRW");
 }
 
 void MTPTransporterUSB::reset()
@@ -151,7 +149,8 @@ void MTPTransporterUSB::reset()
     m_ioState = ACTIVE;
     m_containerReadLen = 0;
 
-    m_bulkRead.interrupt();
+    m_bulkRead.exitThread();
+
     m_bulkWrite.interrupt();
     m_intrWrite.interrupt();
 
@@ -337,6 +336,7 @@ void MTPTransporterUSB::closeDevices()
 {
     m_ioState = SUSPENDED;
 
+    m_bulkRead.exitThread();
     m_bulkWrite.interrupt();
     m_intrWrite.interrupt();
 
