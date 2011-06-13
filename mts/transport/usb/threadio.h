@@ -24,6 +24,7 @@ public:
 
     bool stallWrite();
     bool stallRead();
+    bool stall(bool dirIn);
 
     QMutex m_lock;
 protected:

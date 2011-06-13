@@ -2,7 +2,6 @@
 #include <linux/usb/functionfs.h>
 #include <QMutex>
 #include <QMutexLocker>
-#include <QDebug>
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
@@ -78,6 +77,14 @@ bool IOThread::stallRead()
     }
 }
 
+bool IOThread::stall(bool dirIn)
+{
+    if(dirIn)
+        return stallRead();
+    else
+        return stallWrite();
+}
+
 ControlReaderThread::ControlReaderThread(QObject *parent)
     : IOThread(parent),  m_state(0)
 {
@@ -143,7 +150,7 @@ void ControlReaderThread::setStatus(enum mtpfs_status status)
 
 void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
 {
-    qDebug() << "Event: " << event_names[event->type];
+    //qDebug() << "Event: " << event_names[event->type];
     switch(event->type) {
         case FUNCTIONFS_ENABLE:
         case FUNCTIONFS_RESUME:
@@ -165,22 +172,21 @@ void ControlReaderThread::setupRequest(void *data)
 {
     struct usb_functionfs_event *e = (struct usb_functionfs_event *)data;
 
-    qDebug() << "bRequestType:" << e->u.setup.bRequestType;
-    qDebug() << "bRequest:" << e->u.setup.bRequest;
-    qDebug() << "wValue:" << e->u.setup.wValue;
-    qDebug() << "wIndex:" << e->u.setup.wIndex;
-    qDebug() << "wLength:" << e->u.setup.wLength;
+    /* USB Still Image Capture Device Definition, Section 5 */
+    /* www.usb.org/developers/devclass_docs/usb_still_img10.pdf */
+
+    //qDebug() << "bRequestType:" << e->u.setup.bRequestType;
+    //qDebug() << "bRequest:" << e->u.setup.bRequest;
+    //qDebug() << "wValue:" << e->u.setup.wValue;
+    //qDebug() << "wIndex:" << e->u.setup.wIndex;
+    //qDebug() << "wLength:" << e->u.setup.wLength;
 
     switch(e->u.setup.bRequest) {
         case PTP_REQ_GET_DEVICE_STATUS:
-            if(e->u.setup.bRequestType == 0xa1) {
+            if(e->u.setup.bRequestType == 0xa1)
                 sendStatus(m_status);
-            } else {
-                if(e->u.setup.bRequestType & USB_DIR_IN)
-                    stallRead();
-                else
-                    stallWrite();
-            }
+            else
+                stall((e->u.setup.bRequestType & USB_DIR_IN)>0);
             break;
         case PTP_REQ_CANCEL:
             emit cancelTransaction();
@@ -188,7 +194,9 @@ void ControlReaderThread::setupRequest(void *data)
         case PTP_REQ_DEVICE_RESET:
             emit deviceReset();
             break;
+        //case PTP_REQ_GET_EXTENDED_EVENT_DATA:
         default:
+            stall((e->u.setup.bRequestType & USB_DIR_IN)>0);
             break;
     }
 }
