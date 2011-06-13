@@ -32,8 +32,6 @@
 #ifndef MTPTTRANSPORTERUSB_H
 #define MTPTTRANSPORTERUSB_H
 
-#include <QMutex>
-
 #include "mtptransporter.h"
 #include "threadio.h"
 

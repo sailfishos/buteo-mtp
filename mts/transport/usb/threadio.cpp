@@ -1,18 +1,14 @@
 #include "threadio.h"
 #include <linux/usb/functionfs.h>
-
 #include <QMutex>
 #include <QMutexLocker>
+#include <QDebug>
 #include <errno.h>
-#include <sys/ioctl.h>
-
 #include <pthread.h>
 #include <signal.h>
+#include <endian.h>
 
 #include "trace.h"
-
-#include <assert.h>
-#include <endian.h>
 
 #define cpu_to_le16(x)  htole16(x)
 #define cpu_to_le32(x)  htole32(x)
