@@ -24,6 +24,7 @@ public:
 
     bool stallWrite();
     bool stallRead();
+    bool stall(bool dirIn);
 
     QMutex m_lock;
 protected:
@@ -63,8 +64,11 @@ public:
     ~BulkReaderThread();
 
     void run();
+    void exitThread();
 
     QMutex m_lock;
+private:
+    bool m_threadRunning;
 signals:
     void dataRead(char *buffer, int size);
 };
@@ -77,8 +81,9 @@ public:
     void setData(int fd, const quint8 *buffer, quint32 dataLen, bool isLastPacket);
     void run();
     bool getResult();
+    void exitThread();
 
-    private:
+private:
     const quint8 *m_buffer;
     quint32 m_dataLen;
     bool m_isLastPacket;
@@ -95,9 +100,11 @@ public:
     void addData(const quint8 *buffer, quint32 dataLen);
     void run();
     void reset();
+    void exitThread();
 
 private:
     QMutex m_lock;
+    bool m_running;
 
     QMutex m_bufferLock;
     QList<QPair<quint8 *,int> > m_buffers;

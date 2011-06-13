@@ -414,6 +414,7 @@ void FSStoragePlugin::populatePuoids()
         bytesRead = file.read( name, pathnameLen );
         if( 0 >= bytesRead )
         {
+            delete [] name;
             return;
         }
         name[pathnameLen] = '\0';
@@ -423,6 +424,7 @@ void FSStoragePlugin::populatePuoids()
             id = *(reinterpret_cast<quint32*>(&puoid));
         if( 0 >= bytesRead )
         {
+            delete [] name;
             return;
         }
 

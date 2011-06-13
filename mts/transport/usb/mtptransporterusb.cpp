@@ -30,21 +30,13 @@
 */
 
 #include <stdlib.h>
-#include <dlfcn.h>
 #include <stdio.h>
-#include <errno.h>
-#include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-// FIXME: Change the ioctl header below to a system header inclusion
 #include "mtptransporterusb.h"
 #include "mtpcontainer.h"
-// FIXME include ptp.h when the new driver gets integrated
 #include <linux/usb/functionfs.h>
-#include "ptp.h"
 #include "trace.h"
 #include "threadio.h"
 #include "mtp1descriptors.h"
@@ -52,9 +44,6 @@
 #include <QCoreApplication>
 
 using namespace meegomtp1dot0;
-
-#define MAX_DATA_IN_SIZE 64 * 256
-#define DEFAULT_MAX_PACKET_SIZE 64
 
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
     m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1)
@@ -67,8 +56,6 @@ bool MTPTransporterUSB::activate()
 {
     MTP_LOG_CRITICAL("MTPTransporterUSB::activate");
     int success = false;
-
-    qDebug() << "Registering device:" << mtp1strings.lang0.str1;
 
     m_ctrlFd = open(control_file, O_RDWR);
     if(-1 == m_ctrlFd)
@@ -136,14 +123,12 @@ bool MTPTransporterUSB::flushData()
 
 void MTPTransporterUSB::disableRW()
 {
-    m_bulkRead.interrupt();
-    MTP_LOG_CRITICAL("disableRW");
+    m_bulkRead.exitThread();
 }
 
 void MTPTransporterUSB::enableRW()
 {
     m_bulkRead.start();
-    MTP_LOG_CRITICAL("enableRW");
 }
 
 void MTPTransporterUSB::reset()
@@ -151,9 +136,9 @@ void MTPTransporterUSB::reset()
     m_ioState = ACTIVE;
     m_containerReadLen = 0;
 
-    m_bulkRead.interrupt();
-    m_bulkWrite.interrupt();
-    m_intrWrite.interrupt();
+    m_bulkRead.exitThread();
+    m_bulkWrite.exitThread();
+    m_intrWrite.exitThread();
 
     m_bulkRead.wait();
     m_bulkWrite.wait();
@@ -176,8 +161,6 @@ MTPTransporterUSB::~MTPTransporterUSB()
 bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLastPacket)
 {
     // TODO: Re-entrancy, probably needs to be done earlier in the chain
-    // ++ Should we be able to interrupt while sending normal data...
-    // Aka, do we want a separate thread for Interrupts
     bool r;
 
     // NOTE: This doesn't solve re-entrancy, as it's used for flow
@@ -295,7 +278,8 @@ void MTPTransporterUSB::openDevices()
 {
     m_ioState = ACTIVE;
 
-    m_intrWrite.interrupt();
+    if(m_intrWrite.isRunning())
+        m_intrWrite.exitThread();
     m_bulkWrite.m_lock.unlock();
 
     m_inFd = open(in_file, O_RDWR);
@@ -337,8 +321,9 @@ void MTPTransporterUSB::closeDevices()
 {
     m_ioState = SUSPENDED;
 
-    m_bulkWrite.interrupt();
-    m_intrWrite.interrupt();
+    m_bulkRead.exitThread();
+    m_bulkWrite.exitThread();
+    m_intrWrite.exitThread();
 
     // FIXME: this probably won't exit properly?
     // -- It doesn't, fixit
@@ -373,5 +358,4 @@ void MTPTransporterUSB::stopRead()
 
 void MTPTransporterUSB::handleHighPriorityData()
 {
-    MTP_LOG_CRITICAL("handleHighPriorityData");
 }
