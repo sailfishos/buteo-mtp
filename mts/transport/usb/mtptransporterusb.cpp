@@ -139,7 +139,7 @@ void MTPTransporterUSB::reset()
     m_bulkRead.exitThread();
 
     m_bulkWrite.interrupt();
-    m_intrWrite.interrupt();
+    m_intrWrite.exitThread();
 
     m_bulkRead.wait();
     m_bulkWrite.wait();
@@ -279,7 +279,8 @@ void MTPTransporterUSB::openDevices()
 {
     m_ioState = ACTIVE;
 
-    m_intrWrite.interrupt();
+    if(m_intrWrite.isRunning())
+        m_intrWrite.exitThread();
     m_bulkWrite.m_lock.unlock();
 
     m_inFd = open(in_file, O_RDWR);
@@ -323,7 +324,7 @@ void MTPTransporterUSB::closeDevices()
 
     m_bulkRead.exitThread();
     m_bulkWrite.interrupt();
-    m_intrWrite.interrupt();
+    m_intrWrite.exitThread();
 
     // FIXME: this probably won't exit properly?
     // -- It doesn't, fixit

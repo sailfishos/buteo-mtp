@@ -81,6 +81,7 @@ public:
     void setData(int fd, const quint8 *buffer, quint32 dataLen, bool isLastPacket);
     void run();
     bool getResult();
+    void exitThread();
 
 private:
     const quint8 *m_buffer;
@@ -99,9 +100,11 @@ public:
     void addData(const quint8 *buffer, quint32 dataLen);
     void run();
     void reset();
+    void exitThread();
 
 private:
     QMutex m_lock;
+    bool m_running;
 
     QMutex m_bufferLock;
     QList<QPair<quint8 *,int> > m_buffers;

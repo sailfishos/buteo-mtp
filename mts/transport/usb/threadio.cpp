@@ -305,7 +305,7 @@ bool BulkWriterThread::getResult()
 }
 
 InterruptWriterThread::InterruptWriterThread(QObject *parent)
-    : IOThread(parent)
+    : IOThread(parent), m_running(false)
 {
 }
 
@@ -322,6 +322,7 @@ void InterruptWriterThread::setFd(int fd)
 void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 {
     QMutexLocker locker(&m_bufferLock);
+    int overflow;
 
     quint8 *copy = (quint8*)malloc(dataLen);
     if(copy == NULL) {
@@ -330,12 +331,20 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
     }
     memcpy(copy, buffer, dataLen);
 
-    if(m_buffers.count() > MAX_EVENTS_STORED) {
-        // TODO: This isn't exactly perfect, the event
-        // that was added the first is in the write block
-        QPair<quint8*,int> pair = m_buffers.first();
-        m_buffers.removeFirst();
-        delete pair.first;
+    if(m_buffers.count() >= MAX_EVENTS_STORED) {
+        // It is possible that that sometimes the interrupt will miss
+        // consuming evevents, this is here to keep it from going out
+        // of hand slowly over time
+        overflow = m_buffers.count() - MAX_EVENTS_STORED;
+        if(overflow > 0) {
+            while(overflow--) {
+                QPair<quint8*,int> pair = m_buffers.first();
+                m_buffers.removeFirst();
+                delete pair.first;
+            }
+        }
+        // This will discard the oldest event
+        interrupt();
     }
 
     m_buffers.append(QPair<quint8*,int>(copy, dataLen));
@@ -350,9 +359,9 @@ void InterruptWriterThread::run()
     // Qt documentation says not to use it
     m_handle = QThread::currentThreadId();
 
-    bool running = true;
+    m_running = true;
 
-    while(running) {
+    while(m_running) {
         if(m_buffers.isEmpty()) {
             m_lock.tryLock();
             m_lock.lock();
@@ -371,7 +380,8 @@ void InterruptWriterThread::run()
                 int bytesWritten = write(m_fd, dataptr, dataLen);
                 if(bytesWritten == -1)
                 {
-                    running = false;
+                    if(errno != EINTR)
+                        m_running = false;
                 }
                 dataptr += bytesWritten;
                 dataLen -= bytesWritten;
@@ -393,4 +403,11 @@ void InterruptWriterThread::reset()
         delete item.first;
     }
     m_buffers.clear();
+}
+
+void InterruptWriterThread::exitThread()
+{
+    m_running = false;
+    interrupt();
+    m_lock.unlock();
 }
