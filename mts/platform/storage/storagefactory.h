@@ -43,7 +43,7 @@ class QDir;
 namespace meegomtp1dot0
 {
 class StoragePlugin;
-const QString pluginLocation = "/usr/share/mtp";
+const QString pluginLocation = "/usr/lib/mtp";
 const QString CREATE_STORAGE_PLUGIN = "createStoragePlugin";
 const QString DESTROY_STORAGE_PLUGIN = "destroyStoragePlugin";
 typedef StoragePlugin* (*CREATE_STORAGE_PLUGIN_FPTR)( const quint32& storageId );
