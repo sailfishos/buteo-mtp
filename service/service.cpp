@@ -32,8 +32,11 @@
 
 using namespace meegomtp1dot0;
 
-void signalHandler(int /*signum*/)
+void signalHandler(int signum)
 {
+    if(signum == SIGUSR1)
+        return;
+
     // Is this async safe?
     Mts::destroyInstance();
     _exit(0);
@@ -45,6 +48,7 @@ int main(int argc, char** argv)
 
     signal(SIGINT, &signalHandler);
     signal(SIGALRM, &signalHandler);
+    signal(SIGUSR1, &signalHandler);
 
     QObject::connect(&app,SIGNAL(aboutToQuit()),Mts::getInstance(),SLOT(destroyInstance()));
 
