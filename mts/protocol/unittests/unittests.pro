@@ -4,7 +4,7 @@
 
 CONFIG += qtestlib warn_off debug_and_release
 LIBS += -lcontextsubscriber
-LIBS += -lsynccommon
+LIBS += -lsynccommon -ldl
 TEMPLATE = app
 TARGET = protocol-test
 QT -= gui
@@ -34,7 +34,8 @@ INCLUDEPATH += . \
                ../../transport \
                ../../transport/dummy \
                ../../transport/usb \
-               ../../common 
+               ../../common  \
+               ../../../include
 
 # Input
 HEADERS += mtpresponder_test.h \

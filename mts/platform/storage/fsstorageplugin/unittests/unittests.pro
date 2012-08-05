@@ -4,7 +4,7 @@
 
 CONFIG += qtestlib warn_off debug_and_release
 LIBS += -lqttracker -lcontextsubscriber
-LIBS += -lsynccommon
+LIBS += -lsynccommon -ldl
 TEMPLATE = app
 TARGET = storage-test
 QT += dbus xml
@@ -30,7 +30,8 @@ INCLUDEPATH += . \
 	       ../../../../transport/usb \
 	       ../../../../platform \
 	       ../../../../platform/deviceinfo\
-	       ../../../../common 
+	       ../../../../common \
+	       ../../../../../include
 
 # Input
 HEADERS += fsstorageplugin_test.h \

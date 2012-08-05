@@ -33,7 +33,8 @@ INCLUDEPATH += . \
                platform/deviceinfo \
                transport \
                transport/dummy \
-               transport/usb 
+               transport/usb \
+               ../include
 
 # Input
 
