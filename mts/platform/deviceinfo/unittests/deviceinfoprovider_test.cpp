@@ -40,7 +40,7 @@ void DeviceInfoProvider_Test::initTestCase()
     m_Provider = 0;
     QFile::remove("/tmp/deviceinfo.xml");
     // Copy the XML file over to tmp directory
-    QCOMPARE(QFile::copy("/usr/share/libmeegomtp-tests/deviceinfo.xml", "/tmp/deviceinfo.xml"), true);
+    QCOMPARE(QFile::copy("/opt/tests/buteo-mtp/data/deviceinfo.xml", "/tmp/deviceinfo.xml"), true);
     m_xmlDoc = new QDomDocument();
     //QCOMPARE(m_xmlDoc->setContent(&QFile("/tmp/deviceinfo.xml")), true);
 }

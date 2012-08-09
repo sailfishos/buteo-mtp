@@ -9,7 +9,7 @@ SUBDIRS += mts \
     service
 
 # install additional files for the CI Integration tests
-citests.path = /usr/share/libmeegomtp-tests/
+citests.path = /opt/tests/buteo-mtp/test-definition/
 citests.files = tests.xml
 INSTALLS += citests
 #HEADERS = mts/common/mtp_dbus.h

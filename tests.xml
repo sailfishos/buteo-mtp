@@ -17,15 +17,15 @@
       <!-- test cases for the testset -->
       <case name="deviceinfo-test" type="Functional" description="Testing Device Info"  timeout="900" subfeature="">
         <!-- Step for the tests-->
-        <step expected_result="0"> /usr/share/libmeegomtp-tests/deviceinfo-test > $HOME/mtpadditionalresult.xml </step>
+        <step expected_result="0"> /opt/tests/buteo-mtp/deviceinfo-test > $HOME/mtpadditionalresult.xml </step>
       </case>
       
       <case name="storage-test" type="Functional" description="Testing Storage" timeout="900" subfeature="">
-        <step expected_result="0"> /usr/share/libmeegomtp-tests/storage-test >> $HOME/mtpadditionalresult.xml </step>
+        <step expected_result="0"> /opt/tests/buteo-mtp/storage-test >> $HOME/mtpadditionalresult.xml </step>
       </case>
       
       <case name="protocol-test" type="Functional" description="Testing Protocol Stack" timeout="900" subfeature="">
-        <step expected_result="0"> /usr/share/libmeegomtp-tests/protocol-test >> $HOME/mtpadditionalresult.xml </step>
+        <step expected_result="0"> /opt/tests/buteo-mtp/protocol-test >> $HOME/mtpadditionalresult.xml </step>
       </case>
 
       <!-- Environments - tell where the tests are run -->

@@ -22,7 +22,7 @@ contains( DRIVER, nogadgetfs ) {
 }
 
 #install
-target.path += /usr/bin/
+target.path += /opt/tests/buteo-mtp/
 INSTALLS += target
 
 #clean

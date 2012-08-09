@@ -83,7 +83,7 @@ SOURCES += mtpresponder_test.cpp \
            ../../transport/dummy/mtptransporterdummy.cpp \
 	       ../../mts.cpp
 
-target.path = /usr/bin
+target.path = /opt/tests/buteo-mtp/
 INSTALLS += target
 
 #clean

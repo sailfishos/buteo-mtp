@@ -33,10 +33,10 @@ SOURCES += deviceinfoprovider_test.cpp \
         ../contextsubscriber.cpp \
         ../xmlhandler.cpp
 
-target.path = /usr/bin
+target.path = /opt/tests/buteo-mtp/
 INSTALLS += target
 
-data.path = /usr/share/libmeegomtp-tests
+data.path = /opt/tests/buteo-mtp/data/
 data.files = ../../../deviceInfo.xml
 
 INSTALLS += data

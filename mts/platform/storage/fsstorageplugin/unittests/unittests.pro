@@ -90,7 +90,7 @@ SOURCES += fsstorageplugin_test.cpp \
            ../../../platform/deviceinfo/deviceinfoprovider.cpp \
            ../../../platform/deviceinfo/deviceinfo.cpp
 
-target.path = /usr/bin
+target.path = /opt/tests/buteo-mtp/
 INSTALLS += target
 
 #clean
