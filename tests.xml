@@ -1,49 +1,20 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-
 <testdefinition version="0.1">
-
   <!-- Test suite, name libmeegomtp-tests, the same as test package name -->
   <suite name="libmeegomtp-tests" domain="synchronization"> 
-  
     <!-- At least one set per suite, name and description mandatory -->
     <set name="libmeegomtp-tests-set1" description="libmeegomtp-tests" feature="libmeegomtp unit tests">   
-          
-      <pre_steps>
-        <!-- sleep for a while, wait for device to initialize the startup settings -->
-        <step>sleep 2</step>
-        <!-- TODO  if some setup required add here ,before running the tests-->     
-      </pre_steps>
-
       <!-- test cases for the testset -->
       <case name="deviceinfo-test" type="Functional" description="Testing Device Info"  timeout="900" subfeature="">
         <!-- Step for the tests-->
-        <step expected_result="0"> /opt/tests/buteo-mtp/deviceinfo-test > $HOME/mtpadditionalresult.xml </step>
+        <step expected_result="0">/opt/tests/buteo-mtp/deviceinfo-test</step>
       </case>
-      
       <case name="storage-test" type="Functional" description="Testing Storage" timeout="900" subfeature="">
-        <step expected_result="0"> /opt/tests/buteo-mtp/storage-test >> $HOME/mtpadditionalresult.xml </step>
+        <step expected_result="0">/opt/tests/buteo-mtp/storage-test</step>
       </case>
-      
       <case name="protocol-test" type="Functional" description="Testing Protocol Stack" timeout="900" subfeature="">
-        <step expected_result="0"> /opt/tests/buteo-mtp/protocol-test >> $HOME/mtpadditionalresult.xml </step>
+        <step expected_result="0">/opt/tests/buteo-mtp/protocol-test</step>
       </case>
-
-      <!-- Environments - tell where the tests are run -->
-      <environments>
-        <scratchbox>false</scratchbox>
-        
-        <!-- Make the below value to true, if you want to run the test in device -->
-        <hardware>true</hardware>   
-      </environments>
- 
-      <!-- Fetches additional result files -->
-      <get>
-        <file>$HOME/mtpadditionalresult.xml</file>         
-      </get>         
-      
     </set>
-    
   </suite>
 </testdefinition>
-
-
