@@ -38,11 +38,13 @@ using namespace meegomtp1dot0;
 void DeviceInfoProvider_Test::initTestCase()
 {
     m_Provider = 0;
+    m_xmlFile = 0;
     QFile::remove("/tmp/deviceinfo.xml");
     // Copy the XML file over to tmp directory
     QCOMPARE(QFile::copy("/opt/tests/buteo-mtp/data/deviceinfo.xml", "/tmp/deviceinfo.xml"), true);
     m_xmlDoc = new QDomDocument();
-    //QCOMPARE(m_xmlDoc->setContent(&QFile("/tmp/deviceinfo.xml")), true);
+    m_xmlFile = new QFile("/tmp/deviceinfo.xml");
+    QCOMPARE(m_xmlDoc->setContent(m_xmlFile), true);
 }
 
 void DeviceInfoProvider_Test::cleanupTestCase()
@@ -57,6 +59,13 @@ void DeviceInfoProvider_Test::cleanupTestCase()
         delete m_xmlDoc;
         m_xmlDoc = 0;
     }
+    if(m_xmlFile)
+    {
+        m_xmlFile->close();
+        delete m_xmlFile;
+        m_xmlFile = 0;
+    }
+
     QFile::remove("/tmp/deviceinfo.xml");
 }
 
