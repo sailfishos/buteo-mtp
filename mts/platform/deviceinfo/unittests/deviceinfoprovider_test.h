@@ -94,6 +94,7 @@ class DeviceInfoProvider_Test : public QObject
     private:
     DeviceInfoProvider* m_Provider;
     QDomDocument*       m_xmlDoc;
+    QFile*              m_xmlFile;
 };
 }
 #endif

@@ -41,6 +41,7 @@ int totalCount = 17;
 
 void FSStoragePlugin_test::initTestCase()
 {
+
     QDir dir;
     QFile file( QDir::homePath() + "/.mtp/.mtphandles");
     if( file.open( QIODevice::ReadOnly ) )
@@ -198,7 +199,7 @@ void FSStoragePlugin_test::initTestCase()
     
     ::tracker()->rawSparqlUpdateQuery(query);
 
-    query = "INSERT {<urn:playlist:pl1> nfo:hasMediaFileListEntry <urn:playlist-entry:pl1:0> . <urn:playlist-entry:pl1:0> a nfo:MediaFileListEntry . <urn:playlist-entry:pl1:0> nfo:entryContent <file:///tmp/mtptests/Music/song1.mp3> . <urn:playlist-entry:pl1:0> nfo:listPosition '0' . <urn:playlist:pl1> nfo:hasMediaFileListEntry <urn:playlist-entry:pl1:1> . <urn:playlist-entry:pl1:1> a nfo:MediaFileListEntry . <urn:playlist-entry:pl1:1> nfo:entryContent <file:///tmp/mtptests/Music/song2.mp3> . <urn:playlist-entry:pl1:1> nfo:listPosition '1' .}";
+    query = "INSERT {<urn:playlist:pl1> nfo:hasMediaFileListEntry <urn:playlist-entry:pl1:0> . <urn:playlist-entry:pl1:0> a nfo:MediaFileListEntry . <urn:playlist-entry:pl1:0> nfo:entryUrl <file:///tmp/mtptests/Music/song1.mp3> . <urn:playlist-entry:pl1:0> nfo:listPosition '0' . <urn:playlist:pl1> nfo:hasMediaFileListEntry <urn:playlist-entry:pl1:1> . <urn:playlist-entry:pl1:1> a nfo:MediaFileListEntry . <urn:playlist-entry:pl1:1> nfo:entryUrl <file:///tmp/mtptests/Music/song2.mp3> . <urn:playlist-entry:pl1:1> nfo:listPosition '1' .}";
     
     ::tracker()->rawSparqlUpdateQuery(query);
 
@@ -215,7 +216,7 @@ void FSStoragePlugin_test::initTestCase()
     
     ::tracker()->rawSparqlUpdateQuery(query);
 
-    query = "INSERT {<urn:playlist:pl2> nfo:hasMediaFileListEntry <urn:playlist-entry:pl2:0> . <urn:playlist-entry:pl2:0> a nfo:MediaFileListEntry . <urn:playlist-entry:pl2:0> nfo:entryContent <file:///tmp/mtptests/Music/song3.mp3> . <urn:playlist-entry:pl2:0> nfo:listPosition '0' . <urn:playlist:pl2> nfo:hasMediaFileListEntry <urn:playlist-entry:pl2:1> . <urn:playlist-entry:pl2:1> a nfo:MediaFileListEntry . <urn:playlist-entry:pl2:1> nfo:entryContent <file:///tmp/mtptests/Music/song4.mp3> . <urn:playlist-entry:pl2:1> nfo:listPosition '1' .}";
+    query = "INSERT {<urn:playlist:pl2> nfo:hasMediaFileListEntry <urn:playlist-entry:pl2:0> . <urn:playlist-entry:pl2:0> a nfo:MediaFileListEntry . <urn:playlist-entry:pl2:0> nfo:entryUrl <file:///tmp/mtptests/Music/song3.mp3> . <urn:playlist-entry:pl2:0> nfo:listPosition '0' . <urn:playlist:pl2> nfo:hasMediaFileListEntry <urn:playlist-entry:pl2:1> . <urn:playlist-entry:pl2:1> a nfo:MediaFileListEntry . <urn:playlist-entry:pl2:1> nfo:entryUrl <file:///tmp/mtptests/Music/song4.mp3> . <urn:playlist-entry:pl2:1> nfo:listPosition '1' .}";
     
     ::tracker()->rawSparqlUpdateQuery(query);
 
@@ -229,6 +230,7 @@ void  FSStoragePlugin_test::testStorageCreation()
     {
         dir.mkdir( "Playlists" );
     }
+
     m_storage->enumerateStorage();
     QVERIFY( m_storage->m_root != 0 );
     QCOMPARE( m_storage->m_root->m_handle, static_cast<unsigned int>(0) );
@@ -1486,7 +1488,6 @@ void FSStoragePlugin_test::testReadPlaylists()
     ObjHandle playlistsDirHandle = 0;
     playlistsDirHandle = m_storage->m_pathNamesMap["/tmp/mtptests/Playlists"];
     QCOMPARE(playlistsDirHandle != 0, true);
-
     // Get children of the playlists directory
     QVector<ObjHandle> playlists;
     MTPResponseCode response = m_storage->getObjectHandles(0x0000, playlistsDirHandle, playlists);
@@ -1613,7 +1614,7 @@ void FSStoragePlugin_test::testPlaylistsPersistence()
     QCOMPARE(resultSet.size(), 1);
     QCOMPARE(resultSet[0][0], QString("MyPlaylist"));
 
-    query = QString("SELECT ?f WHERE{<") + urn + QString("> nie:url ?f}");
+    query = QString("SELECT ?f WHERE{<") + urn + QString("> nie:identifier ?f}");
     resultSet = ::tracker()->rawSparqlQuery(query);
     QCOMPARE(resultSet.size(), 1);
     QCOMPARE(resultSet[0][0], QString("file:///tmp/mtptests/Playlists/MyPlaylist"));
@@ -1625,22 +1626,22 @@ void FSStoragePlugin_test::testPlaylistsPersistence()
 
     // Query the entry content's uri to ensure that the playlist entries were
     // added correctly
-    query = QString("SELECT ?f WHERE{<") + resultSetAll[0][0] + QString("> nfo:entryContent ?f}");
+    query = QString("SELECT ?f WHERE{<") + resultSetAll[0][0] + QString("> nfo:entryUrl ?f}");
     resultSet = ::tracker()->rawSparqlQuery(query);
     QCOMPARE(resultSet.size(), 1);
     QCOMPARE(resultSet[0][0], QString("file:///tmp/mtptests/Music/song1.mp3"));
 
-    query = QString("SELECT ?f WHERE{<") + resultSetAll[1][0] + QString("> nfo:entryContent ?f}");
+    query = QString("SELECT ?f WHERE{<") + resultSetAll[1][0] + QString("> nfo:entryUrl ?f}");
     resultSet = ::tracker()->rawSparqlQuery(query);
     QCOMPARE(resultSet.size(), 1);
     QCOMPARE(resultSet[0][0], QString("file:///tmp/mtptests/Music/song2.mp3"));
 
-    query = QString("SELECT ?f WHERE{<") + resultSetAll[2][0] + QString("> nfo:entryContent ?f}");
+    query = QString("SELECT ?f WHERE{<") + resultSetAll[2][0] + QString("> nfo:entryUrl ?f}");
     resultSet = ::tracker()->rawSparqlQuery(query);
     QCOMPARE(resultSet.size(), 1);
     QCOMPARE(resultSet[0][0], QString("file:///tmp/mtptests/Music/song3.mp3"));
 
-    query = QString("SELECT ?f WHERE{<") + resultSetAll[3][0] + QString("> nfo:entryContent ?f}");
+    query = QString("SELECT ?f WHERE{<") + resultSetAll[3][0] + QString("> nfo:entryUrl ?f}");
     resultSet = ::tracker()->rawSparqlQuery(query);
     QCOMPARE(resultSet.size(), 1);
     QCOMPARE(resultSet[0][0], QString("file:///tmp/mtptests/Music/song4.mp3"));
