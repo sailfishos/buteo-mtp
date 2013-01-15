@@ -91,6 +91,7 @@ class DeviceInfoProvider_Test : public QObject
     void testGetVideoMinKFD();
     void testGetVideoMaxKFD();
     void testGetSupportedAudioCodecs();
+    void testGetDeviceInfoXmlPath();
     private:
     DeviceInfoProvider* m_Provider;
     QDomDocument*       m_xmlDoc;

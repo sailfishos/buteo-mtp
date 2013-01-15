@@ -34,6 +34,7 @@
 #include <QXmlSimpleReader>
 #include <QDomDocument>
 #include <QTextStream>
+#include <QProcess>
 #include "xmlhandler.h"
 #include "deviceinfo.h"
 #include "trace.h"
@@ -202,7 +203,7 @@ quint16 DeviceInfo::m_devPropsSupportedTable[] = {
     MTP_DEV_PROPERTY_Device_Friendly_Name
 };
 
-QString DeviceInfo::m_devinceInfoXmlPath = "/home/user/.mtpdeviceinfo.xml";
+QString DeviceInfo::m_deviceInfoXmlPath;
 
 //Constructor, first store default values for device properties. Next,
 //fetch the same from an xml file. If xml parsing fails, the hardcoded
@@ -242,12 +243,14 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
 
     // Kludge : till we know how and where to securely install a file
     // that can be modifed by an apllication.
-    QFile fileDst(m_devinceInfoXmlPath);
+    QFile fileDst(getDeviceInfoXmlPath());
+#ifndef UT_ON
     QFile fileSrc("/usr/share/mtp/deviceinfo.xml");
-    if( "/home/user/.mtpdeviceinfo.xml" == m_devinceInfoXmlPath && !fileDst.exists() )
+    if( !fileDst.exists() )
     {
-        fileSrc.copy(m_devinceInfoXmlPath);
+        fileSrc.copy(m_deviceInfoXmlPath);
     }
+#endif // UT_ON
     fileDst.open(QIODevice::ReadOnly | QIODevice::Text);
     QXmlSimpleReader xmlReader;
     QXmlInputSource source(&fileDst);
@@ -456,7 +459,7 @@ void DeviceInfo::modifyDeviceInfoXml( QString devPropName, QString value )
 {
     QDomDocument document;
     QDomElement element;
-    QFile file(m_devinceInfoXmlPath);
+    QFile file(getDeviceInfoXmlPath());
     if( file.open( QIODevice::ReadOnly) )
     {
         document.setContent(&file);
@@ -480,6 +483,41 @@ void DeviceInfo::modifyDeviceInfoXml( QString devPropName, QString value )
             }
         }
     }
+}
+
+/*******************************************
+ * QString DeviceInfo::getDeviceInfoXmlPath
+ ******************************************/
+QString DeviceInfo::getDeviceInfoXmlPath()
+{
+    if (m_deviceInfoXmlPath.isEmpty()) {
+        QString tmpPath = QProcessEnvironment::systemEnvironment().value("HOME");
+        if (tmpPath.isEmpty()) {
+            // $home not available, try something else ..
+            QProcess process;
+            QStringList args;
+            args << "-c" << "grep ^UID_MIN /etc/login.defs | gawk '{ print $2 }' ""| xargs getent passwd | cut -d ':' -f 6";
+            process.start("/bin/sh", args );
+            process.waitForFinished();
+            tmpPath = process.readAllStandardOutput();
+            tmpPath = tmpPath.trimmed();
+        }
+        if (tmpPath.isEmpty()) {
+            MTP_LOG_WARNING("could not obtain home dir, using /tmp for .mtpdeviceinfo.xml");
+            tmpPath = "/tmp";
+        }
+
+        m_deviceInfoXmlPath = tmpPath + "/.mtpdeviceinfo.xml";
+    }
+    return m_deviceInfoXmlPath;
+}
+
+/*******************************************
+ * void DeviceInfo::setDeviceInfoXmlPath
+ ******************************************/
+void DeviceInfo::setDeviceInfoXmlPath(const QString path)
+{
+    m_deviceInfoXmlPath = path;
 }
 
 /*******************************************
