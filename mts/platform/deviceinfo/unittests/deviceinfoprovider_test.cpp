@@ -30,7 +30,7 @@
 */
 #include <stdlib.h>
 #include <QDomDocument>
-#include <QProcessEnvironment>
+#include <QDir>
 #include "deviceinfoprovider_test.h"
 #include "deviceinfoprovider.h"
 
@@ -405,21 +405,8 @@ void DeviceInfoProvider_Test::testGetDeviceInfoXmlPath()
 {
     DeviceInfo::setDeviceInfoXmlPath("");
     QString path = DeviceInfo::getDeviceInfoXmlPath();
-    if (path.isEmpty())
-        QFAIL ("getDeviceInfoXmlPath() returned empty path");
-    if (path == "/tmp/.mtpdeviceinfo.xml")
-        QFAIL ("getDeviceInfoXmlPath() failed to obtain home ");
-
-    DeviceInfo::setDeviceInfoXmlPath("");
-    // Unset $HOME to test the $HOME not available branch on getDeviceInfoXmlPath()
-    const char* home = getenv("HOME");
-    QCOMPARE (unsetenv("HOME"), 0);
-    path = DeviceInfo::getDeviceInfoXmlPath();
-    QCOMPARE (setenv("HOME", home, 1), 0);
-    if (path.isEmpty())
-        QFAIL ("getDeviceInfoXmlPath() returned empty path");
-    if (path == "/tmp/.mtpdeviceinfo.xml")
-        QFAIL ("getDeviceInfoXmlPath() failed to obtain home ");
+    QVERIFY(!path.isEmpty());
+    QVERIFY(QDir(QDir::homePath()).exists());
 }
 
 QTEST_APPLESS_MAIN(DeviceInfoProvider_Test);

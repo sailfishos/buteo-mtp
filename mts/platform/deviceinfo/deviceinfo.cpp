@@ -34,7 +34,7 @@
 #include <QXmlSimpleReader>
 #include <QDomDocument>
 #include <QTextStream>
-#include <QProcess>
+#include <QDir>
 #include "xmlhandler.h"
 #include "deviceinfo.h"
 #include "trace.h"
@@ -491,22 +491,10 @@ void DeviceInfo::modifyDeviceInfoXml( QString devPropName, QString value )
 QString DeviceInfo::getDeviceInfoXmlPath()
 {
     if (m_deviceInfoXmlPath.isEmpty()) {
-        QString tmpPath = QProcessEnvironment::systemEnvironment().value("HOME");
+        QString tmpPath = QDir::homePath();
         if (tmpPath.isEmpty()) {
-            // $home not available, try something else ..
-            QProcess process;
-            QStringList args;
-            args << "-c" << "grep ^UID_MIN /etc/login.defs | gawk '{ print $2 }' ""| xargs getent passwd | cut -d ':' -f 6";
-            process.start("/bin/sh", args );
-            process.waitForFinished();
-            tmpPath = process.readAllStandardOutput();
-            tmpPath = tmpPath.trimmed();
+            qFatal("DeviceInfo: can't determine home directory");
         }
-        if (tmpPath.isEmpty()) {
-            MTP_LOG_WARNING("could not obtain home dir, using /tmp for .mtpdeviceinfo.xml");
-            tmpPath = "/tmp";
-        }
-
         m_deviceInfoXmlPath = tmpPath + "/.mtpdeviceinfo.xml";
     }
     return m_deviceInfoXmlPath;
