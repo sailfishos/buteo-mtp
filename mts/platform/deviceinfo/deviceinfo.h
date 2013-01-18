@@ -381,7 +381,12 @@ private:
     static quint16 m_eventsSupportedTable[];
     ///< default values for supported MTP device properties.
     static quint16 m_devPropsSupportedTable[];
-
+    ///< The xml file that stores default values for device properties.
+    static QString m_deviceInfoXmlPath;
+    ///< Getter for m_deviceInfoXmlFile.
+    static QString getDeviceInfoXmlPath();
+    ///< Setter for m_deviceInfoXmlFile.
+    static void setDeviceInfoXmlPath(const QString path);
     void modifyDeviceInfoXml( QString devPropName, QString value );
 };
 }

@@ -28,8 +28,9 @@
 * OF THE POSSIBILITY OF SUCH DAMAGE.
 *
 */
-
+#include <stdlib.h>
 #include <QDomDocument>
+#include <QDir>
 #include "deviceinfoprovider_test.h"
 #include "deviceinfoprovider.h"
 
@@ -72,7 +73,7 @@ void DeviceInfoProvider_Test::cleanupTestCase()
 
 void DeviceInfoProvider_Test::testDeviceInfoProviderDefaultConstruction()
 {
-    DeviceInfo::m_devinceInfoXmlPath = "/tmp/deviceinfo.m_xml";
+    DeviceInfo::setDeviceInfoXmlPath("/tmp/m_deviceinfo.xml");
     m_Provider = new DeviceInfoProvider();
     QCOMPARE(m_Provider->syncPartner(), QString("Nokia"));
     QCOMPARE(m_Provider->copyrightInfo(), QString("Do Not Copy"));
@@ -85,7 +86,7 @@ void DeviceInfoProvider_Test::testDeviceInfoProviderDefaultConstruction()
 
 void DeviceInfoProvider_Test::testDeviceInfoProviderConstruction()
 {
-    DeviceInfo::m_devinceInfoXmlPath = "/tmp/deviceinfo.xml";
+    DeviceInfo::setDeviceInfoXmlPath("/tmp/deviceinfo.xml");
     m_Provider = new DeviceInfoProvider();
     // Test some properties to verify that the construction succeeded
     QVERIFY(m_Provider->syncPartner().size() != 0);
@@ -400,5 +401,12 @@ void DeviceInfoProvider_Test::testGetSupportedAudioCodecs()
     }
 }
 
+void DeviceInfoProvider_Test::testGetDeviceInfoXmlPath()
+{
+    DeviceInfo::setDeviceInfoXmlPath("");
+    QString path = DeviceInfo::getDeviceInfoXmlPath();
+    QVERIFY(!path.isEmpty());
+    QVERIFY(QDir(QDir::homePath()).exists());
+}
 
 QTEST_APPLESS_MAIN(DeviceInfoProvider_Test);
