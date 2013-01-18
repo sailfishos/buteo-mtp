@@ -5,7 +5,8 @@
 QT += xml dbus
 QT -= gui
 
-CONFIG += link_pkgconfig debug
+CONFIG += link_pkgconfig debug mobility
+MOBILITY = systeminfo
 #QMAKE_CXXFLAGS += -O0 -Werror
 LIBS += -lcontextsubscriber
 #to be removed later when QtDBus makes it calls thread safe 

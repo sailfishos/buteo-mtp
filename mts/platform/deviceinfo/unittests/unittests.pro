@@ -4,7 +4,8 @@
 
 QT -= gui
 QT += dbus xml
-CONFIG += qtestlib warn_off debug_and_release
+CONFIG += qtestlib warn_off debug_and_release mobility
+MOBILITY = systeminfo
 TEMPLATE = app
 TARGET = deviceinfo-test
 LIBS += -lcontextsubscriber -lsynccommon 
