@@ -1,0 +1,8 @@
+[Unit]
+Description=MTP service
+
+[Service]
+ExecStart=/usr/lib/mtp/start-mtp.sh
+Restart=always
+RestartSec=1
+Nice=-10

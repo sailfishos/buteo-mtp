@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SERVICE=/usr/bin/mtp_service
+SERVICE=/usr/lib/mtp/mtp_service
 STORAGE_PATH=$HOME/.config/mtpstorage
 LINK="Music Videos Pictures Downloads"
 LINK_BASE=$HOME

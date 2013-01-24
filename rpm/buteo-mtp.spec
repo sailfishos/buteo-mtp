@@ -1,26 +1,33 @@
 Name: buteo-mtp
-Version: 0.0.36
+Version: 0.0.40
 Release: 1
 Summary: MTP library
 Group: System/Libraries
 License: LGPLv2.1
-URL: http://meego.gitorious.com/meego-middleware/buteo-mtp
+URL: https://github.com/nemomobile/buteo-mtp
 Source0: %{name}-%{version}.tar.gz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: pkgconfig(contextsubscriber-1.0)
-BuildRequires: buteo-syncfw-devel
-BuildRequires: libqttracker-devel
+BuildRequires: pkgconfig(qttracker)
+BuildRequires: pkgconfig(synccommon)
+BuildRequires: pkgconfig(QtSystemInfo)
+
+# buteo-mtp can use org.freedesktop.thumbnails.Thumbnailer1 to create
+# thumbnails on request; at least Windows 8 requires thumbnails to be
+# generated on the device.
+Requires: tumbler
 
 %description
 %{summary}.
 
 %files
 %defattr(-,root,root,-)
-%config %{_sysconfdir}/sync
+/usr/lib/systemd/user/buteo-mtp.service
+%{_bindir}/buteo-mtp
 %{_libdir}/*.so.*
-%{_libdir}/sync/*.so
 %{_libdir}/mtp/*.so
 %{_datadir}/mtp/*.xml
+%{_libdir}/mtp/mtp_service
+%{_libdir}/mtp/start-mtp.sh
 
 
 %package devel
@@ -37,6 +44,19 @@ Requires: %{name} = %{version}-%{release}
 %{_libdir}/*.so
 
 
+%package sync-plugin
+Summary: MTP plugin for buteo-sync
+Group: System/Libraries
+
+%description sync-plugin
+%{summary}.
+
+%files sync-plugin
+%defattr(-,root,root,-)
+%{_libdir}/sync/*.so
+%config %{_sysconfdir}/sync/profiles/server/*.xml
+
+
 %package tests
 Summary: Tests for %{name}
 Group: Development/Libraries
@@ -47,8 +67,7 @@ Requires: %{name} = %{version}-%{release}
 
 %files tests
 %defattr(-,root,root,-)
-%{_datadir}/libmeegomtp-tests
-%{_bindir}/*test
+/opt/tests/%{name}
 
 
 %prep
@@ -62,14 +81,8 @@ make
 
 
 %install
-rm -rf %{buildroot}
-
 make INSTALL_ROOT=%{buildroot} install
-
-
-%clean
-rm -rf %{buildroot}
-
+chmod +x %{buildroot}/%{_bindir}/buteo-mtp
 
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig

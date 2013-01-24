@@ -1,2 +1,15 @@
+* Thu Jan 24 2013 Bernd Wachter <bernd.wachter@jollamobile.com> - 0.0.40
+- Add tumbler dependency to provide thumbnails on request
+- Move MTP to user session
+- Fix test cases
+- Start providing sane deviceinfo
+
+* Mon Sep 24 2012 Bernd Wachter <bernd.wachter@jollamobile.com> - 0.0.39
+- Update to nemo upstream, contributing to JB#2310
+
+* Sun Aug 05 2012 Bernd Wachter <bernd.wachter@jollamobile.com> - 0.0.38
+- Update to functionfs version
+- Implements JB#1855
+
 * Thu Jun 24 2010 Bernd Wachter <ext-bernd.wachter@nokia.com> - 0.0.36
 - Initial RPM version

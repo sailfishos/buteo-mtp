@@ -11,7 +11,7 @@ LIBS += -L../mts -lmeegomtp
 SOURCES += service.cpp
 
 #install
-target.path += /usr/bin/
+target.path += /usr/lib/mtp/
 target.files = start-mtp.sh mtp_service
 desktop.path = /etc/xdg/autostart
 desktop.files = buteo-mtp.desktop

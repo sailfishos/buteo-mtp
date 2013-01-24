@@ -1,0 +1,19 @@
+#!/bin/sh
+
+DEF_UID=$(grep "^UID_MIN" /etc/login.defs |  tr -s " " | cut -d " " -f2)
+DEVICEUSER=$(getent passwd $DEF_UID | sed 's/:.*//')
+
+case $1 in
+    "start")
+        [ -n "$DEVICEUSER" ] && exec su -l $DEVICEUSER -c "systemctl --user start buteo-mtp.service"
+        exit 1
+        ;;
+    "stop")
+        [ -n "$DEVICEUSER" ] && exec su -l $DEVICEUSER -c "systemctl --user stop buteo-mtp.service"
+        exit 1
+        ;;
+    *)
+        echo "Usage: $0 start|stop"
+        exit 1
+        ;;
+esac

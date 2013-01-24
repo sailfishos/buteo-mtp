@@ -6,7 +6,8 @@ SUBDIRS += mts \
     mts/platform/deviceinfo/unittests \
     mts/platform/storage/fsstorageplugin \
     mts/protocol/unittests \
-    service
+    service \
+    init/systemd
 
 # install additional files for the CI Integration tests
 citests.path = /opt/tests/buteo-mtp/test-definition/
