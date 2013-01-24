@@ -43,7 +43,7 @@ using namespace meegomtp1dot0;
 
 #define BATTERYLEVEL_DEFAULT 0
 #define COPYRIGHTINFO_DEFAULT "Do Not Copy"
-#define SYNCPARTNER_DEFAULT "Nokia"
+#define SYNCPARTNER_DEFAULT "Nemo"
 #define DEVFRNDNAME_DEFAULT "Friendly"
 #define STDVER_DEFAULT 100
 #define VENDOREXTN_DEFAULT 0x00000006
@@ -51,10 +51,10 @@ using namespace meegomtp1dot0;
 #define MTPVER_DEFAULT 100
 #define MTPEXTN_DEFAULT "microsoft.com: 1.0; microsoft.com/WMPPD: 11.0; "
 #define FNMODE_DEFAULT 0
-#define MFR_DEFAULT "Nokia"
-#define MODEL_DEFAULT "Nokia"
+#define MFR_DEFAULT "Nemo"
+#define MODEL_DEFAULT "Nemo"
 #define SERNO_DEFAULT "00000000000000000000000000000001"
-#define DEVVER_DEFAULT "Nokia SW"
+#define DEVVER_DEFAULT "Nemo"
 #define IMAGE_MIN_WIDTH 0
 #define IMAGE_MAX_WIDTH 5000
 #define IMAGE_MIN_HEIGHT 0
@@ -234,7 +234,7 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
     m_videoMinHeight(VIDEO_MIN_HEIGHT), m_videoMaxHeight(VIDEO_MAX_HEIGHT),
     m_videoMinFPS(0), m_videoMaxFPS(100000), m_videoScanType(0x0001), m_videoSampleRate(0),
     m_videoMinBitRate(0), m_videoMaxBitRate(0xFFFFFFFF),
-    m_audioMinBitRate(0), m_audioMaxBitRate(0xFFFFFFFF), 
+    m_audioMinBitRate(0), m_audioMaxBitRate(0xFFFFFFFF),
     m_videoAudioMinBitRate(0), m_videoAudioMaxBitRate(0xFFFFFFFF),
     m_videoMinKFD(0), m_videoMaxKFD(0xFFFFFFFF),
     m_audioSampleRate(0)
@@ -391,7 +391,7 @@ const QString& DeviceInfo::manufacturer() const
 }
 
 /*******************************************
- * const QString& DeviceInfo::model 
+ * const QString& DeviceInfo::model
  ******************************************/
 const QString& DeviceInfo::model() const
 {
@@ -438,7 +438,7 @@ void DeviceInfo::setSyncPartner( const QString& syncPartner )
     m_syncPartner = syncPartner;
 
     // Also modify the xml file
-    modifyDeviceInfoXml( "syncpartner", syncPartner ); 
+    modifyDeviceInfoXml( "syncpartner", syncPartner );
 }
 
 /*******************************************
@@ -449,7 +449,7 @@ void DeviceInfo::setDeviceFriendlyName( const QString& deviceFriendlyName )
     m_deviceFriendlyName = deviceFriendlyName;
 
     // Also modify the xml file
-    modifyDeviceInfoXml( "friendlyname", deviceFriendlyName ); 
+    modifyDeviceInfoXml( "friendlyname", deviceFriendlyName );
 }
 
 /*******************************************
@@ -744,4 +744,3 @@ const QVector<quint32>& DeviceInfo::supportedAudioCodecs() const
 {
     return m_supportedCodecs;
 }
-

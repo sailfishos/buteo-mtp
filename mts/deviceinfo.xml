@@ -9,152 +9,152 @@
 * are permitted provided that the following conditions are met:
 *
 * Redistributions of source code must retain the above copyright notice, this list
-* of conditions and the following disclaimer. Redistributions in binary form must 
-* reproduce the above copyright notice, this list of conditions and the following 
+* of conditions and the following disclaimer. Redistributions in binary form must
+* reproduce the above copyright notice, this list of conditions and the following
 * disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be 
-* used to endorse or promote products derived from this software without specific 
+* Neither the name of Nokia Corporation nor the names of its contributors may be
+* used to endorse or promote products derived from this software without specific
 * prior written permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
 * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-* BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+* BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 * OF THE POSSIBILITY OF SUCH DAMAGE.
-* 
+*
 */ -->
 
 <DeviceInfo>
-	<DeviceInfoDataSet><!--MTP 1.0 DeviceInfo DataSet-->
-		<StdVersion>100</StdVersion><!--Standard Version-->
-		<MTPVendorExtn>0x00000006</MTPVendorExtn><!--MTP Vendor Extension ID-->
-		<MTPVersion>100</MTPVersion><!--MTP Version-->
-		<MTPExtn>microsoft.com:1.0; microsoft.com/WMPPD:11.0; </MTPExtn><!--MTP Extensions-->
-		<FnMode>0x8000</FnMode><!--Functional Mode-->
-		<Manufacturer>Nokia</Manufacturer><!--Manufacturer-->
-		<Model>Nokia N00</Model><!--Model-->
-		<DeviceVersion>MEEGO MTP 1.0</DeviceVersion><!--Device Version-->
-		<SerialNumber>00000000000000000000000000000001</SerialNumber>
+        <DeviceInfoDataSet><!--MTP 1.0 DeviceInfo DataSet-->
+                <StdVersion>100</StdVersion><!--Standard Version-->
+                <MTPVendorExtn>0x00000006</MTPVendorExtn><!--MTP Vendor Extension ID-->
+                <MTPVersion>100</MTPVersion><!--MTP Version-->
+                <MTPExtn>microsoft.com:1.0; microsoft.com/WMPPD:11.0; </MTPExtn><!--MTP Extensions-->
+                <FnMode>0x8000</FnMode><!--Functional Mode-->
+                <Manufacturer>Nemo</Manufacturer><!--Manufacturer-->
+                <Model>Unconfigured Device</Model><!--Model-->
+                <DeviceVersion>Buteo MTP 1.0</DeviceVersion><!--Device Version-->
+                <SerialNumber>00000000000000000000000000000001</SerialNumber>
 
-		<OperationsSupported>
-			<OpCode>0x1001</OpCode><!--GetDeviceInfo-->
-			<OpCode>0x1002</OpCode><!--OpenSession-->
-			<OpCode>0x1003</OpCode><!--CloseSession-->
-			<OpCode>0x1004</OpCode><!--GetStorageIDs-->
-			<OpCode>0x1005</OpCode><!--GetStorageInfo-->
-			<OpCode>0x1006</OpCode><!--GetNumObjects-->
-			<OpCode>0x1007</OpCode><!--GetObjectHandles-->
-			<OpCode>0x1008</OpCode><!--GetObjectInfo-->
-			<OpCode>0x1009</OpCode><!--GetObject-->
-			<!--<OpCode>0x100A</OpCode>GetThumb-->
-			<OpCode>0x100B</OpCode><!--DeleteObject-->
-			<OpCode>0x100C</OpCode><!--SendObjectInfo-->
-			<OpCode>0x100D</OpCode><!--SendObject-->
-			<OpCode>0x1014</OpCode><!--GetDevicePropDesc-->
-			<OpCode>0x1015</OpCode><!--GetDevicePropValue-->
-			<OpCode>0x1016</OpCode><!--SetDevicePropValue-->
-			<OpCode>0x1019</OpCode><!--MoveObject-->
-			<OpCode>0x101A</OpCode><!--CopyObject-->
-			<OpCode>0x101B</OpCode><!--GetPartialObject-->
+                <OperationsSupported>
+                        <OpCode>0x1001</OpCode><!--GetDeviceInfo-->
+                        <OpCode>0x1002</OpCode><!--OpenSession-->
+                        <OpCode>0x1003</OpCode><!--CloseSession-->
+                        <OpCode>0x1004</OpCode><!--GetStorageIDs-->
+                        <OpCode>0x1005</OpCode><!--GetStorageInfo-->
+                        <OpCode>0x1006</OpCode><!--GetNumObjects-->
+                        <OpCode>0x1007</OpCode><!--GetObjectHandles-->
+                        <OpCode>0x1008</OpCode><!--GetObjectInfo-->
+                        <OpCode>0x1009</OpCode><!--GetObject-->
+                        <!--<OpCode>0x100A</OpCode>GetThumb-->
+                        <OpCode>0x100B</OpCode><!--DeleteObject-->
+                        <OpCode>0x100C</OpCode><!--SendObjectInfo-->
+                        <OpCode>0x100D</OpCode><!--SendObject-->
+                        <OpCode>0x1014</OpCode><!--GetDevicePropDesc-->
+                        <OpCode>0x1015</OpCode><!--GetDevicePropValue-->
+                        <OpCode>0x1016</OpCode><!--SetDevicePropValue-->
+                        <OpCode>0x1019</OpCode><!--MoveObject-->
+                        <OpCode>0x101A</OpCode><!--CopyObject-->
+                        <OpCode>0x101B</OpCode><!--GetPartialObject-->
 
-			<OpCode>0x9801</OpCode><!--GetObjectPropsSupported-->
-			<OpCode>0x9802</OpCode><!--GetObjectPropDesc-->
-			<OpCode>0x9803</OpCode><!--GetObjectPropValue-->
-			<OpCode>0x9804</OpCode><!--SetObjectPropValue-->
-			<OpCode>0x9805</OpCode><!--GetObjectPropList-->
-			<OpCode>0x9806</OpCode><!--SetObjectPropList-->
-			<!--<OpCode>0x9807</OpCode>GetInterdependentPropDesc-->
-			<OpCode>0x9808</OpCode><!--SendObjectPropList-->
-			<OpCode>0x9810</OpCode><!--GetObjectReferences-->
-			<OpCode>0x9811</OpCode><!--SetObjectReferences-->
+                        <OpCode>0x9801</OpCode><!--GetObjectPropsSupported-->
+                        <OpCode>0x9802</OpCode><!--GetObjectPropDesc-->
+                        <OpCode>0x9803</OpCode><!--GetObjectPropValue-->
+                        <OpCode>0x9804</OpCode><!--SetObjectPropValue-->
+                        <OpCode>0x9805</OpCode><!--GetObjectPropList-->
+                        <OpCode>0x9806</OpCode><!--SetObjectPropList-->
+                        <!--<OpCode>0x9807</OpCode>GetInterdependentPropDesc-->
+                        <OpCode>0x9808</OpCode><!--SendObjectPropList-->
+                        <OpCode>0x9810</OpCode><!--GetObjectReferences-->
+                        <OpCode>0x9811</OpCode><!--SetObjectReferences-->
 
-		</OperationsSupported>
+                </OperationsSupported>
 
-		<EventsSupported>
-			<EvCode>0x4002</EvCode><!--ObjectAdded-->
-			<EvCode>0x4003</EvCode><!--ObjectRemoved-->
-			<EvCode>0x4007</EvCode><!--ObjectInfoChanged-->
-			<EvCode>0xC801</EvCode><!--ObjectPropChanged-->
-			<EvCode>0x4004</EvCode><!--StorageAdded-->
-			<EvCode>0x4005</EvCode><!--StorageRemoved-->
-			<EvCode>0x400A</EvCode><!--StoreFull-->
-			<EvCode>0x4009</EvCode><!--RequestObjectTransfer-->
-			<EvCode>0x400C</EvCode><!--StorageInfoChanged-->
-			<EvCode>0x4008</EvCode><!--DeviceInfoChanged-->
-			<EvCode>0x4006</EvCode><!--DevicePropChanged-->
-		</EventsSupported>
+                <EventsSupported>
+                        <EvCode>0x4002</EvCode><!--ObjectAdded-->
+                        <EvCode>0x4003</EvCode><!--ObjectRemoved-->
+                        <EvCode>0x4007</EvCode><!--ObjectInfoChanged-->
+                        <EvCode>0xC801</EvCode><!--ObjectPropChanged-->
+                        <EvCode>0x4004</EvCode><!--StorageAdded-->
+                        <EvCode>0x4005</EvCode><!--StorageRemoved-->
+                        <EvCode>0x400A</EvCode><!--StoreFull-->
+                        <EvCode>0x4009</EvCode><!--RequestObjectTransfer-->
+                        <EvCode>0x400C</EvCode><!--StorageInfoChanged-->
+                        <EvCode>0x4008</EvCode><!--DeviceInfoChanged-->
+                        <EvCode>0x4006</EvCode><!--DevicePropChanged-->
+                </EventsSupported>
 
-		<DevPropsSupported>
-			<DevProp><!--Friendly name-->
-				<DevPropCode>0xD402</DevPropCode>
-				<DevPropValue id="friendlyname">Friendly</DevPropValue>
-			</DevProp>
-			<DevProp><!--Sync Partner-->
-				<DevPropCode>0xD401</DevPropCode>
-				<DevPropValue id="syncpartner">Friendly</DevPropValue>
-			</DevProp>
-			<DevProp><!--Copyright Info-->
-				<DevPropCode>0x501F</DevPropCode>
-				<DevPropValue>Do Not Copy</DevPropValue>
-			</DevProp>
-			<DevProp><!--Device Type-->
-				<DevPropCode>0XD407</DevPropCode>
-				<DevPropValue>0x00000003</DevPropValue>
-			</DevProp>
+                <DevPropsSupported>
+                        <DevProp><!--Friendly name-->
+                                <DevPropCode>0xD402</DevPropCode>
+                                <DevPropValue id="friendlyname">Friendly</DevPropValue>
+                        </DevProp>
+                        <DevProp><!--Sync Partner-->
+                                <DevPropCode>0xD401</DevPropCode>
+                                <DevPropValue id="syncpartner">Friendly</DevPropValue>
+                        </DevProp>
+                        <DevProp><!--Copyright Info-->
+                                <DevPropCode>0x501F</DevPropCode>
+                                <DevPropValue>Do Not Copy</DevPropValue>
+                        </DevProp>
+                        <DevProp><!--Device Type-->
+                                <DevPropCode>0XD407</DevPropCode>
+                                <DevPropValue>0x00000003</DevPropValue>
+                        </DevProp>
             <DevProp><!-- Volume -->
                 <DevPropCode>0xD403</DevPropCode>
             </DevProp>
 
-		</DevPropsSupported>
+                </DevPropsSupported>
 
-		<SupportedFormats>
-			<CommonFormat>0x3000</CommonFormat><!--Undefined-->
-			<CommonFormat>0x3001</CommonFormat><!--Association-->
-			<CommonFormat>0x3004</CommonFormat><!--Text-->
-			<CommonFormat>0x3005</CommonFormat><!--HTML-->
-			<CommonFormat>0xBA03</CommonFormat><!--Abstract Audio Album-->
-			<CommonFormat>0xBA05</CommonFormat><!--Abstract AV playlist-->
-			<CommonFormat>0xBB82</CommonFormat><!--vCard2-->
-			<CommonFormat>0xBB83</CommonFormat><!--vCard3-->
-			<CommonFormat>0xBE02</CommonFormat><!--vCal1-->
+                <SupportedFormats>
+                        <CommonFormat>0x3000</CommonFormat><!--Undefined-->
+                        <CommonFormat>0x3001</CommonFormat><!--Association-->
+                        <CommonFormat>0x3004</CommonFormat><!--Text-->
+                        <CommonFormat>0x3005</CommonFormat><!--HTML-->
+                        <CommonFormat>0xBA03</CommonFormat><!--Abstract Audio Album-->
+                        <CommonFormat>0xBA05</CommonFormat><!--Abstract AV playlist-->
+                        <CommonFormat>0xBB82</CommonFormat><!--vCard2-->
+                        <CommonFormat>0xBB83</CommonFormat><!--vCard3-->
+                        <CommonFormat>0xBE02</CommonFormat><!--vCal1-->
 
-			<ImageFormat>0x3801</ImageFormat><!--JPEG-->
-			<ImageFormat>0x3807</ImageFormat><!--GIF-->
-			<ImageFormat>0x380B</ImageFormat><!--PNG-->
-			<ImageFormat>0x380D</ImageFormat><!--TIFF-->
-			<ImageFormat>0x3804</ImageFormat><!--BMP-->
+                        <ImageFormat>0x3801</ImageFormat><!--JPEG-->
+                        <ImageFormat>0x3807</ImageFormat><!--GIF-->
+                        <ImageFormat>0x380B</ImageFormat><!--PNG-->
+                        <ImageFormat>0x380D</ImageFormat><!--TIFF-->
+                        <ImageFormat>0x3804</ImageFormat><!--BMP-->
 
-			<AudioFormat>0x3008</AudioFormat><!--WAV-->
-			<AudioFormat>0x3009</AudioFormat><!--MP3-->
-			<AudioFormat>0xB901</AudioFormat><!--WMA-->
-			<AudioFormat>0xB903</AudioFormat><!--AAC-->
+                        <AudioFormat>0x3008</AudioFormat><!--WAV-->
+                        <AudioFormat>0x3009</AudioFormat><!--MP3-->
+                        <AudioFormat>0xB901</AudioFormat><!--WMA-->
+                        <AudioFormat>0xB903</AudioFormat><!--AAC-->
 
-			<VideoFormat>0x300A</VideoFormat><!--AVI-->
-			<VideoFormat>0x300B</VideoFormat><!--MPEG-->
-			<VideoFormat>0xB984</VideoFormat><!--3GP-->
-			<VideoFormat>0xB982</VideoFormat><!--MP4-->
-			<VideoFormat>0xB981</VideoFormat><!--WMV-->
-		</SupportedFormats>
-	</DeviceInfoDataSet>
+                        <VideoFormat>0x300A</VideoFormat><!--AVI-->
+                        <VideoFormat>0x300B</VideoFormat><!--MPEG-->
+                        <VideoFormat>0xB984</VideoFormat><!--3GP-->
+                        <VideoFormat>0xB982</VideoFormat><!--MP4-->
+                        <VideoFormat>0xB981</VideoFormat><!--WMV-->
+                </SupportedFormats>
+        </DeviceInfoDataSet>
 
-	<SupportedCodecs>
-		<Codec>0x00000000</Codec>
-		<Codec>0x00000001</Codec><!--WAVE_FORMAT_PCM-->
-		<Codec>0x00000006</Codec><!--WAVE_FORMAT_ALAW-->
-		<Codec>0x00000007</Codec><!--WAVE_FORMAT_MULAW-->
-		<Codec>0x00000055</Codec><!--WAVE_FORMAT_MPEGLAYER3-->
-		<Codec>0x00000160</Codec><!--WAVE_FORMAT_MSAUDIO1-->
-		<Codec>0x00000161</Codec><!--WAVE_FORMAT_MSAUDIO2-->
-		<Codec>0x00000162</Codec><!--WAVE_FORMAT_MSAUDIO3-->
-		<Codec>0x00004201</Codec><!--WAVE_FORMAT_NOKIA_AMR-->
-		<Codec>0x0000A106</Codec><!--WAVE_FORMAT_AAC-->
-		<Codec>0x00000022</Codec><!--WAVE_FORMAT_DSPGROUP_TRUESPEECH-->
-	</SupportedCodecs>
+        <SupportedCodecs>
+                <Codec>0x00000000</Codec>
+                <Codec>0x00000001</Codec><!--WAVE_FORMAT_PCM-->
+                <Codec>0x00000006</Codec><!--WAVE_FORMAT_ALAW-->
+                <Codec>0x00000007</Codec><!--WAVE_FORMAT_MULAW-->
+                <Codec>0x00000055</Codec><!--WAVE_FORMAT_MPEGLAYER3-->
+                <Codec>0x00000160</Codec><!--WAVE_FORMAT_MSAUDIO1-->
+                <Codec>0x00000161</Codec><!--WAVE_FORMAT_MSAUDIO2-->
+                <Codec>0x00000162</Codec><!--WAVE_FORMAT_MSAUDIO3-->
+                <Codec>0x00004201</Codec><!--WAVE_FORMAT_NOKIA_AMR-->
+                <Codec>0x0000A106</Codec><!--WAVE_FORMAT_AAC-->
+                <Codec>0x00000022</Codec><!--WAVE_FORMAT_DSPGROUP_TRUESPEECH-->
+        </SupportedCodecs>
 
     <ImageProperties>
         <ImageMinWidth>0</ImageMinWidth>
@@ -162,30 +162,30 @@
         <ImageMinHeight>0</ImageMinHeight>
         <ImageMaxHeight>5000</ImageMaxHeight>
     </ImageProperties>
-	<VideoProperties>
-		<VideoChannel>0x0001</VideoChannel>
-		<VideoChannel>0x0002</VideoChannel>
-		<VideoMinFPS>0</VideoMinFPS>
-		<VideoMaxFPS>100000</VideoMaxFPS>
-		<VideoScanType>0x0001</VideoScanType>
-		<VideoSampleRate>0x00000000</VideoSampleRate>
-		<VideoMinBitRate>0x00000000</VideoMinBitRate>
-		<VideoMaxBitRate>0xFFFFFFFF</VideoMaxBitRate>
-		<VideoAudioMinBitRate>0x00000000</VideoAudioMinBitRate>
-		<VideoAudioMaxBitRate>0xFFFFFFFF</VideoAudioMaxBitRate>
-		<VideoMinKeyFrameDist>0x00000000</VideoMinKeyFrameDist>
-		<VideoMaxKeyFrameDist>0xFFFFFFFF</VideoMaxKeyFrameDist>
+        <VideoProperties>
+                <VideoChannel>0x0001</VideoChannel>
+                <VideoChannel>0x0002</VideoChannel>
+                <VideoMinFPS>0</VideoMinFPS>
+                <VideoMaxFPS>100000</VideoMaxFPS>
+                <VideoScanType>0x0001</VideoScanType>
+                <VideoSampleRate>0x00000000</VideoSampleRate>
+                <VideoMinBitRate>0x00000000</VideoMinBitRate>
+                <VideoMaxBitRate>0xFFFFFFFF</VideoMaxBitRate>
+                <VideoAudioMinBitRate>0x00000000</VideoAudioMinBitRate>
+                <VideoAudioMaxBitRate>0xFFFFFFFF</VideoAudioMaxBitRate>
+                <VideoMinKeyFrameDist>0x00000000</VideoMinKeyFrameDist>
+                <VideoMaxKeyFrameDist>0xFFFFFFFF</VideoMaxKeyFrameDist>
         <VideoMinWidth>0</VideoMinWidth>
         <VideoMaxWidth>1920</VideoMaxWidth>
         <VideoMinHeight>0</VideoMinHeight>
         <VideoMaxHeight>1080</VideoMaxHeight>
-	</VideoProperties>
+        </VideoProperties>
 
-	<AudioProperties>
-		<AudioChannel>0x0001</AudioChannel><!--PRN_PTP_CH_CONF_MONO-->
-		<AudioChannel>0x0002</AudioChannel><!--PRN_PTP_CH_CONF_STEREO-->
-		<AudioSampleRate>0x00000000</AudioSampleRate>
-		<AudioMinBitRate>0x00000000</AudioMinBitRate>
-		<AudioMaxBitRate>0xFFFFFFFF</AudioMaxBitRate><!--500 kbps : lossless codecs-->
-	</AudioProperties>
+        <AudioProperties>
+                <AudioChannel>0x0001</AudioChannel><!--PRN_PTP_CH_CONF_MONO-->
+                <AudioChannel>0x0002</AudioChannel><!--PRN_PTP_CH_CONF_STEREO-->
+                <AudioSampleRate>0x00000000</AudioSampleRate>
+                <AudioMinBitRate>0x00000000</AudioMinBitRate>
+                <AudioMaxBitRate>0xFFFFFFFF</AudioMaxBitRate><!--500 kbps : lossless codecs-->
+        </AudioProperties>
 </DeviceInfo>
