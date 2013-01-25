@@ -1,3 +1,9 @@
+* Fri Jan 25 2013 Bernd Wachter <bernd.wachter@jollamobile.com> - 0.0.41
+- Trap SIGUSR1, preventing premature death of MTP
+- Change default device identifications to Nemo
+- Allow configuration through /etc/default/buteo-mtp and ~/.config/buteo-mtp
+- Add debug option to service, generating ~/mtp.log 
+
 * Thu Jan 24 2013 Bernd Wachter <bernd.wachter@jollamobile.com> - 0.0.40
 - Add tumbler dependency to provide thumbnails on request
 - Move MTP to user session

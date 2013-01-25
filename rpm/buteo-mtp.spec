@@ -1,5 +1,5 @@
 Name: buteo-mtp
-Version: 0.0.40
+Version: 0.0.41
 Release: 1
 Summary: MTP library
 Group: System/Libraries
