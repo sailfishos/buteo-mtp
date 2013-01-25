@@ -25,9 +25,12 @@
 #include <signal.h>
 #include <iostream>
 #include <QCoreApplication>
+#include <QDir>
 #include <QObject>
 #include <QEventLoop>
+#include <QStringList>
 #include <QTimer>
+#include <Logger.h>
 #include "mts.h"
 
 using namespace meegomtp1dot0;
@@ -55,6 +58,16 @@ int main(int argc, char** argv)
     bool ok = Mts::getInstance()->activate();
     if( ok )
     {
+        if (app.arguments().count() > 1 && app.arguments().at(1) == "-d")
+        {
+            Buteo::Logger::createInstance(QDir::homePath() + "/mtp.log", false, 0);
+            if (!Mts::getInstance()->debugLogsEnabled())
+            {
+                Mts::getInstance()->toggleDebugLogs();
+            }
+
+            Buteo::Logger::instance()->enable();
+        }
         app.exec();
     }
     else

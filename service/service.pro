@@ -8,6 +8,9 @@ DEPENDPATH += .
 INCLUDEPATH += . ../mts
 LIBS += -L../mts -lmeegomtp
 
+CONFIG += link_pkgconfig
+PKGCONFIG += synccommon
+
 SOURCES += service.cpp
 
 #install
