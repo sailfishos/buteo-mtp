@@ -35,7 +35,7 @@
 
 using namespace meegomtp1dot0;
 
-void signalHandler(int signum)
+void signalHandler(int signum, siginfo_t *info, void *context)
 {
     if(signum == SIGUSR1)
         return;
@@ -49,9 +49,15 @@ int main(int argc, char** argv)
 {
     QCoreApplication app(argc, argv);
 
-    signal(SIGINT, &signalHandler);
-    signal(SIGALRM, &signalHandler);
-    signal(SIGUSR1, &signalHandler);
+    struct sigaction action;
+
+    action.sa_sigaction = signalHandler;
+    action.sa_flags     = SA_SIGINFO | SA_RESTART;
+    sigemptyset(&action.sa_mask);
+
+    if (sigaction(SIGINT, &action, NULL) < 0) return(-1);
+    if (sigaction(SIGALRM, &action, NULL) < 0) return(-1);
+    if (sigaction(SIGUSR1, &action, NULL) < 0) return(-1);
 
     QObject::connect(&app,SIGNAL(aboutToQuit()),Mts::getInstance(),SLOT(destroyInstance()));
 

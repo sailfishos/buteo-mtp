@@ -49,8 +49,10 @@ void IOThread::setFd(int fd)
 
 void IOThread::interrupt()
 {
-    if(m_handle)
+    if(m_handle) {
+        MTP_LOG_INFO("Sending interrupt signal");
         pthread_kill(m_handle, SIGUSR1);
+    }
 }
 
 bool IOThread::stallWrite()
