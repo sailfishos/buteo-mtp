@@ -132,6 +132,7 @@
                         <AudioFormat>0x3008</AudioFormat><!--WAV-->
                         <AudioFormat>0x3009</AudioFormat><!--MP3-->
                         <AudioFormat>0xB901</AudioFormat><!--WMA-->
+                        <AudioFormat>0xB902</AudioFormat><!--OGG-->
                         <AudioFormat>0xB903</AudioFormat><!--AAC-->
 
                         <VideoFormat>0x300A</VideoFormat><!--AVI-->

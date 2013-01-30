@@ -115,7 +115,7 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
     buildSupportedFormatsList();
 
     // Populate puoids stored persistently and store them in the puoids map.
-    populatePuoids(); 
+    populatePuoids();
 
     m_tracker = new StorageTracker();
     m_thumbnailer = new Thumbnailer();
@@ -149,23 +149,23 @@ bool FSStoragePlugin::enumerateStorage()
     m_tracker->getPlaylists(m_newPlaylists.playlistNames, m_newPlaylists.playlistEntries, false);
 
     // Add the root folder to storage
-    m_root = new StorageItem; 
+    m_root = new StorageItem;
     m_root->m_path = m_storagePath;
     populateObjectInfo( m_root );
     addDirToStorage( m_root, true );
 
-    removeUnusedPuoids(); 
+    removeUnusedPuoids();
 
     // Populate object references stored persistently and add them to the storage.
     populateObjectReferences();
-    
+
     // TODO: The playlist handling is yet unclear. For now, playlists are
     // implemented as abstract 0 byte objects that contain references to other
     // objects.
     // Create playlist folders and sync .pla files with real playlists.
     assignPlaylistReferences();
 
-    return result; 
+    return result;
 }
 
 /************************************************************
@@ -208,7 +208,7 @@ void FSStoragePlugin::syncPlaylists()
     // We need to synchronize the directories (while the dev was offline something could happened)
 
     // First read the Playlists dir and store in a vector
-    QList<QString> playlistItems; 
+    QList<QString> playlistItems;
     dir = QDir( m_playlistPath );
     QStringList contents = dir.entryList();
     for( int i = 0; i < contents.size(); ++i )
@@ -230,7 +230,7 @@ void FSStoragePlugin::syncPlaylists()
 
     // Second read the internal playlist dir and check if there exists a corresponding file in the
     // Playlists directory, if not, create it.
-    // TODO In the future this should synchronize the device playlists 
+    // TODO In the future this should synchronize the device playlists
     dir = QDir( m_internalPlaylistPath );
     contents = dir.entryList();
     for( int i = 0; i < contents.size(); ++i )
@@ -294,7 +294,7 @@ void FSStoragePlugin::assignPlaylistReferences()
             m_objectReferencesMap[refHandle] = references;
         }
     }
-    
+
     // Now we do the same for the playlists that are new on the device
     for(int i = 0; i < m_newPlaylists.playlistNames.size(); i++)
     {
@@ -520,7 +520,7 @@ void FSStoragePlugin::storePuoids()
             return;
         }
 
-        // Write puoid 
+        // Write puoid
         bytesWritten = file.write( reinterpret_cast<const char*>(&puoid), sizeof(MtpInt128) );
             id = *(reinterpret_cast<quint32*>(&puoid));
         if( -1 == bytesWritten )
@@ -541,6 +541,7 @@ void FSStoragePlugin::buildSupportedFormatsList()
     m_formatByExtTable["pla"] = MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist;
     m_formatByExtTable["wav"] = MTP_OBF_FORMAT_WAV;
     m_formatByExtTable["mp3"] = MTP_OBF_FORMAT_MP3;
+    m_formatByExtTable["ogg"] = MTP_OBF_FORMAT_OGG;
     m_formatByExtTable["txt"] = MTP_OBF_FORMAT_Text;
     m_formatByExtTable["htm"] = MTP_OBF_FORMAT_HTML;
     m_formatByExtTable["html"] = MTP_OBF_FORMAT_HTML;
@@ -653,9 +654,9 @@ MTPResponseCode FSStoragePlugin::addFileToStorage( StorageItem *&thisStorageItem
     }
 
     file.close();
-    
+
     // Assign a handle for this item.
-    thisStorageItem->m_handle = requestNewObjectHandle(); 
+    thisStorageItem->m_handle = requestNewObjectHandle();
     // Add the item to the path names map.
     m_pathNamesMap[ thisStorageItem->m_path ] = thisStorageItem->m_handle;
     // Add the item to the object handle map.
@@ -686,8 +687,8 @@ MTPResponseCode FSStoragePlugin::addFileToStorage( StorageItem *&thisStorageItem
     }
 
     // Dates from our device
-    thisStorageItem->m_objectInfo->mtpCaptureDate = getCreatedDate( thisStorageItem ); 
-    thisStorageItem->m_objectInfo->mtpModificationDate = getModifiedDate( thisStorageItem ); 
+    thisStorageItem->m_objectInfo->mtpCaptureDate = getCreatedDate( thisStorageItem );
+    thisStorageItem->m_objectInfo->mtpModificationDate = getModifiedDate( thisStorageItem );
 
     return MTP_RESP_OK;
 }
@@ -712,7 +713,7 @@ MTPResponseCode FSStoragePlugin::addDirToStorage( StorageItem *&thisStorageItem,
     // Assign a handle for this item.
     else
     {
-        thisStorageItem->m_handle = requestNewObjectHandle(); 
+        thisStorageItem->m_handle = requestNewObjectHandle();
     }
     // Add the item to the path names map.
     m_pathNamesMap[ thisStorageItem->m_path ] = thisStorageItem->m_handle;
@@ -768,8 +769,8 @@ MTPResponseCode FSStoragePlugin::addDirToStorage( StorageItem *&thisStorageItem,
     }
 
     // Dates from our device
-    thisStorageItem->m_objectInfo->mtpCaptureDate = getCreatedDate( thisStorageItem ); 
-    thisStorageItem->m_objectInfo->mtpModificationDate = getModifiedDate( thisStorageItem ); 
+    thisStorageItem->m_objectInfo->mtpCaptureDate = getCreatedDate( thisStorageItem );
+    thisStorageItem->m_objectInfo->mtpModificationDate = getModifiedDate( thisStorageItem );
 
     return MTP_RESP_OK;
 }
@@ -816,7 +817,7 @@ void FSStoragePlugin::unlinkChildStorageItem( StorageItem *childStorageItem )
         childStorageItem->m_parent->m_firstChild = childStorageItem->m_nextSibling;
     }
     // not the first child
-    else 
+    else
     {
         StorageItem *itr = childStorageItem->m_parent->m_firstChild;
         while(itr && itr->m_nextSibling != childStorageItem)
@@ -877,7 +878,7 @@ MTPResponseCode FSStoragePlugin::addToStorage( StorageItem *&storageItem, MTPObj
 
     linkChildStorageItem( storageItem, parentStorageItem );
     // Create file or directory
-    switch( info->mtpObjectFormat ) 
+    switch( info->mtpObjectFormat )
     {
         // Directory.
         case MTP_OBF_FORMAT_Association:
@@ -918,7 +919,7 @@ MTPResponseCode FSStoragePlugin::addItem( ObjHandle &parentHandle, ObjHandle &ha
     }
 
     // Add the object ( file/dir ) to the filesystem storage.
-    response = addToStorage( storageItem, info ); 
+    response = addToStorage( storageItem, info );
     if( storageItem )
     {
         handle = storageItem->m_handle;
@@ -934,7 +935,7 @@ MTPResponseCode FSStoragePlugin::addItem( ObjHandle &parentHandle, ObjHandle &ha
 MTPResponseCode FSStoragePlugin::deleteItem( const ObjHandle& handle, const MTPObjFormatCode& formatCode )
 {
     // If handle == 0xFFFFFFFF, that means delete all objects that can be deleted ( this could be filered by fmtCode )
-    quint32 totalNoOfObjects = m_objectHandlesMap.count() - 1; 
+    quint32 totalNoOfObjects = m_objectHandlesMap.count() - 1;
     quint32 noOfObjectsByFormat = 0;
     StorageItem *storageItem = 0;
     MTPResponseCode response = MTP_RESP_GeneralError;
@@ -1002,7 +1003,7 @@ MTPResponseCode FSStoragePlugin::deleteItemHelper( const ObjHandle& handle, bool
     }
 
     // If this is a file or an empty dir, just delete this item.
-    if( !storageItem->m_firstChild ) 
+    if( !storageItem->m_firstChild )
     {
         if( removePhysically && MTP_OBF_FORMAT_Association == storageItem->m_objectInfo->mtpObjectFormat && 0 != storageItem->m_handle )
         {
@@ -1029,7 +1030,7 @@ MTPResponseCode FSStoragePlugin::deleteItemHelper( const ObjHandle& handle, bool
         removeFromStorage( handle, sendEvent );
     }
     // if this is a non-empty dir.
-    else 
+    else
     {
         StorageItem* itr = storageItem->m_firstChild;
         while(itr)
@@ -1070,7 +1071,7 @@ MTPResponseCode FSStoragePlugin::removeFromStorage( const ObjHandle& handle, boo
         if(-1 != storageItem->m_wd)
         {
             // Remove watch on the path and then remove the wd from the map
-	    removeWatchDescriptor( storageItem );
+            removeWatchDescriptor( storageItem );
         }
         m_objectHandlesMap.remove( handle );
         m_pathNamesMap.remove( storageItem->m_path );
@@ -1150,7 +1151,7 @@ MTPResponseCode FSStoragePlugin::getObjectHandles( const MTPObjFormatCode& forma
             break;
 
        // Count of all objects that are children of an object whose handle = associationHandle;
-       default: 
+       default:
            //Check if the association handle is valid.
            if( !m_objectHandlesMap.contains( associationHandle ) )
            {
@@ -1275,7 +1276,7 @@ MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle, const ObjH
     // Write the content to the new item.
     MTPResponseCode response = MTP_RESP_OK;
     QString sourcePath = storageItem->m_path;
-    
+
     // Apply metadata for the destination path
     m_tracker->copy(sourcePath, destinationPath);
     // Ask tracker to ignore the next update on the destination path
@@ -1307,7 +1308,7 @@ MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle, const ObjH
         copiedObjectHandle = parentHandle;
     }
     // this is a file, copy the data
-    else 
+    else
     {
         response = addItem( const_cast<ObjHandle&>(parentHandle), copiedObjectHandle, &objectInfo );
         if( MTP_RESP_OK != response )
@@ -1366,7 +1367,7 @@ void FSStoragePlugin::adjustMovedItemsPath( QString newAncestorPath, StorageItem
     {
         // Move the URI in tracker too
         m_tracker->move(movedItem->m_path, destinationPath);
-        
+
         if( MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == movedItem->m_objectInfo->mtpObjectFormat )
         {
             // If this is a playlist, also need to update the playlist URL
@@ -1389,7 +1390,7 @@ void FSStoragePlugin::adjustMovedItemsPath( QString newAncestorPath, StorageItem
 MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, bool movePhysically )
 {
     // TODO Handle moves across storages;
-    if( m_storageId != destinationStorageId ) 
+    if( m_storageId != destinationStorageId )
     {
         return MTP_RESP_GeneralError;
     }
@@ -1418,7 +1419,7 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle, const ObjH
     QString destinationPath = parentItem->m_path + "/" + storageItem->m_objectInfo->mtpFileName;
 
     // If this is a directory already exists, don't overwrite it.
-    if( MTP_OBF_FORMAT_Association == storageItem->m_objectInfo->mtpObjectFormat ) 
+    if( MTP_OBF_FORMAT_Association == storageItem->m_objectInfo->mtpObjectFormat )
     {
         if( m_pathNamesMap.contains( destinationPath ) )
         {
@@ -1434,7 +1435,7 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle, const ObjH
     // Do the move.
     if( movePhysically )
     {
-        QDir dir; 
+        QDir dir;
         if ( !dir.rename( storageItem->m_path, destinationPath ) )
         {
             return MTP_RESP_InvalidParentObject;
@@ -1455,7 +1456,7 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle, const ObjH
     //storageItem->m_nextSibling = 0;
     // Reset URI in tracker and ask it to ignore
     m_tracker->move(storageItem->m_path, destinationPath);
-    
+
     if(storageItem->m_objectInfo &&
             MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == storageItem->m_objectInfo->mtpObjectFormat)
     {
@@ -1517,12 +1518,12 @@ MTPResponseCode FSStoragePlugin::getObjectInfo( const ObjHandle &handle, const M
  ***********************************************************/
 void FSStoragePlugin::populateObjectInfo( StorageItem *&storageItem )
 {
-    if( !storageItem ) 
+    if( !storageItem )
     {
         return;
     }
     // If we have already stored objectinfo for this item.
-    if( storageItem->m_objectInfo ) 
+    if( storageItem->m_objectInfo )
     {
         return;
     }
@@ -1537,7 +1538,7 @@ void FSStoragePlugin::populateObjectInfo( StorageItem *&storageItem )
     name = name.remove(0,storageItem->m_path.lastIndexOf("/") + 1);
     storageItem->m_objectInfo->mtpFileName = name;
     // object format.
-    storageItem->m_objectInfo->mtpObjectFormat = getObjectFormatByExtension( storageItem ); 
+    storageItem->m_objectInfo->mtpObjectFormat = getObjectFormatByExtension( storageItem );
     // protection status.
     storageItem->m_objectInfo->mtpProtectionStatus = getMTPProtectionStatus( storageItem );
     // object size.
@@ -1557,7 +1558,7 @@ void FSStoragePlugin::populateObjectInfo( StorageItem *&storageItem )
     // image bit depth
     storageItem->m_objectInfo->mtpImageBitDepth = getImageBitDepth( storageItem );
     // parent object.
-    storageItem->m_objectInfo->mtpParentObject = storageItem->m_parent ? storageItem->m_parent->m_handle : 0x00000000; 
+    storageItem->m_objectInfo->mtpParentObject = storageItem->m_parent ? storageItem->m_parent->m_handle : 0x00000000;
     // association type
     storageItem->m_objectInfo->mtpAssociationType = getAssociationType( storageItem );
     // association description
@@ -1565,11 +1566,11 @@ void FSStoragePlugin::populateObjectInfo( StorageItem *&storageItem )
     // sequence number
     storageItem->m_objectInfo->mtpSequenceNumber = getSequenceNumber( storageItem );
     // date created
-    storageItem->m_objectInfo->mtpCaptureDate = getCreatedDate( storageItem ); 
+    storageItem->m_objectInfo->mtpCaptureDate = getCreatedDate( storageItem );
     // date modified
-    storageItem->m_objectInfo->mtpModificationDate = getModifiedDate( storageItem ); 
+    storageItem->m_objectInfo->mtpModificationDate = getModifiedDate( storageItem );
     // keywords.
-    storageItem->m_objectInfo->mtpKeywords = getKeywords( storageItem ); 
+    storageItem->m_objectInfo->mtpKeywords = getKeywords( storageItem );
 }
 
 /************************************************************
@@ -1578,7 +1579,7 @@ void FSStoragePlugin::populateObjectInfo( StorageItem *&storageItem )
 quint16 FSStoragePlugin::getObjectFormatByExtension( StorageItem *storageItem )
 {
     // TODO Fetch from tracker or determine from the file.
-    quint16 format = MTP_OBF_FORMAT_Undefined; 
+    quint16 format = MTP_OBF_FORMAT_Undefined;
 
     QFileInfo item(storageItem->m_path);
     if( item.isDir() )
@@ -1593,7 +1594,7 @@ quint16 FSStoragePlugin::getObjectFormatByExtension( StorageItem *storageItem )
             format = m_formatByExtTable[ext];
         }
     }
-    return format; 
+    return format;
 }
 
 /************************************************************
@@ -1602,7 +1603,7 @@ quint16 FSStoragePlugin::getObjectFormatByExtension( StorageItem *storageItem )
 quint16 FSStoragePlugin::getMTPProtectionStatus( StorageItem* /*storageItem*/ )
 {
     // TODO Fetch from tracker or determine from the file.
-    return 0; 
+    return 0;
 }
 
 /************************************************************
@@ -1649,12 +1650,12 @@ bool FSStoragePlugin::isImage( StorageItem *storageItem )
  ***********************************************************/
 quint16 FSStoragePlugin::getThumbFormat( StorageItem *storageItem )
 {
-    quint16 format = MTP_OBF_FORMAT_Undefined; 
+    quint16 format = MTP_OBF_FORMAT_Undefined;
     if( isImage( storageItem ) )
     {
         format = MTP_OBF_FORMAT_JFIF;
     }
-    return format; 
+    return format;
 }
 
 /************************************************************
@@ -1662,12 +1663,12 @@ quint16 FSStoragePlugin::getThumbFormat( StorageItem *storageItem )
  ***********************************************************/
 quint32 FSStoragePlugin::getThumbPixelWidth( StorageItem *storageItem )
 {
-    quint16 width = 0; 
+    quint16 width = 0;
     if( isImage( storageItem ) )
     {
         width = THUMB_WIDTH;
     }
-    return width; 
+    return width;
 }
 
 /************************************************************
@@ -1675,12 +1676,12 @@ quint32 FSStoragePlugin::getThumbPixelWidth( StorageItem *storageItem )
  ***********************************************************/
 quint32 FSStoragePlugin::getThumbPixelHeight( StorageItem *storageItem )
 {
-    quint16 height = 0; 
+    quint16 height = 0;
     if( isImage( storageItem ) )
     {
         height = THUMB_HEIGHT;
     }
-    return height; 
+    return height;
 }
 
 /************************************************************
@@ -1689,7 +1690,7 @@ quint32 FSStoragePlugin::getThumbPixelHeight( StorageItem *storageItem )
 quint32 FSStoragePlugin::getThumbCompressedSize( StorageItem * /*storageItem*/ )
 {
     // TODO Fetch from tracker or determine from the file.
-    return 0; 
+    return 0;
 }
 
 /************************************************************
@@ -1698,7 +1699,7 @@ quint32 FSStoragePlugin::getThumbCompressedSize( StorageItem * /*storageItem*/ )
 quint32 FSStoragePlugin::getImagePixelWidth( StorageItem * /*storageItem*/ )
 {
     // TODO Fetch from tracker or determine from the file.
-    return 0; 
+    return 0;
 }
 
 /************************************************************
@@ -1707,7 +1708,7 @@ quint32 FSStoragePlugin::getImagePixelWidth( StorageItem * /*storageItem*/ )
 quint32 FSStoragePlugin::getImagePixelHeight( StorageItem * /*storageItem*/ )
 {
     // TODO Fetch from tracker or determine from the file.
-    return 0; 
+    return 0;
 }
 
 /************************************************************
@@ -1716,7 +1717,7 @@ quint32 FSStoragePlugin::getImagePixelHeight( StorageItem * /*storageItem*/ )
 quint16 FSStoragePlugin::getAssociationType( StorageItem * /*storageItem*/ )
 {
     // TODO Fetch from tracker or determine from the file.
-    return 0; 
+    return 0;
 }
 
 /************************************************************
@@ -1725,7 +1726,7 @@ quint16 FSStoragePlugin::getAssociationType( StorageItem * /*storageItem*/ )
 quint32 FSStoragePlugin::getAssociationDescription( StorageItem * /*storageItem*/ )
 {
     // TODO Fetch from tracker or determine from the file.
-    return 0; 
+    return 0;
 }
 
 /************************************************************
@@ -1734,20 +1735,20 @@ quint32 FSStoragePlugin::getAssociationDescription( StorageItem * /*storageItem*
 quint32 FSStoragePlugin::getImageBitDepth( StorageItem * /*storageItem*/ )
 {
     // TODO Fetch from tracker or determine from the file.
-    return 0; 
+    return 0;
 }
 
 /************************************************************
- * quint32 FSStoragePlugin::getSequenceNumber 
+ * quint32 FSStoragePlugin::getSequenceNumber
  ***********************************************************/
 quint32 FSStoragePlugin::getSequenceNumber( StorageItem * /*storageItem*/ )
 {
     // TODO Fetch from tracker
-    return 0; 
+    return 0;
 }
 
 /************************************************************
- * QString FSStoragePlugin::getCreatedDate 
+ * QString FSStoragePlugin::getCreatedDate
  ***********************************************************/
 QString FSStoragePlugin::getCreatedDate( StorageItem *storageItem )
 {
@@ -1778,7 +1779,7 @@ QString FSStoragePlugin::getModifiedDate( StorageItem *storageItem )
 char* FSStoragePlugin::getKeywords( StorageItem * /*storageItem*/ )
 {
     // Not supported.
-    return 0; 
+    return 0;
 }
 
 /************************************************************
@@ -1821,8 +1822,8 @@ MTPResponseCode FSStoragePlugin::readData( const ObjHandle &handle, char *readBu
         return MTP_RESP_GeneralError;
     }
     // TODO: Read this in a loop?
-    readBufferLen = 0; 
-    do{ 
+    readBufferLen = 0;
+    do{
         readBufferLen = file.read( readBuffer, bytesToRead );
         if( -1 == readBufferLen )
         {
@@ -1878,7 +1879,7 @@ MTPResponseCode FSStoragePlugin::writeData( const ObjHandle &handle, char *write
     {
         return MTP_RESP_GeneralError;
     }
-    
+
     if( ( true == isLastSegment ) && ( 0 == writeBuffer ) )
     {
         m_writeObjectHandle = 0;
@@ -2066,7 +2067,7 @@ void FSStoragePlugin::inotifyEventSlot( struct inotify_event *event )
  ***********************************************************/
 MTPResponseCode FSStoragePlugin::getReferences( const ObjHandle &handle , QVector<ObjHandle> &references )
 {
-    if( !m_objectHandlesMap.contains( handle ) )   
+    if( !m_objectHandlesMap.contains( handle ) )
     {
         removeInvalidObjectReferences( handle );
         return MTP_RESP_InvalidObjectHandle;
@@ -2220,7 +2221,7 @@ void FSStoragePlugin::setPlaylistReferences( const ObjHandle &handle , const QVe
 void FSStoragePlugin::storeObjectReferences()
 {
     // Write as follows
-    // 1. No. of objects that have references. 
+    // 1. No. of objects that have references.
     // 2a. Object PUOID
     // 2b. No. of references for this object.
     // 2c. PUOIDs of the referred objects.
@@ -2233,7 +2234,7 @@ void FSStoragePlugin::storeObjectReferences()
     {
         return;
     }
-    quint32 noOfHandles = m_objectReferencesMap.count(); 
+    quint32 noOfHandles = m_objectReferencesMap.count();
     // Recored the position to store the number of object handles at...
     qint64 posNoOfHandles = file.pos();
     bytesWritten = file.write( reinterpret_cast<const char*>(&noOfHandles), sizeof(quint32) );
@@ -2582,10 +2583,10 @@ MTPResponseCode FSStoragePlugin::getObjectPropertyValue( const ObjHandle &handle
     {
         // First, we try to check if the object property has a value in the object info data set
         // or whether if it's statically defined ( hard-coded in other words ).
-        
+
         if( getFromObjInfo )
         {
-            for(QList<MTPObjPropDescVal>::iterator i = propValList.begin(); 
+            for(QList<MTPObjPropDescVal>::iterator i = propValList.begin();
                     i != propValList.end(); ++i)
             {
                 code = getObjectPropertyValueFromStorage( handle, i->propDesc->uPropCode, i->propVal, i->propDesc->uDataType );
@@ -2635,7 +2636,7 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
                 m_puoidsMap.remove(storageItem->m_path);
                 // Adjust path in tracker
                 m_tracker->move(storageItem->m_path, path);
-            
+
                 if( MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == storageItem->m_objectInfo->mtpObjectFormat )
                 {
                     // If this is a playlist, also need to update the playlist URL
@@ -2972,4 +2973,3 @@ bool FSStoragePlugin::isFileNameValid(const QString &fileName, const StorageItem
     }
     return true;
 }
-

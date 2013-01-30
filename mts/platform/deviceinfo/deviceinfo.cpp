@@ -140,6 +140,7 @@ quint16 DeviceInfo::m_supportedFormatsTable[] = {
     MTP_OBF_FORMAT_WAV,
     MTP_OBF_FORMAT_MP3,
     MTP_OBF_FORMAT_WMA,
+    MTP_OBF_FORMAT_OGG,
     MTP_OBF_FORMAT_AAC,
 
     MTP_OBF_FORMAT_AVI,
