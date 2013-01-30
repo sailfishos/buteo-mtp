@@ -352,6 +352,7 @@ void MTPTransporterUSB::stopRead()
 {
     emit cleanup();
 
+    m_containerReadLen = 0;
     m_bulkRead.m_lock.unlock();
     m_bulkWrite.m_lock.unlock();
 }
