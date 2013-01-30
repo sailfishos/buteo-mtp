@@ -152,7 +152,7 @@ void ControlReaderThread::setStatus(enum mtpfs_status status)
 
 void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
 {
-    //qDebug() << "Event: " << event_names[event->type];
+    MTP_LOG_INFO("Event: " << event_names[event->type]);
     switch(event->type) {
         case FUNCTIONFS_ENABLE:
         case FUNCTIONFS_RESUME:
@@ -224,12 +224,11 @@ void BulkReaderThread::run()
 
     char* inbuf = new char[MAX_DATA_IN_SIZE];
 
+    m_lock.lock(); // First we have the lock
     do {
         readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         while(readSize != -1) {
             emit dataRead(inbuf, readSize);
-            // This will wait until it's released in the main thread
-            m_lock.tryLock();
             if(!m_threadRunning) break;
             m_lock.lock();
             if(!m_threadRunning) break;
@@ -387,8 +386,12 @@ void InterruptWriterThread::run()
                 int bytesWritten = write(m_fd, dataptr, dataLen);
                 if(bytesWritten == -1)
                 {
-                    if(errno != EINTR)
+                    if(errno == EINTR)
+                        continue;
+                    else {
                         m_running = false;
+                        break;
+                    }
                 }
                 dataptr += bytesWritten;
                 dataLen -= bytesWritten;
