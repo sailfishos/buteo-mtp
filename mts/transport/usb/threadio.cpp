@@ -223,7 +223,14 @@ void BulkReaderThread::run()
     m_threadRunning = true;
 
     char* inbuf = new char[MAX_DATA_IN_SIZE];
-
+    //
+    // Use m_lock to control message flow btw bulkreader and main thread
+    // 1. reader has lock
+    // 2. read data
+    // 3. inform main thread
+    // 4. reader waits in lock until main has processed data and unlocked
+    // 5. goto 2
+    //
     m_lock.lock(); // First we have the lock
     do {
         readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
