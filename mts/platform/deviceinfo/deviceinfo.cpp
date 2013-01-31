@@ -45,6 +45,7 @@ using namespace meegomtp1dot0;
 #define COPYRIGHTINFO_DEFAULT "Do Not Copy"
 #define SYNCPARTNER_DEFAULT "Nemo"
 #define DEVFRNDNAME_DEFAULT "Friendly"
+#define DEVICON_DEFAULT "/usr/share/mtp/device.ico"
 #define STDVER_DEFAULT 100
 #define VENDOREXTN_DEFAULT 0x00000006
 #define DEVTYPE_DEFAULT 0x00000003
@@ -219,6 +220,7 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
     m_copyrightInfo(COPYRIGHTINFO_DEFAULT),
     m_syncPartner(SYNCPARTNER_DEFAULT),
     m_deviceFriendlyName(DEVFRNDNAME_DEFAULT),
+    m_deviceIconPath(DEVICON_DEFAULT),
     m_standardVersion(STDVER_DEFAULT),
     m_vendorExtension(VENDOREXTN_DEFAULT),
     m_mtpVersion(MTPVER_DEFAULT),
@@ -349,6 +351,27 @@ const QString& DeviceInfo::copyrightInfo( bool /*current*/ ) const
 const QString& DeviceInfo::deviceFriendlyName( bool /*current*/ )
 {
     return m_deviceFriendlyName;
+}
+
+/*******************************************
+ * const QVector<quint8> DeviceInfo::deviceIcon
+ ******************************************/
+const QVector<quint8> DeviceInfo::deviceIcon()
+{
+    QFile file(m_deviceIconPath);
+    QVector<quint8> icondata;
+
+    if (!file.open(QIODevice::ReadOnly)) return icondata;
+
+    QDataStream in(&file);
+    int read = 0;
+    while (!in.atEnd()) {
+        quint8 q;
+        in >> q;
+        icondata.append(q);
+        read ++;
+    }
+    return icondata;
 }
 
 /*******************************************

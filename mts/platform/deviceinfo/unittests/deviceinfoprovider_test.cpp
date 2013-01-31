@@ -409,4 +409,12 @@ void DeviceInfoProvider_Test::testGetDeviceInfoXmlPath()
     QVERIFY(QDir(QDir::homePath()).exists());
 }
 
+void DeviceInfoProvider_Test::testGetDeviceIcon()
+{
+    int s = m_Provider->deviceIcon().size();
+    if(s <= 0) {
+        QFAIL("Empty Device Icon");
+    }
+}
+
 QTEST_APPLESS_MAIN(DeviceInfoProvider_Test);

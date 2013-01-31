@@ -511,6 +511,10 @@ void MTPResponder_test::testGetDevicePropDesc()
     copyAndSendContainer(reqContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
 
+    reqContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_COMMAND, MTP_OP_GetDevicePropDesc, nextTransactionId(), sizeof(quint32));
+    *reqContainer << (quint32)MTP_DEV_PROPERTY_DeviceIcon;
+    copyAndSendContainer(reqContainer);
+    QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
 }
 
 void MTPResponder_test::testGetDevicePropValue()
@@ -531,7 +535,11 @@ void MTPResponder_test::testGetDevicePropValue()
     *reqContainer << (quint32)MTP_DEV_PROPERTY_Perceived_Device_Type;
     copyAndSendContainer(reqContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
-    
+
+    reqContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_COMMAND, MTP_OP_GetDevicePropValue, nextTransactionId(), sizeof(quint32));
+    *reqContainer << (quint32)MTP_DEV_PROPERTY_DeviceIcon;
+    copyAndSendContainer(reqContainer);
+    QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
 }
 
 void MTPResponder_test::testSetDevicePropValue()

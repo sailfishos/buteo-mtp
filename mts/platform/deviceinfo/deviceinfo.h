@@ -96,6 +96,10 @@ public:
     /// \return the device friendly name.
     virtual const QString& deviceFriendlyName( bool current = true );
 
+    /// Gets the device icon for this device.
+    /// \return the device icon data as a vector.
+    virtual const QVector<quint8> deviceIcon();
+
     /// Gets the PTP version this device can support.
     /// \return the PTP version supported.
     virtual const quint16& standardVersion() const;
@@ -284,6 +288,7 @@ protected:
     QString m_copyrightInfo; ///< Device copyright info.
     QString m_syncPartner; ///< This device's sync partner.
     QString m_deviceFriendlyName; ///< The device's friendly name.
+    QString m_deviceIconPath; ///< The device's icon path.
     quint16 m_standardVersion; ///< The PTP version supported.
     quint32 m_vendorExtension; ///< MTP vendor extension id.
     quint16 m_mtpVersion; ///< The MTP version supported.

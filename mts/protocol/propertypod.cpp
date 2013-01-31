@@ -429,6 +429,12 @@ MtpDevPropDesc PropertyPod::m_devicePropDesc[] =
         MTP_FORM_FLAG_NONE, QVariant()
     },
     {
+        MTP_DEV_PROPERTY_DeviceIcon,
+        static_cast<MTPDataType>(MTP_DATA_TYPE_AUINT8), false,
+        QVariant(), QVariant(),
+        MTP_FORM_FLAG_NONE, QVariant()
+    },
+    {
         MTP_DEV_PROPERTY_Perceived_Device_Type,
         static_cast<MTPDataType>(MTP_DATA_TYPE_UINT32), false,
         QVariant(), QVariant(),
@@ -598,6 +604,11 @@ MTPResponseCode PropertyPod::getDevicePropDesc(MTPDevPropertyCode propCode, MtpD
             case MTP_DEV_PROPERTY_Synchronization_Partner:
             {
                 (*propDesc)->currentValue = QVariant::fromValue(QString(m_provider->syncPartner()));
+            }
+            break;
+            case MTP_DEV_PROPERTY_DeviceIcon:
+            {
+                (*propDesc)->currentValue = QVariant::fromValue(QVector<quint8>(m_provider->deviceIcon()));
             }
             break;
             case MTP_DEV_PROPERTY_Perceived_Device_Type:

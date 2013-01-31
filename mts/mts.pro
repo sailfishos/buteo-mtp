@@ -92,7 +92,7 @@ headers.path = /usr/include/libmeegomtp
 INSTALLS += headers
 
 data.path = /usr/share/mtp
-data.files = deviceInfo.xml
+data.files = deviceInfo.xml device.ico
 
 INSTALLS += data
 

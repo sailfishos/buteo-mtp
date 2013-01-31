@@ -106,10 +106,12 @@
                                 <DevPropCode>0XD407</DevPropCode>
                                 <DevPropValue>0x00000003</DevPropValue>
                         </DevProp>
-            <DevProp><!-- Volume -->
-                <DevPropCode>0xD403</DevPropCode>
-            </DevProp>
-
+                        <DevProp><!-- Device Icon -->
+                                <DevPropCode>0xD405</DevPropCode>
+                        </DevProp>
+                        <DevProp><!-- Volume -->
+                                <DevPropCode>0xD403</DevPropCode>
+                        </DevProp>
                 </DevPropsSupported>
 
                 <SupportedFormats>

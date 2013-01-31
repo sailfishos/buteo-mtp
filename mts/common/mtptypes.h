@@ -193,7 +193,7 @@ typedef quint16 MTPResponseCode;
 #define MTP_EV_StorageInfoChanged           0x400C
 #define MTP_EV_CaptureComplete              0x400D
 #define MTP_EV_UnreportedStatus             0x400E
-#define MTP_EV_ObjectPropChanged        0xC801
+#define MTP_EV_ObjectPropChanged            0xC801
 #define MTP_EV_ObjectPropDescChanged        0xC802
 
 typedef quint16 MTPEventCode;
@@ -293,6 +293,7 @@ typedef quint16 MTPDrmStatus;
 #define MTP_DEV_PROPERTY_Device_Friendly_Name           0xD402
 #define MTP_DEV_PROPERTY_Volume                         0xD403
 #define MTP_DEV_PROPERTY_Supported_Formats_Ordered      0xD404
+#define MTP_DEV_PROPERTY_DeviceIcon                     0xD405
 #define MTP_DEV_PROPERTY_Perceived_Device_Type          0xD407
 
 typedef quint16 MTPDevPropertyCode;
