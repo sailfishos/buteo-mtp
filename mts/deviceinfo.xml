@@ -51,7 +51,7 @@
                         <OpCode>0x1007</OpCode><!--GetObjectHandles-->
                         <OpCode>0x1008</OpCode><!--GetObjectInfo-->
                         <OpCode>0x1009</OpCode><!--GetObject-->
-                        <!--<OpCode>0x100A</OpCode>GetThumb-->
+                        <OpCode>0x100A</OpCode><!--GetThumb-->
                         <OpCode>0x100B</OpCode><!--DeleteObject-->
                         <OpCode>0x100C</OpCode><!--SendObjectInfo-->
                         <OpCode>0x100D</OpCode><!--SendObject-->
@@ -109,9 +109,9 @@
                         <DevProp><!-- Device Icon -->
                                 <DevPropCode>0xD405</DevPropCode>
                         </DevProp>
-                        <DevProp><!-- Volume -->
+                        <!--DevProp>Volume
                                 <DevPropCode>0xD403</DevPropCode>
-                        </DevProp>
+                        </DevProp-->
                 </DevPropsSupported>
 
                 <SupportedFormats>

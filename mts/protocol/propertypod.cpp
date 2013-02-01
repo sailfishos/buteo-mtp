@@ -439,13 +439,16 @@ MtpDevPropDesc PropertyPod::m_devicePropDesc[] =
         static_cast<MTPDataType>(MTP_DATA_TYPE_UINT32), false,
         QVariant(), QVariant(),
         MTP_FORM_FLAG_NONE, QVariant()
-    },
+    }
+    #if 0
+    ,
     {
         MTP_DEV_PROPERTY_Volume,
         static_cast<MTPDataType>(MTP_DATA_TYPE_INT32), true,
         QVariant(0), QVariant(),
         MTP_FORM_FLAG_RANGE, QVariant()
     }
+    #endif
 };
 
 PropertyPod::PropertyPod(DeviceInfo* devInfoProvider, MTPExtensionManager* extManager) : m_provider(devInfoProvider), m_extManager(extManager)
