@@ -33,9 +33,13 @@
 #include <QString>
 #include <QRegExp>
 #include <QUuid>
+#include <QUrl>
 #include <QDBusPendingReply>
 #include <QDBusConnection>
-#include <QtTracker/Tracker>
+#include <QtSparql/QSparqlConnection>
+#include <QtSparql/QSparqlError>
+#include <QtSparql/QSparqlQuery>
+#include <QtSparql/QSparqlResult>
 #include <libsynccommon/SyncDBusConnection.h>
 // Local headers
 #include "storagetracker.h"
@@ -691,17 +695,37 @@ bool StorageTracker::setObjectProperty(const QString& path, MTPObjPropertyCode e
     return true;
 }
 
+static QSparqlConnection *trackerConnection()
+{
+    // QTRACKER_DIRECT does not handle the case when DB is removed and
+    // recreated, like with `tracker-control -r` (storage-test does this)
+    static QSparqlConnection *trackerConnection = new QSparqlConnection("QTRACKER");
+    return trackerConnection;
+}
+
 static void trackerQuery(const QString& query, QVector<QStringList> &res)
 {
     MTP_LOG_INFO(query);
-    res = ::tracker()->rawSparqlQuery(query.toUtf8().data());
+
+    QSparqlResult* result = trackerConnection()->syncExec(QSparqlQuery(query));
+
+    while (result->next()) {
+        QStringList row;
+        for (int i = 0; i < result->current().count(); ++i) {
+            row.append(result->current().value(i).toString());
+        }
+        res.append(row);
+    }
+
+    delete result;
 }
 
 static void trackerUpdateQuery(const QString& query)
 {
     // Ignore result for now...
-    ::tracker()->rawSparqlUpdateQuery(query);
     MTP_LOG_INFO(query);
+
+    delete trackerConnection()->syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
 }
 
 static QString generateIriForTracker(const QString& path)
@@ -1253,7 +1277,7 @@ void setAlbumName (const QString& iri, QString& val, QStringList& domains, QStri
     }
     else
     {
-        QString query = QString("DELETE{?f nmm:MusicAlbum ?fld} WHERE{?f nie:url '") + iri + QString("' ; nmm:MusicAlbum ?fld} INSERT{?f nmm:MusicAlbum[ a nmm:MusicAlbum ; nie:title '") + val + QString("']} WHERE{?f a nmm:MusicPiece; nie:url '") + iri + QString("'}");
+        QString query = QString("DELETE{?f nmm:musicAlbum ?fld} WHERE{?f nie:url '") + iri + QString("' ; nmm:musicAlbum ?fld} INSERT{?f nmm:musicAlbum[ a nmm:MusicAlbum ; nie:title '") + val + QString("']} WHERE{?f a nmm:MusicPiece; nie:url '") + iri + QString("'}");
         return trackerUpdateQuery(query);
     }
 }
@@ -1318,12 +1342,12 @@ void setAudioWAVECodec (const QString& iri, QString& val, QStringList& domains, 
 {
     if(iri.isNull())
     {
-        val = QString("mtp:waveFormat");
+        val = QString("mtp:waveformat");
         domains.append("nmm:Video");
     }
     else
     {
-        QString query = QString("DELETE{?f mtp:waveFormat ?fld} WHERE{?f nie:url '") + iri + QString("' ; mtp:waveFormat ?fld} INSERT{?f mtp:waveFormat '") + val + QString("'} WHERE{?f a nmm:Video; nie:url '") + iri + QString("'}");
+        QString query = QString("DELETE{?f mtp:waveformat ?fld} WHERE{?f nie:url '") + iri + QString("' ; mtp:waveformat ?fld} INSERT{?f mtp:waveformat '") + val + QString("'} WHERE{?f a nmm:Video; nie:url '") + iri + QString("'}");
         return trackerUpdateQuery(query);
     }
 }

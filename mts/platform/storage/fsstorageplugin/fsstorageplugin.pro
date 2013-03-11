@@ -3,13 +3,13 @@
 ######################################################################
 
 TEMPLATE = lib
-LIBS += -lqttracker
 TARGET = fsstorage
 
 CONFIG += plugin debug
 #QMAKE_CXXFLAGS += -O0 -Werror
 QT += dbus
 QT -= gui
+CONFIG += qtsparql
 
 DEPENDPATH += . \
               .. \

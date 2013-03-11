@@ -7,7 +7,7 @@ License: LGPLv2.1
 URL: https://github.com/nemomobile/buteo-mtp
 Source0: %{name}-%{version}.tar.gz
 BuildRequires: pkgconfig(contextsubscriber-1.0)
-BuildRequires: pkgconfig(qttracker)
+BuildRequires: pkgconfig(QtSparql)
 BuildRequires: pkgconfig(synccommon)
 BuildRequires: pkgconfig(QtSystemInfo)
 Requires: mtp-vendor-configuration

@@ -3,8 +3,9 @@
 ######################################################################
 
 CONFIG += qtestlib warn_off debug_and_release mobility
+CONFIG += qtsparql
 MOBILITY = systeminfo
-LIBS += -lqttracker -lcontextsubscriber
+LIBS += -lcontextsubscriber
 LIBS += -lsynccommon -ldl
 TEMPLATE = app
 TARGET = storage-test

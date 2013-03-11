@@ -33,7 +33,9 @@
 #include "fsstorageplugin.h"
 #include "storageitem.h"
 #include "storagetracker.h"
-#include <QtTracker/Tracker>
+#include <QtSparql/QSparqlConnection>
+#include <QtSparql/QSparqlQuery>
+#include <QtSparql/QSparqlResult>
 
 using namespace meegomtp1dot0;
 
@@ -41,7 +43,6 @@ int totalCount = 17;
 
 void FSStoragePlugin_test::initTestCase()
 {
-
     QDir dir;
     QFile file( QDir::homePath() + "/.mtp/.mtphandles");
     if( file.open( QIODevice::ReadOnly ) )
@@ -172,53 +173,55 @@ void FSStoragePlugin_test::initTestCase()
 
     sleep(5);
 
+    QSparqlConnection connection("QTRACKER_DIRECT");
+
     // Create tracker playlist1 with song1 and song2
     QString query;
 
     query = "INSERT{<file:///tmp/mtptests/Music/song1.mp3> a nfo:FileDataObject, nie:InformationElement ; nie:url 'file:///tmp/mtptests/Music/song1.mp3'}";
-    ::tracker()->rawSparqlUpdateQuery(query);
+    delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
     
     query = "INSERT{<file:///tmp/mtptests/Music/song2.mp3> a nfo:FileDataObject, nie:InformationElement ; nie:url 'file:///tmp/mtptests/Music/song2.mp3'}";
-    ::tracker()->rawSparqlUpdateQuery(query);
+    delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
     
     query = "INSERT{<file:///tmp/mtptests/Music/song3.mp3> a nfo:FileDataObject, nie:InformationElement ; nie:url 'file:///tmp/mtptests/Music/song3.mp3'}";
-    ::tracker()->rawSparqlUpdateQuery(query);
+    delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
     
     query = "INSERT{<file:///tmp/mtptests/Music/song4.mp3> a nfo:FileDataObject, nie:InformationElement ; nie:url 'file:///tmp/mtptests/Music/song4.mp3'}";
-    ::tracker()->rawSparqlUpdateQuery(query);
+    delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
     
     query = "DELETE { ?entry a rdfs:Resource } WHERE { <urn:playlist:pl1> nfo:hasMediaFileListEntry ?entry . }";
 
-    ::tracker()->rawSparqlUpdateQuery(query);
+    delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::DeleteStatement));
 
     query = "DELETE {<urn:playlist:pl1> a rdfs:Resource}";
     
-    ::tracker()->rawSparqlUpdateQuery(query);
+    delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::DeleteStatement));
 
     query = "INSERT {<urn:playlist:pl1> a nmm:Playlist; nie:title 'play1'}";
     
-    ::tracker()->rawSparqlUpdateQuery(query);
+    delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
 
     query = "INSERT {<urn:playlist:pl1> nfo:hasMediaFileListEntry <urn:playlist-entry:pl1:0> . <urn:playlist-entry:pl1:0> a nfo:MediaFileListEntry . <urn:playlist-entry:pl1:0> nfo:entryUrl <file:///tmp/mtptests/Music/song1.mp3> . <urn:playlist-entry:pl1:0> nfo:listPosition '0' . <urn:playlist:pl1> nfo:hasMediaFileListEntry <urn:playlist-entry:pl1:1> . <urn:playlist-entry:pl1:1> a nfo:MediaFileListEntry . <urn:playlist-entry:pl1:1> nfo:entryUrl <file:///tmp/mtptests/Music/song2.mp3> . <urn:playlist-entry:pl1:1> nfo:listPosition '1' .}";
     
-    ::tracker()->rawSparqlUpdateQuery(query);
+    delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
 
     // Create tracker playlist2 with song3 and song4
     query = "DELETE { ?entry a rdfs:Resource } WHERE { <urn:playlist:pl2> nfo:hasMediaFileListEntry ?entry . }";
 
-    ::tracker()->rawSparqlUpdateQuery(query);
+    delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::DeleteStatement));
 
     query = "DELETE {<urn:playlist:pl2> a rdfs:Resource}";
     
-    ::tracker()->rawSparqlUpdateQuery(query);
+    delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::DeleteStatement));
 
     query = "INSERT {<urn:playlist:pl2> a nmm:Playlist; nie:title 'play2'}";
     
-    ::tracker()->rawSparqlUpdateQuery(query);
+    delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
 
     query = "INSERT {<urn:playlist:pl2> nfo:hasMediaFileListEntry <urn:playlist-entry:pl2:0> . <urn:playlist-entry:pl2:0> a nfo:MediaFileListEntry . <urn:playlist-entry:pl2:0> nfo:entryUrl <file:///tmp/mtptests/Music/song3.mp3> . <urn:playlist-entry:pl2:0> nfo:listPosition '0' . <urn:playlist:pl2> nfo:hasMediaFileListEntry <urn:playlist-entry:pl2:1> . <urn:playlist-entry:pl2:1> a nfo:MediaFileListEntry . <urn:playlist-entry:pl2:1> nfo:entryUrl <file:///tmp/mtptests/Music/song4.mp3> . <urn:playlist-entry:pl2:1> nfo:listPosition '1' .}";
     
-    ::tracker()->rawSparqlUpdateQuery(query);
+    delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
 
 }
 
@@ -1554,10 +1557,15 @@ void FSStoragePlugin_test::testDeletePlaylists()
     MTPResponseCode response = m_storage->deleteItem(handle, MTP_OBF_FORMAT_Undefined);
     QCOMPARE(response, (MTPResponseCode)MTP_RESP_OK);
 
+    // QTRACKER_DIRECT does not support QSparqlResult::QuerySize - use QTRACKER
+    QSparqlConnection connection("QTRACKER");
+
     // Ensure that the playlist is deleted from tracker too
-    QVector<QStringList> result = ::tracker()->rawSparqlQuery(QString("SELECT ?f WHERE {?f a nmm:Playlist}"));
-    QCOMPARE(result.size(), 1);
-    QCOMPARE(result[0][0], QString("urn:playlist:pl2"));
+    QSparqlResult* result = connection.syncExec(QSparqlQuery("SELECT ?f WHERE {?f a nmm:Playlist}"));
+    QCOMPARE(result->size(), 1);
+    result->next();
+    QCOMPARE(result->current().value(0).toString(), QString("urn:playlist:pl2"));
+    delete result;
 
     // Delete the other one too
     handle = m_storage->m_pathNamesMap["/tmp/mtptests/Playlists/play2.pla"];
@@ -1565,10 +1573,10 @@ void FSStoragePlugin_test::testDeletePlaylists()
 
     response = m_storage->deleteItem(handle, MTP_OBF_FORMAT_Undefined);
     QCOMPARE(response, (MTPResponseCode)MTP_RESP_OK);
-    result.clear();
     // Ensure that the playlist is deleted from tracker too
-    result = ::tracker()->rawSparqlQuery(QString("SELECT ?f WHERE {?f a nmm:Playlist}"));
-    QCOMPARE(result.size(), 0);
+    result = connection.syncExec(QSparqlQuery("SELECT ?f WHERE {?f a nmm:Playlist}"));
+    QCOMPARE(result->size(), 0);
+    delete result;
 }
 
 void FSStoragePlugin_test::testCreatePlaylists()
@@ -1602,49 +1610,72 @@ void FSStoragePlugin_test::testPlaylistsPersistence()
 {
     // Make direct tracker queries to ensure that the playlist MyPlaylist has
     // been added.
+    // QTRACKER_DIRECT does not support QSparqlResult::QuerySize - use QTRACKER
+    QSparqlConnection connection("QTRACKER");
     QString urn;
-    QVector<QStringList> resultSet;
+    QSparqlResult *resultSet = 0;
+
     QString query = QString("SELECT ?f WHERE {?f a nmm:Playlist}");
-    resultSet = ::tracker()->rawSparqlQuery(query);
-    QCOMPARE(resultSet.size(), 1);
-    urn = resultSet[0][0];
+    resultSet = connection.syncExec(QSparqlQuery(query));
+    QCOMPARE(resultSet->size(), 1);
+    resultSet->next();
+    urn = resultSet->stringValue(0);
+    delete resultSet;
     
     query = QString("SELECT ?f WHERE{<") + urn + QString("> nie:title ?f}");
-    resultSet = ::tracker()->rawSparqlQuery(query);
-    QCOMPARE(resultSet.size(), 1);
-    QCOMPARE(resultSet[0][0], QString("MyPlaylist"));
+    resultSet = connection.syncExec(QSparqlQuery(query));
+    QCOMPARE(resultSet->size(), 1);
+    resultSet->next();
+    QCOMPARE(resultSet->stringValue(0), QString("MyPlaylist"));
+    delete resultSet;
 
     query = QString("SELECT ?f WHERE{<") + urn + QString("> nie:identifier ?f}");
-    resultSet = ::tracker()->rawSparqlQuery(query);
-    QCOMPARE(resultSet.size(), 1);
-    QCOMPARE(resultSet[0][0], QString("file:///tmp/mtptests/Playlists/MyPlaylist"));
+    resultSet = connection.syncExec(QSparqlQuery(query));
+    QCOMPARE(resultSet->size(), 1);
+    resultSet->next();
+    QCOMPARE(resultSet->stringValue(0), QString("file:///tmp/mtptests/Playlists/MyPlaylist"));
+    delete resultSet;
 
     // Query the entries now
     query = QString("SELECT ?f WHERE{<") + urn + QString("> nfo:hasMediaFileListEntry ?f}");
-    QVector<QStringList> resultSetAll = ::tracker()->rawSparqlQuery(query);
-    QCOMPARE(resultSetAll.size(), 4);
+    QSparqlResult *resultSetAll = connection.syncExec(QSparqlQuery(query));
+    QCOMPARE(resultSetAll->size(), 4);
 
     // Query the entry content's uri to ensure that the playlist entries were
     // added correctly
-    query = QString("SELECT ?f WHERE{<") + resultSetAll[0][0] + QString("> nfo:entryUrl ?f}");
-    resultSet = ::tracker()->rawSparqlQuery(query);
-    QCOMPARE(resultSet.size(), 1);
-    QCOMPARE(resultSet[0][0], QString("file:///tmp/mtptests/Music/song1.mp3"));
+    resultSetAll->next();
+    query = QString("SELECT ?f WHERE{<") + resultSetAll->stringValue(0) + QString("> nfo:entryUrl ?f}");
+    resultSet = connection.syncExec(QSparqlQuery(query));
+    QCOMPARE(resultSet->size(), 1);
+    resultSet->next();
+    QCOMPARE(resultSet->stringValue(0), QString("file:///tmp/mtptests/Music/song1.mp3"));
+    delete resultSet;
 
-    query = QString("SELECT ?f WHERE{<") + resultSetAll[1][0] + QString("> nfo:entryUrl ?f}");
-    resultSet = ::tracker()->rawSparqlQuery(query);
-    QCOMPARE(resultSet.size(), 1);
-    QCOMPARE(resultSet[0][0], QString("file:///tmp/mtptests/Music/song2.mp3"));
+    resultSetAll->next();
+    query = QString("SELECT ?f WHERE{<") + resultSetAll->stringValue(0) + QString("> nfo:entryUrl ?f}");
+    resultSet = connection.syncExec(QSparqlQuery(query));
+    QCOMPARE(resultSet->size(), 1);
+    resultSet->next();
+    QCOMPARE(resultSet->stringValue(0), QString("file:///tmp/mtptests/Music/song2.mp3"));
+    delete resultSet;
 
-    query = QString("SELECT ?f WHERE{<") + resultSetAll[2][0] + QString("> nfo:entryUrl ?f}");
-    resultSet = ::tracker()->rawSparqlQuery(query);
-    QCOMPARE(resultSet.size(), 1);
-    QCOMPARE(resultSet[0][0], QString("file:///tmp/mtptests/Music/song3.mp3"));
+    resultSetAll->next();
+    query = QString("SELECT ?f WHERE{<") + resultSetAll->stringValue(0) + QString("> nfo:entryUrl ?f}");
+    resultSet = connection.syncExec(QSparqlQuery(query));
+    QCOMPARE(resultSet->size(), 1);
+    resultSet->next();
+    QCOMPARE(resultSet->stringValue(0), QString("file:///tmp/mtptests/Music/song3.mp3"));
+    delete resultSet;
 
-    query = QString("SELECT ?f WHERE{<") + resultSetAll[3][0] + QString("> nfo:entryUrl ?f}");
-    resultSet = ::tracker()->rawSparqlQuery(query);
-    QCOMPARE(resultSet.size(), 1);
-    QCOMPARE(resultSet[0][0], QString("file:///tmp/mtptests/Music/song4.mp3"));
+    resultSetAll->next();
+    query = QString("SELECT ?f WHERE{<") + resultSetAll->stringValue(0) + QString("> nfo:entryUrl ?f}");
+    resultSet = connection.syncExec(QSparqlQuery(query));
+    QCOMPARE(resultSet->size(), 1);
+    resultSet->next();
+    QCOMPARE(resultSet->stringValue(0), QString("file:///tmp/mtptests/Music/song4.mp3"));
+    delete resultSet;
+
+    delete resultSetAll;
 }
 
 void FSStoragePlugin_test::cleanupTestCase()
