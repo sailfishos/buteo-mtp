@@ -10,7 +10,7 @@ MOBILITY = systeminfo
 #QMAKE_CXXFLAGS += -O0 -Werror
 LIBS += -lcontextsubscriber
 #to be removed later when QtDBus makes it calls thread safe 
-LIBS += -lsynccommon
+LIBS += -lbuteosyncfw
 
 TEMPLATE = lib
 TARGET = meegomtp
