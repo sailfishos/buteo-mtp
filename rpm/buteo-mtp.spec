@@ -8,7 +8,7 @@ URL: https://github.com/nemomobile/buteo-mtp
 Source0: %{name}-%{version}.tar.gz
 BuildRequires: pkgconfig(contextsubscriber-1.0)
 BuildRequires: pkgconfig(QtSparql)
-BuildRequires: pkgconfig(synccommon)
+BuildRequires: pkgconfig(buteosyncfw)
 BuildRequires: pkgconfig(QtSystemInfo)
 Requires: mtp-vendor-configuration
 # buteo-mtp can use org.freedesktop.thumbnails.Thumbnailer1 to create
@@ -70,8 +70,8 @@ Group: System/Libraries
 
 %files sync-plugin
 %defattr(-,root,root,-)
-%{_libdir}/sync/*.so
-%config %{_sysconfdir}/sync/profiles/server/*.xml
+#%{_libdir}/sync/*.so
+%config %{_sysconfdir}/buteo/profiles/server/*.xml
 
 
 %package tests

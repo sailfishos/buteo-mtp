@@ -9,7 +9,7 @@ INCLUDEPATH += . ../mts
 LIBS += -L../mts -lmeegomtp
 
 CONFIG += link_pkgconfig
-PKGCONFIG += synccommon
+PKGCONFIG += buteosyncfw
 
 SOURCES += service.cpp
 
