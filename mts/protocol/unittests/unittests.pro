@@ -5,7 +5,7 @@
 CONFIG += qtestlib warn_off debug_and_release mobility
 MOBILITY = systeminfo
 LIBS += -lcontextsubscriber
-LIBS += -lsynccommon -ldl
+LIBS += -lbuteosyncfw -ldl
 TEMPLATE = app
 TARGET = protocol-test
 QT -= gui
@@ -61,7 +61,7 @@ HEADERS += mtpresponder_test.h \
            ../../transport/usb/mtptransporterusb.h \
            ../../transport/usb/threadio.h \
            ../../transport/dummy/mtptransporterdummy.h \
-	       ../../mts.h
+               ../../mts.h
 
 SOURCES += mtpresponder_test.cpp \
            ../mtpresponder.cpp \
@@ -82,7 +82,7 @@ SOURCES += mtpresponder_test.cpp \
            ../../transport/usb/descriptor.c \
            ../../transport/usb/threadio.cpp \
            ../../transport/dummy/mtptransporterdummy.cpp \
-	       ../../mts.cpp
+               ../../mts.cpp
 
 target.path = /opt/tests/buteo-mtp/
 INSTALLS += target

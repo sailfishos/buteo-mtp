@@ -8,7 +8,7 @@ CONFIG += qtestlib warn_off debug_and_release mobility
 MOBILITY = systeminfo
 TEMPLATE = app
 TARGET = deviceinfo-test
-LIBS += -lcontextsubscriber -lsynccommon 
+LIBS += -lcontextsubscriber -lbuteosyncfw
 DEFINES += UT_ON
 #QMAKE_CXXFLAGS += -ftest-coverage -fprofile-arcs
 #QMAKE_LFLAGS += -fprofile-arcs -ftest-coverage
@@ -18,7 +18,7 @@ INCLUDEPATH += . \
 ../../ \
 ../../../ \
 ../../../protocol/ \
-../../../common/ 
+../../../common/
 
 
 # Input
@@ -44,4 +44,3 @@ INSTALLS += data
 
 #clean
 QMAKE_CLEAN += $(TARGET)
-

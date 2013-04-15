@@ -6,7 +6,7 @@ CONFIG += qtestlib warn_off debug_and_release mobility
 CONFIG += qtsparql
 MOBILITY = systeminfo
 LIBS += -lcontextsubscriber
-LIBS += -lsynccommon -ldl
+LIBS += -lbuteosyncfw -ldl
 TEMPLATE = app
 TARGET = storage-test
 QT += dbus xml
@@ -19,21 +19,21 @@ DEPENDPATH += . \
               .. \
               ../.. \
               ../../../.. \
-	      ../../../../protocol
+              ../../../../protocol
 
 INCLUDEPATH += . \
                .. \
                ../.. \
                ../../../.. \
-	       ../../../../protocol \
-	       ../../../../protocol/extensions \
-	       ../../../../transport \
-	       ../../../../transport/dummy \
-	       ../../../../transport/usb \
-	       ../../../../platform \
-	       ../../../../platform/deviceinfo\
-	       ../../../../common \
-	       ../../../../../include
+               ../../../../protocol \
+               ../../../../protocol/extensions \
+               ../../../../transport \
+               ../../../../transport/dummy \
+               ../../../../transport/usb \
+               ../../../../platform \
+               ../../../../platform/deviceinfo\
+               ../../../../common \
+               ../../../../../include
 
 # Input
 HEADERS += fsstorageplugin_test.h \

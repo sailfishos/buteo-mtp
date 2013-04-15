@@ -39,7 +39,7 @@
 #include <QSystemInfo>
 #include <QSystemDeviceInfo>
 
-#include <libsynccommon/SyncDBusConnection.h>
+#include <buteosyncfw/SyncDBusConnection.h>
 
 using namespace meegomtp1dot0;
 QTM_USE_NAMESPACE
@@ -73,7 +73,7 @@ DeviceInfoProvider::DeviceInfoProvider()
 }
 
 /**********************************************
- * DeviceInfoProvider::~DeviceInfoProvider 
+ * DeviceInfoProvider::~DeviceInfoProvider
  *********************************************/
 DeviceInfoProvider::~DeviceInfoProvider()
 {
@@ -158,7 +158,7 @@ quint8 DeviceInfoProvider::batteryLevel( bool /*current*/ ) const
 /**********************************************
  * const QString& DeviceInfoProvider::deviceFriendlyName
  *********************************************/
-#if 0 
+#if 0
 const QString& DeviceInfoProvider::deviceFriendlyName( bool /*current*/ )
 {
     QString name = getBTFriendlyName();
@@ -177,4 +177,3 @@ void DeviceInfoProvider::batteryLevelChanged( const quint8& /*batteryLevel*/ )
 {
     //TODO Send an event
 }
-

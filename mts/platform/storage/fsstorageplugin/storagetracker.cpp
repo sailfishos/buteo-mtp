@@ -40,7 +40,7 @@
 #include <QtSparql/QSparqlError>
 #include <QtSparql/QSparqlQuery>
 #include <QtSparql/QSparqlResult>
-#include <libsynccommon/SyncDBusConnection.h>
+#include <buteosyncfw/SyncDBusConnection.h>
 // Local headers
 #include "storagetracker.h"
 #include "trace.h"
@@ -1710,4 +1710,3 @@ bool StorageTracker::isTrackerPropertySupported(const QString &property)
 {
     return m_trackerPropertyTable.contains(property);
 }
-

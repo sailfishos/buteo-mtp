@@ -33,7 +33,7 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
-#include <libsynccommon/SyncDBusConnection.h>
+#include <buteosyncfw/SyncDBusConnection.h>
 #include "thumbnailer.h"
 #include "trace.h"
 
@@ -48,7 +48,7 @@ static const QString NORMAL_DIR = "/normal";
 static const QString THUMB_DIR = "/.thumbnails";
 
 
-Thumbnailer::Thumbnailer() : 
+Thumbnailer::Thumbnailer() :
     ThumbnailerProxy(THUMBNAILER_SERVICE, THUMBNAILER_GENERIC_PATH, Buteo::SyncDBusConnection::sessionBus()), MAX_REQ_MAP_SIZE(50),
     m_scheduler("foreground"), m_flavor("normal")
 {
@@ -207,4 +207,3 @@ QByteArray Thumbnailer::generateThumbnail(const QString& path)
     return ret;
 }
 #endif
-
