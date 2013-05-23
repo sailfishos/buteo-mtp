@@ -75,7 +75,7 @@ void DeviceInfoProvider_Test::testDeviceInfoProviderDefaultConstruction()
 {
     DeviceInfo::setDeviceInfoXmlPath("/tmp/m_deviceinfo.xml");
     m_Provider = new DeviceInfoProvider();
-    QCOMPARE(m_Provider->syncPartner(), QString("Nokia"));
+    QCOMPARE(m_Provider->syncPartner(), QString("Nemo"));
     QCOMPARE(m_Provider->copyrightInfo(), QString("Do Not Copy"));
     QVERIFY(m_Provider->MTPOperationsSupported().size() != 0);
     QVERIFY(m_Provider->MTPEventsSupported().size() != 0);
