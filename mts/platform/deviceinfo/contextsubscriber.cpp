@@ -29,7 +29,13 @@
 *
 */
 
+#include <QtGlobal>
+// work around breakage in statefs-contextkit
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include "contextproperty.h"
+#else
 #include "contextsubscriber/contextproperty.h"
+#endif
 #include "contextsubscriber.h"
 
 using namespace meegomtp1dot0;

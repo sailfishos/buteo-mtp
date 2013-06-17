@@ -36,10 +36,10 @@
 #include <QUrl>
 #include <QDBusPendingReply>
 #include <QDBusConnection>
-#include <QtSparql/QSparqlConnection>
-#include <QtSparql/QSparqlError>
-#include <QtSparql/QSparqlQuery>
-#include <QtSparql/QSparqlResult>
+#include <QSparqlConnection>
+#include <QSparqlError>
+#include <QSparqlQuery>
+#include <QSparqlResult>
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
 #include <buteosyncfw5/SyncDBusConnection.h>

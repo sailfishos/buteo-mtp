@@ -33,9 +33,9 @@
 #include "fsstorageplugin.h"
 #include "storageitem.h"
 #include "storagetracker.h"
-#include <QtSparql/QSparqlConnection>
-#include <QtSparql/QSparqlQuery>
-#include <QtSparql/QSparqlResult>
+#include <QSparqlConnection>
+#include <QSparqlQuery>
+#include <QSparqlResult>
 
 using namespace meegomtp1dot0;
 
@@ -63,7 +63,7 @@ void FSStoragePlugin_test::initTestCase()
         MTPResponseCode response;
         quint32 handle = m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/fileA"];
         response = m_storage->getReferences( handle, references );
-        QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+        QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
         QCOMPARE( references.size(), 2 );
         QCOMPARE( references[0], static_cast<unsigned int>(15) );
         QCOMPARE( references[1], static_cast<unsigned int>(16) );
@@ -180,30 +180,30 @@ void FSStoragePlugin_test::initTestCase()
 
     query = "INSERT{<file:///tmp/mtptests/Music/song1.mp3> a nfo:FileDataObject, nie:InformationElement ; nie:url 'file:///tmp/mtptests/Music/song1.mp3'}";
     delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
-    
+
     query = "INSERT{<file:///tmp/mtptests/Music/song2.mp3> a nfo:FileDataObject, nie:InformationElement ; nie:url 'file:///tmp/mtptests/Music/song2.mp3'}";
     delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
-    
+
     query = "INSERT{<file:///tmp/mtptests/Music/song3.mp3> a nfo:FileDataObject, nie:InformationElement ; nie:url 'file:///tmp/mtptests/Music/song3.mp3'}";
     delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
-    
+
     query = "INSERT{<file:///tmp/mtptests/Music/song4.mp3> a nfo:FileDataObject, nie:InformationElement ; nie:url 'file:///tmp/mtptests/Music/song4.mp3'}";
     delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
-    
+
     query = "DELETE { ?entry a rdfs:Resource } WHERE { <urn:playlist:pl1> nfo:hasMediaFileListEntry ?entry . }";
 
     delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::DeleteStatement));
 
     query = "DELETE {<urn:playlist:pl1> a rdfs:Resource}";
-    
+
     delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::DeleteStatement));
 
     query = "INSERT {<urn:playlist:pl1> a nmm:Playlist; nie:title 'play1'}";
-    
+
     delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
 
     query = "INSERT {<urn:playlist:pl1> nfo:hasMediaFileListEntry <urn:playlist-entry:pl1:0> . <urn:playlist-entry:pl1:0> a nfo:MediaFileListEntry . <urn:playlist-entry:pl1:0> nfo:entryUrl <file:///tmp/mtptests/Music/song1.mp3> . <urn:playlist-entry:pl1:0> nfo:listPosition '0' . <urn:playlist:pl1> nfo:hasMediaFileListEntry <urn:playlist-entry:pl1:1> . <urn:playlist-entry:pl1:1> a nfo:MediaFileListEntry . <urn:playlist-entry:pl1:1> nfo:entryUrl <file:///tmp/mtptests/Music/song2.mp3> . <urn:playlist-entry:pl1:1> nfo:listPosition '1' .}";
-    
+
     delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
 
     // Create tracker playlist2 with song3 and song4
@@ -212,15 +212,15 @@ void FSStoragePlugin_test::initTestCase()
     delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::DeleteStatement));
 
     query = "DELETE {<urn:playlist:pl2> a rdfs:Resource}";
-    
+
     delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::DeleteStatement));
 
     query = "INSERT {<urn:playlist:pl2> a nmm:Playlist; nie:title 'play2'}";
-    
+
     delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
 
     query = "INSERT {<urn:playlist:pl2> nfo:hasMediaFileListEntry <urn:playlist-entry:pl2:0> . <urn:playlist-entry:pl2:0> a nfo:MediaFileListEntry . <urn:playlist-entry:pl2:0> nfo:entryUrl <file:///tmp/mtptests/Music/song3.mp3> . <urn:playlist-entry:pl2:0> nfo:listPosition '0' . <urn:playlist:pl2> nfo:hasMediaFileListEntry <urn:playlist-entry:pl2:1> . <urn:playlist-entry:pl2:1> a nfo:MediaFileListEntry . <urn:playlist-entry:pl2:1> nfo:entryUrl <file:///tmp/mtptests/Music/song4.mp3> . <urn:playlist-entry:pl2:1> nfo:listPosition '1' .}";
-    
+
     delete connection.syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
 
 }
@@ -249,7 +249,7 @@ void FSStoragePlugin_test::testDeleteAll()
     MTPResponseCode response = MTP_RESP_GeneralError;
 
     response = m_storage->deleteItem( 0xFFFFFFFF,  MTP_OBF_FORMAT_Undefined );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     QCOMPARE( m_storage->m_objectHandlesMap.size(), 1 );
     QCOMPARE( m_storage->m_objectHandlesMap.size(), m_storage->m_pathNamesMap.size() );
@@ -273,27 +273,27 @@ void FSStoragePlugin_test::testObjectHandlesCountAfterCreation()
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 0x00000000, objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(totalCount - 1) );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, 0xFFFFFFFF, objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(7) );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1")], objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(4) );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir2")], objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(3) );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/subdir3")], objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(3) );
 }
 
@@ -303,7 +303,7 @@ void FSStoragePlugin_test::testObjectHandlesAfterCreation()
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 0x00000000, objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), totalCount - 1 );
     QCOMPARE( objectHandles.contains(0), static_cast<bool>(false) );
     QCOMPARE( objectHandles.contains(1), static_cast<bool>(true) );
@@ -311,17 +311,17 @@ void FSStoragePlugin_test::testObjectHandlesAfterCreation()
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/subdir3")], objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), 3 );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1")], objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), 4 );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, 100, objectHandles );
-    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidParentObject); 
+    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidParentObject);
     QCOMPARE( objectHandles.size(), 0 );
 }
 
@@ -330,14 +330,14 @@ void FSStoragePlugin_test::testInvalidGetObjectHandle()
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 100, objectHandles );
-    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidParentObject); 
+    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidParentObject);
     QCOMPARE( objectHandles.size(), static_cast<qint32>(0) );
 
     //test getObjectHandles with association param that's a valid handle but not an association.
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/file1")],
                                           objectHandles );
-    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidParentObject); 
+    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidParentObject);
     QCOMPARE( objectHandles.size(), static_cast<qint32>(0) );
 }
 
@@ -345,7 +345,7 @@ void FSStoragePlugin_test::testGetObjectHandleByFormat()
 {
     QVector<ObjHandle> objectHandles;
     MTPResponseCode response = m_storage->getObjectHandles( MTP_OBF_FORMAT_Association, 0x00000000, objectHandles );
-    QCOMPARE( response,(MTPResponseCode) MTP_RESP_OK); 
+    QCOMPARE( response,(MTPResponseCode) MTP_RESP_OK);
     QCOMPARE( objectHandles.size(), static_cast<qint32>(5) );
 }
 
@@ -354,39 +354,39 @@ void FSStoragePlugin_test::testObjectInfoAfterCreation()
     const MTPObjectInfo *objectInfo = 0;
 
     MTPResponseCode response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests")], objectInfo );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("mtptests") );
 
     response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1")], objectInfo );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("subdir1") );
 
     response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir2")], objectInfo );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("subdir2") );
 
     response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/file1")], objectInfo );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("file1") );
     QCOMPARE( objectInfo->mtpObjectCompressedSize, static_cast<quint64>(1));
 
     response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir2/fileB")], objectInfo );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("fileB") );
     QCOMPARE( objectInfo->mtpObjectCompressedSize,static_cast<quint64>(6));
 
     response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/subdir3")], objectInfo );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("subdir3") );
     QCOMPARE( objectInfo->mtpObjectCompressedSize,static_cast<quint64>(0));
 
     response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/subdir3/file3")], objectInfo );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("file3") );
     QCOMPARE( objectInfo->mtpObjectCompressedSize,static_cast<quint64>(100));
 
     response = m_storage->getObjectInfo( 100, objectInfo );
-    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidObjectHandle); 
+    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidObjectHandle);
 }
 
 void FSStoragePlugin_test::testFindByPath()
@@ -498,7 +498,7 @@ void FSStoragePlugin_test::testAddFile()
     MTPObjectInfo objectInfo;
     //memset(&objectInfo, 0 , sizeof(MTPObjectInfo));
     objectInfo.mtpParentObject = 100;
-    
+
     response = m_storage->addItem( parentHandle, handle, (MTPObjectInfo*)0 );
     QCOMPARE( response,(MTPResponseCode) MTP_RESP_Invalid_Dataset);
 
@@ -683,32 +683,32 @@ void FSStoragePlugin_test::testObjectHandlesCountAfterAddition()
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 0x00000000, objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(totalCount) );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, 0xFFFFFFFF, objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(9) );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1")], objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(5) );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir2")], objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(4) );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/subdir3")], objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(4) );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, 100, objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_InvalidParentObject ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_InvalidParentObject );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(0) );
 }
 
@@ -718,7 +718,7 @@ void FSStoragePlugin_test::testObjectHandlesAfterAddition()
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 0x00000000, objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), totalCount );
     QCOMPARE( objectHandles.contains(0), static_cast<bool>(false) );
     QCOMPARE( objectHandles.contains(1), static_cast<bool>(true) );
@@ -726,17 +726,17 @@ void FSStoragePlugin_test::testObjectHandlesAfterAddition()
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/subdir3")], objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), 4 );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1")], objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), 5 );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, 100, objectHandles );
-    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidParentObject); 
+    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidParentObject);
     QCOMPARE( objectHandles.size(), 0 );
 }
 
@@ -745,19 +745,19 @@ void FSStoragePlugin_test::testObjectInfoAfterAddition()
     const MTPObjectInfo *objectInfo;
 
     MTPResponseCode response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests")], objectInfo );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("mtptests") );
 
     response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1")], objectInfo );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("subdir1") );
 
     response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/addfile")], objectInfo );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("addfile") );
 
     response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir2/D1/D2/f1")], objectInfo );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("f1") );
 
     StorageItem* storageItem;
@@ -767,7 +767,7 @@ void FSStoragePlugin_test::testObjectInfoAfterAddition()
     QCOMPARE( storageItem->m_path, QString("/tmp/mtptests/subdir2/D1/D2/f1") );
 
     response = m_storage->getObjectInfo( 100, objectInfo );
-    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidObjectHandle); 
+    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidObjectHandle);
 }
 
 void FSStoragePlugin_test::testGetObjectPropertyValue()
@@ -822,10 +822,10 @@ void FSStoragePlugin_test::testSetReferences()
     references.append(16);
 
     response = m_storage->setReferences( 100, references );
-    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidObjectHandle); 
+    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidObjectHandle);
 
     response = m_storage->setReferences( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/fileA"], references );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
 
 void FSStoragePlugin_test::testGetReferences()
@@ -834,10 +834,10 @@ void FSStoragePlugin_test::testGetReferences()
     MTPResponseCode response;
 
     response = m_storage->getReferences( 100, references );
-    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidObjectHandle); 
+    QCOMPARE( response,(MTPResponseCode) MTP_RESP_InvalidObjectHandle);
 
     response = m_storage->getReferences( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/fileA"], references );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( references.size(), 3 );
     QCOMPARE( references[0], static_cast<unsigned int>(1) );
     QCOMPARE( references[1], static_cast<unsigned int>(15) );
@@ -849,13 +849,13 @@ void FSStoragePlugin_test::testDeleteFile()
     MTPResponseCode response;
 
     response = m_storage->deleteItem( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/file1"],  MTP_OBF_FORMAT_Undefined );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->deleteItem( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/file2"],  MTP_OBF_FORMAT_Undefined );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->deleteItem( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/file3"],  MTP_OBF_FORMAT_Undefined );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
 }
 
@@ -864,10 +864,10 @@ void FSStoragePlugin_test::testDeleteDir()
     MTPResponseCode response;
 
     response = m_storage->deleteItem( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/subdir3"],  MTP_OBF_FORMAT_Undefined );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->deleteItem( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1"],  MTP_OBF_FORMAT_Undefined );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     totalCount -= 9;
 }
@@ -880,22 +880,22 @@ void FSStoragePlugin_test::testObjectHandlesCountAfterDeletion()
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 0x00000000, objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(totalCount - 1) );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, 0xFFFFFFFF, objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(8) );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir2")], objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(4) );
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, 100, objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_InvalidParentObject ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_InvalidParentObject );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(0) );
 }
 
@@ -905,7 +905,7 @@ void FSStoragePlugin_test::testObjectHandlesAfterDeletion()
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 0x00000000, objectHandles );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), totalCount -1 );
     QCOMPARE( objectHandles.contains(0), static_cast<bool>(false) );
     QCOMPARE( objectHandles.contains(1), static_cast<bool>(true) );
@@ -918,10 +918,10 @@ void FSStoragePlugin_test::testFileCopy()
     QVector<ObjHandle> objectHandles;
 
     response = m_storage->copyObject( 1, m_storage->m_pathNamesMap["/tmp/mtptests/subdir2"], 0, newHandle );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->copyObject( 3, m_storage->m_pathNamesMap["/tmp/mtptests/subdir2"], 0, newHandle );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
 
 void FSStoragePlugin_test::testDirCopy()
@@ -957,13 +957,13 @@ void FSStoragePlugin_test::testDirCopy()
 
     // Copy dir D1 from subdir2 to mtptests
     response = m_storage->copyObject( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/D1"], m_storage->m_pathNamesMap["/tmp/mtptests"], 0, newHandle );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
 
 void FSStoragePlugin_test::testFileMove()
 {
     MTPResponseCode response;
-    
+
     response = m_storage->moveObject( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/fileA"], m_storage->m_pathNamesMap["/tmp/mtptests"], 1 );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
@@ -995,7 +995,7 @@ void FSStoragePlugin_test::testTruncateItem()
 {
     MTPResponseCode response;
     response = m_storage->truncateItem( m_storage->m_pathNamesMap["/tmp/mtptests/file3"], 0 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QFile file("/tmp/mtptests/file3");
     QCOMPARE( file.size(), static_cast<qint64>(0));
 }
@@ -1005,7 +1005,7 @@ void FSStoragePlugin_test::testGetPath()
     MTPResponseCode response;
     QString path;
     response = m_storage->getPath( m_storage->m_pathNamesMap["/tmp/mtptests/file3"], path );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( path, QString("/tmp/mtptests/file3") );
 }
 
@@ -1016,104 +1016,104 @@ void FSStoragePlugin_test::testGetObjectPropertyValueFromStorage()
     ObjHandle handle = m_storage->m_pathNamesMap["/tmp/mtptests/file3"];
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Association_Desc, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toInt(), 0 );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Association_Type, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toInt(), 0 );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Parent_Obj, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toUInt(), m_storage->m_pathNamesMap["/tmp/mtptests/"] );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Obj_Size, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toULongLong(), static_cast<quint64>(0) );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_StorageID, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toInt(), 1 );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Obj_Format, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toUInt(), (unsigned int)MTP_OBF_FORMAT_Undefined  );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Protection_Status, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toInt(), 0 );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Allowed_Folder_Contents, v, MTP_DATA_TYPE_UNDEF );
     QVector<quint16> vec = v.value<QVector<quint16> >();
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( vec.size(), 0 );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Date_Created, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toString() != "", true );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Date_Added, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toString() != "", true );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Date_Modified, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toString() != "", true );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Obj_File_Name, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toString(), QString("file3") );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Rep_Sample_Format, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toUInt(), quint32(MTP_OBF_FORMAT_JFIF) );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Rep_Sample_Size, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toInt(), 1024 * 48 );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Rep_Sample_Height, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toInt(), 100 );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Rep_Sample_Width, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toInt(), 100 );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Video_FourCC_Codec, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Hidden, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toInt(), 0 );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Persistent_Unique_ObjId, v, MTP_DATA_TYPE_UNDEF );
     MtpInt128 puoid = v.value<MtpInt128>();
     MtpInt128 zero(0);
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( puoid.compare(zero) == 0, true );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Non_Consumable, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toInt(), 0 );
 }
 
@@ -1125,110 +1125,110 @@ void FSStoragePlugin_test::testGetObjectPropertyValueFromTracker()
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Date_Created, v, MTP_DATA_TYPE_STR );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Name, v, MTP_DATA_TYPE_STR );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     //QCOMPARE( v.toString() == QString("file3") || v.toString() == QString("none"), true );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Artist, v, MTP_DATA_TYPE_STR );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Width, v, MTP_DATA_TYPE_UINT32 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Height, v, MTP_DATA_TYPE_UINT32 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Duration, v, MTP_DATA_TYPE_UINT32 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     /*
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Rating, v, MTP_DATA_TYPE_UINT16 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     */
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Track, v, MTP_DATA_TYPE_UINT16 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Genre, v, MTP_DATA_TYPE_STR );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Use_Count, v, MTP_DATA_TYPE_UINT32 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     /*
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Original_Release_Date, v, MTP_DATA_TYPE_STR );
-                                                             
+
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     */
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Album_Name, v, MTP_DATA_TYPE_STR );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     /*
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Album_Artist, v, MTP_DATA_TYPE_STR );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     */
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Bitrate_Type, v, MTP_DATA_TYPE_UINT16 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Sample_Rate, v, MTP_DATA_TYPE_UINT32 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Nbr_Of_Channels, v, MTP_DATA_TYPE_UINT16 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     /*
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Scan_Type, v, MTP_DATA_TYPE_UINT16 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     */
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Audio_WAVE_Codec, v, MTP_DATA_TYPE_UINT32 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Audio_BitRate, v, MTP_DATA_TYPE_UINT32 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Video_FourCC_Codec, v, MTP_DATA_TYPE_UINT32 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Video_BitRate, v, MTP_DATA_TYPE_UINT32 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Frames_Per_Thousand_Secs, v, MTP_DATA_TYPE_UINT32 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     /*
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_KeyFrame_Distance, v, MTP_DATA_TYPE_UINT32 );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Encoding_Profile, v, MTP_DATA_TYPE_STR );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     */
 }
 
@@ -1252,149 +1252,149 @@ void FSStoragePlugin_test::testSetObjectPropertyValueInTracker()
     desc.uPropCode = MTP_OBJ_PROP_Date_Created;
     desc.uDataType = MTP_DATA_TYPE_STR;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(none);
     desc.uPropCode = MTP_OBJ_PROP_Name;
     desc.uDataType = MTP_DATA_TYPE_STR;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     response = m_storage->getObjectPropertyValueFromTracker( handle,
                                                              MTP_OBJ_PROP_Name, v, MTP_DATA_TYPE_STR );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( v.toString() == QString("file3") || v.toString() == QString("none"), true );
 
     v.setValue(none);
     desc.uPropCode = MTP_OBJ_PROP_Artist;
     desc.uDataType = MTP_DATA_TYPE_STR;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt32);
     desc.uPropCode = MTP_OBJ_PROP_Width;
     desc.uDataType = MTP_DATA_TYPE_STR;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt32);
     desc.uPropCode = MTP_OBJ_PROP_Height;
     desc.uDataType = MTP_DATA_TYPE_UINT32;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt32);
     desc.uPropCode = MTP_OBJ_PROP_Duration;
     desc.uDataType = MTP_DATA_TYPE_UINT32;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt16);
     desc.uPropCode = MTP_OBJ_PROP_Rating;
     desc.uDataType = MTP_DATA_TYPE_UINT16;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt16);
     desc.uPropCode = MTP_OBJ_PROP_Track;
     desc.uDataType = MTP_DATA_TYPE_UINT16;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(empty);
     desc.uPropCode = MTP_OBJ_PROP_Genre;
     desc.uDataType = MTP_DATA_TYPE_STR;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt32);
     desc.uPropCode = MTP_OBJ_PROP_Use_Count;
     desc.uDataType = MTP_DATA_TYPE_UINT32;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(empty);
     desc.uPropCode = MTP_OBJ_PROP_Original_Release_Date;
     desc.uDataType = MTP_DATA_TYPE_STR;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(none);
     desc.uPropCode = MTP_OBJ_PROP_Album_Name;
     desc.uDataType = MTP_DATA_TYPE_STR;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(none);
     desc.uPropCode = MTP_OBJ_PROP_Album_Artist;
     desc.uDataType = MTP_DATA_TYPE_STR;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt16);
     desc.uPropCode = MTP_OBJ_PROP_Bitrate_Type;
     desc.uDataType = MTP_DATA_TYPE_UINT16;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt32);
     desc.uPropCode = MTP_OBJ_PROP_Sample_Rate;
     desc.uDataType = MTP_DATA_TYPE_UINT32;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt16);
     desc.uPropCode = MTP_OBJ_PROP_Nbr_Of_Channels;
     desc.uDataType = MTP_DATA_TYPE_UINT16;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt16);
     desc.uPropCode = MTP_OBJ_PROP_Scan_Type;
     desc.uDataType = MTP_DATA_TYPE_UINT16;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt16);
     desc.uPropCode = MTP_OBJ_PROP_Audio_WAVE_Codec;
     desc.uDataType = MTP_DATA_TYPE_UINT32;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt32);
     desc.uPropCode = MTP_OBJ_PROP_Audio_BitRate;
     desc.uDataType = MTP_DATA_TYPE_UINT32;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt32);
     desc.uPropCode = MTP_OBJ_PROP_Video_FourCC_Codec;
     desc.uDataType = MTP_DATA_TYPE_UINT32;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt32);
     desc.uPropCode = MTP_OBJ_PROP_Video_BitRate;
     desc.uDataType = MTP_DATA_TYPE_UINT32;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt32);
     desc.uPropCode = MTP_OBJ_PROP_Frames_Per_Thousand_Secs;
     desc.uDataType = MTP_DATA_TYPE_UINT32;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(uInt32);
     desc.uPropCode = MTP_OBJ_PROP_KeyFrame_Distance;
     desc.uDataType = MTP_DATA_TYPE_UINT32;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     v.setValue(empty);
     desc.uPropCode = MTP_OBJ_PROP_Encoding_Profile;
     desc.uDataType = MTP_DATA_TYPE_STR;
     response = m_storage->setObjectPropertyValue( handle, propValList );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
 
 void FSStoragePlugin_test::testGetInvalidObjectPropertyValueFromStorage()
@@ -1404,7 +1404,7 @@ void FSStoragePlugin_test::testGetInvalidObjectPropertyValueFromStorage()
     ObjHandle handle = m_storage->m_pathNamesMap["/tmp/mtptests/file3"];
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              0x0000, v, MTP_DATA_TYPE_UNDEF );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_ObjectProp_Not_Supported ); 
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_ObjectProp_Not_Supported );
 }
 
 void FSStoragePlugin_test::testInotifyCreate()
@@ -1438,7 +1438,7 @@ void FSStoragePlugin_test::testInotifyModify()
         ++getOutOfHere;
     }
     QCOMPARE( size, static_cast<quint64>(4) );
-} 
+}
 
 void FSStoragePlugin_test::testInotifyMove()
 {
@@ -1462,7 +1462,7 @@ void FSStoragePlugin_test::testInotifyMove()
     // Fetch the object info once
     const MTPObjectInfo *objInfo;
     m_storage->getObjectInfo(m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/tmpfile"], objInfo);
-} 
+}
 
 void FSStoragePlugin_test::testInotifyDelete()
 {
@@ -1499,7 +1499,7 @@ void FSStoragePlugin_test::testReadPlaylists()
 
     ObjHandle playlist1Handle = 0;
     ObjHandle playlist2Handle = 0;
-    
+
     const MTPObjectInfo *objectInfo = 0;
     response = m_storage->getObjectInfo(playlists[0], objectInfo);
     QCOMPARE(response, (MTPResponseCode)MTP_RESP_OK);
@@ -1523,12 +1523,12 @@ void FSStoragePlugin_test::testReadPlaylists()
     // Test their references
     response = m_storage->getReferences(playlist1Handle, playlistEntries);
     QCOMPARE(response, (MTPResponseCode)MTP_RESP_OK);
-    QCOMPARE(playlistEntries.size(), 2); 
+    QCOMPARE(playlistEntries.size(), 2);
 
     response = m_storage->getObjectInfo(playlistEntries[0], objectInfo);
     QCOMPARE(response, (MTPResponseCode)MTP_RESP_OK);
     QCOMPARE(objectInfo->mtpFileName, QString("song1.mp3"));
-    
+
     response = m_storage->getObjectInfo(playlistEntries[1], objectInfo);
     QCOMPARE(response, (MTPResponseCode)MTP_RESP_OK);
     QCOMPARE(objectInfo->mtpFileName, QString("song2.mp3"));
@@ -1536,12 +1536,12 @@ void FSStoragePlugin_test::testReadPlaylists()
     // Test their references
     response = m_storage->getReferences(playlist2Handle, playlistEntries);
     QCOMPARE(response, (MTPResponseCode)MTP_RESP_OK);
-    QCOMPARE(playlistEntries.size(), 2); 
+    QCOMPARE(playlistEntries.size(), 2);
 
     response = m_storage->getObjectInfo(playlistEntries[0], objectInfo);
     QCOMPARE(response, (MTPResponseCode)MTP_RESP_OK);
     QCOMPARE(objectInfo->mtpFileName, QString("song3.mp3"));
-    
+
     response = m_storage->getObjectInfo(playlistEntries[1], objectInfo);
     QCOMPARE(response, (MTPResponseCode)MTP_RESP_OK);
     QCOMPARE(objectInfo->mtpFileName, QString("song4.mp3"));
@@ -1621,7 +1621,7 @@ void FSStoragePlugin_test::testPlaylistsPersistence()
     resultSet->next();
     urn = resultSet->stringValue(0);
     delete resultSet;
-    
+
     query = QString("SELECT ?f WHERE{<") + urn + QString("> nie:title ?f}");
     resultSet = connection.syncExec(QSparqlQuery(query));
     QCOMPARE(resultSet->size(), 1);
@@ -1690,4 +1690,3 @@ void FSStoragePlugin_test::cleanupTestCase()
 }
 
 QTEST_MAIN(FSStoragePlugin_test);
-
