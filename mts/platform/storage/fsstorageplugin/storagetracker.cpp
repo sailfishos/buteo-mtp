@@ -778,7 +778,7 @@ QString getName (const QString& iri)
             // Empty title? return name...
             int idx = iri.lastIndexOf(QChar('/'));
             ret = iri.mid(idx + 1);
-            ret = QUrl::fromEncoded(ret.toAscii()).toString();
+            ret = QUrl::fromEncoded(ret.toLatin1()).toString();
         }
     }
     return ret;
@@ -1522,7 +1522,7 @@ void StorageTracker::getPlaylists(QStringList &playlistPaths, QList<QStringList>
             if(true == getExisting)
             {
                 // Add a new item to the playlist path
-                thisPlaylistUrl = QUrl::fromEncoded(thisPlaylistUrl.toAscii()).toString();
+                thisPlaylistUrl = QUrl::fromEncoded(thisPlaylistUrl.toLatin1()).toString();
                 playlistPaths.append(thisPlaylistUrl.remove("file://"));
             }
             else
@@ -1533,7 +1533,7 @@ void StorageTracker::getPlaylists(QStringList &playlistPaths, QList<QStringList>
             j++;
         }
         QString entryUrl = resultRow.at(1);
-        entryUrl = QUrl::fromEncoded(entryUrl.toAscii()).toString();
+        entryUrl = QUrl::fromEncoded(entryUrl.toLatin1()).toString();
         if(-1 != j)
         {
             // Append the entry URL to the list of entries

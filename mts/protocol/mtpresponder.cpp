@@ -66,7 +66,7 @@ MTPResponder* MTPResponder::instance()
 MTPResponder::MTPResponder() : m_storageServer(0), m_transporter(0), m_copiedObjHandle(0),
                                m_state(RESPONDER_IDLE), m_objPropListInfo(0), m_sendObjectSequencePtr(0),
                                m_prevState(RESPONDER_IDLE), m_isLastPacket(false), m_containerToBeResent(false)
-                               
+
 {
     MTP_FUNC_TRACE();
 
@@ -228,7 +228,7 @@ void MTPResponder::createCommandHandler()
 bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
 {
     MTP_FUNC_TRACE();
-    
+
     MTP_LOG_INFO("Sending container of type:: " << QString("0x%1").arg(container.containerType(), 0, 16));
     MTP_LOG_INFO("Code:: " << QString("0x%1").arg(container.code(), 0, 16));
 
@@ -360,9 +360,9 @@ void MTPResponder::commandHandler()
     MTP_FUNC_TRACE();
 
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
-    
+
     QVector<quint32> params;
-     
+
     bool waitForDataPhase = false;
 
     MTP_LOG_INFO("MTP OPERATION:::: " << QString("0x%1").arg(reqContainer->code(), 0, 16));
@@ -397,7 +397,7 @@ void MTPResponder::commandHandler()
             }
         }
     }
-    else 
+    else
     {
         // invalid opcode -- This response should be sent right away (no need to
         // wait on the data phase)
@@ -495,7 +495,7 @@ void MTPResponder::dataHandler(quint8* data, quint32 dataLen, bool isFirstPacket
             return;
         }
     }
-    // check if an error was already detected in the operation request phase      
+    // check if an error was already detected in the operation request phase
     if(MTP_RESP_OK != m_transactionSequence->mtpResp)
     {
         respCode = m_transactionSequence->mtpResp;
@@ -505,13 +505,13 @@ void MTPResponder::dataHandler(quint8* data, quint32 dataLen, bool isFirstPacket
     {
         respCode = MTP_RESP_InvalidTransID;
     }
-        // check whether the opcode of the data container corresponds to the one of the operation phase 
+        // check whether the opcode of the data container corresponds to the one of the operation phase
     else if(m_transactionSequence->dataContainer && (m_transactionSequence->dataContainer->code() != reqContainer->code()))
     {
         respCode = MTP_RESP_GeneralError;
     }
-    
-    if(MTP_RESP_OK == respCode) 
+
+    if(MTP_RESP_OK == respCode)
     {
         switch(reqContainer->code())
         {
@@ -537,17 +537,17 @@ void MTPResponder::dataHandler(quint8* data, quint32 dataLen, bool isFirstPacket
                     sendObjectPropListData();
                     return;
                 }
-            case MTP_OP_SetDevicePropValue:                
+            case MTP_OP_SetDevicePropValue:
                 {
                     setDevicePropValueData();
                     return;
                 }
-            case MTP_OP_SetObjectPropValue:                
+            case MTP_OP_SetObjectPropValue:
                 {
                     setObjPropValueData();
                     return;
                 }
-            case MTP_OP_SetObjectReferences:                
+            case MTP_OP_SetObjectReferences:
                 {
                     setObjReferencesData();
                     return;
@@ -565,7 +565,7 @@ void MTPResponder::dataHandler(quint8* data, quint32 dataLen, bool isFirstPacket
                 }
         }
     }
-    // RESPONSE PHASE 
+    // RESPONSE PHASE
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
     bool sent = sendContainer(respContainer);
     if( false == sent )
@@ -629,7 +629,7 @@ void MTPResponder::eventHandler()
     MTP_FUNC_TRACE();
     // TODO: This needs to be implemented
 #if 0
-    // check what kind of event has been received 
+    // check what kind of event has been received
     switch()
     {
         case MTP_EV_CancelTransaction:
@@ -649,40 +649,40 @@ void MTPResponder::getDeviceInfoReq()
 
     // Standard Version
     quint16 stdVer = m_devInfoProvider->standardVersion();
-    // Vendor Extension ID 
+    // Vendor Extension ID
     quint32 vendorExtId = m_devInfoProvider->vendorExtension();
-    // Vendor Extendion Version 
+    // Vendor Extendion Version
     quint16 vendorExtVer = m_devInfoProvider->MTPVersion();
-    // Functional Mode 
+    // Functional Mode
     quint16 funcMode = m_devInfoProvider->functionalMode();
-    // Operations Supported (array) 
+    // Operations Supported (array)
     QVector<quint16> opsSupported = m_devInfoProvider->MTPOperationsSupported();
-    // Events Supported (array) 
+    // Events Supported (array)
     QVector<quint16> evsSupported = m_devInfoProvider->MTPEventsSupported();
-    // Device Properties Supported (array) 
+    // Device Properties Supported (array)
     QVector<quint16> propsSupported = m_devInfoProvider->MTPDevicePropertiesSupported();
 
-    // Capture Formats (array) 
+    // Capture Formats (array)
     quint32 captureFormatsNumElem = 0;
     quint32 captureFormatsLen = 0;
     quint16 *captureFormats = 0;
 
-    // Image Formats (array) 
+    // Image Formats (array)
     QVector<quint16> imageFormats = m_devInfoProvider->supportedFormats();
 
-    // Vendor Extension Description (string) 
+    // Vendor Extension Description (string)
     QString vendorExtDesc = m_devInfoProvider->MTPExtension();
 
-    // Manufacturer (string) 
+    // Manufacturer (string)
     QString manufacturer = m_devInfoProvider->manufacturer();
 
-    // Model (string) 
+    // Model (string)
     QString model = m_devInfoProvider->model();
 
-    // Device Version (string) 
+    // Device Version (string)
     QString devVersion = m_devInfoProvider->deviceVersion();
 
-    // Serial Number (string) 
+    // Serial Number (string)
     QString serialNbr = m_devInfoProvider->serialNo();
 
     payloadLength = sizeof(stdVer) +
@@ -761,14 +761,14 @@ void MTPResponder::openSessionReq()
     {
         code = MTP_RESP_SessionAlreadyOpen;
         respParam = m_transactionSequence->mtpSessionId;
-        // 1 parameter: SessionID 
+        // 1 parameter: SessionID
         payloadLength = sizeof(respParam);
     }
     else
     {
-        // save new session id 
+        // save new session id
         m_transactionSequence->mtpSessionId = params[0];
-        // inform storage server that a new session has been opened 
+        // inform storage server that a new session has been opened
     }
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId(), sizeof(respParam));
     if(MTP_RESP_SessionAlreadyOpen == code)
@@ -781,7 +781,7 @@ void MTPResponder::openSessionReq()
         MTP_LOG_CRITICAL("Could not send response");
     }
 }
- 
+
 void MTPResponder::closeSessionReq()
 {
     MTP_FUNC_TRACE();
@@ -820,8 +820,8 @@ void MTPResponder::getStorageIDReq()
     quint16 code =  MTP_RESP_OK;
     QVector<quint32> storageIds;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
-      
-    // check if everything is ok, so that cmd can be processed 
+
+    // check if everything is ok, so that cmd can be processed
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
     if (MTP_RESP_OK == code && !m_storageServer)
@@ -836,10 +836,10 @@ void MTPResponder::getStorageIDReq()
         code = m_storageServer->storageIds(storageIds);
     }
     bool sent = true;
-    // if all preconditions fulfilled start enter data phase 
+    // if all preconditions fulfilled start enter data phase
     if(MTP_RESP_OK == code)
     {
-        // DATA PHASE 
+        // DATA PHASE
         quint32 payloadLength = storageIds.size() * sizeof(quint32) + sizeof(quint32);
         MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
         dataContainer << storageIds;
@@ -849,7 +849,7 @@ void MTPResponder::getStorageIDReq()
             MTP_LOG_CRITICAL("Could not send data");
         }
     }
-    // RESPONSE PHASE 
+    // RESPONSE PHASE
     if( true == sent )
     {
         MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
@@ -873,23 +873,23 @@ void MTPResponder::getStorageInfoReq()
     {
         QVector<quint32> params;
         reqContainer->params(params);
-        // check still if the StorageID is correct and the storage is OK 
+        // check still if the StorageID is correct and the storage is OK
         quint32 storageId = params[0];
         code = m_storageServer->checkStorage( storageId );
         if( MTP_RESP_OK == code )
         {
             MTPStorageInfo storageInfo;
 
-            // get info from storage server  
+            // get info from storage server
             code = m_storageServer->storageInfo( storageId, storageInfo );
-            
+
             if( MTP_RESP_OK == code )
             {
-                // all information for StorageInfo dataset retrieved from Storage Server 
-                // determine total length of Storage Info dataset 
+                // all information for StorageInfo dataset retrieved from Storage Server
+                // determine total length of Storage Info dataset
                 payloadLength = MTP_STORAGE_INFO_SIZE + ( ( storageInfo.storageDescription.size() + 1 ) * 2 ) +
                                 ( ( storageInfo.volumeLabel.size() + 1 ) * 2 );
-                
+
                 // Create data container
                 MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
 
@@ -933,7 +933,7 @@ void MTPResponder::getNumObjectsReq()
     QVector<quint32> params;
     reqContainer->params(params);
 
-    // check if everything is ok, so that cmd can be processed 
+    // check if everything is ok, so that cmd can be processed
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
     if (MTP_RESP_OK == code && !m_storageServer)
@@ -960,14 +960,14 @@ void MTPResponder::getNumObjectsReq()
             // Check if the object handle, if provided is valid
             if( code == MTP_RESP_OK && 0x00000000 != params[2] && 0xFFFFFFFF != params[2] )
             {
-	        code = m_storageServer->checkHandle( params[2] );
+                code = m_storageServer->checkHandle( params[2] );
             }
         }
     }
 
     if( MTP_RESP_OK == code )
     {
-        // retrieve the number of objects from storage server 
+        // retrieve the number of objects from storage server
         code = m_storageServer->getObjectHandles(params[0], static_cast<MTPObjFormatCode>(params[1]), params[2], handles);
     }
     noOfObjects = handles.size() >= 0 ? handles.size() : 0;
@@ -995,7 +995,7 @@ void MTPResponder::getObjectHandlesReq()
     QVector<quint32> params;
     reqContainer->params(params);
 
-    // check if everything is ok, so that cmd can be processed 
+    // check if everything is ok, so that cmd can be processed
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
     if (MTP_RESP_OK == code && !m_storageServer)
@@ -1022,14 +1022,14 @@ void MTPResponder::getObjectHandlesReq()
             // Check if the object handle, if provided is valid
             if( code == MTP_RESP_OK && 0x00000000 != params[2] && 0xFFFFFFFF != params[2] )
             {
-	        code = m_storageServer->checkHandle( params[2] );
+                code = m_storageServer->checkHandle( params[2] );
             }
         }
     }
 
     if( MTP_RESP_OK == code )
     {
-        // retrieve the number of objects from storage server 
+        // retrieve the number of objects from storage server
         code = m_storageServer->getObjectHandles(params[0],
                 static_cast<MTPObjFormatCode>(params[1]),
                 params[2], handles);
@@ -1037,7 +1037,7 @@ void MTPResponder::getObjectHandlesReq()
     bool sent = true;
     if( MTP_RESP_OK == code )
     {
-        // DATA PHASE 
+        // DATA PHASE
         payloadLength = ( handles.size() + 1 ) * sizeof(quint32);
         MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
         dataContainer << handles;
@@ -1066,8 +1066,8 @@ void MTPResponder::getObjectInfoReq()
     quint32 payloadLength = 0;
     MTPResponseCode code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
-            
-    // check if everthing is ok, so that cmd can be processed 
+
+    // check if everthing is ok, so that cmd can be processed
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     QVector<quint32> params;
     reqContainer->params(params);
@@ -1075,8 +1075,8 @@ void MTPResponder::getObjectInfoReq()
     if((MTP_RESP_OK == code) && (MTP_RESP_OK == (code = m_storageServer->getObjectInfo(params[0], objectInfo))))
     {
         payloadLength = sizeof(MTPObjectInfo);
-        // consider the variable part(strings) in the ObjectInfo dataset 
-        // for the length of the payload 
+        // consider the variable part(strings) in the ObjectInfo dataset
+        // for the length of the payload
         payloadLength += ( objectInfo->mtpFileName.size() ? ( objectInfo->mtpFileName.size() + 1 ) * 2 : 0 );
         payloadLength += ( objectInfo->mtpCaptureDate.size() ? ( objectInfo->mtpCaptureDate.size() + 1 ) * 2 : 0 );
         payloadLength += ( objectInfo->mtpModificationDate.size() ? ( objectInfo->mtpModificationDate.size() + 1 ) * 2 : 0 );
@@ -1084,7 +1084,7 @@ void MTPResponder::getObjectInfoReq()
         MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
 
         dataContainer << *objectInfo;
-         
+
         sent = sendContainer(dataContainer);
         if( false == sent )
         {
@@ -1112,8 +1112,8 @@ void MTPResponder::getObjectReq()
     MTPResponseCode code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     QVector<quint32> params;
-            
-    // check if everthing is ok, so that cmd can be processed 
+
+    // check if everthing is ok, so that cmd can be processed
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     if( MTP_RESP_OK == code )
     {
@@ -1129,13 +1129,13 @@ void MTPResponder::getObjectReq()
     }
 
     bool sent = true;
-    // enter data phase if precondition has been OK 
+    // enter data phase if precondition has been OK
     if( MTP_RESP_OK == code )
     {
         if( payloadLength > maxBufferSize )
         {
-            // segmentation needed 
-            // set the segmentation info 
+            // segmentation needed
+            // set the segmentation info
             m_segmentedSender.totalDataLen = payloadLength;
             m_segmentedSender.payloadLen = BUFFER_MAX_LEN - MTP_HEADER_SIZE;
             m_segmentedSender.objHandle = params[0];
@@ -1143,17 +1143,17 @@ void MTPResponder::getObjectReq()
             m_segmentedSender.segmentationStarted = true;
             m_segmentedSender.sendResp = false;
             m_segmentedSender.headerSent = false;
-            // start segmented sending of the object 
+            // start segmented sending of the object
             sendObjectSegmented();
             // response will be send from sendObjectSegmented
             return;
-        }            
+        }
         else
         {
-            // no segmentation needed 
+            // no segmentation needed
             MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
-            
-            // get the Object from the storage Server 
+
+            // get the Object from the storage Server
             qint32 readLength = payloadLength;
             code = m_storageServer->readData(static_cast<ObjHandle&>(params[0]), reinterpret_cast<char*>(dataContainer.payload()),
                                              readLength, static_cast<quint32>(0));
@@ -1171,7 +1171,7 @@ void MTPResponder::getObjectReq()
         }
 
     }
-    
+
     if( true == sent )
     {
         MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
@@ -1223,10 +1223,10 @@ void MTPResponder::sendObjectInfoReq()
     MTP_FUNC_TRACE();
     MTPResponseCode code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
-    
+
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     m_transactionSequence->mtpResp = code;
-    // DATA PHASE will follow 
+    // DATA PHASE will follow
 }
 
 void MTPResponder::sendObjectReq()
@@ -1234,12 +1234,12 @@ void MTPResponder::sendObjectReq()
     MTP_FUNC_TRACE();
     MTPResponseCode code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
-    
-    // check whether the used IDs are OK 
+
+    // check whether the used IDs are OK
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
-    if( MTP_RESP_OK == code ) 
+    if( MTP_RESP_OK == code )
     {
-        // check still whether a SendObjectInfo dataset or an objectproplist dataset exists 
+        // check still whether a SendObjectInfo dataset or an objectproplist dataset exists
         // TODO Why was the 0 != size check added? It will be 0 for abstract objects like playlists
         if( ( !m_sendObjectSequencePtr && !m_objPropListInfo )  /*|| (m_objPropListInfo && 0 == m_objPropListInfo->objectSize)*/ )
         {
@@ -1267,13 +1267,13 @@ void MTPResponder::setObjectProtectionReq()
 void MTPResponder::getDevicePropDescReq()
 {
     MTP_FUNC_TRACE();
-      
+
     MTPResponseCode code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
-    // check if everything is ok, so that cmd can be processed 
+    // check if everything is ok, so that cmd can be processed
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     bool sent = true;
-    //  enter data phase 
+    //  enter data phase
     if( MTP_RESP_OK == code )
     {
         MtpDevPropDesc *propDesc = 0;
@@ -1312,8 +1312,8 @@ void MTPResponder::getDevicePropValueReq()
     MTPResponseCode code =  MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     bool sent = true;
-    
-    // check if everything is ok, so that cmd can be processed 
+
+    // check if everything is ok, so that cmd can be processed
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     if( MTP_RESP_OK == code )
     {
@@ -1332,7 +1332,7 @@ void MTPResponder::getDevicePropValueReq()
                 MTP_LOG_CRITICAL("Could not send data");
             }
         }
-    }    
+    }
 
     if( true == sent )
     {
@@ -1350,7 +1350,7 @@ void MTPResponder::setDevicePropValueReq()
     MTP_FUNC_TRACE();
     MTPResponseCode code =  MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
-    // check if everything is ok, so that cmd can be processed 
+    // check if everything is ok, so that cmd can be processed
     code = preCheck( m_transactionSequence->mtpSessionId, reqContainer->transactionId() );
     if( MTP_RESP_OK == code )
     {
@@ -1367,7 +1367,7 @@ void MTPResponder::setDevicePropValueReq()
     }
     // wait for the data phase to get the value to be set and to respond
     // in case that here in the request phase an error was detected, the
-    // response with the error code is sent at the end of the data phase      
+    // response with the error code is sent at the end of the data phase
     m_transactionSequence->mtpResp = code;
 }
 
@@ -1383,29 +1383,29 @@ void MTPResponder::moveObjectReq()
     quint16 code =  MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
-    // Check if the session id and transaction id are valid before proceeding further 
+    // Check if the session id and transaction id are valid before proceeding further
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
-    // Session and transaction id's are ok 
+    // Session and transaction id's are ok
     if(MTP_RESP_OK == code)
     {
         QVector<quint32> params;
         reqContainer->params(params);
-        // Check if the object handle passed to us is valid and exists in the storage passed to us 
+        // Check if the object handle passed to us is valid and exists in the storage passed to us
         if( MTP_RESP_OK != ( code = m_storageServer->checkHandle(params[0]) ) )
         {
         }
-        // Check if storage handle that's passed to us exists, is not full, and is writable 
+        // Check if storage handle that's passed to us exists, is not full, and is writable
         else if( MTP_RESP_OK != ( code = m_storageServer->checkStorage(params[1]) ) )
         {
             // We came across a storage related error ;
         }
-        // If the parent object handle is passed, check if that's valid 
+        // If the parent object handle is passed, check if that's valid
         else if( params[2] && MTP_RESP_OK != m_storageServer->checkHandle(params[2]) )
         {
             code = MTP_RESP_InvalidParentObject;
         }
-        // Storage, object and parent handles are ok, proceed to copy the object 
+        // Storage, object and parent handles are ok, proceed to copy the object
         else
         {
             code = m_storageServer->moveObject(params[0], params[2], params[1]);
@@ -1417,7 +1417,7 @@ void MTPResponder::moveObjectReq()
             }
         }
     }
-    
+
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
     bool sent = sendContainer(respContainer);
     if( false == sent )
@@ -1433,29 +1433,29 @@ void MTPResponder::copyObjectReq()
     ObjHandle retHandle = 0;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
-    // Check if the session id and transaction id are valid before proceeding further 
+    // Check if the session id and transaction id are valid before proceeding further
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
-    // Session and transaction id's are ok 
+    // Session and transaction id's are ok
     if(MTP_RESP_OK == code)
     {
         QVector<quint32> params;
         reqContainer->params(params);
-        // Check if the object handle passed to us is valid and exists in the storage passed to us 
+        // Check if the object handle passed to us is valid and exists in the storage passed to us
         if( MTP_RESP_OK != ( code = m_storageServer->checkHandle(params[0]) ) )
         {
         }
-        // Check if storage handle that's passed to us exists, is not full, and is writable 
+        // Check if storage handle that's passed to us exists, is not full, and is writable
         else if( MTP_RESP_OK != ( code = m_storageServer->checkStorage(params[1]) ) )
         {
             // We cam across a storage related error ;
         }
-        // If the parent object handle is passed, check if that's valid 
+        // If the parent object handle is passed, check if that's valid
         else if( params[2] && MTP_RESP_OK != m_storageServer->checkHandle(params[2]) )
         {
             code = MTP_RESP_InvalidParentObject;
         }
-        // Storage, object and parent handles are ok, proceed to copy the object 
+        // Storage, object and parent handles are ok, proceed to copy the object
         else
         {
             code = m_storageServer->copyObject(params[0], params[2], params[1], retHandle);
@@ -1466,8 +1466,8 @@ void MTPResponder::copyObjectReq()
     {
         return;
     }
-       
-    // RESPONSE PHASE 
+
+    // RESPONSE PHASE
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId(), sizeof(retHandle));
     respContainer << retHandle;
     m_copiedObjHandle = retHandle;
@@ -1486,7 +1486,7 @@ void MTPResponder::getObjPropsSupportedReq()
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     bool sent = true;
 
-    // check if everthing is ok, so that cmd can be processed 
+    // check if everthing is ok, so that cmd can be processed
     // Pass 0x00000001 as the session ID, as this operation does not need an active session
     if (MTP_RESP_OK != (code = preCheck(0x00000001, reqContainer->transactionId())))
     {
@@ -1497,12 +1497,12 @@ void MTPResponder::getObjPropsSupportedReq()
         QVector<quint32> params;
         reqContainer->params(params);
         MTPObjectFormatCategory category = (MTPObjectFormatCategory)m_devInfoProvider->getFormatCodeCategory(params[0]);
-        
+
         QVector<MTPObjPropertyCode> propsSupported;
 
         code = m_propertyPod->getObjectPropsSupportedByType(category, propsSupported);
-        
-        // enter data phase if precondition has been OK 
+
+        // enter data phase if precondition has been OK
         if(MTP_RESP_OK == code)
         {
             quint32 payloadLength = propsSupported.size() * sizeof(MTPObjPropertyCode) + sizeof(quint32);
@@ -1534,7 +1534,7 @@ void MTPResponder::getObjPropDescReq()
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     bool sent = true;
 
-    // check if everthing is ok, so that cmd can be processed 
+    // check if everthing is ok, so that cmd can be processed
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     if(MTP_RESP_OK == code)
     {
@@ -1565,7 +1565,7 @@ void MTPResponder::getObjPropDescReq()
             }
         }
     }
-    
+
     if( true == sent )
     {
         MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
@@ -1584,7 +1584,7 @@ void MTPResponder::getObjPropValueReq()
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     bool sent = true;
 
-    // check if everthing is ok, so that cmd can be processed 
+    // check if everthing is ok, so that cmd can be processed
     code =  preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     if(MTP_RESP_OK == code)
     {
@@ -1629,10 +1629,10 @@ void MTPResponder::getObjPropValueReq()
                     m_extensionManager->getObjPropValue(path, propCode, propValList[0].propVal, code);
                 }
             }
-            // enter data phase if value has been retrieved 
+            // enter data phase if value has been retrieved
             if(MTP_RESP_OK == code)
             {
-                // DATA PHASE 
+                // DATA PHASE
                 quint32 payloadLength = sizeof(QVariant); // approximation
                 MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
                 if(1 == propValList.size())
@@ -1667,9 +1667,9 @@ void MTPResponder::getObjPropValueReq()
 void MTPResponder::setObjPropValueReq()
 {
     MTP_FUNC_TRACE();
-    
+
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
-    // check if everthing is ok, so that cmd can be processed 
+    // check if everthing is ok, so that cmd can be processed
     m_transactionSequence->mtpResp = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     if(MTP_RESP_OK == m_transactionSequence->mtpResp)
     {
@@ -1695,7 +1695,7 @@ void MTPResponder::setObjPropValueReq()
                 m_transactionSequence->mtpResp = MTP_RESP_AccessDenied;
             }
         }
-    }   
+    }
 }
 
 void MTPResponder::getObjectPropListReq()
@@ -1711,7 +1711,7 @@ void MTPResponder::getObjectPropListReq()
     QVector<quint32> params;
     reqContainer->params(params);
 
-    
+
     objHandle = static_cast<ObjHandle>(params[0]);
     format = static_cast<MTPObjFormatCode>(params[1]);
     propCode = static_cast<MTPObjPropertyCode>(params[2]);
@@ -1720,7 +1720,7 @@ void MTPResponder::getObjectPropListReq()
     bool sent = true;
 
     resp = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
-    
+
     if( MTP_RESP_OK == resp )
     {
         if((0 == objHandle) && (0 == depth))
@@ -1736,7 +1736,7 @@ void MTPResponder::getObjectPropListReq()
         }
         else if( (1 < depth) && (0xFFFFFFFF > depth) )
         {
-            // we do not support depth values between 1 and 0xFFFFFFFF 
+            // we do not support depth values between 1 and 0xFFFFFFFF
             resp = MTP_RESP_Specification_By_Depth_Unsupported;
         }
         else if(0 == propCode)
@@ -1758,7 +1758,7 @@ void MTPResponder::getObjectPropListReq()
             quint32 storageID = 0xFFFFFFFF;
             const MTPObjectInfo *objInfo;
             ObjHandle currentObj = 0;
-          
+
             if(0 == depth)
             {
                 // The properties for this object are requested
@@ -1780,29 +1780,29 @@ void MTPResponder::getObjectPropListReq()
                 }
                 resp = m_storageServer->getObjectHandles(storageID, format, tempHandle, objHandles);
             }
-                
+
             if(MTP_RESP_OK == resp)
             {
                 // TODO: The buffer max len needs to be decided
                 quint32 maxPayloadLen = BUFFER_MAX_LEN - MTP_HEADER_SIZE;
                 MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), maxPayloadLen);
-                    
-                // if there are no handles found an empty dataset will be sent 
+
+                // if there are no handles found an empty dataset will be sent
                 numHandles = objHandles.size();
                 MTP_LOG_TRACE( numHandles);
                 dataContainer << numHandles; // Write the numHandles here for now, to advance the serializer's pointer
-                // go through the list of found ObjectHandles 
+                // go through the list of found ObjectHandles
                 for(quint32 i = 0; (i < numHandles && (MTP_RESP_OK == resp)); i++)
                 {
                     currentObj = objHandles[i];
-                        
+
                     resp = m_storageServer->getObjectInfo(currentObj, objInfo);
                     if(MTP_RESP_OK == resp)
                     {
-                        // find the format and the category of the object 
+                        // find the format and the category of the object
                         objFormat = static_cast<MTPObjFormatCode>(objInfo->mtpObjectFormat);
                         category = static_cast<MTPObjectFormatCategory>(m_devInfoProvider->getFormatCodeCategory(objFormat));
-                                                
+
                         // FIXME: Investigate if the below force assignment to common format is really needed
                         if (category == MTP_UNSUPPORTED_FORMAT)
                         {
@@ -1810,7 +1810,7 @@ void MTPResponder::getObjectPropListReq()
                         }
 
                         QList<MTPObjPropDescVal> propValList;
-                        // check whether all or a certain ObjectProperty of the referenced Object is requested 
+                        // check whether all or a certain ObjectProperty of the referenced Object is requested
                         if(0xFFFF == propCode)
                         {
                             const MtpObjPropDesc *propDesc = 0;
@@ -1903,12 +1903,12 @@ void MTPResponder::setObjectPropListReq()
     MTPResponseCode respCode =  MTP_RESP_OK;
 
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
-    // check if everthing is ok, so that cmd can be processed 
+    // check if everthing is ok, so that cmd can be processed
     respCode = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
-    // Store the code 
+    // Store the code
     m_transactionSequence->mtpResp = respCode;
-    // Wait for the data phase 
+    // Wait for the data phase
 }
 
 void MTPResponder::getInterdependentPropDescReq()
@@ -1935,13 +1935,13 @@ void MTPResponder::sendObjectPropListReq()
     MTPObjectFormatCategory category = MTP_UNSUPPORTED_FORMAT;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
-    // check if everthing is ok, so that cmd can be processed 
+    // check if everthing is ok, so that cmd can be processed
     *respCode = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     if(MTP_RESP_OK == *respCode)
     {
         QVector<quint32> params;
         reqContainer->params(params);
-        // If storage id is provided, check if it's valid 
+        // If storage id is provided, check if it's valid
         storageID = params[0];
         if(storageID)
         {
@@ -1950,7 +1950,7 @@ void MTPResponder::sendObjectPropListReq()
 
         if(MTP_RESP_OK == *respCode)
         {
-            // If the parent object is provided, check that 
+            // If the parent object is provided, check that
             parentHandle = params[1];
             if((0 != parentHandle) && (0xFFFFFFFF != parentHandle))
             {
@@ -1996,7 +1996,7 @@ void MTPResponder::getObjReferencesReq()
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     bool sent = true;
 
-    // check if everthing is ok, so that cmd can be processed 
+    // check if everthing is ok, so that cmd can be processed
     respCode = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     if(MTP_RESP_OK == respCode)
     {
@@ -2004,7 +2004,7 @@ void MTPResponder::getObjReferencesReq()
         reqContainer->params(params);
         QVector<ObjHandle> objReferences;
         respCode = m_storageServer->getReferences(params[0], objReferences);
-        // enter data phase if precondition has been OK 
+        // enter data phase if precondition has been OK
         if(MTP_RESP_OK == respCode)
         {
             quint32 payloadLength = objReferences.size() * sizeof(ObjHandle) + sizeof(quint32);
@@ -2017,7 +2017,7 @@ void MTPResponder::getObjReferencesReq()
             }
         }
     }
-    
+
     if( true == sent )
     {
         MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
@@ -2035,7 +2035,7 @@ void MTPResponder::setObjReferencesReq()
     quint16 respCode =  MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
-    // check if everthing is ok, so that cmd can be processed 
+    // check if everthing is ok, so that cmd can be processed
     respCode = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     m_transactionSequence->mtpResp = respCode;
 }
@@ -2046,7 +2046,7 @@ void MTPResponder::skipReq()
     quint16 respCode =  MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
-    // check if everthing is ok, so that cmd can be processed 
+    // check if everthing is ok, so that cmd can be processed
     respCode = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     if(MTP_RESP_OK == respCode)
     {
@@ -2065,7 +2065,7 @@ void MTPResponder::skipReq()
 void MTPResponder::sendObjectInfoData()
 {
     MTP_FUNC_TRACE();
-    
+
     MTPObjectInfo objectInfo;
     MTPResponseCode response =  m_transactionSequence->mtpResp;
     quint32 responseParams[3];
@@ -2074,12 +2074,12 @@ void MTPResponder::sendObjectInfoData()
     QVector<quint32> params;
     if(MTP_RESP_OK == m_transactionSequence->mtpResp)
     {
-        // If there's a objectproplist dataset existing, delete that 
+        // If there's a objectproplist dataset existing, delete that
         freeObjproplistInfo();
         m_sendObjectSequencePtr = new MTPSendObjectSequence();
 
         reqContainer->params(params);
-    
+
         // De-serialize the object info
         *recvContainer >> objectInfo;
 
@@ -2090,11 +2090,11 @@ void MTPResponder::sendObjectInfoData()
         }
         else
         {
-            // get the requested StorageId 
+            // get the requested StorageId
             responseParams[0] = params[0];
-            // get the requested Parent ObjectHandle 
+            // get the requested Parent ObjectHandle
             responseParams[1] = params[1];
-            // trigger creation of a file in Storage Server 
+            // trigger creation of a file in Storage Server
             response = m_storageServer->addItem(responseParams[0], responseParams[1], responseParams[2],
                                                 &objectInfo);
         }
@@ -2102,22 +2102,22 @@ void MTPResponder::sendObjectInfoData()
         // creation of file was successful store information which are needed later temporarly
         if( MTP_RESP_OK == response )
         {
-            // save the ObjectInfo temporarly 
+            // save the ObjectInfo temporarly
             m_sendObjectSequencePtr->objInfo = new MTPObjectInfo;
             *(m_sendObjectSequencePtr->objInfo) = objectInfo;
-            // save the ObjectHandle temporarly 
+            // save the ObjectHandle temporarly
             m_sendObjectSequencePtr->objHandle = responseParams[2];
         }
         else
         {
             delete m_sendObjectSequencePtr;
             m_sendObjectSequencePtr = 0;
-            // return parameters shall not be used 
+            // return parameters shall not be used
             memset(&responseParams[0],0, sizeof(responseParams));
         }
     }
 
-    // create and send container for response 
+    // create and send container for response
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, response, reqContainer->transactionId(), sizeof(responseParams));
     if( MTP_RESP_OK == response )
     {
@@ -2133,14 +2133,14 @@ void MTPResponder::sendObjectInfoData()
 void MTPResponder::sendObjectData(quint8* data, quint32 dataLen, bool isFirstPacket, bool isLastPacket)
 {
     MTP_FUNC_TRACE();
-    
+
     quint32 objectLen = 0;
     MTPResponseCode code =  MTP_RESP_OK;
     MTPContainerWrapper container(data);
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     ObjHandle handle = 0;
 
-    // error if no ObjectInfo or objectproplist dataset has been sent before 
+    // error if no ObjectInfo or objectproplist dataset has been sent before
     if( !m_objPropListInfo && ( !m_sendObjectSequencePtr || !m_sendObjectSequencePtr->objInfo ) )
     {
         code = MTP_RESP_NoValidObjectInfo;
@@ -2156,32 +2156,32 @@ void MTPResponder::sendObjectData(quint8* data, quint32 dataLen, bool isFirstPac
         {
             handle = m_objPropListInfo->objectHandle;
         }
-       
-        // assume that the whole segment will be written 
+
+        // assume that the whole segment will be written
         objectLen = dataLen;
-                
+
         if (isFirstPacket)
         {
-            // the start segment includes the container header, which should not be written 
-            // set the pointer of the data to be written, on the payload 
+            // the start segment includes the container header, which should not be written
+            // set the pointer of the data to be written, on the payload
             writeBuffer = container.payload();
             //subtract header length
             objectLen -= MTP_HEADER_SIZE;
          }
          else
          {
-             // if it is not the start, just take the receive data an length 
+             // if it is not the start, just take the receive data an length
              writeBuffer = data;
          }
-                
-         // write data 
+
+         // write data
          code = m_storageServer->writeData( handle, reinterpret_cast<char*>(writeBuffer), objectLen, isFirstPacket, isLastPacket);
          if( MTP_RESP_OK == code )
          {
              code = sendObjectCheck(handle, objectLen, isLastPacket, code);
          }
     }
-    
+
     if( MTP_RESP_Undefined != code )
     {
         // Delete the stored sendObjectInfo information
@@ -2195,7 +2195,7 @@ void MTPResponder::sendObjectData(quint8* data, quint32 dataLen, bool isFirstPac
             delete m_sendObjectSequencePtr;
             m_sendObjectSequencePtr = 0;
         }
-        // Apply object prop list if one was sent thru SendObjectPropList 
+        // Apply object prop list if one was sent thru SendObjectPropList
         if(MTP_RESP_OK == code && m_objPropListInfo)
         {
             MTPObjectFormatCategory category = m_devInfoProvider->getFormatCodeCategory(m_objPropListInfo->objectFormatCode);
@@ -2205,7 +2205,7 @@ void MTPResponder::sendObjectData(quint8* data, quint32 dataLen, bool isFirstPac
             {
                 if( MTP_OBJ_PROP_Obj_File_Name == m_objPropListInfo->objPropList[i].objectPropCode)
                 {
-                    // This has already been set 
+                    // This has already been set
                     continue;
                 }
                 // Get the object prop desc for this property
@@ -2229,7 +2229,7 @@ void MTPResponder::sendObjectData(quint8* data, quint32 dataLen, bool isFirstPac
         }
 
         // This is moved here intentionally : in case a cancel tx is received before sending the response above
-	// we would need the handle to delete the object.
+        // we would need the handle to delete the object.
         freeObjproplistInfo();
     } // no else, wait for the next data packet...
 }
@@ -2241,7 +2241,7 @@ void MTPResponder::setObjectPropListData()
     quint32 numObjects = 0;
     quint32 response = 0x00000000;
     ObjHandle objHandle = 0;
-    MTPObjPropertyCode propCode; 
+    MTPObjPropertyCode propCode;
     MTPDataType datatype = MTP_DATA_TYPE_UNDEF;
     MTPObjFormatCode format;
     MTPObjectFormatCategory category;
@@ -2250,24 +2250,24 @@ void MTPResponder::setObjectPropListData()
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     MTPRxContainer *recvContainer = m_transactionSequence->dataContainer;
 
-    // Deserialize the no. of elements for which we need to set object property values 
+    // Deserialize the no. of elements for which we need to set object property values
     *recvContainer >> numObjects;
 
-    // Proceed to set object property values for noOfElements objects 
+    // Proceed to set object property values for noOfElements objects
     for(; ((i < numObjects) && (MTP_RESP_OK == respCode)); i++)
     {
-        // First, get the object handle 
+        // First, get the object handle
         *recvContainer >> objHandle;
-        // Check if this is a valid object handle 
+        // Check if this is a valid object handle
         const MTPObjectInfo *objInfo;
         respCode = m_storageServer->getObjectInfo(objHandle, objInfo);
 
         if(MTP_RESP_OK == respCode)
         {
-            // Next, get the object property code 
+            // Next, get the object property code
             *recvContainer >> propCode;
 
-            // Check if the object property code is valid and that it can be "set" 
+            // Check if the object property code is valid and that it can be "set"
             format = static_cast<MTPObjFormatCode>(objInfo->mtpObjectFormat);
             category = static_cast<MTPObjectFormatCategory>(m_devInfoProvider->getFormatCodeCategory(format));
             respCode = m_propertyPod->getObjectPropDesc(category, propCode, propDesc);
@@ -2276,15 +2276,15 @@ void MTPResponder::setObjectPropListData()
                 respCode = propDesc->bGetSet ? MTP_RESP_OK : MTP_RESP_AccessDenied;
                 if(MTP_RESP_OK == respCode)
                 {
-                    // Next, get this object property's datatype 
+                    // Next, get this object property's datatype
                     *recvContainer >> datatype;
                     QList<MTPObjPropDescVal> propValList;
                     propValList.append(MTPObjPropDescVal(propDesc));
                     recvContainer->deserializeVariantByType(datatype, propValList[0].propVal);
-                    // Set the object property value 
+                    // Set the object property value
                     respCode = m_storageServer->setObjectPropertyValue(objHandle, propValList);
                     m_propCache->addToCache( objHandle, propValList );
-                }   
+                }
             }
         }
     }
@@ -2293,7 +2293,7 @@ void MTPResponder::setObjectPropListData()
         // Set the response parameter to the 0 based index of the property that caused the problem
         response = i - 1;
     }
-    // create and send container for response 
+    // create and send container for response
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
     bool sent = sendContainer(respContainer);
     if( false == sent )
@@ -2328,18 +2328,18 @@ void MTPResponder::sendObjectPropListData()
         return;
     }
 
-    // Deserialize the no. of elements for which we need to set object property values 
+    // Deserialize the no. of elements for which we need to set object property values
     *recvContainer >> m_objPropListInfo->noOfElements;
 
-    // Allocate memory for the the number of elements obj property list item 
+    // Allocate memory for the the number of elements obj property list item
     m_objPropListInfo->objPropList = new ObjPropListInfo::ObjectPropList[m_objPropListInfo->noOfElements];
 
     for(quint32 i = 0; i < m_objPropListInfo->noOfElements; i++ )
     {
         m_objPropListInfo->objPropList[i].value = 0;
-        // First, get the object handle 
+        // First, get the object handle
         *recvContainer >> m_objPropListInfo->objPropList[i].objectHandle;
-        // Check if the object handle is 0x00000000 
+        // Check if the object handle is 0x00000000
         if(0 != m_objPropListInfo->objPropList[i].objectHandle)
         {
             respCode = MTP_RESP_Invalid_Dataset;
@@ -2348,12 +2348,12 @@ void MTPResponder::sendObjectPropListData()
             break;
         }
 
-        // Next, get the object property code 
+        // Next, get the object property code
         *recvContainer >> m_objPropListInfo->objPropList[i].objectPropCode;
 
         category = static_cast<MTPObjectFormatCategory>(m_devInfoProvider->getFormatCodeCategory(m_objPropListInfo->objectFormatCode));
         propCode = static_cast<MTPObjPropertyCode>(m_objPropListInfo->objPropList[i].objectPropCode);
-        // Check if the object property code is valid and that it can be "get" 
+        // Check if the object property code is valid and that it can be "get"
         if(MTP_RESP_OK != m_propertyPod->getObjectPropDesc(category, propCode, propDesc))
         {
             respCode = MTP_RESP_Invalid_Dataset;
@@ -2362,13 +2362,13 @@ void MTPResponder::sendObjectPropListData()
             break;
         }
 
-        // Next, get this object property's datatype 
+        // Next, get this object property's datatype
         *recvContainer >> m_objPropListInfo->objPropList[i].datatype;
 
         m_objPropListInfo->objPropList[i].value = new QVariant();
         recvContainer->deserializeVariantByType(m_objPropListInfo->objPropList[i].datatype, *m_objPropListInfo->objPropList[i].value);
 
-        // If this property is the filename, trigger object creation in the file system now 
+        // If this property is the filename, trigger object creation in the file system now
         if( MTP_OBJ_PROP_Obj_File_Name == m_objPropListInfo->objPropList[i].objectPropCode)
         {
             objInfo.mtpStorageId = m_objPropListInfo->storageId;
@@ -2392,7 +2392,7 @@ void MTPResponder::sendObjectPropListData()
             }
         }
     }
-    // create and send container for response 
+    // create and send container for response
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId(), respSize);
     for(quint32 i = 0; i < (respSize/sizeof(quint32)); i++)
     {
@@ -2408,7 +2408,7 @@ void MTPResponder::sendObjectPropListData()
 void MTPResponder::setDevicePropValueData()
 {
     MTP_FUNC_TRACE();
-    
+
     quint16 response =  MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     QVector<quint32> params;
@@ -2418,7 +2418,7 @@ void MTPResponder::setDevicePropValueData()
 
     switch(propCode)
     {
-        // set the value if the property is supported 
+        // set the value if the property is supported
         case MTP_DEV_PROPERTY_Device_Friendly_Name:
             {
                 QString name;
@@ -2433,7 +2433,7 @@ void MTPResponder::setDevicePropValueData()
                 m_devInfoProvider->setSyncPartner(partner);
             }
             break;
-        case MTP_DEV_PROPERTY_Volume:                 
+        case MTP_DEV_PROPERTY_Volume:
             {
                 qint32 vol = 0;
                 *recvContainer >> vol;
@@ -2442,8 +2442,8 @@ void MTPResponder::setDevicePropValueData()
         default:
             {
                 // Call extension manager's method to set device property value
-            }            
-            break;     
+            }
+            break;
     }
 
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, response, reqContainer->transactionId());
@@ -2459,13 +2459,13 @@ void MTPResponder::setObjPropValueData()
     MTP_FUNC_TRACE();
     MTPResponseCode respCode = m_transactionSequence->mtpResp;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
-    
+
     // If there was some problem in the request phase...
     if (MTP_RESP_OK == respCode)
     {
         QVector<quint32> params;
         reqContainer->params(params);
-        // Check if the object property code is valid and that it can be "set" 
+        // Check if the object property code is valid and that it can be "set"
         ObjHandle objHandle = params[0];
         const MTPObjectInfo *objInfo;
         if(MTP_RESP_OK == (respCode = m_storageServer->getObjectInfo(objHandle, objInfo)))
@@ -2497,7 +2497,7 @@ void MTPResponder::setObjPropValueData()
             }
         }
     }
-    // create and send container for response 
+    // create and send container for response
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
     bool sent = sendContainer(respContainer);
     if( false == sent )
@@ -2519,7 +2519,7 @@ void MTPResponder::setObjReferencesData()
     // De-serialize the references array
     *recvContainer >> references;
     respCode = m_storageServer->setReferences(params[0], references);
-    
+
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
     bool sent = sendContainer(respContainer);
     if( false == sent )
@@ -2565,12 +2565,12 @@ void MTPResponder::freeObjproplistInfo()
     {
         for(quint32 i = 0; i < m_objPropListInfo->noOfElements; i++)
         {
-            if( m_objPropListInfo->objPropList[i].value ) 
+            if( m_objPropListInfo->objPropList[i].value )
             {
                 delete m_objPropListInfo->objPropList[i].value;
             }
         }
-        if(m_objPropListInfo->objPropList) 
+        if(m_objPropListInfo->objPropList)
         {
             delete[] m_objPropListInfo->objPropList;
         }
@@ -2608,7 +2608,7 @@ MTPResponseCode MTPResponder::sendObjectCheck( ObjHandle handle, const quint32 d
         quint32 bytesWritten = m_sendObjectSequencePtr->sendObjBytesWritten;
         // update the total amount of written bytes */
         m_sendObjectSequencePtr->sendObjBytesWritten = bytesWritten + dataLen;
-        
+
         // check if all parts of the object have been received
         if( m_sendObjectSequencePtr->objInfo->mtpObjectCompressedSize >
             m_sendObjectSequencePtr->sendObjBytesWritten )
@@ -2706,7 +2706,7 @@ void MTPResponder::handleCancelTransaction()
     if( !m_transactionSequence->reqContainer )
     {
         emit deviceStatusOK();
-	MTP_LOG_CRITICAL("Received Cancel Transaction while in idle state : do nothing");
+        MTP_LOG_CRITICAL("Received Cancel Transaction while in idle state : do nothing");
         //Nothing to do
         return;
     }
@@ -2717,9 +2717,9 @@ void MTPResponder::handleCancelTransaction()
     switch( m_transactionSequence->reqContainer->code() )
     {
         // Host initiated cancel for host to device data transfer
-        case MTP_OP_SendObject: 
-        case MTP_OP_SendObjectPropList: 
-        case MTP_OP_SendObjectInfo: 
+        case MTP_OP_SendObject:
+        case MTP_OP_SendObjectPropList:
+        case MTP_OP_SendObjectInfo:
         {
             ObjHandle handle = 0x00000000;
             // A SendObjectPropListInfo was used.
@@ -2814,7 +2814,7 @@ bool MTPResponder::serializePropListQuantum(ObjHandle currentObj, QList<MTPObjPr
     // Ignore below return value
     if( allProps )
     {
-        if( m_propCache->getFromCache( currentObj, propValList, notFoundList ) ) 
+        if( m_propCache->getFromCache( currentObj, propValList, notFoundList ) )
         {
             ;//Do Nothing
         }
@@ -2861,7 +2861,7 @@ bool MTPResponder::serializePropListQuantum(ObjHandle currentObj, QList<MTPObjPr
 void MTPResponder::sendObjectSegmented()
 {
     MTP_FUNC_TRACE();
-    
+
     quint32 segPayloadLength = 0;
     quint32 segDataOffset = 0;
     quint8 *segPtr = 0;
@@ -2869,11 +2869,11 @@ void MTPResponder::sendObjectSegmented()
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     MTPOperationCode opCode = reqContainer->code();
     bool sent = true;
-    
+
     segDataOffset = m_segmentedSender.offset;
     segPayloadLength = m_segmentedSender.payloadLen;
 
-    // start segmentation 
+    // start segmentation
     while(segDataOffset < m_segmentedSender.totalDataLen)
     {
         if(m_segmentedSender.headerSent == false)
@@ -2913,7 +2913,7 @@ void MTPResponder::sendObjectSegmented()
             respCode = m_storageServer->readData(m_segmentedSender.objHandle, (char*)segPtr, bytesRead, segDataOffset);
             if(MTP_RESP_OK != respCode)
             {
-                m_segmentedSender.sendResp = true;   
+                m_segmentedSender.sendResp = true;
                 delete[] (segPtr);
                 break;
             }
@@ -2962,7 +2962,7 @@ void MTPResponder::sendObjectSegmented()
             }
         }
         // Segmented sending is done
-        m_segmentedSender.segmentationStarted = FALSE;
+        m_segmentedSender.segmentationStarted = false;
     }
 }
 
@@ -3020,4 +3020,3 @@ void MTPResponder::invalidatePropertyCache(ObjHandle objHandle, MTPObjPropertyCo
 {
     m_propCache->removeFromCache(objHandle, propCode);
 }
-

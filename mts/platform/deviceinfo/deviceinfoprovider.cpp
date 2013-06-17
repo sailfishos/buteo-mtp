@@ -36,13 +36,20 @@
 #include <QDBusReply>
 #include <QVariant>
 #include <QMap>
-#include <QSystemInfo>
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <QDeviceInfo>
+#else
 #include <QSystemDeviceInfo>
+#include <QSystemInfo>
+
+QTM_USE_NAMESPACE
+#endif
 
 #include <buteosyncfw/SyncDBusConnection.h>
 
 using namespace meegomtp1dot0;
-QTM_USE_NAMESPACE
+
 
 #define BLUEZ_DEST "org.bluez"
 #define BLUEZ_MANAGER_INTERFACE "org.bluez.Manager"
@@ -87,15 +94,27 @@ DeviceInfoProvider::~DeviceInfoProvider()
  *********************************************/
 void DeviceInfoProvider::getSystemInfo()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+    QDeviceInfo *di = new QDeviceInfo(this);
+
+    /// @todo hardcoded to first IMEI for now
+    m_serialNo = di->imei(0).isEmpty() ? m_serialNo : di->imei(0);
+    m_deviceVersion = di->version(QDeviceInfo::Firmware).isEmpty()
+        ? m_deviceVersion : di->version(QDeviceInfo::Firmware);
+#else
     QSystemInfo *si = new QSystemInfo(this);
     QSystemDeviceInfo *di = new QSystemDeviceInfo(this);
 
-    m_deviceVersion = si->version(QSystemInfo::Firmware).isEmpty() ? m_deviceVersion : si->version(QSystemInfo::Firmware);
+    m_deviceVersion = si->version(QSystemInfo::Firmware).isEmpty()
+        ? m_deviceVersion : si->version(QSystemInfo::Firmware);
     m_serialNo = di->imei().isEmpty() ? m_serialNo : di->imei();
+
+    delete si;
+#endif
+
     m_manufacturer = di->manufacturer().isEmpty() ? m_manufacturer : di->manufacturer();
     m_model = di->model().isEmpty() ? m_model : di->model();
 
-    delete si;
     delete di;
 }
 

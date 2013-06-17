@@ -5,12 +5,17 @@
 QT += xml dbus
 QT -= gui
 
-CONFIG += link_pkgconfig debug mobility
-MOBILITY = systeminfo
+CONFIG += link_pkgconfig debug
+
+equals(QT_MAJOR_VERSION, 4): {
+    CONFIG += mobility
+    MOBILITY = systeminfo
+    PKGCONFIG += buteosyncfw
+}
+equals(QT_MAJOR_VERSION, 5): PKGCONFIG += Qt0SystemInfo buteosyncfw5
+
 #QMAKE_CXXFLAGS += -O0 -Werror
 LIBS += -lcontextsubscriber
-#to be removed later when QtDBus makes it calls thread safe 
-LIBS += -lbuteosyncfw
 
 TEMPLATE = lib
 TARGET = meegomtp
@@ -102,4 +107,3 @@ INSTALLS += tmp
 
 #clean
 QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)
-
