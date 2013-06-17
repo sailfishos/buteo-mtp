@@ -103,9 +103,7 @@ void ControlReaderThread::run()
     struct usb_functionfs_event *event;
     int readSize, count;
 
-    // This is a nasty hack for pthread kill use
-    // Qt documentation says not to use it
-    m_handle = QThread::currentThreadId();
+    m_handle = pthread_self();
     do {
         while((readSize = read(m_fd, readBuffer, MAX_CONTROL_IN_SIZE)) > 0) {
             count = readSize/(sizeof(struct usb_functionfs_event));
@@ -217,9 +215,7 @@ void BulkReaderThread::run()
 {
     int readSize;
 
-    // This is a nasty hack for pthread kill use
-    // Qt documentation says not to use it
-    m_handle = QThread::currentThreadId();
+    m_handle = pthread_self();
     m_threadRunning = true;
 
     char* inbuf = new char[MAX_DATA_IN_SIZE];
@@ -286,9 +282,7 @@ void BulkWriterThread::run()
     int bytesWritten = 0;
     char *dataptr = (char*)m_buffer;
 
-    // This is a nasty hack for pthread kill use
-    // Qt documentation says not to use it
-    m_handle = QThread::currentThreadId();
+    m_handle = pthread_self();
 
     do {
         bytesWritten = write(m_fd, dataptr, m_dataLen);
@@ -368,9 +362,7 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 
 void InterruptWriterThread::run()
 {
-    // This is a nasty hack for pthread kill use
-    // Qt documentation says not to use it
-    m_handle = QThread::currentThreadId();
+    m_handle = pthread_self();
 
     m_running = true;
 
