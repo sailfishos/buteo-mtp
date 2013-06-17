@@ -10,12 +10,11 @@ CONFIG += link_pkgconfig debug
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
     MOBILITY = systeminfo
-    PKGCONFIG += buteosyncfw
+    PKGCONFIG += buteosyncfw contextkit-statefs-qt4
 }
-equals(QT_MAJOR_VERSION, 5): PKGCONFIG += Qt0SystemInfo buteosyncfw5
+equals(QT_MAJOR_VERSION, 5): PKGCONFIG += Qt0SystemInfo buteosyncfw5 contextkit-statefs
 
 #QMAKE_CXXFLAGS += -O0 -Werror
-LIBS += -lcontextsubscriber
 
 TEMPLATE = lib
 TARGET = meegomtp

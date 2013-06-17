@@ -9,24 +9,24 @@
 * are permitted provided that the following conditions are met:
 *
 * Redistributions of source code must retain the above copyright notice, this list
-* of conditions and the following disclaimer. Redistributions in binary form must 
-* reproduce the above copyright notice, this list of conditions and the following 
+* of conditions and the following disclaimer. Redistributions in binary form must
+* reproduce the above copyright notice, this list of conditions and the following
 * disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of Nokia Corporation nor the names of its contributors may be 
-* used to endorse or promote products derived from this software without specific 
+* Neither the name of Nokia Corporation nor the names of its contributors may be
+* used to endorse or promote products derived from this software without specific
 * prior written permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
 * IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
 * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-* BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+* BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
 * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 * OF THE POSSIBILITY OF SUCH DAMAGE.
-* 
+*
 */
 
 
@@ -51,7 +51,7 @@ enum TransportType
 };
 
 typedef quint32 ObjHandle;
- 
+
 /* object format category */
 #define     MTP_UNSUPPORTED_FORMAT 0x0001
 #define     MTP_AUDIO_FORMAT 0x0002
@@ -60,7 +60,7 @@ typedef quint32 ObjHandle;
 #define     MTP_COMMON_FORMAT 0x0005
 
 typedef quint16 MTPObjectFormatCategory;
-    
+
 
 /* data types */
 #define MTP_DATA_TYPE_UNDEF     0x0000
@@ -174,7 +174,7 @@ typedef quint16 MTPOperationCode;
 #define MTP_RESP_Object_Too_Large                        0xA809
 #define MTP_RESP_ObjectProp_Not_Supported                0xA80A
 
-    
+
 typedef quint16 MTPResponseCode;
 
 /* event codes */
@@ -198,11 +198,11 @@ typedef quint16 MTPResponseCode;
 
 typedef quint16 MTPEventCode;
 Q_DECLARE_METATYPE(MTPEventCode);
-    
+
 
 /* container types */
 #define MTP_CONTAINER_TYPE_UNDEFINED     0x0000
-#define MTP_CONTAINER_TYPE_COMMAND       0x0001           
+#define MTP_CONTAINER_TYPE_COMMAND       0x0001
 #define MTP_CONTAINER_TYPE_DATA          0x0002
 #define MTP_CONTAINER_TYPE_RESPONSE      0x0003
 #define MTP_CONTAINER_TYPE_EVENT         0x0004
@@ -299,7 +299,7 @@ typedef quint16 MTPDrmStatus;
 typedef quint16 MTPDevPropertyCode;
 
 /* object format codes */
-    
+
 #define MTP_OBF_FORMAT_Undefined                       0x3000
 #define MTP_OBF_FORMAT_Association                     0x3001
 #define MTP_OBF_FORMAT_Script                          0x3002
@@ -307,11 +307,11 @@ typedef quint16 MTPDevPropertyCode;
 #define MTP_OBF_FORMAT_Text                            0x3004
 #define MTP_OBF_FORMAT_HTML                            0x3005
 #define MTP_OBF_FORMAT_DPOF                            0x3006
-#define MTP_OBF_FORMAT_AIFF                            0x3007  
-#define MTP_OBF_FORMAT_WAV                             0x3008  
-#define MTP_OBF_FORMAT_MP3                             0x3009 
-#define MTP_OBF_FORMAT_AVI                             0x300A  
-#define MTP_OBF_FORMAT_MPEG                            0x300B  
+#define MTP_OBF_FORMAT_AIFF                            0x3007
+#define MTP_OBF_FORMAT_WAV                             0x3008
+#define MTP_OBF_FORMAT_MP3                             0x3009
+#define MTP_OBF_FORMAT_AVI                             0x300A
+#define MTP_OBF_FORMAT_MPEG                            0x300B
 #define MTP_OBF_FORMAT_ASF                             0x300C
 #define MTP_OBF_FORMAT_Unknown_Image_Object            0x3800
 #define MTP_OBF_FORMAT_EXIF_JPEG                       0x3801
@@ -320,7 +320,7 @@ typedef quint16 MTPDevPropertyCode;
 #define MTP_OBF_FORMAT_BMP                             0x3804
 #define MTP_OBF_FORMAT_CIFF                            0x3805
 /* 0x3806 Undefined Reserved */
-#define MTP_OBF_FORMAT_GIF                             0x3807 
+#define MTP_OBF_FORMAT_GIF                             0x3807
 #define MTP_OBF_FORMAT_JFIF                            0x3808
 #define MTP_OBF_FORMAT_PCD                             0x3809
 #define MTP_OBF_FORMAT_PICT                            0x380A
@@ -328,7 +328,7 @@ typedef quint16 MTPDevPropertyCode;
 /* 0x380C Undefined  Reserved */
 #define MTP_OBF_FORMAT_TIFF                            0x380D
 #define MTP_OBF_FORMAT_TIFF_IT                         0x380E
-#define MTP_OBF_FORMAT_JP2                             0x380F   
+#define MTP_OBF_FORMAT_JP2                             0x380F
 #define MTP_OBF_FORMAT_JPX                             0x3810
 #define MTP_OBF_FORMAT_Undefined_Firmware           0xB802
 #define MTP_OBF_FORMAT_Windows_Image_Format           0xB881
@@ -602,7 +602,7 @@ struct MtpRequest
 {
   MTPOperationCode opCode;      // The operation code for the request
   QVector<MtpParam> params;     // Request parameters (size must be no more than 5)
-  quint8 *data;                 // Request data 
+  quint8 *data;                 // Request data
   quint32 dataLen;              // Data length
   MtpRequest() : opCode(0), data(0), dataLen(0) {}     // Constructor
 };
@@ -711,7 +711,7 @@ struct MtpInt128
     }
 
     // Compares two MtpInt128's
-    int compare( MtpInt128 &rhs ) const
+    int compare( const MtpInt128 &rhs ) const
     {
         int diff = 0;
         for(qint32 i = 15; ((i >= 0) && (0 == diff)) ; i--)
@@ -721,7 +721,7 @@ struct MtpInt128
         return diff;
     }
 
-    bool operator==( MtpInt128 &rhs ) const
+    bool operator==( const MtpInt128 &rhs ) const
     {
         return (0 == compare(rhs)) ? true : false;
     }
@@ -780,7 +780,7 @@ struct MtpObjPropDesc
   QVariant        defValue;
   quint32         groupCode;
   MtpFormFlag     formFlag;
-  QVariant        formField; // Can only be the types as specified in table 5.1 of the MTP 1.0 spec., 
+  QVariant        formField; // Can only be the types as specified in table 5.1 of the MTP 1.0 spec.,
   // ex: MtpRangeForm, MtpEnumForm, quint16, etc... Note: some types may be semantically incorrect such as
   // a range/enum of arrays
 };
@@ -793,7 +793,7 @@ struct MTPObjPropDescVal
     const MtpObjPropDesc *propDesc;
     QVariant propVal;
 
-    MTPObjPropDescVal() : 
+    MTPObjPropDescVal() :
        propDesc(0)
     {
     }
@@ -828,7 +828,7 @@ struct MTPObjectInfo
     QString                 mtpFileName;
     QString                 mtpCaptureDate;
     QString                 mtpModificationDate;
-    QString                 mtpKeywords;    
+    QString                 mtpKeywords;
     MTPObjectInfo() : mtpStorageId(0), mtpObjectFormat(MTP_OBF_FORMAT_Undefined),
                       mtpProtectionStatus(MTP_PROTECTION_NoProtection), mtpObjectCompressedSize(0),
                       mtpThumbFormat(MTP_OBF_FORMAT_Undefined), mtpThumbCompressedSize(0),
@@ -837,7 +837,6 @@ struct MTPObjectInfo
                       mtpParentObject(0), mtpAssociationType(MTP_ASSOCIATION_TYPE_Undefined),
                       mtpAssociationDescription(0), mtpSequenceNumber(0)
                       {}
-                      
+
 };
 #endif
-

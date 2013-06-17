@@ -33,7 +33,11 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/SyncDBusConnection.h>
+#else
 #include <buteosyncfw/SyncDBusConnection.h>
+#endif
 #include "thumbnailer.h"
 #include "trace.h"
 

@@ -6,10 +6,10 @@ Group: System/Libraries
 License: LGPLv2.1
 URL: https://github.com/nemomobile/buteo-mtp
 Source0: %{name}-%{version}.tar.gz
-BuildRequires: pkgconfig(contextsubscriber-1.0)
 BuildRequires: pkgconfig(QtSparql)
 BuildRequires: pkgconfig(buteosyncfw)
 BuildRequires: pkgconfig(QtSystemInfo)
+BuildRequires: pkgconfig(contextkit-statefs-qt4)
 Requires: mtp-vendor-configuration
 # buteo-mtp can use org.freedesktop.thumbnails.Thumbnailer1 to create
 # thumbnails on request; at least Windows 8 requires thumbnails to be
@@ -92,7 +92,7 @@ Requires: %{name} = %{version}-%{release}
 
 
 %build
-qmake
+qmake -qt=4
 # breaks on parallel builds
 make
 

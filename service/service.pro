@@ -9,7 +9,8 @@ INCLUDEPATH += . ../mts
 LIBS += -L../mts -lmeegomtp
 
 CONFIG += link_pkgconfig
-PKGCONFIG += buteosyncfw
+equals(QT_MAJOR_VERSION, 4): PKGCONFIG += buteosyncfw
+equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5
 
 SOURCES += service.cpp
 

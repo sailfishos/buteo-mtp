@@ -46,7 +46,7 @@
 QTM_USE_NAMESPACE
 #endif
 
-#include <buteosyncfw/SyncDBusConnection.h>
+#include <SyncDBusConnection.h>
 
 using namespace meegomtp1dot0;
 

@@ -32,7 +32,11 @@
 #ifndef PRN_TRACE_H
 #define PRN_TRACE_H
 // Use logging macros available in sync-fw
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/LogMacros.h>
+#else
 #include <buteosyncfw/LogMacros.h>
+#endif
 #include "mts.h"
 
 #define MTP_LOG_LEVEL_CRITICAL      1

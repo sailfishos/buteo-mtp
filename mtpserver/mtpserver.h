@@ -32,7 +32,11 @@
 #ifndef MTPSERVER_H
 #define MTPSERVER_H
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/ServerPlugin.h>
+#else
 #include <buteosyncfw/ServerPlugin.h>
+#endif
 
 using namespace Buteo;
 

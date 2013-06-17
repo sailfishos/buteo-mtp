@@ -7,11 +7,11 @@ CONFIG += qtestlib warn_off debug_and_release link_pkgconfig
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
     MOBILITY = systeminfo
-    PKGCONFIG += buteosyncfw
+    PKGCONFIG += buteosyncfw contextkit-statefs-qt4
 }
-equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5
+equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5 Qt0SystemInfo contextkit-statefs
 
-LIBS += -lcontextsubscriber -ldl
+LIBS += -ldl
 TEMPLATE = app
 TARGET = protocol-test
 QT -= gui

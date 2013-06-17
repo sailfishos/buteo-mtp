@@ -40,7 +40,12 @@
 #include <QtSparql/QSparqlError>
 #include <QtSparql/QSparqlQuery>
 #include <QtSparql/QSparqlResult>
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#include <buteosyncfw5/SyncDBusConnection.h>
+#else
 #include <buteosyncfw/SyncDBusConnection.h>
+#endif
 // Local headers
 #include "storagetracker.h"
 #include "trace.h"

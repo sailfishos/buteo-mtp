@@ -8,11 +8,11 @@ CONFIG += qtsparql
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
     MOBILITY = systeminfo
-    PKGCONFIG += buteosyncfw
+    PKGCONFIG += buteosyncfw contextkit-statefs-qt4
 }
-equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5 Qt0SystemInfo
+equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5 Qt0SystemInfo contextkit-statefs
 
-LIBS += -lcontextsubscriber -ldl
+LIBS += -ldl
 TEMPLATE = app
 TARGET = storage-test
 QT += dbus xml
