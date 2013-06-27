@@ -255,12 +255,10 @@ BulkWriterThread::BulkWriterThread(QObject *parent)
 {
 }
 
-void BulkWriterThread::setData(int fd, const quint8 *buffer, quint32 dataLen, bool isLastPacket)
+void BulkWriterThread::setData(const quint8 *buffer, quint32 dataLen)
 {
     m_buffer = buffer;
     m_dataLen = dataLen;
-    m_isLastPacket = isLastPacket;
-    m_fd = fd;
     m_result = false;
 }
 

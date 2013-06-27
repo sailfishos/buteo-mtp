@@ -166,7 +166,7 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
     // NOTE: This doesn't solve re-entrancy, as it's used for flow
     m_bulkWrite.m_lock.lock();
 
-    m_bulkWrite.setData(m_inFd, data, dataLen, isLastPacket);
+    m_bulkWrite.setData(data, dataLen);
     m_bulkWrite.start();
 
     while(!m_bulkWrite.m_lock.tryLock()) {
@@ -286,6 +286,8 @@ void MTPTransporterUSB::openDevices()
     if(-1 == m_inFd)
     {
         MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << in_file);
+    } else {
+        mBulkWrite.setFd(m_inFd);
     }
 
     // TODO: Read state might lock due to the manner of operation,

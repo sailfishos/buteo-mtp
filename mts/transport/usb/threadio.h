@@ -72,7 +72,7 @@ class BulkWriterThread : public IOThread {
 public:
     explicit BulkWriterThread(QObject *parent = 0);
 
-    void setData(int fd, const quint8 *buffer, quint32 dataLen, bool isLastPacket);
+    void setData(const quint8 *buffer, quint32 dataLen);
     void run();
     bool getResult();
     void exitThread();
@@ -81,7 +81,6 @@ public:
 private:
     const quint8 *m_buffer;
     quint32 m_dataLen;
-    bool m_isLastPacket;
     bool m_result;
 };
 
