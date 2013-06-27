@@ -14,19 +14,13 @@ enum mtpfs_status {
     MTPFS_STATUS_TXCANCEL
 };
 
-class QMutex;
-
 class IOThread : public QThread {
 public:
     explicit IOThread(QObject *parent = 0);
     void setFd(int fd);
     void interrupt();
-
-    bool stallWrite();
-    bool stallRead();
     bool stall(bool dirIn);
 
-    QMutex m_lock;
 protected:
     pthread_t m_handle;
     int m_fd;
@@ -78,15 +72,16 @@ class BulkWriterThread : public IOThread {
 public:
     explicit BulkWriterThread(QObject *parent = 0);
 
-    void setData(int fd, const quint8 *buffer, quint32 dataLen, bool isLastPacket);
+    void setData(const quint8 *buffer, quint32 dataLen);
     void run();
+    bool resultReady();
     bool getResult();
     void exitThread();
 
 private:
     const quint8 *m_buffer;
     quint32 m_dataLen;
-    bool m_isLastPacket;
+    QAtomicInt m_result_ready;
     bool m_result;
 };
 

@@ -14,8 +14,7 @@
 #define le32_to_cpu(x)  le32toh(x)
 #define le16_to_cpu(x)  le16toh(x)
 
-//#define MAX_DATA_IN_SIZE (64 * 1024)
-#define MAX_DATA_IN_SIZE (64 * 256)
+#define MAX_DATA_IN_SIZE (16 * 1024)
 #define MAX_CONTROL_IN_SIZE 64
 #define MAX_EVENTS_STORED 16
 
@@ -55,36 +54,24 @@ void IOThread::interrupt()
     }
 }
 
-bool IOThread::stallWrite()
-{
-    int err;
-    err = write(m_fd, &err, 0);
-    if(err == -1 && errno == EL2HLT) {
-        return true;
-    } else {
-        MTP_LOG_CRITICAL("Unable to halt endpoint");
-        return false;
-    }
-}
-
-bool IOThread::stallRead()
-{
-    int err;
-    err = read(m_fd, &err, 0);
-    if(err == -1 && errno == EL2HLT) {
-        return true;
-    } else {
-        MTP_LOG_CRITICAL("Unable to halt endpoint");
-        return false;
-    }
-}
-
 bool IOThread::stall(bool dirIn)
 {
-    if(dirIn)
-        return stallRead();
+    /* Indicate a protocol stall by requesting I/O in the "wrong" direction.
+     * So after a USB_DIR_IN request (where we'd normally write a response)
+     * we read instead, and after a USB_DIR_OUT request (where we'd normally
+     * read a response) we write instead.
+     */
+    int err;
+    if(dirIn) // &err is just a dummy value here, since length is 0 bytes
+        err = read(m_fd, &err, 0);
     else
-        return stallWrite();
+        err = write(m_fd, &err, 0);
+    if(err == -1 && errno == EL2HLT) {
+        return true;
+    } else {
+        MTP_LOG_CRITICAL("Unable to halt endpoint");
+        return false;
+    }
 }
 
 ControlReaderThread::ControlReaderThread(QObject *parent)
@@ -266,19 +253,28 @@ void BulkReaderThread::exitThread()
 BulkWriterThread::BulkWriterThread(QObject *parent)
     : IOThread(parent)
 {
+    // Connect the finished signal (emitted from the writer thread) to
+    // a do-nothing slot (received in the transporter's thread) in order to
+    // make sure that sendData() in the transporter is woken up after the
+    // result is ready. This way sendData doesn't have to poll.
+    connect(this, SIGNAL(finished()), SLOT(quit()), Qt::QueuedConnection);
 }
 
-void BulkWriterThread::setData(int fd, const quint8 *buffer, quint32 dataLen, bool isLastPacket)
+void BulkWriterThread::setData(const quint8 *buffer, quint32 dataLen)
 {
+    // This runs in the main thread. The caller makes sure that the
+    // writer thread is not running yet.
+
     m_buffer = buffer;
     m_dataLen = dataLen;
-    m_isLastPacket = isLastPacket;
-    m_fd = fd;
     m_result = false;
+    m_result_ready.store(0);
 }
 
 void BulkWriterThread::run()
 {
+    // Call setData before starting the thread.
+
     int bytesWritten = 0;
     char *dataptr = (char*)m_buffer;
 
@@ -289,20 +285,26 @@ void BulkWriterThread::run()
         if(bytesWritten == -1)
         {
             m_result = false;
+            m_result_ready.storeRelease(1);
             return;
         }
         dataptr += bytesWritten;
         m_dataLen -= bytesWritten;
     } while(m_dataLen);
-    m_result = true;
 
     m_handle = 0;
+    m_result = true;
+    m_result_ready.storeRelease(1);
+}
 
-    m_lock.unlock();
+bool BulkWriterThread::resultReady()
+{
+    return m_result_ready.load() != 0;
 }
 
 bool BulkWriterThread::getResult()
 {
+    // Check resultReady() before calling getResult()
     return m_result;
 }
 
