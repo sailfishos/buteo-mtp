@@ -14,8 +14,6 @@ enum mtpfs_status {
     MTPFS_STATUS_TXCANCEL
 };
 
-class QMutex;
-
 class IOThread : public QThread {
 public:
     explicit IOThread(QObject *parent = 0);
@@ -23,7 +21,6 @@ public:
     void interrupt();
     bool stall(bool dirIn);
 
-    QMutex m_lock;
 protected:
     pthread_t m_handle;
     int m_fd;
@@ -80,6 +77,7 @@ public:
     bool getResult();
     void exitThread();
 
+    QMutex m_lock;
 private:
     const quint8 *m_buffer;
     quint32 m_dataLen;

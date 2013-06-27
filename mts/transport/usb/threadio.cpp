@@ -14,8 +14,7 @@
 #define le32_to_cpu(x)  le32toh(x)
 #define le16_to_cpu(x)  le16toh(x)
 
-//#define MAX_DATA_IN_SIZE (64 * 1024)
-#define MAX_DATA_IN_SIZE (64 * 256)
+#define MAX_DATA_IN_SIZE (16 * 1024)
 #define MAX_CONTROL_IN_SIZE 64
 #define MAX_EVENTS_STORED 16
 
