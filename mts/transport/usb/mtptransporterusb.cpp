@@ -301,7 +301,7 @@ void MTPTransporterUSB::openDevices()
     m_outFd = open(out_file, O_RDWR);
     if(-1 == m_outFd)
     {
-        MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << out_file);
+        MTP_LOG_CRITICAL("Couldn't open OUT endpoint file " << out_file);
     } else {
         m_bulkRead.setFd(m_outFd);
         m_bulkRead.start();
