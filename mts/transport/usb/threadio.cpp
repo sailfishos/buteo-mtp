@@ -81,6 +81,11 @@ bool IOThread::stallRead()
 
 bool IOThread::stall(bool dirIn)
 {
+    /* Indicate a protocol stall by requesting I/O in the "wrong" direction.
+     * So after a USB_DIR_IN request (where we'd normally write a response)
+     * we read instead, and after a USB_DIR_OUT request (where we'd normally
+     * read a response) we write instead.
+     */
     if(dirIn)
         return stallRead();
     else
