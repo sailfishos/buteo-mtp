@@ -20,7 +20,8 @@ Requires: mtp-vendor-configuration
 # thumbnails on request; at least Windows 8 requires thumbnails to be
 # generated on the device.
 Requires: tumbler
-Conflicts: buteo-mtp
+Provides: buteo-mtp = %{version}
+Obsoletes: buteo-mtp < %{version}
 
 %description
 %{summary}.
