@@ -74,13 +74,14 @@ public:
 
     void setData(const quint8 *buffer, quint32 dataLen);
     void run();
+    bool resultReady();
     bool getResult();
     void exitThread();
 
-    QMutex m_lock;
 private:
     const quint8 *m_buffer;
     quint32 m_dataLen;
+    QAtomicInt m_result_ready;
     bool m_result;
 };
 

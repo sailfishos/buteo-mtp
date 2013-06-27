@@ -46,7 +46,7 @@
 using namespace meegomtp1dot0;
 
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
-    m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1)
+    m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1), m_writer_busy(false)
 {
     QObject::connect(&m_bulkRead, SIGNAL(dataRead(char*,int)),
         this, SLOT(handleDataRead(char*,int)), Qt::QueuedConnection);
@@ -144,7 +144,6 @@ void MTPTransporterUSB::reset()
     m_bulkWrite.wait();
     m_intrWrite.wait();
 
-    m_bulkWrite.m_lock.unlock();
     m_bulkRead.m_lock.unlock();
 
     m_intrWrite.start();
@@ -160,32 +159,31 @@ MTPTransporterUSB::~MTPTransporterUSB()
 
 bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLastPacket)
 {
-    // TODO: Re-entrancy, probably needs to be done earlier in the chain
-    bool r;
+    // TODO: can't handle re-entrant calls with the current design.
+    if(m_writer_busy)
+    {
+        MTP_LOG_WARNING("Refusing bulk write request during bulk write");
+        return false;
+    }
+    m_writer_busy = true;
 
-    // NOTE: This doesn't solve re-entrancy, as it's used for flow
-    m_bulkWrite.m_lock.lock();
+    // Unlike the other IO threads, the bulk writer is only alive
+    // while processing one buffer and then finishes. It all happens
+    // during this call. The reason for the extra thread is to
+    // remain responsive to events while the data is being written.
+    // That's done by calling processEvents while waiting.
 
     m_bulkWrite.setData(data, dataLen);
     m_bulkWrite.start();
 
-    while(!m_bulkWrite.m_lock.tryLock()) {
-        QCoreApplication::processEvents();
+    // The bulk writer will make sure that processEvents is woken up
+    // when the result is ready.
+    while(!m_bulkWrite.resultReady()) {
+        QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
     }
-    r = m_bulkWrite.getResult();
+    bool r = m_bulkWrite.getResult();
 
-    m_bulkWrite.m_lock.unlock();
-
-#if 0
-    if(!isEvent && isLastPacket)
-    {
-        if( 0 > fsync(m_usbFd) )
-        {
-            r = false;
-        }
-    }
-#endif
-
+    m_writer_busy = false;
     return r;
 }
 
@@ -280,14 +278,13 @@ void MTPTransporterUSB::openDevices()
 
     if(m_intrWrite.isRunning())
         m_intrWrite.exitThread();
-    m_bulkWrite.m_lock.unlock();
 
     m_inFd = open(in_file, O_RDWR);
     if(-1 == m_inFd)
     {
         MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << in_file);
     } else {
-        mBulkWrite.setFd(m_inFd);
+        m_bulkWrite.setFd(m_inFd);
     }
 
     // TODO: Read state might lock due to the manner of operation,
@@ -356,7 +353,6 @@ void MTPTransporterUSB::stopRead()
 
     m_containerReadLen = 0;
     m_bulkRead.m_lock.unlock();
-    m_bulkWrite.m_lock.unlock();
 }
 
 void MTPTransporterUSB::handleHighPriorityData()

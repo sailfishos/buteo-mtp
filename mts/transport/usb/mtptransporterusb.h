@@ -113,6 +113,7 @@ class MTPTransporterUSB : public MTPTransporter
         ControlReaderThread     m_ctrl;         ///< Threaded IO for Control EP
         BulkReaderThread        m_bulkRead;     ///< Threaded Reader for Bulk Out EP
         BulkWriterThread        m_bulkWrite;    ///< Threaded Writer for Bulk In EP
+        bool                    m_writer_busy;
         InterruptWriterThread   m_intrWrite;    ///< Threaded Writer for Interrupt EP
 
     public Q_SLOTS:

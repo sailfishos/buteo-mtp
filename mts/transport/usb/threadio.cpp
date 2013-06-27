@@ -253,17 +253,28 @@ void BulkReaderThread::exitThread()
 BulkWriterThread::BulkWriterThread(QObject *parent)
     : IOThread(parent)
 {
+    // Connect the finished signal (emitted from the writer thread) to
+    // a do-nothing slot (received in the transporter's thread) in order to
+    // make sure that sendData() in the transporter is woken up after the
+    // result is ready. This way sendData doesn't have to poll.
+    connect(this, SIGNAL(finished()), SLOT(quit()), Qt::QueuedConnection);
 }
 
 void BulkWriterThread::setData(const quint8 *buffer, quint32 dataLen)
 {
+    // This runs in the main thread. The caller makes sure that the
+    // writer thread is not running yet.
+
     m_buffer = buffer;
     m_dataLen = dataLen;
     m_result = false;
+    m_result_ready.store(0);
 }
 
 void BulkWriterThread::run()
 {
+    // Call setData before starting the thread.
+
     int bytesWritten = 0;
     char *dataptr = (char*)m_buffer;
 
@@ -274,20 +285,26 @@ void BulkWriterThread::run()
         if(bytesWritten == -1)
         {
             m_result = false;
+            m_result_ready.storeRelease(1);
             return;
         }
         dataptr += bytesWritten;
         m_dataLen -= bytesWritten;
     } while(m_dataLen);
-    m_result = true;
 
     m_handle = 0;
+    m_result = true;
+    m_result_ready.storeRelease(1);
+}
 
-    m_lock.unlock();
+bool BulkWriterThread::resultReady()
+{
+    return m_result_ready.load() != 0;
 }
 
 bool BulkWriterThread::getResult()
 {
+    // Check resultReady() before calling getResult()
     return m_result;
 }
 
