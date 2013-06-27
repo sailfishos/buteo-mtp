@@ -21,9 +21,6 @@ public:
     explicit IOThread(QObject *parent = 0);
     void setFd(int fd);
     void interrupt();
-
-    bool stallWrite();
-    bool stallRead();
     bool stall(bool dirIn);
 
     QMutex m_lock;

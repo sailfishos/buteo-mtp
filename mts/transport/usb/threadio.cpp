@@ -55,30 +55,6 @@ void IOThread::interrupt()
     }
 }
 
-bool IOThread::stallWrite()
-{
-    int err;
-    err = write(m_fd, &err, 0);
-    if(err == -1 && errno == EL2HLT) {
-        return true;
-    } else {
-        MTP_LOG_CRITICAL("Unable to halt endpoint");
-        return false;
-    }
-}
-
-bool IOThread::stallRead()
-{
-    int err;
-    err = read(m_fd, &err, 0);
-    if(err == -1 && errno == EL2HLT) {
-        return true;
-    } else {
-        MTP_LOG_CRITICAL("Unable to halt endpoint");
-        return false;
-    }
-}
-
 bool IOThread::stall(bool dirIn)
 {
     /* Indicate a protocol stall by requesting I/O in the "wrong" direction.
@@ -86,10 +62,17 @@ bool IOThread::stall(bool dirIn)
      * we read instead, and after a USB_DIR_OUT request (where we'd normally
      * read a response) we write instead.
      */
-    if(dirIn)
-        return stallRead();
+    int err;
+    if(dirIn) // &err is just a dummy value here, since length is 0 bytes
+        err = read(m_fd, &err, 0);
     else
-        return stallWrite();
+        err = write(m_fd, &err, 0);
+    if(err == -1 && errno == EL2HLT) {
+        return true;
+    } else {
+        MTP_LOG_CRITICAL("Unable to halt endpoint");
+        return false;
+    }
 }
 
 ControlReaderThread::ControlReaderThread(QObject *parent)
