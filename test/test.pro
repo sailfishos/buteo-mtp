@@ -9,7 +9,7 @@ INCLUDEPATH += . ../mts
 LIBS += -L../mts -lmeegomtp
 DRIVER = nogadgetfs
 CONFIG += debug_and_release
-
+QT -= gui
 # Input
 
 contains( DRIVER, gadgetfs ) {

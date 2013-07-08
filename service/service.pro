@@ -8,6 +8,7 @@ DEPENDPATH += .
 INCLUDEPATH += . ../mts
 LIBS += -L../mts -lmeegomtp
 
+QT -= gui
 CONFIG += link_pkgconfig
 equals(QT_MAJOR_VERSION, 4): PKGCONFIG += buteosyncfw
 equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5

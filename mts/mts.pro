@@ -12,7 +12,7 @@ equals(QT_MAJOR_VERSION, 4): {
     MOBILITY = systeminfo
     PKGCONFIG += buteosyncfw contextkit-statefs-qt4
 }
-equals(QT_MAJOR_VERSION, 5): PKGCONFIG += Qt0SystemInfo buteosyncfw5 contextkit-statefs
+equals(QT_MAJOR_VERSION, 5): PKGCONFIG += Qt5SystemInfo buteosyncfw5 contextkit-statefs
 
 #QMAKE_CXXFLAGS += -O0 -Werror
 
