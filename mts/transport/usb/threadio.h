@@ -38,7 +38,7 @@ public:
 private:
     void handleEvent(struct usb_functionfs_event *event);
     void setupRequest(void *data);
-    void sendStatus(enum mtpfs_status status);
+    void sendStatus();
 
     QMutex m_statusLock;
     int m_state;

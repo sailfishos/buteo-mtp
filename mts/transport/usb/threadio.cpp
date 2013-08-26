@@ -109,13 +109,13 @@ void ControlReaderThread::run()
     }
 }
 
-void ControlReaderThread::sendStatus(enum mtpfs_status status)
+void ControlReaderThread::sendStatus()
 {
     QMutexLocker locker(&m_statusLock);
 
     int bytesWritten = 0;
     int dataLen = 4; /* TODO: If status size is ever above 0x4 */
-    char *dataptr = (char*)&status_data[status];
+    char *dataptr = (char*)&status_data[m_status];
 
     do {
         bytesWritten = write(m_fd, dataptr, dataLen);
@@ -171,7 +171,7 @@ void ControlReaderThread::setupRequest(void *data)
     switch(e->u.setup.bRequest) {
         case PTP_REQ_GET_DEVICE_STATUS:
             if(e->u.setup.bRequestType == 0xa1)
-                sendStatus(m_status);
+                sendStatus();
             else
                 stall((e->u.setup.bRequestType & USB_DIR_IN)>0);
             break;
