@@ -91,7 +91,6 @@ public:
     explicit InterruptWriterThread(QObject *parent = 0);
     ~InterruptWriterThread();
 
-    void setFd(int fd);
     void addData(const quint8 *buffer, quint32 dataLen);
     void run();
     void reset();

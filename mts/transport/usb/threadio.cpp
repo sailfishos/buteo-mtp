@@ -323,11 +323,6 @@ InterruptWriterThread::~InterruptWriterThread()
     reset();
 }
 
-void InterruptWriterThread::setFd(int fd)
-{
-    m_fd = fd;
-}
-
 void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 {
     QMutexLocker locker(&m_bufferLock);
