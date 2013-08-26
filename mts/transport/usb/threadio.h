@@ -7,6 +7,7 @@
 #include <QMutex>
 #include <QPair>
 #include <QList>
+#include <QWaitCondition>
 
 enum mtpfs_status {
     MTPFS_STATUS_OK,
@@ -98,9 +99,9 @@ public:
 
 private:
     QMutex m_lock;
+    QWaitCondition m_wait;
     bool m_running;
 
-    QMutex m_bufferLock;
     QList<QPair<quint8 *,int> > m_buffers;
 };
 
