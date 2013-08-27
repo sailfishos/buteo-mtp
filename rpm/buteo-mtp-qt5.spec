@@ -20,15 +20,21 @@ Requires: mtp-vendor-configuration
 # thumbnails on request; at least Windows 8 requires thumbnails to be
 # generated on the device.
 Requires: tumbler
+Requires(pre): shadow-utils
+Requires(pre): /usr/bin/groupadd-user
 Provides: buteo-mtp = %{version}
 Obsoletes: buteo-mtp < %{version}
 
 %description
 %{summary}.
 
+# TODO: once proper activation as msyncd plugin works as expected,
+#       move user session startup into sub-package
 %files
 %defattr(-,root,root,-)
 /usr/lib/systemd/user/buteo-mtp.service
+%{_unitdir}/*.mount
+%{_unitdir}/local-fs.target.wants/*.mount
 %{_bindir}/buteo-mtp
 %{_libdir}/*.so.*
 %{_libdir}/mtp/*.so
@@ -77,7 +83,7 @@ Group: System/Libraries
 
 %files sync-plugin
 %defattr(-,root,root,-)
-#%{_libdir}/sync/*.so
+%{_libdir}/buteo-plugins-qt5/*.so
 %config %{_sysconfdir}/buteo/profiles/server/*.xml
 
 
@@ -108,6 +114,16 @@ make
 %install
 make INSTALL_ROOT=%{buildroot} install
 chmod +x %{buildroot}/%{_bindir}/buteo-mtp
+mkdir -p %{buildroot}/%{_unitdir}/local-fs.target.wants
+ln -s ../dev-mtp.mount %{buildroot}/%{_unitdir}/local-fs.target.wants/
+
+
+# create group if it does not exist yet, though don't remove it
+# as it should come from other packages
+%pre
+groupadd -f -g 1024 mtp
+groupadd-user mtp
+
 
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
