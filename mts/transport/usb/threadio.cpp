@@ -217,7 +217,11 @@ void BulkReaderThread::run()
         while(readSize != -1) {
             emit dataRead(inbuf, readSize);
             if(!m_threadRunning) break;
+            // QWaitCondition requires the lock to be held, but we
+            // don't use the lock for anything else so just lock it here.
+            m_lock.lock();
             m_wait.wait(&m_lock);
+            m_lock.unlock();
             if(!m_threadRunning) break;
             readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         }
