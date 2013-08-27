@@ -206,23 +206,19 @@ void BulkReaderThread::run()
     m_threadRunning = true;
 
     char* inbuf = new char[MAX_DATA_IN_SIZE];
-    //
-    // Use m_lock to control message flow btw bulkreader and main thread
-    // 1. reader has lock
-    // 2. read data
-    // 3. inform main thread
-    // 4. reader waits in lock until main has processed data and unlocked
-    // 5. goto 2
-    //
-    m_lock.lock(); // First we have the lock
+    // m_wait controls message flow between bulkreader and main thread.
+    // This thread fills inbuf, then hands the buffer over to the main
+    // thread by emitting dataRead.
+    // When the main thread is done with the buffer, it will wake up
+    // this thread again by calling releaseBuffer() which uses m_wait
+    // to notify this thread.
     do {
         readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         while(readSize != -1) {
             emit dataRead(inbuf, readSize);
             if(!m_threadRunning) break;
-            m_lock.lock();
+            m_wait.wait(&m_lock);
             if(!m_threadRunning) break;
-            inbuf = new char[MAX_DATA_IN_SIZE];
             readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         }
     } while(errno == ESHUTDOWN && m_threadRunning);
@@ -240,14 +236,21 @@ void BulkReaderThread::run()
     }
 }
 
+// Called by the main thread when it's done with the buffer it got
+// from the dataRead signal.
+void BulkReaderThread::releaseBuffer()
+{
+    m_wait.wakeAll();
+}
+
 void BulkReaderThread::exitThread()
 {
     // Executed in main thread
     m_threadRunning = false;
     // TODO: Not 100% reliable operation
     usleep(10);
-    interrupt();
-    m_lock.unlock();
+    interrupt();  // wake up the thread if it's in read()
+    m_wait.wakeAll(); // wake up the thread if it's in m_wait.wait()
 }
 
 BulkWriterThread::BulkWriterThread(QObject *parent)

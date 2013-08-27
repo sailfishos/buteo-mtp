@@ -60,10 +60,12 @@ public:
 
     void run();
     void exitThread();
+    void releaseBuffer(); // receiver of dataRead is done processing data
 
-    QMutex m_lock;
 private:
     bool m_threadRunning;
+    QMutex m_lock; // used with m_wait
+    QWaitCondition m_wait;
 signals:
     void dataRead(char *buffer, int size);
 };
@@ -98,7 +100,7 @@ public:
     void exitThread();
 
 private:
-    QMutex m_lock;
+    QMutex m_lock; // protects m_buffers and used with m_wait
     QWaitCondition m_wait;
     bool m_running;
 
