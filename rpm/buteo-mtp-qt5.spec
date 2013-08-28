@@ -106,9 +106,8 @@ Conflicts: buteo-mtp-tests
 
 
 %build
-qmake -qt=5 -recursive
-# breaks on parallel builds
-make
+%qmake5
+make %{_smp_mflags}
 
 
 %install
