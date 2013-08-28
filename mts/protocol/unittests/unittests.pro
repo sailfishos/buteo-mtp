@@ -7,9 +7,9 @@ CONFIG += warn_off debug_and_release link_pkgconfig
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
     MOBILITY = systeminfo
-    PKGCONFIG += buteosyncfw contextkit-statefs-qt4
+    PKGCONFIG += buteosyncfw
 }
-equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5 Qt5SystemInfo contextkit-statefs
+equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5 Qt5SystemInfo
 
 LIBS += -ldl
 TEMPLATE = app
@@ -60,7 +60,6 @@ HEADERS += mtpresponder_test.h \
            ../../platform/storage/storagefactory.h \
            ../../platform/storage/storageplugin.h \
            ../../platform/deviceinfo/xmlhandler.h \
-           ../../platform/deviceinfo/contextsubscriber.h \
            ../../platform/deviceinfo/deviceinfoprovider.h \
            ../../platform/deviceinfo/deviceinfo.h \
            ../../transport/mtptransporter.h \
@@ -81,7 +80,6 @@ SOURCES += mtpresponder_test.cpp \
            ../mtpextensionmanager.cpp \
            ../../platform/storage/storagefactory.cpp \
            ../../platform/deviceinfo/xmlhandler.cpp \
-           ../../platform/deviceinfo/contextsubscriber.cpp \
            ../../platform/deviceinfo/deviceinfoprovider.cpp \
            ../../platform/deviceinfo/deviceinfo.cpp \
            ../../transport/usb/mtptransporterusb.cpp \

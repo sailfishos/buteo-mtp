@@ -10,9 +10,9 @@ CONFIG += link_pkgconfig debug
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
     MOBILITY = systeminfo
-    PKGCONFIG += buteosyncfw contextkit-statefs-qt4
+    PKGCONFIG += buteosyncfw
 }
-equals(QT_MAJOR_VERSION, 5): PKGCONFIG += Qt5SystemInfo buteosyncfw5 contextkit-statefs
+equals(QT_MAJOR_VERSION, 5): PKGCONFIG += Qt5SystemInfo buteosyncfw5
 
 #QMAKE_CXXFLAGS += -O0 -Werror
 
@@ -57,7 +57,6 @@ HEADERS += mts.h \
            protocol/mtprxcontainer.h \
            protocol/mtptxcontainer.h \
            protocol/extensions/mtpextension.h \
-           platform/deviceinfo/contextsubscriber.h \
            platform/deviceinfo/deviceinfo.h \
            platform/deviceinfo/deviceinfoprovider.h \
            platform/deviceinfo/xmlhandler.h \
@@ -80,7 +79,6 @@ SOURCES += mts.cpp \
            protocol/mtptxcontainer.cpp \
            transport/usb/mtptransporterusb.cpp \
            transport/dummy/mtptransporterdummy.cpp \
-           platform/deviceinfo/contextsubscriber.cpp \
            platform/deviceinfo/deviceinfo.cpp \
            platform/deviceinfo/deviceinfoprovider.cpp \
            platform/deviceinfo/xmlhandler.cpp \

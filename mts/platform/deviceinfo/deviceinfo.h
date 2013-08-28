@@ -63,12 +63,6 @@ class DeviceInfo : public QObject
 friend class XMLHandler;
 
 public:
-    /// Gets the device's battery level.
-    /// \param current [in] boolean which indicates whether to get the current
-    /// value(the default behavior) or the default value.
-    /// \return the battery level.
-    virtual quint8 batteryLevel( bool current = true ) const;
-
     /// Gets the form flag for battery level.
     /// \param min [out] if the form flag is range, this has the least value in the range, else it's 0.
     /// \param max [out] if the form flag is range, this has the largest value in the range, else it's 0.
@@ -284,7 +278,6 @@ public:
     virtual ~DeviceInfo();
 
 protected:
-    quint8 m_batteryLevel; ///< Device battery strength.
     QString m_copyrightInfo; ///< Device copyright info.
     QString m_syncPartner; ///< This device's sync partner.
     QString m_deviceFriendlyName; ///< The device's friendly name.

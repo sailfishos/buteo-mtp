@@ -9,9 +9,9 @@ CONFIG += warn_off debug_and_release link_pkgconfig
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
     MOBILITY = systeminfo
-    PKGCONFIG += buteosyncfw contextkit-statefs-qt4
+    PKGCONFIG += buteosyncfw
 }
-equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5 Qt5SystemInfo contextkit-statefs
+equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5 Qt5SystemInfo
 
 TEMPLATE = app
 TARGET = deviceinfo-test
@@ -31,13 +31,11 @@ INCLUDEPATH += . \
 HEADERS += deviceinfoprovider_test.h \
         ../deviceinfoprovider.h \
         ../deviceinfo.h \
-        ../contextsubscriber.h \
         ../xmlhandler.h
 
 SOURCES += deviceinfoprovider_test.cpp \
         ../deviceinfoprovider.cpp \
         ../deviceinfo.cpp \
-        ../contextsubscriber.cpp \
         ../xmlhandler.cpp
 
 target.path = /opt/tests/buteo-mtp/

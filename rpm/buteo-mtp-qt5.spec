@@ -6,7 +6,6 @@ Group: System/Libraries
 License: LGPLv2.1
 URL: https://github.com/nemomobile/buteo-mtp
 Source0: %{name}-%{version}.tar.gz
-BuildRequires: pkgconfig(contextkit-statefs)
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Sparql)
 BuildRequires: pkgconfig(Qt5DBus)

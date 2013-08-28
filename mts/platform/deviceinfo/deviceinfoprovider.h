@@ -34,11 +34,6 @@
 
 #include "deviceinfo.h"
 
-namespace meegomtp1dot0
-{
-class ContextSubscriber;
-}
-
 /// This class implements DeviceInfo for getting and setting device info and properties for an MTP session.
 
 /// This class uses services like context subscriber, sysinfod, etc to get values for device
@@ -55,14 +50,6 @@ class DeviceInfoProvider : public DeviceInfo
         friend class DeviceInfoProvider_Test;
 #endif
 public:
-    /// Gets the device's battery level.
-    /// \param current [in] boolean which indicates whether to get the current
-    /// value(the default behavior) or the default value.
-    /// \return unsigned char the battery level.
-    /// \callgraph
-    /// \callergraph
-    quint8 batteryLevel( bool current = true ) const;
-
     /// Gets the friendly name of this device.
     /// \param current [in] boolean which indicates whether to get the current
     /// value(the default behavior) or the default value.
@@ -75,11 +62,6 @@ public:
     /// Destructor.
     ~DeviceInfoProvider();
 
-public slots:
-    /// Slot to handle battery level change signal.
-    /// \param the new battery level.
-    void batteryLevelChanged( const quint8& batteryLevel );
-
 private:
     /// Gets device version and serial no from sysinfod.
     void getSystemInfo();
@@ -90,8 +72,6 @@ private:
     /// Gets the BT friendly name of the device.
     QString getBTFriendlyName();
 
-    /// This class helps to get context specific device info.
-    ContextSubscriber *m_contextSubscriber;
     QString m_defaultAdapterPath; ///< The BT default adapter interface path.
 };
 }

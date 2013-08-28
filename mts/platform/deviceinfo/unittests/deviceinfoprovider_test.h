@@ -50,9 +50,6 @@ class DeviceInfoProvider_Test : public QObject
     void cleanupTestCase();
     void testDeviceInfoProviderDefaultConstruction();
     void testDeviceInfoProviderConstruction();
-    /* Context subscriber fails on SB
-    void testGetBatteryLevel();
-    */
     void testGetSyncPartner();
     void testGetCopyrightInfo();
     void testGetDeviceFriendlyName();
