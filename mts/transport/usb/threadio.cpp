@@ -362,15 +362,15 @@ void InterruptWriterThread::run()
     while(m_running) {
         m_lock.lock();
 
-        while(m_buffers.isEmpty()) {
+        while(m_running && m_buffers.isEmpty())
             m_wait.wait(&m_lock); // will release the lock while waiting
-            if (!m_running) { // may have been woken up by exitThread()
-                m_lock.unlock();
-                break;
-            }
-        }
-        QPair<quint8*,int> pair = m_buffers.takeFirst();
 
+        if (!m_running) { // may have been woken up by exitThread()
+            m_lock.unlock();
+            break;
+        }
+
+        QPair<quint8*,int> pair = m_buffers.takeFirst();
         m_lock.unlock();
 
         quint8 *dataptr = pair.first;
