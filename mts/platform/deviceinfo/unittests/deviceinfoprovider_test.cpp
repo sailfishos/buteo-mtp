@@ -96,12 +96,6 @@ void DeviceInfoProvider_Test::testDeviceInfoProviderConstruction()
     QVERIFY(m_Provider->MTPDevicePropertiesSupported().size() != 0);
 }
 
-/* Context subscriber fails on SB
-void DeviceInfoProvider_Test::testGetBatteryLevel()
-{
-}
-*/
-
 void DeviceInfoProvider_Test::testGetSyncPartner()
 {
     QVERIFY(m_Provider->syncPartner().size() != 0);

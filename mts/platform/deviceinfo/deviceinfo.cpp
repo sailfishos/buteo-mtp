@@ -41,7 +41,6 @@
 
 using namespace meegomtp1dot0;
 
-#define BATTERYLEVEL_DEFAULT 0
 #define COPYRIGHTINFO_DEFAULT "Do Not Copy"
 #define SYNCPARTNER_DEFAULT "Nemo"
 #define DEVFRNDNAME_DEFAULT "Friendly"
@@ -216,7 +215,6 @@ QString DeviceInfo::m_deviceInfoXmlPath;
  ******************************************/
 DeviceInfo::DeviceInfo( QObject *parent ) :
     QObject(parent),
-    m_batteryLevel(BATTERYLEVEL_DEFAULT),
     m_copyrightInfo(COPYRIGHTINFO_DEFAULT),
     m_syncPartner(SYNCPARTNER_DEFAULT),
     m_deviceFriendlyName(DEVFRNDNAME_DEFAULT),
@@ -319,14 +317,6 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
  ******************************************/
 DeviceInfo::~DeviceInfo()
 {
-}
-
-/*******************************************
- * quint8 DeviceInfo::batteryLevel
- ******************************************/
-quint8 DeviceInfo::batteryLevel( bool /*current*/ ) const
-{
-    return m_batteryLevel;
 }
 
 /*******************************************

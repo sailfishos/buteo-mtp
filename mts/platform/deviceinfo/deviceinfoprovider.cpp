@@ -30,7 +30,6 @@
 */
 
 #include "deviceinfoprovider.h"
-#include "contextsubscriber.h"
 #include "trace.h"
 #include <QDBusInterface>
 #include <QDBusReply>
@@ -63,15 +62,6 @@ using namespace meegomtp1dot0;
  *********************************************/
 DeviceInfoProvider::DeviceInfoProvider()
 {
-#ifdef UT_ON
-    // Temporary: The context subscriber constructor crashes while doing UT.
-    m_contextSubscriber = 0;
-#else
-    // Listen to context subscriber for battery level change notifications.
-    m_contextSubscriber = new ContextSubscriber(this);
-    QObject::connect(m_contextSubscriber, SIGNAL(batteryLevelChanged(const quint8&)), this, SLOT(batteryLevelChanged(const quint8&)));
-#endif
-
     getSystemInfo();
 
     // Get the BT adapter interface, this interface can later be used to get the BT name
@@ -84,9 +74,6 @@ DeviceInfoProvider::DeviceInfoProvider()
  *********************************************/
 DeviceInfoProvider::~DeviceInfoProvider()
 {
-#ifndef UT_ON
-    delete m_contextSubscriber;
-#endif
 }
 
 /**********************************************
@@ -167,14 +154,6 @@ QString DeviceInfoProvider::getBTFriendlyName()
 }
 
 /**********************************************
- * quint8 DeviceInfoProvider::batteryLevel
- *********************************************/
-quint8 DeviceInfoProvider::batteryLevel( bool /*current*/ ) const
-{
-    return m_contextSubscriber->batteryLevel();
-}
-
-/**********************************************
  * const QString& DeviceInfoProvider::deviceFriendlyName
  *********************************************/
 #if 0
@@ -189,10 +168,3 @@ const QString& DeviceInfoProvider::deviceFriendlyName( bool /*current*/ )
 }
 #endif
 
-/**********************************************
- * void DeviceInfoProvider::batteryLevelChanged
- *********************************************/
-void DeviceInfoProvider::batteryLevelChanged( const quint8& /*batteryLevel*/ )
-{
-    //TODO Send an event
-}

@@ -8,9 +8,9 @@ CONFIG += qtsparql
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
     MOBILITY = systeminfo
-    PKGCONFIG += buteosyncfw contextkit-statefs-qt4
+    PKGCONFIG += buteosyncfw
 }
-equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5 Qt5SystemInfo contextkit-statefs
+equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5 Qt5SystemInfo
 
 LIBS += -ldl
 TEMPLATE = app
@@ -69,7 +69,6 @@ HEADERS += fsstorageplugin_test.h \
            transport/usb/threadio.h \
            transport/dummy/mtptransporterdummy.h \
            platform/deviceinfo/xmlhandler.h \
-           platform/deviceinfo/contextsubscriber.h \
            platform/deviceinfo/deviceinfoprovider.h \
            platform/deviceinfo/deviceinfo.h
 
@@ -96,7 +95,6 @@ SOURCES += fsstorageplugin_test.cpp \
            transport/usb/descriptor.c \
            transport/dummy/mtptransporterdummy.cpp \
            platform/deviceinfo/xmlhandler.cpp \
-           platform/deviceinfo/contextsubscriber.cpp \
            platform/deviceinfo/deviceinfoprovider.cpp \
            platform/deviceinfo/deviceinfo.cpp
 
