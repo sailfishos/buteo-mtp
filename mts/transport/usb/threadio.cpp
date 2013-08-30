@@ -109,13 +109,13 @@ void ControlReaderThread::run()
     }
 }
 
-void ControlReaderThread::sendStatus(enum mtpfs_status status)
+void ControlReaderThread::sendStatus()
 {
     QMutexLocker locker(&m_statusLock);
 
     int bytesWritten = 0;
     int dataLen = 4; /* TODO: If status size is ever above 0x4 */
-    char *dataptr = (char*)&status_data[status];
+    char *dataptr = (char*)&status_data[m_status];
 
     do {
         bytesWritten = write(m_fd, dataptr, dataLen);
@@ -171,7 +171,7 @@ void ControlReaderThread::setupRequest(void *data)
     switch(e->u.setup.bRequest) {
         case PTP_REQ_GET_DEVICE_STATUS:
             if(e->u.setup.bRequestType == 0xa1)
-                sendStatus(m_status);
+                sendStatus();
             else
                 stall((e->u.setup.bRequestType & USB_DIR_IN)>0);
             break;
@@ -206,23 +206,23 @@ void BulkReaderThread::run()
     m_threadRunning = true;
 
     char* inbuf = new char[MAX_DATA_IN_SIZE];
-    //
-    // Use m_lock to control message flow btw bulkreader and main thread
-    // 1. reader has lock
-    // 2. read data
-    // 3. inform main thread
-    // 4. reader waits in lock until main has processed data and unlocked
-    // 5. goto 2
-    //
-    m_lock.lock(); // First we have the lock
+    // m_wait controls message flow between bulkreader and main thread.
+    // This thread fills inbuf, then hands the buffer over to the main
+    // thread by emitting dataRead.
+    // When the main thread is done with the buffer, it will wake up
+    // this thread again by calling releaseBuffer() which uses m_wait
+    // to notify this thread.
     do {
         readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         while(readSize != -1) {
             emit dataRead(inbuf, readSize);
             if(!m_threadRunning) break;
+            // QWaitCondition requires the lock to be held, but we
+            // don't use the lock for anything else so just lock it here.
             m_lock.lock();
+            m_wait.wait(&m_lock);
+            m_lock.unlock();
             if(!m_threadRunning) break;
-            inbuf = new char[MAX_DATA_IN_SIZE];
             readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
         }
     } while(errno == ESHUTDOWN && m_threadRunning);
@@ -240,14 +240,21 @@ void BulkReaderThread::run()
     }
 }
 
+// Called by the main thread when it's done with the buffer it got
+// from the dataRead signal.
+void BulkReaderThread::releaseBuffer()
+{
+    m_wait.wakeAll();
+}
+
 void BulkReaderThread::exitThread()
 {
     // Executed in main thread
     m_threadRunning = false;
     // TODO: Not 100% reliable operation
     usleep(10);
-    interrupt();
-    m_lock.unlock();
+    interrupt();  // wake up the thread if it's in read()
+    m_wait.wakeAll(); // wake up the thread if it's in m_wait.wait()
 }
 
 BulkWriterThread::BulkWriterThread(QObject *parent)
@@ -323,15 +330,9 @@ InterruptWriterThread::~InterruptWriterThread()
     reset();
 }
 
-void InterruptWriterThread::setFd(int fd)
-{
-    m_fd = fd;
-}
-
 void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 {
-    QMutexLocker locker(&m_bufferLock);
-    int overflow;
+    QMutexLocker locker(&m_lock);
 
     quint8 *copy = (quint8*)malloc(dataLen);
     if(copy == NULL) {
@@ -340,26 +341,16 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
     }
     memcpy(copy, buffer, dataLen);
 
-    if(m_buffers.count() >= MAX_EVENTS_STORED) {
-        // It is possible that that sometimes the interrupt will miss
-        // consuming evevents, this is here to keep it from going out
-        // of hand slowly over time
-        overflow = m_buffers.count() - MAX_EVENTS_STORED;
-        if(overflow > 0) {
-            while(overflow--) {
-                QPair<quint8*,int> pair = m_buffers.first();
-                m_buffers.removeFirst();
-                delete pair.first;
-            }
-        }
-        // This will discard the oldest event
-        interrupt();
+    // This is here in case the interrupt writing thread cannot keep up
+    // with the events. It removes the oldest events.
+    while(m_buffers.count() >= MAX_EVENTS_STORED) {
+        QPair<quint8*,int> pair = m_buffers.takeFirst();
+        delete pair.first;
     }
 
+    if(m_buffers.empty())
+        m_wait.wakeAll(); // restart processing after m_lock is released
     m_buffers.append(QPair<quint8*,int>(copy, dataLen));
-
-    // Incase the event system is waiting empty
-    m_lock.unlock();
 }
 
 void InterruptWriterThread::run()
@@ -369,37 +360,40 @@ void InterruptWriterThread::run()
     m_running = true;
 
     while(m_running) {
-        if(m_buffers.isEmpty()) {
-            m_lock.tryLock();
-            m_lock.lock();
-        } else {
-            m_bufferLock.lock();
+        m_lock.lock();
 
-            QPair<quint8*,int> pair = m_buffers.first();
-            m_buffers.removeFirst();
+        while(m_running && m_buffers.isEmpty())
+            m_wait.wait(&m_lock); // will release the lock while waiting
 
-            m_bufferLock.unlock();
-
-            quint8 *dataptr = pair.first;
-            int dataLen = pair.second;
-
-            do {
-                int bytesWritten = write(m_fd, dataptr, dataLen);
-                if(bytesWritten == -1)
-                {
-                    if(errno == EINTR)
-                        continue;
-                    else {
-                        m_running = false;
-                        break;
-                    }
-                }
-                dataptr += bytesWritten;
-                dataLen -= bytesWritten;
-            } while(dataLen);
-
-            free(pair.first);
+        if (!m_running) { // may have been woken up by exitThread()
+            m_lock.unlock();
+            break;
         }
+
+        QPair<quint8*,int> pair = m_buffers.takeFirst();
+        m_lock.unlock();
+
+        quint8 *dataptr = pair.first;
+        int dataLen = pair.second;
+
+        do {
+            int bytesWritten = write(m_fd, dataptr, dataLen);
+            if(bytesWritten == -1)
+            {
+                // FIXME: this EINTR handling will discard the event,
+                // possibly halfway through sending it, and leak the buffer.
+                if(errno == EINTR)
+                    continue;
+                else {
+                    m_running = false;
+                    break;
+                }
+            }
+            dataptr += bytesWritten;
+            dataLen -= bytesWritten;
+        } while(dataLen);
+
+        free(pair.first);
     }
 
     m_handle = 0;
@@ -407,7 +401,7 @@ void InterruptWriterThread::run()
 
 void InterruptWriterThread::reset()
 {
-    QMutexLocker locker(&m_bufferLock);
+    QMutexLocker locker(&m_lock);
 
     QPair<quint8*,int> item;
     foreach(item, m_buffers) {
@@ -419,6 +413,6 @@ void InterruptWriterThread::reset()
 void InterruptWriterThread::exitThread()
 {
     m_running = false;
-    interrupt();
-    m_lock.unlock();
+    interrupt();  // wake up the thread if it's in write()
+    m_wait.wakeAll(); // wake up the thread if it's in m_wait.wait()
 }

@@ -7,6 +7,7 @@
 #include <QMutex>
 #include <QPair>
 #include <QList>
+#include <QWaitCondition>
 
 enum mtpfs_status {
     MTPFS_STATUS_OK,
@@ -38,7 +39,7 @@ public:
 private:
     void handleEvent(struct usb_functionfs_event *event);
     void setupRequest(void *data);
-    void sendStatus(enum mtpfs_status status);
+    void sendStatus();
 
     QMutex m_statusLock;
     int m_state;
@@ -59,10 +60,12 @@ public:
 
     void run();
     void exitThread();
+    void releaseBuffer(); // receiver of dataRead is done processing data
 
-    QMutex m_lock;
 private:
     bool m_threadRunning;
+    QMutex m_lock; // used with m_wait
+    QWaitCondition m_wait;
 signals:
     void dataRead(char *buffer, int size);
 };
@@ -91,17 +94,16 @@ public:
     explicit InterruptWriterThread(QObject *parent = 0);
     ~InterruptWriterThread();
 
-    void setFd(int fd);
     void addData(const quint8 *buffer, quint32 dataLen);
     void run();
     void reset();
     void exitThread();
 
 private:
-    QMutex m_lock;
+    QMutex m_lock; // protects m_buffers and used with m_wait
+    QWaitCondition m_wait;
     bool m_running;
 
-    QMutex m_bufferLock;
     QList<QPair<quint8 *,int> > m_buffers;
 };
 

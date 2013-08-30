@@ -144,8 +144,6 @@ void MTPTransporterUSB::reset()
     m_bulkWrite.wait();
     m_intrWrite.wait();
 
-    m_bulkRead.m_lock.unlock();
-
     m_intrWrite.start();
     m_bulkRead.start();
 
@@ -197,12 +195,9 @@ bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLa
 void MTPTransporterUSB::handleDataRead(char* buffer, int size)
 {
     // TODO: Merge this with processReceivedData
-    if(size > 0) {
+    if(size > 0)
         processReceivedData((quint8 *)buffer, size);
-    }
-    delete buffer;
-
-    m_bulkRead.m_lock.unlock();
+    m_bulkRead.releaseBuffer();
 }
 
 void MTPTransporterUSB::suspend()
@@ -327,9 +322,7 @@ void MTPTransporterUSB::closeDevices()
     // FIXME: this probably won't exit properly?
     // -- It doesn't, fixit
     if(m_outFd != -1) {
-        m_bulkRead.m_lock.unlock();
         close(m_outFd);
-        //m_bulkRead.wait();
         m_outFd = -1;
     }
     if(m_inFd != -1) {
@@ -350,9 +343,7 @@ void MTPTransporterUSB::startRead()
 void MTPTransporterUSB::stopRead()
 {
     emit cleanup();
-
     m_containerReadLen = 0;
-    m_bulkRead.m_lock.unlock();
 }
 
 void MTPTransporterUSB::handleHighPriorityData()
