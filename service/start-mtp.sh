@@ -1,10 +1,10 @@
 #!/bin/bash
 
 SERVICE=/usr/lib/mtp/mtp_service
-STORAGE_PATH=$HOME/.config/mtpstorage
+STORAGE_PATH=$HOME
 LINK_BASE=$HOME
 XDG_KEYS="DOWNLOAD DOCUMENTS MUSIC PICTURES VIDEOS"
-XDG_LINKS="true"
+XDG_LINKS="false"
 
 [ -f /etc/default/buteo-mtp ] && . /etc/default/buteo-mtp
 [ -f $HOME/.config/buteo-mtp ] && . $HOME/.config/buteo-mtp
