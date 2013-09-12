@@ -44,7 +44,7 @@ int totalCount = 17;
 void FSStoragePlugin_test::initTestCase()
 {
     QDir dir;
-    QFile file( QDir::homePath() + "/.mtp/.mtphandles");
+    QFile file( QDir::homePath() + "/.local/mtp/mtphandles");
     if( file.open( QIODevice::ReadOnly ) )
     {
         m_storage = new FSStoragePlugin( 1, MTP_STORAGE_TYPE_FixedRAM, "/tmp/mtptests", "media", "Phone Memory");
@@ -71,7 +71,7 @@ void FSStoragePlugin_test::initTestCase()
         delete m_storage;
 
         QDir dir("/tmp/mtptests");
-        dir.remove(".mtphandles");
+        dir.remove("mtphandles");
         dir.remove("subdir2/fileA");
         dir.remove("subdir2/fileB");
         dir.remove("subdir2/fileC");
@@ -255,7 +255,7 @@ void FSStoragePlugin_test::testDeleteAll()
     QCOMPARE( m_storage->m_objectHandlesMap.size(), m_storage->m_pathNamesMap.size() );
 
     delete m_storage;
-    system("rm -rf ~/.mtp");
+    system("rm -rf ~/.local/mtp");
     system("rm -rf /tmp/mtptests");
     system("tracker-control -r");
     sleep(2);
@@ -1681,7 +1681,7 @@ void FSStoragePlugin_test::testPlaylistsPersistence()
 void FSStoragePlugin_test::cleanupTestCase()
 {
     delete m_storage;
-    system("rm -rf ~/.mtp");
+    system("rm -rf ~/.local/mtp");
     system("rm -rf /tmp/mtptests");
     system("tracker-control -r");
     sleep(2);

@@ -509,7 +509,7 @@ QString DeviceInfo::getDeviceInfoXmlPath()
         if (tmpPath.isEmpty()) {
             qFatal("DeviceInfo: can't determine home directory");
         }
-        m_deviceInfoXmlPath = tmpPath + "/.mtpdeviceinfo.xml";
+        m_deviceInfoXmlPath = tmpPath + "/.cache/mtp/mtpdeviceinfo.xml";
     }
     return m_deviceInfoXmlPath;
 }

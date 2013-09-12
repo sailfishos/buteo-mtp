@@ -40,7 +40,7 @@ using namespace meegomtp1dot0;
 
 static void cleanDirs()
 {
-    QString mtpHiddenPath = QDir::homePath() + "/.mtp";
+    QString mtpHiddenPath = QDir::homePath() + "/.local/mtp";
     QString removeMtpHiddenPath = "rm -rf " + mtpHiddenPath;
     system(removeMtpHiddenPath.toUtf8().data());
     system("rm -rf /home/user/MyDocs/*");
@@ -192,7 +192,7 @@ void MTPResponder_test::testSendObject()
     copyAndSendContainer(reqContainer);
 
     char tmp[6] = "xxxxx";
-    
+
     MTPTxContainer *dataContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_DATA, MTP_OP_SendObject, m_transactionId, 5);
     memcpy( dataContainer->payload(), tmp, 5 );
     dataContainer->seek(5);
@@ -241,7 +241,7 @@ void MTPResponder_test::testSendObject2()
     copyAndSendContainer(reqContainer);
 
     char tmp[6] = "yyyyy";
-    
+
     MTPTxContainer *dataContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_DATA, MTP_OP_SendObject, m_transactionId, 5);
     memcpy( dataContainer->payload(), tmp, 5 );
     dataContainer->seek(5);
@@ -525,12 +525,12 @@ void MTPResponder_test::testGetDevicePropValue()
     *reqContainer << (quint32)MTP_DEV_PROPERTY_Device_Friendly_Name;
     copyAndSendContainer(reqContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
-    
+
     reqContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_COMMAND, MTP_OP_GetDevicePropValue, nextTransactionId(), sizeof(quint32));
     *reqContainer << (quint32)MTP_DEV_PROPERTY_Synchronization_Partner;
     copyAndSendContainer(reqContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
-    
+
     reqContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_COMMAND, MTP_OP_GetDevicePropValue, nextTransactionId(), sizeof(quint32));
     *reqContainer << (quint32)MTP_DEV_PROPERTY_Perceived_Device_Type;
     copyAndSendContainer(reqContainer);
@@ -714,4 +714,3 @@ void MTPResponder_test::testCloseSession()
 }
 
 QTEST_APPLESS_MAIN(MTPResponder_test);
-

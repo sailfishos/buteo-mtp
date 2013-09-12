@@ -100,16 +100,16 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
         m_storageInfo.freeSpace = (quint64)stat.f_bavail * stat.f_bsize;
     }
 
-    m_mtpPersistentDBPath = QDir::homePath() + "/.mtp";
+    m_mtpPersistentDBPath = QDir::homePath() + "/.local/mtp";
     QDir dir = QDir( m_mtpPersistentDBPath );
     if( !dir.exists() )
     {
         dir.mkdir( m_mtpPersistentDBPath );
     }
 
-    m_puoidsDbPath = m_mtpPersistentDBPath + "/.mtppuoids";
-    m_objectReferencesDbPath = m_mtpPersistentDBPath + "/.mtpreferences";
-    m_internalPlaylistPath = m_mtpPersistentDBPath + "/.Playlists";
+    m_puoidsDbPath = m_mtpPersistentDBPath + "/mtppuoids";
+    m_objectReferencesDbPath = m_mtpPersistentDBPath + "/mtpreferences";
+    m_internalPlaylistPath = m_mtpPersistentDBPath + "/Playlists";
     m_playlistPath = storagePath + "/Playlists";
 
     buildSupportedFormatsList();
