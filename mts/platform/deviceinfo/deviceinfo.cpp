@@ -509,7 +509,14 @@ QString DeviceInfo::getDeviceInfoXmlPath()
         if (tmpPath.isEmpty()) {
             qFatal("DeviceInfo: can't determine home directory");
         }
-        m_deviceInfoXmlPath = tmpPath + "/.cache/mtp/mtpdeviceinfo.xml";
+
+        tmpPath = tmpPath + "/.cache/mtp";
+        QDir tmpDir = QDir(tmpPath);
+        if (!tmpDir.exists()){
+            if (!tmpDir.mkpath(tmpPath))
+                qFatal("Unable to create ~/.cache/mtp/");
+        }
+        m_deviceInfoXmlPath = tmpPath + "/mtpdeviceinfo.xml";
     }
     return m_deviceInfoXmlPath;
 }

@@ -104,7 +104,7 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
     QDir dir = QDir( m_mtpPersistentDBPath );
     if( !dir.exists() )
     {
-        dir.mkdir( m_mtpPersistentDBPath );
+        dir.mkpath( m_mtpPersistentDBPath );
     }
 
     m_puoidsDbPath = m_mtpPersistentDBPath + "/mtppuoids";
@@ -134,7 +134,7 @@ bool FSStoragePlugin::enumerateStorage()
     QDir dir = QDir( m_storagePath );
     if( !dir.exists() )
     {
-        dir.mkdir( m_storagePath );
+        dir.mkpath( m_storagePath );
     }
 
     // Make the Playlists directory, if one does not exist
@@ -202,7 +202,7 @@ void FSStoragePlugin::syncPlaylists()
     QDir dir( m_storagePath );
     if( !dir.exists( "Playlists" ) )
     {
-        dir.mkdir( "Playlists" );
+        dir.mkpath( "Playlists" );
     }
 
     // We need to synchronize the directories (while the dev was offline something could happened)
@@ -702,7 +702,7 @@ MTPResponseCode FSStoragePlugin::addDirToStorage( StorageItem *&thisStorageItem,
     QDir dir = QDir( thisStorageItem->m_path );
     if( !dir.exists() && !isRootDir )
     {
-        dir.mkdir( thisStorageItem->m_path );
+        dir.mkpath( thisStorageItem->m_path );
     }
 
     // If this is the root dir, assign a handle of 0.
