@@ -19,12 +19,14 @@ class IOThread : public QThread {
 public:
     explicit IOThread(QObject *parent = 0);
     void setFd(int fd);
-    void interrupt();
+    virtual void interrupt();
+    void exitThread();
     bool stall(bool dirIn);
 
 protected:
     pthread_t m_handle;
     int m_fd;
+    bool m_shouldExit;
 };
 
 class ControlReaderThread : public IOThread {
@@ -59,11 +61,10 @@ public:
     ~BulkReaderThread();
 
     void run();
-    void exitThread();
     void releaseBuffer(); // receiver of dataRead is done processing data
+    virtual void interrupt();
 
 private:
-    bool m_threadRunning;
     QMutex m_lock; // used with m_wait
     QWaitCondition m_wait;
 signals:
@@ -79,7 +80,6 @@ public:
     void run();
     bool resultReady();
     bool getResult();
-    void exitThread();
 
 private:
     const quint8 *m_buffer;
@@ -97,12 +97,11 @@ public:
     void addData(const quint8 *buffer, quint32 dataLen);
     void run();
     void reset();
-    void exitThread();
+    virtual void interrupt();
 
 private:
     QMutex m_lock; // protects m_buffers and used with m_wait
     QWaitCondition m_wait;
-    bool m_running;
 
     QList<QPair<quint8 *,int> > m_buffers;
 };
