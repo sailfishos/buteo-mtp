@@ -29,6 +29,7 @@
 *
 */
 
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -44,6 +45,24 @@
 #include <QCoreApplication>
 
 using namespace meegomtp1dot0;
+
+static void signalHandler(int signum)
+{
+    return; // This handler just exists to make blocking I/O return with EINTR
+}
+
+static void catchUserSignal()
+{
+    struct sigaction action;
+
+    memset(&action, 0, sizeof(action));
+    action.sa_handler = signalHandler;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+
+    if (sigaction(SIGUSR1, &action, NULL) < 0)
+        MTP_LOG_WARNING("Could not establish SIGUSR1 signal handler");
+}
 
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
     m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1), m_writer_busy(false)
@@ -85,6 +104,7 @@ bool MTPTransporterUSB::activate()
     }
 
     if(success) {
+        catchUserSignal();
         openDevices(); // TODO: trigger with Bind?
         m_ctrl.setFd(m_ctrlFd);
         QObject::connect(&m_ctrl, SIGNAL(startIO()),
