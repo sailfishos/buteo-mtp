@@ -107,16 +107,18 @@ void ControlReaderThread::run()
     int readSize, count;
 
     m_handle = pthread_self();
-    do {
-        while((readSize = read(m_fd, readBuffer, MAX_CONTROL_IN_SIZE)) > 0) {
-            count = readSize/(sizeof(struct usb_functionfs_event));
-            event = (struct usb_functionfs_event*)readBuffer;
-            for(int i = 0; i < count; i++ )
-                handleEvent(event + i);
+    while(!m_shouldExit) {
+        readSize = read(m_fd, readBuffer, MAX_CONTROL_IN_SIZE);
+        if (readSize <= 0) {
+            if (errno != EINTR)
+                perror("ControlReaderThread");
+            continue;
         }
-        if(errno != EINTR)
-            perror("ControlReaderThread");
-    } while(!m_shouldExit);
+        count = readSize/(sizeof(struct usb_functionfs_event));
+        event = (struct usb_functionfs_event*)readBuffer;
+        for(int i = 0; i < count; i++ )
+            handleEvent(event + i);
+    }
 
 
     m_handle = 0;
