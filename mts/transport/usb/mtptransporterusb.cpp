@@ -123,10 +123,10 @@ bool MTPTransporterUSB::activate()
 
 bool MTPTransporterUSB::deactivate()
 {
+    MTP_LOG_INFO("MTPTransporterUSB deactivating");
     closeDevices();
 
-    m_ctrl.interrupt();
-    m_ctrl.wait();
+    m_ctrl.exitThread();
     close(m_ctrlFd);
 
     return true;
@@ -159,10 +159,6 @@ void MTPTransporterUSB::reset()
     m_bulkRead.exitThread();
     m_bulkWrite.exitThread();
     m_intrWrite.exitThread();
-
-    m_bulkRead.wait();
-    m_bulkWrite.wait();
-    m_intrWrite.wait();
 
     m_intrWrite.start();
     m_bulkRead.start();

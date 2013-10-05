@@ -120,7 +120,6 @@ void ControlReaderThread::run()
             handleEvent(event + i);
     }
 
-
     m_handle = 0;
     MTP_LOG_CRITICAL("ControlReaderThread exited");
 }
