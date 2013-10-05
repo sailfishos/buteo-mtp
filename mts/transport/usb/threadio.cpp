@@ -162,6 +162,12 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
         case FUNCTIONFS_SUSPEND:
             emit stopIO();
             break;
+        case FUNCTIONFS_BIND:
+            emit bindUSB();
+            break;
+        case FUNCTIONFS_UNBIND:
+            emit unbindUSB();
+            break;
         case FUNCTIONFS_SETUP:
             setupRequest((void*)event);
             break;

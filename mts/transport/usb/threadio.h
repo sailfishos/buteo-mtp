@@ -50,6 +50,8 @@ private:
 signals:
     void startIO();
     void stopIO();
+    void bindUSB();
+    void unbindUSB();
     void deviceReset();
     void cancelTransaction();
 };
