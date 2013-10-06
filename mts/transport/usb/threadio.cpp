@@ -316,11 +316,18 @@ void BulkWriterThread::run()
         {
             if(errno == EINTR)
                 continue;
-            if(errno == EAGAIN || errno == ESHUTDOWN)
+            if(errno == EAGAIN)
             {
                 MTP_LOG_WARNING("BulkWriterThread delaying: errno " << errno);
                 msleep(1);
                 continue;
+            }
+            if(errno == ESHUTDOWN)
+            {
+                // After a shutdown, the host won't expect this data anymore,
+                // so drop it and report failure.
+                MTP_LOG_WARNING("BulkWriterThread exiting (endpoint shutdown)");
+                break;
             }
             MTP_LOG_CRITICAL("BulkWriterThread exiting: errno " << errno);
             break;
