@@ -2876,6 +2876,11 @@ void MTPResponder::sendObjectSegmented()
     // start segmentation
     while(segDataOffset < m_segmentedSender.totalDataLen)
     {
+        if(reqContainer != m_transactionSequence->reqContainer)
+        {
+            // Transaction was canceled or session was closed
+            return;
+        }
         if(m_segmentedSender.headerSent == false)
         {
             // This the first segment, thus it needs to have the MTP container header
