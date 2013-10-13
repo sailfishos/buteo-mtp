@@ -215,6 +215,7 @@ BulkReaderThread::~BulkReaderThread()
 void BulkReaderThread::run()
 {
     int readSize;
+    bool bufferSent = false;
 
     m_handle = pthread_self();
 
@@ -227,6 +228,8 @@ void BulkReaderThread::run()
     // to notify this thread.
     while (!m_shouldExit) {
         readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
+        if (m_shouldExit)
+            break;
         if (readSize == -1) {
             if (errno == EINTR)
                 continue;
@@ -239,18 +242,21 @@ void BulkReaderThread::run()
             break;
         }
 
+        bufferSent = true;
         emit dataRead(inbuf, readSize);
         // QWaitCondition requires the lock to be held, but we
         // don't use the lock for anything else so just lock it here.
         m_lock.lock();
         m_wait.wait(&m_lock);
         m_lock.unlock();
+        bufferSent = false;
     }
 
-    // FIXME: if we were interrupted with exitThread() then there might
-    // still be a dataRead event on the main thread's stack that references
-    // this buffer.
-    delete[] inbuf;
+    // FIXME: We can't free the buffer if there may still be a
+    // dataRead event on the main thread's queue that references it. 
+    // Avoid a segfault there by leaking the buffer. Not an ideal solution.
+    if (!bufferSent)
+        delete[] inbuf;
     m_handle = 0;
 }
 
