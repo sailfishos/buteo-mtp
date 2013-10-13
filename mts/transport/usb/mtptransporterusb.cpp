@@ -200,6 +200,7 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
     }
     bool r = m_bulkWrite.getResult();
 
+    m_bulkWrite.wait();
     m_writer_busy = false;
     return r;
 }
