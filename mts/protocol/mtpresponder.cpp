@@ -50,7 +50,9 @@
 
 using namespace meegomtp1dot0;
 
-static const quint32 BUFFER_MAX_LEN = 64 * 1024;
+// BUFFER_MAX_LEN is based on the max request size in ci13xxx_udc.c,
+// which is four pages of 4k each
+static const quint32 BUFFER_MAX_LEN = 4 * 4096;
 MTPResponder* MTPResponder::m_instance = 0;
 
 MTPResponder* MTPResponder::instance()
