@@ -392,20 +392,23 @@ void InterruptWriterThread::run()
         quint8 *dataptr = pair.first;
         int dataLen = pair.second;
 
-        do {
+        while(dataLen && !m_shouldExit) {
             int bytesWritten = write(m_fd, dataptr, dataLen);
             if(bytesWritten == -1)
             {
-                // FIXME: this EINTR handling will discard the event,
-                // possibly halfway through sending it, and leak the buffer.
-                if(errno == EINTR || errno == EAGAIN)
+                if (errno == EINTR)
                     continue;
-                MTP_LOG_CRITICAL("InterruptWriterThread exiting: " << errno);
+                if (errno == EAGAIN || errno == ESHUTDOWN) {
+                    MTP_LOG_WARNING("InterruptWriterThread delaying:" << errno);
+                    msleep(1);
+                    continue;
+                }
+                MTP_LOG_CRITICAL("InterruptWriterThread exiting:" << errno);
                 break;
             }
             dataptr += bytesWritten;
             dataLen -= bytesWritten;
-        } while(dataLen && !m_shouldExit);
+        }
 
         free(pair.first);
     }
