@@ -250,10 +250,8 @@ void BulkReaderThread::run()
         }
 
         bufferSent = true;
-        emit dataRead(inbuf, readSize);
-        // QWaitCondition requires the lock to be held, but we
-        // don't use the lock for anything else so just lock it here.
         m_lock.lock();
+        emit dataRead(inbuf, readSize);
         m_wait.wait(&m_lock);
         m_lock.unlock();
         bufferSent = false;
@@ -271,6 +269,10 @@ void BulkReaderThread::run()
 // from the dataRead signal.
 void BulkReaderThread::releaseBuffer()
 {
+    // The reader thread will take the lock before emitting dataRead,
+    // and will release it inside m_wait, so taking the lock here ensures
+    // that the reader is already waiting and will notice our wakeAll.
+    QMutexLocker locker(&m_lock);
     m_wait.wakeAll();
 }
 
