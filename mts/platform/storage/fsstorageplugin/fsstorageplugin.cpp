@@ -942,7 +942,9 @@ MTPResponseCode FSStoragePlugin::deleteItem( const ObjHandle& handle, const MTPO
 
     if( 0xFFFFFFFF == handle )
     {
-        for( QHash<ObjHandle,StorageItem*>::const_iterator i = m_objectHandlesMap.constBegin() ; i != m_objectHandlesMap.constEnd(); ++i )
+        // deleteItemHelper modifies m_objectHandlesMap so loop over a copy
+        QHash<ObjHandle,StorageItem*> objectHandles = m_objectHandlesMap;
+        for( QHash<ObjHandle,StorageItem*>::const_iterator i = objectHandles.constBegin() ; i != objectHandles.constEnd(); ++i )
         {
             if( formatCode && MTP_OBF_FORMAT_Undefined != formatCode )
             {
