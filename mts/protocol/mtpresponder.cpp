@@ -1203,12 +1203,14 @@ void MTPResponder::getPartialObjectReq()
 {
     MTP_FUNC_TRACE();
     // FIXME: Implement this!!
+    sendResponse(MTP_RESP_OperationNotSupported);
 }
 
 void MTPResponder::setObjectProtectionReq()
 {
     MTP_FUNC_TRACE();
     // FIXME: Implement this!!
+    sendResponse(MTP_RESP_OperationNotSupported);
 }
 
 void MTPResponder::getDevicePropDescReq()
@@ -1312,6 +1314,7 @@ void MTPResponder::resetDevicePropValueReq()
 {
     MTP_FUNC_TRACE();
     // FIXME: Implement this?
+    sendResponse(MTP_RESP_OperationNotSupported);
 }
 
 void MTPResponder::moveObjectReq()
