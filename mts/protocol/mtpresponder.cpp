@@ -1822,7 +1822,7 @@ void MTPResponder::getInterdependentPropDescReq()
     MTP_FUNC_TRACE();
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     // FIXME: Implement this!
-    sendResponse(reqContainer->code()); // TODO: is this code right?
+    sendResponse(MTP_RESP_OperationNotSupported);
 }
 
 void MTPResponder::sendObjectPropListReq()
@@ -2124,7 +2124,6 @@ void MTPResponder::setObjectPropListData()
     MTP_FUNC_TRACE();
     MTPResponseCode respCode = MTP_RESP_OK;
     quint32 numObjects = 0;
-    quint32 response = 0x00000000;
     ObjHandle objHandle = 0;
     MTPObjPropertyCode propCode;
     MTPDataType datatype = MTP_DATA_TYPE_UNDEF;
@@ -2176,9 +2175,12 @@ void MTPResponder::setObjectPropListData()
     if(MTP_RESP_OK != respCode)
     {
         // Set the response parameter to the 0 based index of the property that caused the problem
-        response = i - 1;
+        sendResponse(respCode, i - 1);
     }
-    sendResponse(respCode);  // TODO: actually add response parameter
+    else
+    {
+        sendResponse(MTP_RESP_OK);
+    }
 }
 
 void MTPResponder::sendObjectPropListData()
