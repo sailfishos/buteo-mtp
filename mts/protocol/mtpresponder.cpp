@@ -279,6 +279,35 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
     return true;
 }
 
+bool MTPResponder::sendResponse(MTPResponseCode code)
+{
+    MTP_FUNC_TRACE();
+
+    quint16 transactionId = m_transactionSequence->reqContainer->transactionId();
+    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, transactionId);
+    bool sent = sendContainer(respContainer);
+    if( false == sent )
+    {
+        MTP_LOG_CRITICAL("Could not send response");
+    }
+    return sent;
+}
+
+bool MTPResponder::sendResponse(MTPResponseCode code, quint32 param1)
+{
+    MTP_FUNC_TRACE();
+
+    quint16 transactionId = m_transactionSequence->reqContainer->transactionId();
+    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, transactionId, sizeof(param1));
+    respContainer << param1;
+    bool sent = sendContainer(respContainer);
+    if( false == sent )
+    {
+        MTP_LOG_CRITICAL("Could not send response");
+    }
+    return sent;
+}
+
 void MTPResponder::receiveContainer(quint8* data, quint32 dataLen, bool isFirstPacket, bool isLastPacket)
 {
     MTP_FUNC_TRACE();
@@ -391,24 +420,14 @@ void MTPResponder::commandHandler()
         {
             // TODO: Check the return below? Can we assume that this will succeed as operationHasDataPhase has succeeded?
             //handleExtendedOperation();
-            MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, MTP_RESP_OperationNotSupported, reqContainer->transactionId());
-            bool sent = sendContainer(respContainer);
-            if( false == sent )
-            {
-                MTP_LOG_CRITICAL("Could not send response");
-            }
+            sendResponse(MTP_RESP_OperationNotSupported);
         }
     }
     else
     {
         // invalid opcode -- This response should be sent right away (no need to
         // wait on the data phase)
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, MTP_RESP_OperationNotSupported, reqContainer->transactionId());
-        bool sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(MTP_RESP_OperationNotSupported);
     }
 }
 
@@ -568,12 +587,7 @@ void MTPResponder::dataHandler(quint8* data, quint32 dataLen, bool isFirstPacket
         }
     }
     // RESPONSE PHASE
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(respCode);
 }
 
 bool MTPResponder::handleExtendedOperation()
@@ -611,7 +625,7 @@ bool MTPResponder::handleExtendedOperation()
                 delete[] resp.data;
             }
             // Send response
-            MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, resp.respCode, reqContainer->transactionId(), resp.params.size());
+            MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, resp.respCode, reqContainer->transactionId(), resp.params.size() * sizeof(MtpParam));
             for(int i = 0; i < resp.params.size(); i++)
             {
                 respContainer << resp.params[i];
@@ -735,21 +749,13 @@ void MTPResponder::getDeviceInfoReq()
 
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, MTP_RESP_OK, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(MTP_RESP_OK);
     }
 }
 
 void MTPResponder::openSessionReq()
 {
     MTP_FUNC_TRACE();
-    quint32 payloadLength = 0;
-    quint32 respParam = 0;
-    quint16 code =  MTP_RESP_OK;
     QVector<quint32> params;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
@@ -757,30 +763,18 @@ void MTPResponder::openSessionReq()
 
     if ((MTP_INITIAL_SESSION_ID == params[0]))
     {
-        code = MTP_RESP_InvalidParameter;
+        sendResponse(MTP_RESP_InvalidParameter);
     }
     else if(m_transactionSequence->mtpSessionId != MTP_INITIAL_SESSION_ID)
     {
-        code = MTP_RESP_SessionAlreadyOpen;
-        respParam = m_transactionSequence->mtpSessionId;
-        // 1 parameter: SessionID
-        payloadLength = sizeof(respParam);
+        sendResponse(MTP_RESP_SessionAlreadyOpen, m_transactionSequence->mtpSessionId);
     }
     else
     {
         // save new session id
         m_transactionSequence->mtpSessionId = params[0];
-        // inform storage server that a new session has been opened
-    }
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId(), sizeof(respParam));
-    if(MTP_RESP_SessionAlreadyOpen == code)
-    {
-        respContainer << respParam;
-    }
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
+        // TODO:: inform storage server that a new session has been opened
+        sendResponse(MTP_RESP_OK);
     }
 }
 
@@ -808,12 +802,7 @@ void MTPResponder::closeSessionReq()
 
          // FIXME: Trigger the discarding of a file, which has been possibly created in StorageServer
     }
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(code);
 }
 
 void MTPResponder::getStorageIDReq()
@@ -854,12 +843,7 @@ void MTPResponder::getStorageIDReq()
     // RESPONSE PHASE
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(code);
     }
 }
 
@@ -916,12 +900,7 @@ void MTPResponder::getStorageInfoReq()
 
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(code);
     }
 }
 
@@ -974,16 +953,7 @@ void MTPResponder::getNumObjectsReq()
     }
     noOfObjects = handles.size() >= 0 ? handles.size() : 0;
 
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId(), sizeof(noOfObjects));
-    if(MTP_RESP_OK == code)
-    {
-        respContainer << noOfObjects;
-    }
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(code, noOfObjects);
 }
 
 void MTPResponder::getObjectHandlesReq()
@@ -1052,12 +1022,7 @@ void MTPResponder::getObjectHandlesReq()
 
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(code);
     }
 }
 
@@ -1096,12 +1061,7 @@ void MTPResponder::getObjectInfoReq()
 
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(code);
     }
 }
 
@@ -1176,12 +1136,7 @@ void MTPResponder::getObjectReq()
 
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(code);
     }
 }
 
@@ -1190,12 +1145,7 @@ void MTPResponder::getThumbReq()
     MTP_FUNC_TRACE();
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     // FIXME: Implement this!
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, MTP_RESP_OperationNotSupported, reqContainer->transactionId());
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(MTP_RESP_OperationNotSupported);
 }
 
 void MTPResponder::deleteObjectReq()
@@ -1212,12 +1162,7 @@ void MTPResponder::deleteObjectReq()
         code = m_storageServer->deleteItem(params[0], static_cast<MTPObjFormatCode>(params[1]));
         m_propCache->removeFromCache( params[0] );
     }
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(code);
 }
 
 void MTPResponder::sendObjectInfoReq()
@@ -1297,12 +1242,7 @@ void MTPResponder::getDevicePropDescReq()
 
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(code);
     }
 }
 
@@ -1338,12 +1278,7 @@ void MTPResponder::getDevicePropValueReq()
 
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(code);
     }
 }
 
@@ -1420,12 +1355,7 @@ void MTPResponder::moveObjectReq()
         }
     }
 
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(code);
 }
 
 void MTPResponder::copyObjectReq()
@@ -1470,14 +1400,8 @@ void MTPResponder::copyObjectReq()
     }
 
     // RESPONSE PHASE
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId(), sizeof(retHandle));
-    respContainer << retHandle;
     m_copiedObjHandle = retHandle;
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(code, retHandle);
 }
 
 void MTPResponder::getObjPropsSupportedReq()
@@ -1520,12 +1444,7 @@ void MTPResponder::getObjPropsSupportedReq()
 
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(code);
     }
 }
 
@@ -1570,12 +1489,7 @@ void MTPResponder::getObjPropDescReq()
 
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send data");
-        }
+        sendResponse(code);
     }
 }
 
@@ -1657,12 +1571,7 @@ void MTPResponder::getObjPropValueReq()
 
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(code);
     }
 }
 
@@ -1890,12 +1799,7 @@ void MTPResponder::getObjectPropListReq()
 
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, resp, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(resp);
     }
 }
 
@@ -1918,12 +1822,7 @@ void MTPResponder::getInterdependentPropDescReq()
     MTP_FUNC_TRACE();
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     // FIXME: Implement this!
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, reqContainer->code(), reqContainer->transactionId());
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(reqContainer->code()); // TODO: is this code right?
 }
 
 void MTPResponder::sendObjectPropListReq()
@@ -2022,12 +1921,7 @@ void MTPResponder::getObjReferencesReq()
 
     if( true == sent )
     {
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(respCode);
     }
 }
 
@@ -2056,12 +1950,7 @@ void MTPResponder::skipReq()
         reqContainer->params(params);
     }
 
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(respCode);
 }
 
 void MTPResponder::sendObjectInfoData()
@@ -2223,13 +2112,7 @@ void MTPResponder::sendObjectData(quint8* data, quint32 dataLen, bool isFirstPac
         // Trigger close file in the storage server... ignore return here
         m_storageServer->writeData( handle, 0, 0, false, true);
         // create and send container for response
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, reqContainer->transactionId());
-        bool sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
-
+        sendResponse(code);
         // This is moved here intentionally : in case a cancel tx is received before sending the response above
         // we would need the handle to delete the object.
         freeObjproplistInfo();
@@ -2295,13 +2178,7 @@ void MTPResponder::setObjectPropListData()
         // Set the response parameter to the 0 based index of the property that caused the problem
         response = i - 1;
     }
-    // create and send container for response
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(respCode);  // TODO: actually add response parameter
 }
 
 void MTPResponder::sendObjectPropListData()
@@ -2321,12 +2198,7 @@ void MTPResponder::sendObjectPropListData()
     if(0 == m_objPropListInfo || MTP_RESP_OK != m_transactionSequence->mtpResp)
     {
         respCode = 0 == m_objPropListInfo ? MTP_RESP_GeneralError : m_transactionSequence->mtpResp;
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
-        sent = sendContainer(respContainer);
-        if( false == sent )
-        {
-            MTP_LOG_CRITICAL("Could not send response");
-        }
+        sendResponse(respCode);
         return;
     }
 
@@ -2439,6 +2311,7 @@ void MTPResponder::setDevicePropValueData()
             {
                 qint32 vol = 0;
                 *recvContainer >> vol;
+                // TODO: implement this
             }
             break;
         default:
@@ -2448,12 +2321,7 @@ void MTPResponder::setDevicePropValueData()
             break;
     }
 
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, response, reqContainer->transactionId());
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(response);
 }
 
 void MTPResponder::setObjPropValueData()
@@ -2499,13 +2367,7 @@ void MTPResponder::setObjPropValueData()
             }
         }
     }
-    // create and send container for response
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(respCode);
 }
 
 void MTPResponder::setObjReferencesData()
@@ -2522,12 +2384,7 @@ void MTPResponder::setObjReferencesData()
     *recvContainer >> references;
     respCode = m_storageServer->setReferences(params[0], references);
 
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId());
-    bool sent = sendContainer(respContainer);
-    if( false == sent )
-    {
-        MTP_LOG_CRITICAL("Could not send response");
-    }
+    sendResponse(respCode);
 }
 
 void MTPResponder::deleteStoredRequest()
@@ -2948,24 +2805,15 @@ void MTPResponder::sendObjectSegmented()
 
     if(true == m_segmentedSender.sendResp)
     {
-        quint32 payloadLength = 0;
-
-        if(MTP_OP_GetPartialObject == opCode)
-        {
-            // Send as the first response parameter, the number of bytes sent
-            payloadLength = sizeof(quint32);
-        }
-        MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, respCode, reqContainer->transactionId(), payloadLength);
-        if(0 != payloadLength)
-        {
-            respContainer << m_segmentedSender.bytesSent;
-        }
         if( true == sent )
         {
-            sent = sendContainer(respContainer);
-            if( false == sent )
+            if(MTP_OP_GetPartialObject == opCode)
             {
-                MTP_LOG_CRITICAL("Could not send response");
+                sendResponse(respCode, m_segmentedSender.bytesSent);
+            }
+            else
+            {
+                sendResponse(respCode);
             }
         }
         // Segmented sending is done
