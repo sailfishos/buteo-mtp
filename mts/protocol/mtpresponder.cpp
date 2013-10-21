@@ -1065,12 +1065,15 @@ void MTPResponder::getObjectInfoReq()
     }
 }
 
+// This handler does double duty for GetObject and GetPartialObject
 void MTPResponder::getObjectReq()
 {
     MTP_FUNC_TRACE();
 
     quint64 payloadLength = 0;
+    quint32 startingOffset = 0;
     quint64 maxBufferSize = BUFFER_MAX_LEN;
+    qint32 readLength = 0;
     MTPResponseCode code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     QVector<quint32> params;
@@ -1088,6 +1091,12 @@ void MTPResponder::getObjectReq()
             code = MTP_RESP_InvalidObjectHandle;
         }
         payloadLength = objectInfo->mtpObjectCompressedSize;
+        if( MTP_OP_GetPartialObject == reqContainer->code() )
+        {
+            startingOffset = params[1];
+            payloadLength = startingOffset > payloadLength ? 0 : payloadLength - startingOffset;
+            payloadLength = payloadLength > params[2] ? params[2] : payloadLength;
+        }
     }
 
     bool sent = true;
@@ -1101,7 +1110,7 @@ void MTPResponder::getObjectReq()
             m_segmentedSender.totalDataLen = payloadLength;
             m_segmentedSender.payloadLen = BUFFER_MAX_LEN - MTP_HEADER_SIZE;
             m_segmentedSender.objHandle = params[0];
-            m_segmentedSender.offset = 0;
+            m_segmentedSender.offset = startingOffset;
             m_segmentedSender.segmentationStarted = true;
             m_segmentedSender.sendResp = false;
             m_segmentedSender.headerSent = false;
@@ -1116,9 +1125,9 @@ void MTPResponder::getObjectReq()
             MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
 
             // get the Object from the storage Server
-            qint32 readLength = payloadLength;
+            readLength = payloadLength;
             code = m_storageServer->readData(static_cast<ObjHandle&>(params[0]), reinterpret_cast<char*>(dataContainer.payload()),
-                                             readLength, static_cast<quint32>(0));
+                                             readLength, static_cast<quint32>(startingOffset));
 
             if( MTP_RESP_OK == code )
             {
@@ -1136,7 +1145,14 @@ void MTPResponder::getObjectReq()
 
     if( true == sent )
     {
-        sendResponse(code);
+        if( MTP_OP_GetPartialObject == reqContainer->code() )
+        {
+            sendResponse(code, readLength);
+        }
+        else
+        {
+            sendResponse(code);
+        }
     }
 }
 
@@ -1202,8 +1218,7 @@ void MTPResponder::sendObjectReq()
 void MTPResponder::getPartialObjectReq()
 {
     MTP_FUNC_TRACE();
-    // FIXME: Implement this!!
-    sendResponse(MTP_RESP_OperationNotSupported);
+    getObjectReq();
 }
 
 void MTPResponder::setObjectProtectionReq()
