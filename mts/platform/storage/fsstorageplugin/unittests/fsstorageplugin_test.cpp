@@ -36,10 +36,17 @@
 #include <QSparqlConnection>
 #include <QSparqlQuery>
 #include <QSparqlResult>
+#include <QImage>
+#include <QPainter>
+#include <QRadialGradient>
+
 
 using namespace meegomtp1dot0;
 
 int totalCount = 17;
+
+static const int THUMBNAIL_WIDTH = 100;
+static const int THUMBNAIL_HEIGHT = 100;
 
 void FSStoragePlugin_test::initTestCase()
 {
@@ -1090,12 +1097,12 @@ void FSStoragePlugin_test::testGetObjectPropertyValueFromStorage()
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Rep_Sample_Height, v, MTP_DATA_TYPE_UNDEF );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( v.toInt(), 100 );
+    QCOMPARE( v.toInt(), THUMBNAIL_HEIGHT );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Rep_Sample_Width, v, MTP_DATA_TYPE_UNDEF );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( v.toInt(), 100 );
+    QCOMPARE( v.toInt(), THUMBNAIL_WIDTH );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Video_FourCC_Codec, v, MTP_DATA_TYPE_UNDEF );
@@ -1678,6 +1685,82 @@ void FSStoragePlugin_test::testPlaylistsPersistence()
     delete resultSet;
 
     delete resultSetAll;
+}
+
+void FSStoragePlugin_test::testThumbnailer()
+{
+    // Create an image for the thumbnailer to work on
+    QImage testpic(800, 600, QImage::Format_RGB32);
+    QPainter painter(&testpic);
+    QRadialGradient gradient(400, 400, 100, 400, 300);
+    gradient.setColorAt(0, QColor::fromRgb(0x404040));
+    gradient.setColorAt(1, QColor::fromRgb(0x00ffff));
+    painter.setBrush(gradient);
+    painter.setPen(Qt::NoPen);
+    painter.drawRect(testpic.rect());
+    QVERIFY2(!testpic.isNull(), "testpic not valid");
+    bool success = testpic.save("/tmp/mtptests/testpic.png");
+    QVERIFY2(success, "testpic not saved");
+
+    // Wait for the inotify handler to process it
+    QEventLoop loop;
+    ObjHandle handle = 0;
+    int maxtries = 20;
+    while (!handle && maxtries > 0)
+    {
+        loop.processEvents();
+        handle = m_storage->m_pathNamesMap["/tmp/mtptests/testpic.png"];
+        --maxtries;
+    }
+    QVERIFY2(handle != 0, "testpic not registered in storage");
+
+    // Now ask for its thumbnail
+    MTPResponseCode response;
+    QVariant value;
+    response = m_storage->getObjectPropertyValueFromStorage( handle,
+        MTP_OBJ_PROP_Rep_Sample_Data, value, MTP_DATA_TYPE_UNDEF);
+    QVERIFY(!value.isNull());
+    QVector<quint8> data = value.value<QVector<quint8> >(); // sigh, why is this not a QByteArray
+
+    if ( data.isEmpty() )
+    {
+        // Thumbnail was not generated synchronously, so wait for
+        // it to be ready. Readiness should be signaled to the initiator
+        // via an ObjectPropChanged event.
+        QSignalSpy spy(m_storage, SIGNAL(eventGenerated(MTPEventCode, const QVector<quint32>&, QString)));
+        QList<QVariant> arguments;
+        QVERIFY(spy.isValid());
+        int maxsignals = 20;
+        while (maxsignals > 0)
+        {
+            bool emitted = spy.wait();
+            QVERIFY2(emitted, "thumbnail-ready signal not received");
+            arguments = spy.takeFirst();
+            // Skip other events; we might get some inotify ones as a side
+            // effect of generating the signal.
+            if (arguments.at(0).value<MTPEventCode>() == MTP_EV_ObjectPropChanged)
+                break;
+            --maxsignals;
+        }
+        QVector<quint32> params = arguments.at(1).value<QVector<quint32> >();
+        QCOMPARE(params.count(), 2);
+        QCOMPARE(params[0], handle);
+        QCOMPARE(params[1], (unsigned) MTP_OBJ_PROP_Rep_Sample_Data);
+        response = m_storage->getObjectPropertyValueFromStorage( handle,
+            MTP_OBJ_PROP_Rep_Sample_Data, value, MTP_DATA_TYPE_UNDEF);
+        QVERIFY(!value.isNull());
+        data = value.value<QVector<quint8> >();
+        // After getting the event, there must be a thumbnail
+        QVERIFY(!data.isEmpty());
+    }
+
+    // Check that it's a valid image
+    QImage thumbnail;
+    // expect JPEG because other tests expect JFIF for Sample_Format
+    thumbnail.loadFromData(data.data(), data.size(), "JPEG");
+    QVERIFY(!thumbnail.isNull());
+    QVERIFY(thumbnail.width() <= THUMBNAIL_WIDTH);
+    QVERIFY(thumbnail.height() <= THUMBNAIL_HEIGHT);
 }
 
 void FSStoragePlugin_test::cleanupTestCase()

@@ -14,6 +14,8 @@ BuildRequires: pkgconfig(Qt5Qml)
 BuildRequires: pkgconfig(Qt5Test)
 BuildRequires: pkgconfig(buteosyncfw5)
 BuildRequires: pkgconfig(Qt5SystemInfo)
+# for the thumbnailer unit test
+BuildRequires: pkgconfig(Qt5Gui)
 Requires: mtp-vendor-configuration
 # buteo-mtp can use org.freedesktop.thumbnails.Thumbnailer1 to create
 # thumbnails on request; at least Windows 8 requires thumbnails to be

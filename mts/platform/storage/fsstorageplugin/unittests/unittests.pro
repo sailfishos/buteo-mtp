@@ -16,7 +16,6 @@ LIBS += -ldl
 TEMPLATE = app
 TARGET = storage-test
 QT += dbus xml testlib
-QT -= gui
 DEFINES += UT_ON
 #QMAKE_CXXFLAGS += -ftest-coverage -fprofile-arcs
 #QMAKE_LFLAGS += -fprofile-arcs -ftest-coverage

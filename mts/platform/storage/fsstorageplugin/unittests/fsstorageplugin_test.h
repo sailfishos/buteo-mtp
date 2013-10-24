@@ -93,6 +93,7 @@ private slots:
     void testDeletePlaylists();
     void testCreatePlaylists();
     void testPlaylistsPersistence();
+    void testThumbnailer();
     void cleanupTestCase();
 
 private:
