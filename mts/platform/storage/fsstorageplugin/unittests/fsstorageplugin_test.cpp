@@ -248,8 +248,10 @@ void FSStoragePlugin_test::testDeleteAll()
 {
     MTPResponseCode response = MTP_RESP_GeneralError;
 
+    // The storageitem for the root should survive deletion, hence the
+    // PartialDeletion and the remaining item count of 1
     response = m_storage->deleteItem( 0xFFFFFFFF,  MTP_OBF_FORMAT_Undefined );
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
+    QCOMPARE( response, (MTPResponseCode)MTP_RESP_PartialDeletion );
 
     QCOMPARE( m_storage->m_objectHandlesMap.size(), 1 );
     QCOMPARE( m_storage->m_objectHandlesMap.size(), m_storage->m_pathNamesMap.size() );

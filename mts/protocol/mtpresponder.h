@@ -404,6 +404,11 @@ class MTPResponder : public QObject
         /// Sends a large data packet in segments of max data packet size
         void sendObjectSegmented();
 
+        /// Constructs and sends a standard MTP response container
+        /// It uses the transaction id from m_transactionSequence->reqContainer
+        bool sendResponse(MTPResponseCode code);
+        bool sendResponse(MTPResponseCode code, quint32 param1);
+
         /// Handles extended MTP operations. data and dataLen must be 0 if the operation has no data phase
         bool handleExtendedOperation();
 

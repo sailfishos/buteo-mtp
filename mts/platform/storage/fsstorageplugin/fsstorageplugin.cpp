@@ -935,27 +935,39 @@ MTPResponseCode FSStoragePlugin::addItem( ObjHandle &parentHandle, ObjHandle &ha
 MTPResponseCode FSStoragePlugin::deleteItem( const ObjHandle& handle, const MTPObjFormatCode& formatCode )
 {
     // If handle == 0xFFFFFFFF, that means delete all objects that can be deleted ( this could be filered by fmtCode )
-    quint32 totalNoOfObjects = m_objectHandlesMap.count() - 1;
-    quint32 noOfObjectsByFormat = 0;
+    bool deletedSome = false;
+    bool failedSome = false;
     StorageItem *storageItem = 0;
     MTPResponseCode response = MTP_RESP_GeneralError;
 
     if( 0xFFFFFFFF == handle )
     {
-        for( QHash<ObjHandle,StorageItem*>::const_iterator i = m_objectHandlesMap.constBegin() ; i != m_objectHandlesMap.constEnd(); ++i )
+        // deleteItemHelper modifies m_objectHandlesMap so loop over a copy
+        QHash<ObjHandle,StorageItem*> objectHandles = m_objectHandlesMap;
+        for( QHash<ObjHandle,StorageItem*>::const_iterator i = objectHandles.constBegin() ; i != objectHandles.constEnd(); ++i )
         {
             if( formatCode && MTP_OBF_FORMAT_Undefined != formatCode )
             {
                 storageItem = i.value();
                 if( storageItem->m_objectInfo && storageItem->m_objectInfo->mtpObjectFormat == formatCode )
                 {
-                    ++noOfObjectsByFormat;
                     response = deleteItemHelper( i.key() );
                 }
             }
             else
             {
                 response = deleteItemHelper( i.key() );
+            }
+            if( MTP_RESP_OK == response)
+            {
+                deletedSome = true;
+            }
+            else if (MTP_RESP_InvalidObjectHandle != response)
+            {
+                // "invalid object handle" is not a failure because it
+                // just means this item was deleted as part of a folder
+                // before the loop got to it.
+                failedSome = true;
             }
         }
     }
@@ -964,19 +976,14 @@ MTPResponseCode FSStoragePlugin::deleteItem( const ObjHandle& handle, const MTPO
         response = deleteItemHelper( handle );
     }
 
-    if( MTP_RESP_OK == response && 0xFFFFFFFF == handle )
+    /* MTPv1.1 D.2.11 DeleteObject
+     * "If a value of 0xFFFFFFFF is passed in the first parameter, and
+     * some subset of objects are not deleted (but at least one object is
+     * deleted), a response of Partial_Deletion shall be returned."
+     */
+    if( 0xFFFFFFFF == handle && deletedSome && failedSome)
     {
-        if( formatCode && MTP_OBF_FORMAT_Undefined != formatCode )
-        {
-            if( noOfObjectsByFormat + m_objectHandlesMap.count() - 1 != totalNoOfObjects )
-            {
-                response = MTP_RESP_PartialDeletion;
-            }
-        }
-        else if( m_objectHandlesMap.count() != 1 )
-        {
-            response = MTP_RESP_PartialDeletion;
-        }
+        response = MTP_RESP_PartialDeletion;
     }
 
     return response;
@@ -1000,6 +1007,12 @@ MTPResponseCode FSStoragePlugin::deleteItemHelper( const ObjHandle& handle, bool
     if( !storageItem )
     {
         return MTP_RESP_GeneralError;
+    }
+
+    // Allowing deletion of the root is too dangerous (might be $HOME)
+    if( storageItem == m_root )
+    {
+        return MTP_RESP_ObjectWriteProtected;
     }
 
     // If this is a file or an empty dir, just delete this item.
