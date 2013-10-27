@@ -163,6 +163,8 @@ public:
     /// \size [in] the size in bytes.
     MTPResponseCode truncateItem( const ObjHandle &handle, const quint32 &size );
 
+    void excludePath( const QString & path );
+
 public slots:
     /// This slot gets notified when an inotify event is received, and takes appropriate action.
     void inotifyEventSlot( struct inotify_event* );
@@ -451,6 +453,8 @@ private:
 
     QHash<ObjHandle, StorageItem*> m_objectHandlesMap; ///< each storage has a map of all it's object's handles to corresponding storage item.
     QFile *m_dataFile;
+
+    QStringList m_excludePaths; ///< Paths that should not be indexed
     
 };
 }
