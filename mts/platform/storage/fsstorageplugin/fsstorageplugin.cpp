@@ -58,7 +58,13 @@ static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x0000-\\x
 extern "C" StoragePlugin* createStoragePlugin( const quint32& storageId )
 {
     QString storagePath = QDir::homePath();
-    return new FSStoragePlugin( storageId, MTP_STORAGE_TYPE_FixedRAM, storagePath, "media", "Phone Memory" );
+    FSStoragePlugin *plugin = new FSStoragePlugin( storageId, MTP_STORAGE_TYPE_FixedRAM, storagePath, "media", "Phone Memory" );
+    // These need to be excluded to protect against accessing MTP internal
+    // data over MTP, which can cause loops or crashes etc.
+    plugin->excludePath(".local/mtp");  // contains MTP databases
+    plugin->excludePath(".cache");      // contains msyncd log
+    plugin->excludePath(".thumbnails"); // would trigger thumbnailing of thumbs
+    return plugin;
 }
 
 extern "C" void destroyStoragePlugin( StoragePlugin* storagePlugin )
@@ -616,6 +622,8 @@ void FSStoragePlugin::getLargestPuoid( MtpInt128& puoid )
  ***********************************************************/
 MTPResponseCode FSStoragePlugin::addFileToStorage( StorageItem *&thisStorageItem, bool sendEvent, bool createIfNotExist )
 {
+    if ( m_excludePaths.contains(thisStorageItem->m_path) )
+        return MTP_RESP_AccessDenied;
     // Create the file in the file system.
     QFile file(thisStorageItem->m_path);
     QIODevice::OpenModeFlag openMode = ((createIfNotExist) ? (QIODevice::ReadWrite) : (QIODevice::ReadOnly));
@@ -698,6 +706,9 @@ MTPResponseCode FSStoragePlugin::addFileToStorage( StorageItem *&thisStorageItem
  ***********************************************************/
 MTPResponseCode FSStoragePlugin::addDirToStorage( StorageItem *&thisStorageItem, bool isRootDir, bool sendEvent, bool createIfNotExist )
 {
+    if ( m_excludePaths.contains(thisStorageItem->m_path) )
+        return MTP_RESP_AccessDenied;
+
     // Create the directory in the file system.
     QDir dir = QDir( thisStorageItem->m_path );
     if( !dir.exists() && !isRootDir )
@@ -2985,4 +2996,9 @@ bool FSStoragePlugin::isFileNameValid(const QString &fileName, const StorageItem
         return false;
     }
     return true;
+}
+
+void FSStoragePlugin::excludePath(const QString &path)
+{
+    m_excludePaths << (m_storagePath + "/" + path);
 }
