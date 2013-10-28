@@ -53,7 +53,7 @@ static const QString THUMB_DIR = "/.thumbnails";
 
 
 Thumbnailer::Thumbnailer() :
-    ThumbnailerProxy(THUMBNAILER_SERVICE, THUMBNAILER_GENERIC_PATH, Buteo::SyncDBusConnection::sessionBus()), MAX_REQ_MAP_SIZE(50),
+    ThumbnailerProxy(THUMBNAILER_SERVICE, THUMBNAILER_GENERIC_PATH, Buteo::SyncDBusConnection::sessionBus()), MAX_REQ_MAP_SIZE(2000),
     m_scheduler("foreground"), m_flavor("normal")
 {
     QString thumbBaseDir = QDir::homePath() + THUMB_DIR;
