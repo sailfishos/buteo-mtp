@@ -283,6 +283,12 @@ bool MTPResponder::sendResponse(MTPResponseCode code)
 {
     MTP_FUNC_TRACE();
 
+    if (0 == m_transactionSequence->reqContainer)
+    {
+        MTP_LOG_WARNING("Transaction gone, not sending response");
+        return false;
+    }
+
     quint16 transactionId = m_transactionSequence->reqContainer->transactionId();
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, transactionId);
     bool sent = sendContainer(respContainer);
