@@ -7,7 +7,7 @@ TARGET = fsstorage
 
 CONFIG += plugin debug
 #QMAKE_CXXFLAGS += -O0 -Werror
-QT += dbus
+QT += dbus xml
 QT -= gui
 CONFIG += qtsparql
 
@@ -35,6 +35,7 @@ HEADERS += fsstorageplugin.h \
            storageitem.h
 
 SOURCES += fsstorageplugin.cpp \
+           fsstoragepluginfactory.cpp \
            storagetracker.cpp \
            thumbnailerproxy.cpp \
            thumbnailer.cpp \
@@ -43,7 +44,11 @@ SOURCES += fsstorageplugin.cpp \
 
 #install
 target.path = /usr/lib/mtp
-INSTALLS += target
+
+configuration.path = /etc/buteo
+configuration.files = mtp-fsstorage-conf.xml
+
+INSTALLS += target configuration
 
 #clean
 QMAKE_CLEAN += $(TARGET)

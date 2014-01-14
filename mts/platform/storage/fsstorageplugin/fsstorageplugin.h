@@ -459,21 +459,5 @@ private:
 };
 }
 
-using namespace meegomtp1dot0;
-
-/// The StorageFactory uses this interface to get a number of individual
-/// storages that are made available in the plug-in's configuration. A single
-/// storage plug-in library may offer multiple StoragePlugin instances, e.g.
-/// one for internal memory of a device and another for removable memory card.
-extern "C" quint8 storageCount();
-
-/// The StorageFactory uses this interface to load new storage plug-ins.
-/// The pluginId has to be >= 0 and < value returned by storageCount().
-extern "C" StoragePlugin* createStoragePlugin( const quint8 pluginId,
-                                               const quint32& storageId );
-
-/// The StorageFactory uses this interface to destroy loaded storage plug-ins.
-extern "C" void destroyStoragePlugin( StoragePlugin *storagePlugin );
-
 #endif
 
