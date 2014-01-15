@@ -99,10 +99,9 @@ StorageFactory::StorageFactory() :  m_storageId(0), m_storagePluginsPath( plugin
     }
     else
     {
-        ba = CREATE_STORAGE_PLUGIN.toUtf8();
-        CREATE_STORAGE_PLUGIN_FPTR createStoragePluginFptr =
-        ( CREATE_STORAGE_PLUGIN_FPTR )dlsym( pluginHandle,
-                                             ba.constData() );
+        STORAGE_COUNT_FPTR storageCountFptr =
+                ( STORAGE_COUNT_FPTR )dlsym( pluginHandle,
+                                             STORAGE_COUNT.toUtf8().constData());
         if( dlerror() )
         {
             MTP_LOG_WARNING("Failed to dlsym because " << dlerror());
@@ -110,15 +109,36 @@ StorageFactory::StorageFactory() :  m_storageId(0), m_storagePluginsPath( plugin
         }
         else
         {
-            quint32 storageId = assignStorageId(1,1);
-            StoragePlugin *storagePlugin = (*createStoragePluginFptr)( storageId );
-            // Add this storage to all storages list.
-            m_allStorages[storageId] = storagePlugin;
+            ba = CREATE_STORAGE_PLUGIN.toUtf8();
+            CREATE_STORAGE_PLUGIN_FPTR createStoragePluginFptr =
+            ( CREATE_STORAGE_PLUGIN_FPTR )dlsym( pluginHandle,
+                                                 ba.constData() );
+            if( dlerror() )
+            {
+                MTP_LOG_WARNING("Failed to dlsym because " << dlerror());
+                dlclose( pluginHandle );
+            }
+            else
+            {
+                quint8 pluginCount = (*storageCountFptr)();
+                for( quint8 i = 0; i < pluginCount; ++i )
+                {
+                    quint32 storageId = assignStorageId(i + 1, 1);
+                    StoragePlugin *storagePlugin = (*createStoragePluginFptr)( i, storageId );
+                    if (!storagePlugin) {
+                        MTP_LOG_WARNING("Couldn't create StoragePlugin for id" << i);
+                        continue;
+                    }
 
-            PluginHandlesInfo_ pluginHandlesInfo;
-            pluginHandlesInfo.storagePluginPtr = storagePlugin;
-            pluginHandlesInfo.storagePluginHandle = pluginHandle;
-            m_pluginHandlesInfoVector.append( pluginHandlesInfo );
+                    // Add this storage to all storages list.
+                    m_allStorages[storageId] = storagePlugin;
+
+                    PluginHandlesInfo_ pluginHandlesInfo;
+                    pluginHandlesInfo.storagePluginPtr = storagePlugin;
+                    pluginHandlesInfo.storagePluginHandle = pluginHandle;
+                    m_pluginHandlesInfoVector.append( pluginHandlesInfo );
+                }
+            }
         }
     }
 }
@@ -128,46 +148,26 @@ StorageFactory::StorageFactory() :  m_storageId(0), m_storagePluginsPath( plugin
  ******************************************************/
 StorageFactory::~StorageFactory()
 {
-    //TODO For now handle only the file system storage plug-in. As we have more storages
-    // make this generic.
-#if 0 
-    for( quint32 i = 0; i < m_pluginHandlesInfoVector.count() ; ++i )
+    for( int i = 0; i < m_pluginHandlesInfoVector.count() ; ++i )
     {
-        PluginHandlesInfo_ pluginHandlesInfo;
-        pluginHandlesInfo.storagePluginPtr = m_pluginHandlesInfoVector[i].storagePluginPtr;
-        pluginHandlesInfo.storagePluginHandle = m_pluginHandlesInfoVector[i].storagePluginHandle;
+        PluginHandlesInfo_ &pluginHandlesInfo = m_pluginHandlesInfoVector[i];
        
-        DESTROY_STORAGE_PLUGIN_FPTR destroyStoragePluginFptr = ( DESTROY_STORAGE_PLUGIN_FPTR )dlsym( pluginHandlesInfo.storagePluginHandle,
-                                                                                                     DESTROY_STORAGE_PLUGIN.toStdString().c_str() );
+        DESTROY_STORAGE_PLUGIN_FPTR destroyStoragePluginFptr =
+                ( DESTROY_STORAGE_PLUGIN_FPTR )dlsym( pluginHandlesInfo.storagePluginHandle,
+                                                      DESTROY_STORAGE_PLUGIN.toUtf8().constData() );
         if( dlerror() )
         {
-            dlclose( pluginHandlesInfo.storagePluginHandle );
+            MTP_LOG_WARNING( "Failed to destroy storage because" << dlerror() );
             continue;
         }
 
         (*destroyStoragePluginFptr)( pluginHandlesInfo.storagePluginPtr );
-        dlclose( pluginHandlesInfo.storagePluginHandle );
     }
-#endif
 
-    PluginHandlesInfo_ pluginHandlesInfo;
-    pluginHandlesInfo.storagePluginPtr = m_pluginHandlesInfoVector[0].storagePluginPtr;
-    pluginHandlesInfo.storagePluginHandle = m_pluginHandlesInfoVector[0].storagePluginHandle;
-       
-    QByteArray ba = DESTROY_STORAGE_PLUGIN.toUtf8();
-    DESTROY_STORAGE_PLUGIN_FPTR destroyStoragePluginFptr = ( DESTROY_STORAGE_PLUGIN_FPTR )
-                                                             dlsym( pluginHandlesInfo.storagePluginHandle,
-                                                                    ba.constData() );
-    if( dlerror() )
-    {
-        MTP_LOG_WARNING("Failed to destroy storage because" << dlerror());
-        dlclose( pluginHandlesInfo.storagePluginHandle );
-    }
-    else
-    {
-        (*destroyStoragePluginFptr)( pluginHandlesInfo.storagePluginPtr );
-        dlclose( pluginHandlesInfo.storagePluginHandle );
-    }
+    /* TODO: Make generic. We want to dlclose all plugins and each one only
+     * once. So far it doesn't matter as we have only file system storage
+     * plug-in. */
+    dlclose( m_pluginHandlesInfoVector[0].storagePluginHandle );
 }
 
 /*******************************************************

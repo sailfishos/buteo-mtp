@@ -55,8 +55,18 @@ const quint32 MAX_READ_LEN    =    64 * 1024;
 static quint32 fourcc_wmv3 = 0x574D5633;
 static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x0000-\\x001F]");
 
-extern "C" StoragePlugin* createStoragePlugin( const quint32& storageId )
+extern "C" quint8 storageCount()
 {
+    return 1;
+}
+
+extern "C" StoragePlugin* createStoragePlugin( const quint8 pluginId,
+                                               const quint32& storageId )
+{
+    if (pluginId != 0) {
+        return 0;
+    }
+
     QString storagePath = QDir::homePath();
     FSStoragePlugin *plugin = new FSStoragePlugin( storageId, MTP_STORAGE_TYPE_FixedRAM, storagePath, "media", "Phone Memory" );
     // These need to be excluded to protect against accessing MTP internal
