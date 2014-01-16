@@ -459,13 +459,5 @@ private:
 };
 }
 
-using namespace meegomtp1dot0;
-
-/// The StorageFactory uses this interface to load new storage plug-ins.
-extern "C" StoragePlugin* createStoragePlugin( const quint32& storageId );
-
-/// The StorageFactory uses this interface to destroy loaded storage plug-ins.
-extern "C" void destroyStoragePlugin( StoragePlugin *storagePlugin );
-
 #endif
 

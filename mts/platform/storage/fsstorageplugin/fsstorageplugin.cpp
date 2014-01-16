@@ -55,27 +55,6 @@ const quint32 MAX_READ_LEN    =    64 * 1024;
 static quint32 fourcc_wmv3 = 0x574D5633;
 static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x0000-\\x001F]");
 
-extern "C" StoragePlugin* createStoragePlugin( const quint32& storageId )
-{
-    QString storagePath = QDir::homePath();
-    FSStoragePlugin *plugin = new FSStoragePlugin( storageId, MTP_STORAGE_TYPE_FixedRAM, storagePath, "media", "Phone Memory" );
-    // These need to be excluded to protect against accessing MTP internal
-    // data over MTP, which can cause loops or crashes etc.
-    plugin->excludePath(".local/mtp");  // contains MTP databases
-    plugin->excludePath(".cache");      // contains msyncd log
-    plugin->excludePath(".thumbnails"); // would trigger thumbnailing of thumbs
-    return plugin;
-}
-
-extern "C" void destroyStoragePlugin( StoragePlugin* storagePlugin )
-{
-    if( storagePlugin )
-    {
-        delete storagePlugin;
-        storagePlugin = 0;
-    }
-}
-
 /************************************************************
  * FSStoragePlugin::FSStoragePlugin
  ***********************************************************/
@@ -128,6 +107,9 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
     QObject::connect( m_thumbnailer, SIGNAL( thumbnailReady( const QString& ) ), this, SLOT( receiveThumbnail( const QString& ) ) );
     m_inotify = new FSInotify( IN_MOVE | IN_CREATE | IN_DELETE | IN_CLOSE_WRITE );
     QObject::connect( m_inotify, SIGNAL(inotifyEventSignal( struct inotify_event* )), this, SLOT(inotifyEventSlot( struct inotify_event* )) );
+
+    MTP_LOG_INFO(storagePath << "exported as FS storage" << volumeLabel << '('
+            << storageDescription << ')');
 }
 
 /************************************************************
@@ -3001,4 +2983,6 @@ bool FSStoragePlugin::isFileNameValid(const QString &fileName, const StorageItem
 void FSStoragePlugin::excludePath(const QString &path)
 {
     m_excludePaths << (m_storagePath + "/" + path);
+    MTP_LOG_INFO("Storage" << m_storageInfo.volumeLabel << "excluded"
+            << path << "from being exported via MTP.");
 }
