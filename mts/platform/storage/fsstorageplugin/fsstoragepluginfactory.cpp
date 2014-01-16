@@ -93,7 +93,22 @@ StoragePlugin *FSStoragePluginFactory::createPlugin(quint8 pluginId,
 
     const QDomNodeList &blacklist = storage.elementsByTagName("blacklist");
     for (int i = 0; i != blacklist.size(); ++i) {
-        result->excludePath(blacklist.at(i).toElement().text());
+        QFile blacklistFile(blacklist.at(i).toElement().text());
+        if (!blacklistFile.open(QFile::ReadOnly)) {
+            MTP_LOG_WARNING(blacklistFile.fileName() << "couldn't be opened "
+                    "for reading.");
+            continue;
+        }
+
+        while (!blacklistFile.atEnd()) {
+            QString line = blacklistFile.readLine();
+            if (line.startsWith('#')) {
+                // Comment line.
+                continue;
+            }
+
+            result->excludePath(line.trimmed());
+        }
     }
 
     return result;

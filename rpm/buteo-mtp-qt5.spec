@@ -59,6 +59,7 @@ Provides: mtp-vendor-configuration
 %{_datadir}/mtp/*.xml
 %{_datadir}/mtp/*.ico
 %config %{_sysconfdir}/buteo/mtp-fsstorage-conf.xml
+%config %{_sysconfdir}/buteo/homedir-blacklist.conf
 
 %package devel
 Summary: Development files for %{name}

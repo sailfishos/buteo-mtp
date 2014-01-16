@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mtp-fsstorage-conf>
     <storage name="media" path="/home/nemo" description="Phone Memory">
-        <!--
-            These need to be excluded to protect against accessing MTP internal
-            data over MTP, which can cause loops, crashes, etc.
-        -->
-        <blacklist>.local/mtp</blacklist>
-        <blacklist>.cache</blacklist>
-        <blacklist>.thumbnails</blacklist>
+        <blacklist>/etc/buteo/homedir-blacklist.conf</blacklist>
     </storage>
 </mtp-fsstorage-conf>

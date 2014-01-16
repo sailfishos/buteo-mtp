@@ -46,7 +46,7 @@ SOURCES += fsstorageplugin.cpp \
 target.path = /usr/lib/mtp
 
 configuration.path = /etc/buteo
-configuration.files = mtp-fsstorage-conf.xml
+configuration.files = mtp-fsstorage-conf.xml homedir-blacklist.conf
 
 INSTALLS += target configuration
 
