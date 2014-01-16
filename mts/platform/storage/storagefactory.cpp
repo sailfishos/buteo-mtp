@@ -123,7 +123,7 @@ StorageFactory::StorageFactory() :  m_storageId(0), m_storagePluginsPath( plugin
                 quint8 pluginCount = (*storageCountFptr)();
                 for( quint8 i = 0; i < pluginCount; ++i )
                 {
-                    quint32 storageId = assignStorageId(i + 1, 1);
+                    quint32 storageId = assignStorageId(1, i + 1);
                     StoragePlugin *storagePlugin = (*createStoragePluginFptr)( i, storageId );
                     if (!storagePlugin) {
                         MTP_LOG_WARNING("Couldn't create StoragePlugin for id" << i);
