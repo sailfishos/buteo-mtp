@@ -41,7 +41,6 @@ Obsoletes: buteo-mtp < %{version}
 %{_libdir}/mtp/*.so
 %{_libdir}/mtp/mtp_service
 %{_libdir}/mtp/start-mtp.sh
-%config %{_sysconfdir}/buteo/mtp-fsstorage-conf.xml
 
 %package sample-vendor-configuration
 Summary: Vendor configuration example for MTP
@@ -59,7 +58,7 @@ Provides: mtp-vendor-configuration
 %defattr(-,root,root,-)
 %{_datadir}/mtp/*.xml
 %{_datadir}/mtp/*.ico
-
+%config %{_sysconfdir}/buteo/mtp-fsstorage-conf.xml
 
 %package devel
 Summary: Development files for %{name}
