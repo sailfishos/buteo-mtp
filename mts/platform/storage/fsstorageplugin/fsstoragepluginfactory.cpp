@@ -35,6 +35,8 @@
 #include "trace.h"
 
 #include <QDomDocument>
+#include <QDir>
+#include <sys/stat.h>
 
 using namespace meegomtp1dot0;
 
@@ -81,8 +83,39 @@ StoragePlugin *FSStoragePluginFactory::createPlugin(quint8 pluginId,
         return 0;
     }
 
+    QDir dir(storage.attribute("path"));
+    if (!dir.exists()) {
+        MTP_LOG_WARNING("Storage path" << storage.attribute("path")
+                << "is not a directory");
+        return 0;
+    }
+
     bool removable =
             !storage.attribute("removable").compare("true", Qt::CaseInsensitive);
+
+    if (removable && !dir.isRoot()) {
+        struct stat storageStat;
+        if (stat(dir.absolutePath().toUtf8(), &storageStat) != 0) {
+            MTP_LOG_WARNING("Couldn't stat" << dir.absolutePath());
+            return 0;
+        }
+
+        if (!dir.cdUp()) {
+            MTP_LOG_WARNING("Couldn't get parent directory of " << dir);
+            return 0;
+        }
+
+        struct stat parentStat;
+        if (stat(dir.absolutePath().toUtf8(), &parentStat) != 0) {
+            MTP_LOG_WARNING("Couldn't stat" << dir.absolutePath());
+            return 0;
+        }
+
+        if (storageStat.st_dev == parentStat.st_dev) {
+            MTP_LOG_INFO(dir << "is not mounted");
+            return 0;
+        }
+    }
 
     FSStoragePlugin *result =
             new FSStoragePlugin(storageId,
