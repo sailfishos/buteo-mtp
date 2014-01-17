@@ -38,7 +38,7 @@ static const char *const event_names[] = {
 };
 
 IOThread::IOThread(QObject *parent)
-    : QThread(parent), m_handle(0), m_fd(0), m_shouldExit(false)
+    : QThread(parent), m_fd(0), m_shouldExit(false), m_handle(0)
 {}
 
 void IOThread::setFd(int fd)
@@ -48,6 +48,8 @@ void IOThread::setFd(int fd)
 
 void IOThread::interrupt()
 {
+    QMutexLocker locker(&m_handleLock);
+
     if(m_handle) {
         MTP_LOG_INFO("Sending interrupt signal");
         pthread_kill(m_handle, SIGUSR1);
@@ -90,6 +92,17 @@ bool IOThread::stall(bool dirIn)
     }
 }
 
+void IOThread::run()
+{
+    m_handle = pthread_self();
+
+    execute();
+
+    m_handleLock.lock();
+    m_handle = 0;
+    m_handleLock.unlock();
+}
+
 ControlReaderThread::ControlReaderThread(QObject *parent)
     : IOThread(parent),  m_state(0)
 {
@@ -100,13 +113,12 @@ ControlReaderThread::~ControlReaderThread()
 {
 }
 
-void ControlReaderThread::run()
+void ControlReaderThread::execute()
 {
     char readBuffer[MAX_CONTROL_IN_SIZE];
     struct usb_functionfs_event *event;
     int readSize, count;
 
-    m_handle = pthread_self();
     while(!m_shouldExit) {
         readSize = read(m_fd, readBuffer, MAX_CONTROL_IN_SIZE);
         if (readSize <= 0) {
@@ -120,7 +132,6 @@ void ControlReaderThread::run()
             handleEvent(event + i);
     }
 
-    m_handle = 0;
     MTP_LOG_CRITICAL("ControlReaderThread exited");
 }
 
@@ -219,12 +230,10 @@ BulkReaderThread::~BulkReaderThread()
 {
 }
 
-void BulkReaderThread::run()
+void BulkReaderThread::execute()
 {
     int readSize;
     bool bufferSent = false;
-
-    m_handle = pthread_self();
 
     char* inbuf = new char[MAX_DATA_IN_SIZE];
     // m_wait controls message flow between bulkreader and main thread.
@@ -262,7 +271,6 @@ void BulkReaderThread::run()
     // Avoid a segfault there by leaking the buffer. Not an ideal solution.
     if (!bufferSent)
         delete[] inbuf;
-    m_handle = 0;
 }
 
 // Called by the main thread when it's done with the buffer it got
@@ -303,14 +311,12 @@ void BulkWriterThread::setData(const quint8 *buffer, quint32 dataLen)
     m_result_ready.store(0);
 }
 
-void BulkWriterThread::run()
+void BulkWriterThread::execute()
 {
     // Call setData before starting the thread.
 
     int bytesWritten = 0;
     char *dataptr = (char*)m_buffer;
-
-    m_handle = pthread_self();
 
     while (m_dataLen && !m_shouldExit) {
         bytesWritten = write(m_fd, dataptr, m_dataLen);
@@ -338,7 +344,6 @@ void BulkWriterThread::run()
         m_dataLen -= bytesWritten;
     }
 
-    m_handle = 0;
     m_result = m_dataLen == 0;
     m_result_ready.storeRelease(1);
 }
@@ -387,10 +392,8 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
     m_buffers.append(QPair<quint8*,int>(copy, dataLen));
 }
 
-void InterruptWriterThread::run()
+void InterruptWriterThread::execute()
 {
-    m_handle = pthread_self();
-
     while(!m_shouldExit) {
         m_lock.lock();
 
@@ -428,8 +431,6 @@ void InterruptWriterThread::run()
 
         free(pair.first);
     }
-
-    m_handle = 0;
 }
 
 void InterruptWriterThread::reset()

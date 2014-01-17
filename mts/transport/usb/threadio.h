@@ -24,9 +24,16 @@ public:
     bool stall(bool dirIn);
 
 protected:
-    pthread_t m_handle;
+    void run();
+    // Implement this method in subclass.
+    virtual void execute() = 0;
+
     int m_fd;
     bool m_shouldExit;
+
+private:
+    QMutex m_handleLock;
+    pthread_t m_handle;
 };
 
 class ControlReaderThread : public IOThread {
@@ -35,8 +42,10 @@ public:
     explicit ControlReaderThread(QObject *parent = 0);
     ~ControlReaderThread();
 
-    void run();
     void setStatus(enum mtpfs_status status);
+
+protected:
+    void execute();
 
 private:
     void handleEvent(struct usb_functionfs_event *event);
@@ -62,9 +71,11 @@ public:
     explicit BulkReaderThread(QObject *parent = 0);
     ~BulkReaderThread();
 
-    void run();
     void releaseBuffer(); // receiver of dataRead is done processing data
     virtual void interrupt();
+
+protected:
+    virtual void execute();
 
 private:
     QMutex m_lock; // used with m_wait
@@ -79,9 +90,11 @@ public:
     explicit BulkWriterThread(QObject *parent = 0);
 
     void setData(const quint8 *buffer, quint32 dataLen);
-    void run();
     bool resultReady();
     bool getResult();
+
+protected:
+    virtual void execute();
 
 private:
     const quint8 *m_buffer;
@@ -97,9 +110,11 @@ public:
     ~InterruptWriterThread();
 
     void addData(const quint8 *buffer, quint32 dataLen);
-    void run();
     void reset();
     virtual void interrupt();
+
+protected:
+    virtual void execute();
 
 private:
     QMutex m_lock; // protects m_buffers and used with m_wait
