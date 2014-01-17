@@ -60,6 +60,26 @@ MTPResponder* MTPResponder::instance()
     MTP_FUNC_TRACE();
     if(0 == m_instance)
     {
+        /* Do all the metatype registration here to ensure we have all the
+         * needed symbols defined in libmtp-server.so rather than in some
+         * storage plugin that doesn't have to be loaded all the time. */
+        qRegisterMetaType<char>();
+        qRegisterMetaType<MtpInt128>();
+        qRegisterMetaType<MTPEventCode>();
+        qRegisterMetaType<MtpEnumForm>();
+        qRegisterMetaType<MtpRangeForm>();
+
+        qRegisterMetaType<QVector<char> >();
+        qRegisterMetaType<QVector<qint8> >();
+        qRegisterMetaType<QVector<qint16> >();
+        qRegisterMetaType<QVector<qint32> >();
+        qRegisterMetaType<QVector<qint64> >();
+        qRegisterMetaType<QVector<quint8> >();
+        qRegisterMetaType<QVector<quint16> >();
+        qRegisterMetaType<QVector<quint32> >();
+        qRegisterMetaType<QVector<quint64> >();
+        qRegisterMetaType<QVector<MtpInt128> >();
+
         m_instance = new MTPResponder();
     }
     return m_instance;
