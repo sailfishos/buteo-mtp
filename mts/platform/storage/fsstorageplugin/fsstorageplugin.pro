@@ -45,8 +45,8 @@ SOURCES += fsstorageplugin.cpp \
 #install
 target.path = /usr/lib/mtp
 
-configuration.path = /etc/buteo
-configuration.files = mtp-fsstorage-conf.xml homedir-blacklist.conf
+configuration.path = /etc/fsstorage.d
+configuration.files = phone-memory.xml homedir-blacklist.conf
 
 INSTALLS += target configuration
 

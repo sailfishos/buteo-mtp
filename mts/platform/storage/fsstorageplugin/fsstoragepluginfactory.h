@@ -32,9 +32,7 @@
 #ifndef FSSTORAGEPLUGINFACTORY_H
 #define FSSTORAGEPLUGINFACTORY_H
 
-#include <QScopedPointer>
-
-class QDomDocument;
+#include <QString>
 
 namespace meegomtp1dot0 {
 
@@ -42,34 +40,32 @@ class StoragePlugin;
 
 class FSStoragePluginFactory {
 public:
-    int pluginCount() const;
-    StoragePlugin *createPlugin(quint8 pluginId, quint32 storageId);
+    static QList<QString> configFiles();
+    static StoragePlugin *create(QString configFileName, quint32 storageId);
 
-    ~FSStoragePluginFactory();
-
-    static FSStoragePluginFactory& instance();
 private:
     FSStoragePluginFactory();
     Q_DISABLE_COPY(FSStoragePluginFactory);
 
-    QScopedPointer<QDomDocument> configuration;
-    static const char *CONFIG_FILE_PATH;
+    static const char *CONFIG_DIR;
 };
 
 } // namespace meegomtp1dot0
 
 extern "C" {
 
-/// The StorageFactory uses this interface to get a number of individual
-/// storages that are made available in the plug-in's configuration. A single
-/// storage plug-in library may offer multiple StoragePlugin instances, e.g.
-/// one for internal memory of a device and another for removable memory card.
-quint8 storageCount();
+/// A single storage plug-in library may offer multiple StoragePlugin instances,
+/// e.g. one for internal memory of a device and another for removable memory
+/// card. Each storage has its configuration stored in a separate XML file.
+///
+/// This function allows the StorageFactory to obtain a list of configuration
+/// files available for the storage plug-in.
+QList<QString> storageConfigurations();
 
-/// The StorageFactory uses this interface to load new storage plug-ins.
-/// The pluginId has to be >= 0 and < value returned by storageCount().
-meegomtp1dot0::StoragePlugin* createStoragePlugin(const quint8 pluginId,
-                                                  const quint32& storageId);
+/// The StorageFactory uses this interface to create a new storage plug-in
+/// instance based on a configuration in given file.
+meegomtp1dot0::StoragePlugin* createStoragePlugin(QString configFileName,
+                                                  quint32 storageId);
 
 /// The StorageFactory uses this interface to destroy loaded storage plug-ins.
 void destroyStoragePlugin(meegomtp1dot0::StoragePlugin *storagePlugin);

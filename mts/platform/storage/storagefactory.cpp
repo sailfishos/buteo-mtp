@@ -99,9 +99,9 @@ StorageFactory::StorageFactory() :  m_storageId(0), m_storagePluginsPath( plugin
     }
     else
     {
-        STORAGE_COUNT_FPTR storageCountFptr =
-                ( STORAGE_COUNT_FPTR )dlsym( pluginHandle,
-                                             STORAGE_COUNT.toUtf8().constData());
+        STORAGE_CONFIGURATIONS_FPTR storageConfigurationsFptr =
+                ( STORAGE_CONFIGURATIONS_FPTR )dlsym( pluginHandle,
+                        STORAGE_CONFIGURATIONS.toUtf8().constData() );
         if( dlerror() )
         {
             MTP_LOG_WARNING("Failed to dlsym because " << dlerror());
@@ -120,11 +120,12 @@ StorageFactory::StorageFactory() :  m_storageId(0), m_storagePluginsPath( plugin
             }
             else
             {
-                quint8 pluginCount = (*storageCountFptr)();
-                for( quint8 i = 0; i < pluginCount; ++i )
+                QList<QString> configFiles = (*storageConfigurationsFptr)();
+                for( quint8 i = 0; i < configFiles.count(); ++i )
                 {
                     quint32 storageId = assignStorageId(1, i + 1);
-                    StoragePlugin *storagePlugin = (*createStoragePluginFptr)( i, storageId );
+                    StoragePlugin *storagePlugin =
+                            (*createStoragePluginFptr)( configFiles[i], storageId );
                     if (!storagePlugin) {
                         MTP_LOG_WARNING("Couldn't create StoragePlugin for id" << i);
                         continue;

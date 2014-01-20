@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<mtp-fsstorage-conf>
-    <storage name="media" path="/home/nemo" description="Phone Memory">
-        <blacklist>/etc/buteo/homedir-blacklist.conf</blacklist>
-    </storage>
-</mtp-fsstorage-conf>

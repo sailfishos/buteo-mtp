@@ -34,51 +34,58 @@
 #include "fsstorageplugin.h"
 #include "trace.h"
 
+#include <QDirIterator>
 #include <QDomDocument>
-#include <QDir>
 #include <sys/stat.h>
 
 using namespace meegomtp1dot0;
 
-const char *FSStoragePluginFactory::CONFIG_FILE_PATH =
-        "/etc/buteo/mtp-fsstorage-conf.xml";
+const char *FSStoragePluginFactory::CONFIG_DIR = "/etc/fsstorage.d";
 
-FSStoragePluginFactory::FSStoragePluginFactory():
-  configuration(new QDomDocument()) {
-    QFile configFile(CONFIG_FILE_PATH);
+QList<QString> FSStoragePluginFactory::configFiles() {
+    QList<QString> result;
+
+    QDirIterator it(CONFIG_DIR, QDir::Files);
+    while (it.hasNext()) {
+        QString fileName(it.next());
+        if (fileName.endsWith(".xml", Qt::CaseInsensitive)) {
+            result.append(fileName);
+        }
+    }
+
+    MTP_LOG_INFO("Found" << result.size() << "FSStoragePlugin configurations.");
+
+    return result;
+}
+
+StoragePlugin *FSStoragePluginFactory::create(QString configFileName,
+                                              quint32 storageId) {
+
+    QFile configFile(configFileName);
     if (!configFile.exists()) {
-        MTP_LOG_CRITICAL(CONFIG_FILE_PATH << "doesn't exist.");
-        return;
+        MTP_LOG_CRITICAL(configFileName << "doesn't exist.");
+        return 0;
     }
 
     if (!configFile.open(QFile::ReadOnly)) {
-        MTP_LOG_CRITICAL(CONFIG_FILE_PATH << "couldn't be opened for reading.");
-        return;
+        MTP_LOG_CRITICAL(configFileName << "couldn't be opened for reading.");
+        return 0;
     }
 
-    configuration->setContent(&configFile);
+    QDomDocument configuration;
+    configuration.setContent(&configFile);
 
-    MTP_LOG_INFO("Loaded FSStoragePlugin configuration with" << pluginCount()
-            << "storages");
-}
+    QDomElement storage = configuration.documentElement();
 
-int FSStoragePluginFactory::pluginCount() const {
-    return configuration->documentElement().elementsByTagName("storage").count();
-}
-
-StoragePlugin *FSStoragePluginFactory::createPlugin(quint8 pluginId,
-                                                    quint32 storageId) {
-
-    const QDomElement &storage =
-            configuration->documentElement().elementsByTagName("storage").at(pluginId).toElement();
-    if (storage.isNull()) {
+    if (storage.tagName() != "storage") {
+        MTP_LOG_CRITICAL(configFileName << "is not a storage configuration.");
         return 0;
     }
 
     if (!storage.hasAttribute("path") ||
         !storage.hasAttribute("name") ||
         !storage.hasAttribute("description")) {
-        MTP_LOG_WARNING("Storage" << pluginId << "is missing some of "
+        MTP_LOG_WARNING("Storage" << configFileName << "is missing some of "
                 "mandatory attributes 'name', 'path', and 'description'");
         return 0;
     }
@@ -127,7 +134,13 @@ StoragePlugin *FSStoragePluginFactory::createPlugin(quint8 pluginId,
 
     const QDomNodeList &blacklist = storage.elementsByTagName("blacklist");
     for (int i = 0; i != blacklist.size(); ++i) {
-        QFile blacklistFile(blacklist.at(i).toElement().text());
+        QString blacklistFileName(blacklist.at(i).toElement().text().trimmed());
+        // Allow blacklist file paths relative to CONFIG_DIR.
+        if (!blacklistFileName.startsWith('/')) {
+            blacklistFileName.prepend('/').prepend(CONFIG_DIR);
+        }
+
+        QFile blacklistFile(blacklistFileName);
         if (!blacklistFile.open(QFile::ReadOnly)) {
             MTP_LOG_WARNING(blacklistFile.fileName() << "couldn't be opened "
                     "for reading.");
@@ -148,24 +161,13 @@ StoragePlugin *FSStoragePluginFactory::createPlugin(quint8 pluginId,
     return result;
 }
 
-FSStoragePluginFactory::~FSStoragePluginFactory() {}
-
-FSStoragePluginFactory& FSStoragePluginFactory::instance() {
-    static QScopedPointer<FSStoragePluginFactory> instance;
-    if (!instance) {
-        instance.reset(new FSStoragePluginFactory());
-    }
-
-    return *instance;
+extern "C" QList<QString> storageConfigurations() {
+    return FSStoragePluginFactory::configFiles();
 }
 
-extern "C" quint8 storageCount() {
-    return FSStoragePluginFactory::instance().pluginCount();
-}
-
-extern "C" StoragePlugin* createStoragePlugin(const quint8 pluginId,
-                                              const quint32& storageId) {
-    return FSStoragePluginFactory::instance().createPlugin(pluginId, storageId);
+extern "C" StoragePlugin* createStoragePlugin(QString configFileName,
+                                              quint32 storageId) {
+    return FSStoragePluginFactory::create(configFileName, storageId);
 }
 
 extern "C" void destroyStoragePlugin(StoragePlugin* storagePlugin) {
