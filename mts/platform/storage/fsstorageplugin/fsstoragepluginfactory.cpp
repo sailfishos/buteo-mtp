@@ -84,16 +84,17 @@ StoragePlugin *FSStoragePluginFactory::createPlugin(quint8 pluginId,
     }
 
     QDir dir(storage.attribute("path"));
-    if (!dir.exists()) {
-        MTP_LOG_WARNING("Storage path" << storage.attribute("path")
-                << "is not a directory");
-        return 0;
-    }
 
     bool removable =
             !storage.attribute("removable").compare("true", Qt::CaseInsensitive);
 
     if (removable && !dir.isRoot()) {
+        if (!dir.exists()) {
+            MTP_LOG_WARNING("Storage path" << storage.attribute("path")
+                    << "is not a directory");
+            return 0;
+        }
+
         struct stat storageStat;
         if (stat(dir.absolutePath().toUtf8(), &storageStat) != 0) {
             MTP_LOG_WARNING("Couldn't stat" << dir.absolutePath());
