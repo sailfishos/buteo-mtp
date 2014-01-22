@@ -1185,9 +1185,52 @@ void MTPResponder::getObjectReq()
 void MTPResponder::getThumbReq()
 {
     MTP_FUNC_TRACE();
+    bool sent = false;
+    MTPResponseCode code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
-    // FIXME: Implement this!
-    sendResponse(MTP_RESP_OperationNotSupported);
+
+    code = preCheck(m_transactionSequence->mtpSessionId,
+            reqContainer->transactionId());
+    if( MTP_RESP_OK == code )
+    {
+        QVector<quint32> params;
+        reqContainer->params( params );
+
+        const MtpObjPropDesc *propDesc = 0;
+        m_propertyPod->getObjectPropDesc( MTP_IMAGE_FORMAT,
+                MTP_OBJ_PROP_Rep_Sample_Data, propDesc );
+
+        QList<MTPObjPropDescVal> propValList;
+        propValList.append( MTPObjPropDescVal ( propDesc ) );
+
+        code = m_storageServer->getObjectPropertyValue( params[0], propValList );
+        if( MTP_RESP_OK == code )
+        {
+            QVector<quint8> thumbnailData =
+                    propValList[0].propVal.value<QVector<quint8> >();
+
+            int payloadLength = thumbnailData.size();
+
+            MTPTxContainer dataContainer( MTP_CONTAINER_TYPE_DATA,
+                    reqContainer->code(), reqContainer->transactionId(),
+                    payloadLength );
+
+            memcpy( dataContainer.payload(), thumbnailData.constData(),
+                    payloadLength );
+
+            dataContainer.seek( payloadLength );
+            sent = sendContainer( dataContainer );
+            if( false == sent )
+            {
+                MTP_LOG_CRITICAL("Could not send thumbnail data");
+            }
+        }
+    }
+
+    if( true == sent )
+    {
+        sendResponse(code);
+    }
 }
 
 void MTPResponder::deleteObjectReq()
