@@ -299,10 +299,10 @@ MTPResponseCode StorageFactory::getObjectHandles( const quint32& storageId, cons
     // Get the total count across all storages.
     if( 0xFFFFFFFF == storageId )
     {
-        QVector<ObjHandle> handles;
         QHash<quint32,StoragePlugin*>::const_iterator itr = m_allStorages.constBegin();
         for( ; itr != m_allStorages.constEnd(); ++itr )
         {
+            QVector<ObjHandle> handles;
             response = itr.value()->getObjectHandles( formatCode, associationHandle, handles );
             if( MTP_RESP_OK != response )
             {
