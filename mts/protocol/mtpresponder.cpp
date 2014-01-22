@@ -1120,7 +1120,9 @@ void MTPResponder::getObjectReq()
         if( MTP_OP_GetPartialObject == reqContainer->code() )
         {
             startingOffset = params[1];
+            // clamp payloadLength to remaining length of file
             payloadLength = startingOffset > payloadLength ? 0 : payloadLength - startingOffset;
+            // clamp payloadLength to maximum length in request
             payloadLength = payloadLength > params[2] ? params[2] : payloadLength;
         }
     }
@@ -1133,7 +1135,7 @@ void MTPResponder::getObjectReq()
         {
             // segmentation needed
             // set the segmentation info
-            m_segmentedSender.totalDataLen = payloadLength;
+            m_segmentedSender.totalDataLen = startingOffset + payloadLength;
             m_segmentedSender.payloadLen = BUFFER_MAX_LEN - MTP_HEADER_SIZE;
             m_segmentedSender.objHandle = params[0];
             m_segmentedSender.offset = startingOffset;
