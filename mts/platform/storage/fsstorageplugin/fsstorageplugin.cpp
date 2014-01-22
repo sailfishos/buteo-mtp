@@ -1693,10 +1693,19 @@ quint32 FSStoragePlugin::getThumbPixelHeight( StorageItem *storageItem )
 /************************************************************
  * quint32 FSStoragePlugin::getThumbCompressedSize
  ***********************************************************/
-quint32 FSStoragePlugin::getThumbCompressedSize( StorageItem * /*storageItem*/ )
+quint32 FSStoragePlugin::getThumbCompressedSize( StorageItem *storageItem )
 {
-    // TODO Fetch from tracker or determine from the file.
-    return 0;
+    quint32 size = 0;
+    if ( isImage( storageItem ) )
+    {
+        QString thumbPath = m_thumbnailer->requestThumbnail( storageItem->m_path,
+                m_imageMimeTable.value( storageItem->m_objectInfo->mtpObjectFormat ) );
+        if( !thumbPath.isEmpty() )
+        {
+            size = QFileInfo( thumbPath ).size();
+        }
+    }
+    return size;
 }
 
 /************************************************************
@@ -2692,8 +2701,14 @@ void FSStoragePlugin::receiveThumbnail(const QString &path)
     ObjHandle handle = m_pathNamesMap.value(path);
     if(0 != handle)
     {
+        StorageItem *storageItem = m_objectHandlesMap[handle];
+        storageItem->m_objectInfo->mtpThumbCompressedSize =
+                getThumbCompressedSize( storageItem );
+
         QVector<quint32> params;
         params.append(handle);
+        emit eventGenerated(MTP_EV_ObjectInfoChanged, params, QString());
+
         params.append(MTP_OBJ_PROP_Rep_Sample_Data);
         emit eventGenerated(MTP_EV_ObjectPropChanged, params, QString());
     }
