@@ -1228,8 +1228,6 @@ MTPResponseCode FSStoragePlugin::storageInfo( MTPStorageInfo &info )
  ***********************************************************/
 MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, ObjHandle &copiedObjectHandle, quint32 recursionCounter /*= 0*/)
 {
-    bool txCancelled = false;
-
     if( !checkHandle( handle ) )
     {
         return MTP_RESP_InvalidObjectHandle;
@@ -1326,6 +1324,7 @@ MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle, const ObjH
         quint32 readOffset = 0, remainingLen = sourceObjSize;
         qint32 readLen = MAX_READ_LEN;
         char readBuffer[MAX_READ_LEN];
+        bool txCancelled = false;
 
         while( remainingLen && response == MTP_RESP_OK )
         {
