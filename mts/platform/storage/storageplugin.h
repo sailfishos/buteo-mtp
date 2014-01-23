@@ -52,10 +52,14 @@ class StoragePlugin : public QObject
 
 public:
     /// Constructor.
-    StoragePlugin(){}
+    StoragePlugin(quint32 storageId): m_storageId(storageId) {}
 
     /// Destructor.
     virtual ~StoragePlugin(){}
+
+    quint32 storageId() const {
+        return m_storageId;
+    }
 
     /// Enumerate the storage.
     /// \return true or false depending on whether storage succeeded or failed.
@@ -189,6 +193,8 @@ public Q_SLOTS:
     virtual void getLargestPuoid( MtpInt128& puoid ) = 0;
 
 protected:
+    /// Storage id assigned to this storage by the storage factory.
+    quint32 m_storageId;
     MTPStorageInfo m_storageInfo;
     QString m_storagePath;
     QHash<ObjHandle, QVector<ObjHandle> > m_objectReferencesMap; ///< this map maintains references (if any) for each object.

@@ -413,7 +413,6 @@ private:
     MTPResponseCode deleteItemHelper( const ObjHandle& handle, bool removePhysically = true, bool sendEvent = false );
     bool isFileNameValid(const QString &fileName, const StorageItem *parent);
 
-    quint32 m_storageId; ///< storage id assigned to this storage by the storage factory.
     QHash<int,ObjHandle> m_watchDescriptorMap; ///< map from an inotify watch on an object to it's object handle.
     QHash<QString,ObjHandle> m_pathNamesMap;
     QHash<QString,MtpInt128> m_puoidsMap;
