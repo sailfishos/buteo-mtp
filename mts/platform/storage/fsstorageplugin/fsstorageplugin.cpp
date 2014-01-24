@@ -1729,10 +1729,17 @@ quint32 FSStoragePlugin::getImagePixelHeight( StorageItem * /*storageItem*/ )
 /************************************************************
  * quint16 FSStoragePlugin::getAssociationType
  ***********************************************************/
-quint16 FSStoragePlugin::getAssociationType( StorageItem * /*storageItem*/ )
+quint16 FSStoragePlugin::getAssociationType( StorageItem *storageItem )
 {
-    // TODO Fetch from tracker or determine from the file.
-    return 0;
+    QFileInfo item(storageItem->m_path);
+    if( item.isDir() )
+    {
+        // GenFolder is the only type used in MTP.
+        // The others may be used for PTP compatibility but are not required.
+        return MTP_ASSOCIATION_TYPE_GenFolder;
+    }
+    else
+        return 0;
 }
 
 /************************************************************
@@ -1740,7 +1747,8 @@ quint16 FSStoragePlugin::getAssociationType( StorageItem * /*storageItem*/ )
  ***********************************************************/
 quint32 FSStoragePlugin::getAssociationDescription( StorageItem * /*storageItem*/ )
 {
-    // TODO Fetch from tracker or determine from the file.
+    // 0 means it is not a bi-directionally linked folder.
+    // See section 3.6.2.1 of the MTP spec.
     return 0;
 }
 
