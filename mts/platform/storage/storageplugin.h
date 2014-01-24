@@ -116,7 +116,7 @@ public:
     /// \param handle [in] object to be copied.
     /// \param parentHandle [in] parent in destination location.
     /// \param storageId [in] destination storage.
-    virtual MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, ObjHandle &copiedObjectHandle, quint32 recursionDepth = 0) = 0;
+    virtual MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage, ObjHandle &copiedObjectHandle, quint32 recursionDepth = 0) = 0;
 
     /// Moves an object within or across storages.
     /// \param handle [in] object to be moved.

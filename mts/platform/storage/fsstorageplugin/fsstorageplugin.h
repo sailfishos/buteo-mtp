@@ -123,7 +123,7 @@ public:
     /// \param destinationStorageId [in] destination storage.
     /// \param copiedObjectHandle [out] The handle to the copied object is returned in this
     /// \param recursionCounter [in] The recursion depth
-    MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, ObjHandle &copiedObjectHandle , quint32 recursionCounter = 0);
+    MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage, ObjHandle &copiedObjectHandle , quint32 recursionCounter = 0);
 
     /// Moves an object within or across storages.
     /// \param handle [in] object to be moved.
