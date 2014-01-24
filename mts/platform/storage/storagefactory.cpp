@@ -447,12 +447,18 @@ MTPResponseCode StorageFactory::copyObject( const ObjHandle &handle, const ObjHa
  ******************************************************/
 MTPResponseCode StorageFactory::moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId ) const
 {
+    if( !m_allStorages.contains( destinationStorageId ) )
+    {
+        return MTP_RESP_InvalidStorageID;
+    }
+
     QHash<quint32,StoragePlugin*>::const_iterator itr = m_allStorages.constBegin();
     for( ; itr != m_allStorages.constEnd(); ++itr )
     {
         if( itr.value()->checkHandle( handle ) )
         {
-            return itr.value()->moveObject( handle, parentHandle, destinationStorageId );
+            return itr.value()->moveObject( handle, parentHandle,
+                    m_allStorages[destinationStorageId] );
         }
     }
     return MTP_RESP_InvalidObjectHandle;

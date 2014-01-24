@@ -1380,10 +1380,12 @@ void FSStoragePlugin::adjustMovedItemsPath( QString newAncestorPath, StorageItem
 /************************************************************
  * MTPResponseCode FSStoragePlugin::moveObject
  ***********************************************************/
-MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, bool movePhysically )
+MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle,
+        const ObjHandle &parentHandle, StoragePlugin *destinationStorage,
+        bool movePhysically )
 {
     // TODO Handle moves across storages;
-    if( m_storageId != destinationStorageId )
+    if( destinationStorage != this )
     {
         return MTP_RESP_GeneralError;
     }
@@ -2824,7 +2826,7 @@ void FSStoragePlugin::handleFSMove(const struct inotify_event *fromEvent, const 
                 }
                 else
                 {
-                    moveObject( movedHandle, toHandle, m_storageId, false );
+                    moveObject( movedHandle, toHandle, this, false );
                 }
 
                 // object info would need to be computed again

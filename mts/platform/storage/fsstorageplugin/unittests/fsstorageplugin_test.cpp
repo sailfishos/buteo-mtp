@@ -973,7 +973,8 @@ void FSStoragePlugin_test::testFileMove()
 {
     MTPResponseCode response;
 
-    response = m_storage->moveObject( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/fileA"], m_storage->m_pathNamesMap["/tmp/mtptests"], 1 );
+    response = m_storage->moveObject( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/fileA"],
+            m_storage->m_pathNamesMap["/tmp/mtptests"], m_storage );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
 
@@ -981,7 +982,8 @@ void FSStoragePlugin_test::testDirMove()
 {
     MTPResponseCode response;
 
-    response = m_storage->moveObject( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/D1"], m_storage->m_pathNamesMap["/tmp/mtptests/D1"], 1 );
+    response = m_storage->moveObject( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/D1"],
+            m_storage->m_pathNamesMap["/tmp/mtptests/D1"], m_storage );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
 

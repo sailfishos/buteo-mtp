@@ -129,8 +129,8 @@ public:
     /// Moves an object within or across storages.
     /// \param handle [in] object to be moved.
     /// \param parentHandle [in] parent in destination location.
-    /// \param storageId [in] destination storage.
-    MTPResponseCode moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, bool movePhysically = true );
+    /// \param destinationStorage [in] destination storage.
+    MTPResponseCode moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage, bool movePhysically = true );
 
     /// Given an object handle, provides it's absolute path in its storage.
     /// \param handle [in] object handle.
