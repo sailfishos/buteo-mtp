@@ -1251,14 +1251,15 @@ MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle,
     // Get the source object's objectinfo dataset.
     MTPObjectInfo objectInfo  = *m_objectHandlesMap[handle]->m_objectInfo;
 
-    // FIXME freeSpace not accurate, Check if the object fits.
-    /*quint64 freeSpaceRemaining = 0;
-    MTPResponseCode resp;
-    resp = freeSpace( freeSpaceRemaining );
-    if( freeSpaceRemaining < objectInfo.mtpObjectCompressedSize )
+    MTPStorageInfo storageInfo;
+    if( destinationStorage->storageInfo(storageInfo) != MTP_RESP_OK )
+    {
+        return MTP_RESP_GeneralError;
+    }
+    if( storageInfo.freeSpace < objectInfo.mtpObjectCompressedSize )
     {
         return MTP_RESP_StoreFull;
-    }*/
+    }
 
     QString destinationPath;
     if ( destinationStorage->getPath(parentHandle, destinationPath) != MTP_RESP_OK )
