@@ -82,6 +82,22 @@ public:
     /// \return MTP response.
     virtual MTPResponseCode deleteItem( const ObjHandle& handle, const MTPObjFormatCode& formatCode ) = 0;
 
+    /// Recursively copies objects from another storage.
+    ///
+    /// The duplicated object hierarchy will retain its original object handles.
+    /// It is a responsibility of the method's caller to ensure the handles are
+    /// kept unique from the initiator's point of view, and thus disowned from
+    /// their previous storage.
+    ///
+    /// \param sourceStorage [in] a source StoragePlugin.
+    /// \param source [in] handle of the object to duplicate into this storage.
+    /// \param parent [in] handle of an existing association in this storage
+    ///               that will become parent of the copied object hierarchy.
+    ///
+    /// \return MTP response.
+    virtual MTPResponseCode copyHandle( StoragePlugin *sourceStorage,
+            ObjHandle source, ObjHandle parent ) = 0;
+
     /// Fills a collection with handles of child object of a given association
     /// (folder).
     ///

@@ -878,6 +878,68 @@ MTPResponseCode FSStoragePlugin::addItem( ObjHandle &parentHandle, ObjHandle &ha
     return response;
 }
 
+MTPResponseCode FSStoragePlugin::copyHandle( StoragePlugin *sourceStorage,
+        ObjHandle source, ObjHandle parent )
+{
+    if( m_objectHandlesMap.contains( source ) )
+    {
+        return MTP_RESP_Invalid_Dataset;
+    }
+
+    // Initiator has left it to us to choose the parent; choose root folder.
+    if( parent == 0xFFFFFFFF )
+    {
+        parent = 0;
+    }
+
+    if( !checkHandle( parent ) )
+    {
+        return MTP_RESP_InvalidParentObject;
+    }
+
+    const MTPObjectInfo *info;
+    MTPResponseCode result = sourceStorage->getObjectInfo( source, info );
+    if( result != MTP_RESP_OK )
+    {
+        return result;
+    }
+
+    MTPObjectInfo newInfo( *info );
+    newInfo.mtpParentObject = parent;
+
+    QString path = m_objectHandlesMap[newInfo.mtpParentObject]->m_path + "/"
+            + newInfo.mtpFileName;
+
+    result = addToStorage( path, 0, &newInfo, false, true, source );
+    if( result != MTP_RESP_OK )
+    {
+        return result;
+    }
+
+    if ( newInfo.mtpObjectFormat == MTP_OBF_FORMAT_Association )
+    {
+        // Directory, copy recursively.
+        QVector<ObjHandle> childHandles;
+        sourceStorage->getObjectHandles( 0, source, childHandles );
+        foreach( ObjHandle handle, childHandles )
+        {
+            result = copyHandle( sourceStorage, handle, source );
+            if( result != MTP_RESP_OK )
+            {
+                return result;
+            }
+        }
+
+        return MTP_RESP_OK;
+    }
+    else
+    {
+        // Source and destination handles are the same, though each
+        // in a different storage.
+        return copyData( sourceStorage, source, this, source );
+    }
+}
+
 /************************************************************
  * MTPResponseCode FSStoragePlugin::deleteItem
  ***********************************************************/
@@ -1356,16 +1418,23 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle,
         const ObjHandle &parentHandle, StoragePlugin *destinationStorage,
         bool movePhysically )
 {
-    // TODO Handle moves across storages;
-    if( destinationStorage != this )
-    {
-        return MTP_RESP_GeneralError;
-    }
-
     if( !checkHandle( handle ) )
     {
         return MTP_RESP_InvalidObjectHandle;
     }
+
+    if( destinationStorage != this )
+    {
+        MTPResponseCode response =
+                destinationStorage->copyHandle( this, handle, parentHandle );
+        if ( response != MTP_RESP_OK )
+        {
+            return response;
+        }
+
+        return deleteItem( handle, MTP_OBF_FORMAT_Undefined );
+    }
+
     if( !checkHandle( parentHandle ) )
     {
         return MTP_RESP_InvalidParentObject;

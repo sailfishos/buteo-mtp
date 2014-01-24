@@ -74,6 +74,9 @@ public:
 
     MTPResponseCode deleteItem( const ObjHandle& handle, const MTPObjFormatCode& formatCode );
 
+    MTPResponseCode copyHandle( StoragePlugin *sourceStorage, ObjHandle source,
+            ObjHandle parent );
+
     MTPResponseCode getObjectHandles( const MTPObjFormatCode& formatCode, const quint32& associationHandle, QVector<ObjHandle> &objectHandles ) const;
 
     bool checkHandle( const ObjHandle &handle ) const;
