@@ -1660,6 +1660,8 @@ void StorageTracker::copy(const QString &fromPath, const QString &toPath)
     }
     QString urn = resultSet[0][0];
 
+    resultSet.clear();
+
     // Now get all available properties for the from URN
     query = QString("SELECT ?p ?v WHERE{<") + urn + QString("> ?p ?v}");
     trackerQuery(query, resultSet);
