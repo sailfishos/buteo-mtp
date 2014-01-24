@@ -32,6 +32,7 @@
 #include <QtCore/QVector>
 #include <QtCore/QString>
 #include <QtCore/QCoreApplication>
+#include <QtAlgorithms>
 #include <qglobal.h>
 
 #include "mtpresponder.h"
@@ -1035,6 +1036,10 @@ void MTPResponder::getObjectHandlesReq()
     bool sent = true;
     if( MTP_RESP_OK == code )
     {
+        // At least one PTP client (iPhoto) only shows all pictures if
+        // the handles are sorted. It's probably related to having parent
+        // folders listed before the objects they contain.
+        qSort(handles);
         // DATA PHASE
         payloadLength = ( handles.size() + 1 ) * sizeof(quint32);
         MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
