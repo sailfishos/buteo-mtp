@@ -628,23 +628,8 @@ MTPResponseCode FSStoragePlugin::addFileToStorage( StorageItem *&thisStorageItem
 
     // Assign a handle for this item.
     thisStorageItem->m_handle = requestNewObjectHandle();
-    // Add the item to the path names map.
-    m_pathNamesMap[ thisStorageItem->m_path ] = thisStorageItem->m_handle;
-    // Add the item to the object handle map.
-    m_objectHandlesMap[ thisStorageItem->m_handle ] = thisStorageItem;
 
-    if( !m_puoidsMap.contains( thisStorageItem->m_path ) )
-    {
-        // Assign a new puoid
-        requestNewPuoid( thisStorageItem->m_puoid );
-        // Add the puoid to the map.
-        m_puoidsMap[thisStorageItem->m_path] = thisStorageItem->m_puoid;
-    }
-    else
-    {
-        // Use the persistent puoid.
-        thisStorageItem->m_puoid = m_puoidsMap[thisStorageItem->m_path];
-    }
+    addItemToMaps( thisStorageItem );
 
     // Add this PUOID to the PUOID->Object Handles map
     m_puoidToHandleMap[thisStorageItem->m_puoid] = thisStorageItem->m_handle;
@@ -689,23 +674,8 @@ MTPResponseCode FSStoragePlugin::addDirToStorage( StorageItem *&thisStorageItem,
     {
         thisStorageItem->m_handle = requestNewObjectHandle();
     }
-    // Add the item to the path names map.
-    m_pathNamesMap[ thisStorageItem->m_path ] = thisStorageItem->m_handle;
-    // Add the item to the object handle map.
-    m_objectHandlesMap[ thisStorageItem->m_handle ] = thisStorageItem;
 
-    if( !m_puoidsMap.contains( thisStorageItem->m_path ) )
-    {
-        // Assign a new puoid
-        requestNewPuoid( thisStorageItem->m_puoid );
-        // Add the puoid to the map.
-        m_puoidsMap[thisStorageItem->m_path] = thisStorageItem->m_puoid;
-    }
-    else
-    {
-        // Use the persistent puoid.
-        thisStorageItem->m_puoid = m_puoidsMap[thisStorageItem->m_path];
-    }
+    addItemToMaps( thisStorageItem );
 
     // Add the item to the watch descriptor maps.
     addWatchDescriptor( thisStorageItem );
@@ -864,6 +834,28 @@ MTPResponseCode FSStoragePlugin::addToStorage( StorageItem *&storageItem, MTPObj
         {
             return addFileToStorage( storageItem, false, true);
         }
+    }
+}
+
+void FSStoragePlugin::addItemToMaps( StorageItem *item )
+{
+    // Path names map.
+    m_pathNamesMap[ item->m_path ] = item->m_handle;
+
+    // Object handles map.
+    m_objectHandlesMap[ item->m_handle ] = item;
+
+    if( !m_puoidsMap.contains( item->m_path ) )
+    {
+        // Assign a new puoid
+        requestNewPuoid( item->m_puoid );
+        // Add the puoid to the map.
+        m_puoidsMap[item->m_path] = item->m_puoid;
+    }
+    else
+    {
+        // Use the persistent puoid.
+        item->m_puoid = m_puoidsMap[item->m_path];
     }
 }
 

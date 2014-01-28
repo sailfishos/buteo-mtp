@@ -248,6 +248,11 @@ private:
     /// \return MTP response.
     MTPResponseCode addToStorage( StorageItem *&storageItem, MTPObjectInfo *info );
 
+    /// Inserts a storage item into internal data structures for faster search.
+    ///
+    /// \param item [in] a storage item.
+    void addItemToMaps( StorageItem *item );
+
     /// Removes a storage item.
     /// \param handle [in] the handle of the object that needs to be removed.
     /// \sendEvent [in] indicates whether to send an ObjectRemoved event to the inititiator.
