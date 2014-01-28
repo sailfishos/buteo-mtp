@@ -623,21 +623,6 @@ MTPResponseCode FSStoragePlugin::addFileToStorage( StorageItem *&thisStorageItem
         m_tracker->ignoreNextUpdate(QStringList(m_tracker->generateIri(thisStorageItem->m_path)));
     }
 #endif
-    // Next check if this is a playlist item.
-    if((false == createIfNotExist) &&
-       (MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == thisStorageItem->m_objectInfo->mtpObjectFormat))
-    {
-        // Check is the playlist is also in tracker
-        if(false == m_tracker->isPlaylistExisting(thisStorageItem->m_path))
-        {
-            // Delete the file from the filesystem and unlink the node
-            unlinkChildStorageItem(thisStorageItem);
-            delete thisStorageItem;
-            thisStorageItem = 0;
-            file.remove();
-            return MTP_RESP_OK;
-        }
-    }
 
     file.close();
 
