@@ -115,7 +115,10 @@ public:
     /// Copies an object within or across storages.
     /// \param handle [in] object to be copied.
     /// \param parentHandle [in] parent in destination location.
-    /// \param storageId [in] destination storage.
+    /// \param destinationStorage [in] destination storage; NULL means copy
+    ///                           happens within a single storage.
+    /// \param copiedObjectHandle [out] The handle to the copied object is returned in this
+    /// \param recursionCounter [in] The recursion depth
     virtual MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage, ObjHandle &copiedObjectHandle, quint32 recursionDepth = 0) = 0;
 
     /// Moves an object within or across storages.

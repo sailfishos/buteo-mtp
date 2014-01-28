@@ -1234,6 +1234,10 @@ MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle,
     {
         return MTP_RESP_InvalidObjectHandle;
     }
+    if( !destinationStorage )
+    {
+        destinationStorage = this;
+    }
     if( !destinationStorage->checkHandle( parentHandle ) )
     {
         return MTP_RESP_InvalidParentObject;
