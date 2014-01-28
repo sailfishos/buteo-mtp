@@ -2795,10 +2795,7 @@ void FSStoragePlugin::handleFSCreate(const struct inotify_event *event, const ch
         if(parentNode && (parentNode->m_wd == event->wd))
         {
             QString addedPath = parentNode->m_path + QString("/") + QString(name);
-            // Already handled?
-            ObjHandle addedNode = m_pathNamesMap.value(parentNode->m_path + QString("/") + QString(name));
-            // Root node should never be returned by the above call, so the check below is safe
-            if(0 == addedNode)
+            if( !m_pathNamesMap.contains(addedPath) )
             {
                 StorageItem *addedNode = new StorageItem;
                 addedNode->m_path = addedPath;
