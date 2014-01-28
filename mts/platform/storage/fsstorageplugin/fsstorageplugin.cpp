@@ -137,10 +137,7 @@ bool FSStoragePlugin::enumerateStorage()
     m_tracker->getPlaylists(m_newPlaylists.playlistNames, m_newPlaylists.playlistEntries, false);
 
     // Add the root folder to storage
-    m_root = new StorageItem;
-    m_root->m_path = m_storagePath;
-    populateObjectInfo( m_root );
-    addDirToStorage( m_root, true );
+    addToStorage(m_storagePath, &m_root);
 
     removeUnusedPuoids();
 
@@ -595,126 +592,37 @@ void FSStoragePlugin::getLargestPuoid( MtpInt128& puoid )
 {
     puoid = m_largestPuoid;
 }
-/************************************************************
- * MTPrespCode FSStoragePlugin::addFileToStorage
- ***********************************************************/
-MTPResponseCode FSStoragePlugin::addFileToStorage( StorageItem *&thisStorageItem, bool sendEvent, bool createIfNotExist )
+
+MTPResponseCode FSStoragePlugin::createFile( const QString &path )
 {
-    if ( m_excludePaths.contains(thisStorageItem->m_path) )
-        return MTP_RESP_AccessDenied;
     // Create the file in the file system.
-    QFile file(thisStorageItem->m_path);
-    QIODevice::OpenModeFlag openMode = ((createIfNotExist) ? (QIODevice::ReadWrite) : (QIODevice::ReadOnly));
-    // If the file already exists, we do not have to open it in read-write mode
-    if ( !file.open( openMode ) )
+    QFile file( path );
+    if ( !file.open( QIODevice::ReadWrite ) )
     {
-        // Also remove it from the path names map, just in case...
-        m_pathNamesMap.remove(thisStorageItem->m_path);
-        unlinkChildStorageItem(thisStorageItem);
-        delete thisStorageItem;
-        thisStorageItem = 0;
         return MTP_RESP_GeneralError;
     }
 
 #if 0
-    if(createIfNotExist)
-    {
-        // Ask tracker to ignore the next update (close) on this file
-        m_tracker->ignoreNextUpdate(QStringList(m_tracker->generateIri(thisStorageItem->m_path)));
-    }
+    // Ask tracker to ignore the next update (close) on this file
+    m_tracker->ignoreNextUpdate( QStringList( m_tracker->generateIri( path ) ) );
 #endif
 
     file.close();
 
-    // Assign a handle for this item.
-    thisStorageItem->m_handle = requestNewObjectHandle();
-
-    addItemToMaps( thisStorageItem );
-
-    // Add this PUOID to the PUOID->Object Handles map
-    m_puoidToHandleMap[thisStorageItem->m_puoid] = thisStorageItem->m_handle;
-
-    // Send an event to the MTP intitator if this file got added not due to the initiator.
-    if( sendEvent )
-    {
-        QVector<quint32> eventParams;
-        eventParams.append( thisStorageItem->m_handle );
-        emit eventGenerated(MTP_EV_ObjectAdded, eventParams, QString());
-    }
-
-    // Dates from our device
-    thisStorageItem->m_objectInfo->mtpCaptureDate = getCreatedDate( thisStorageItem );
-    thisStorageItem->m_objectInfo->mtpModificationDate = getModifiedDate( thisStorageItem );
-
     return MTP_RESP_OK;
 }
 
-/************************************************************
- * MTPrespCode FSStoragePlugin::addDirToStorage
- ***********************************************************/
-MTPResponseCode FSStoragePlugin::addDirToStorage( StorageItem *&thisStorageItem, bool isRootDir, bool sendEvent, bool createIfNotExist )
+MTPResponseCode FSStoragePlugin::createDirectory( const QString &path )
 {
-    if ( m_excludePaths.contains(thisStorageItem->m_path) )
-        return MTP_RESP_AccessDenied;
-
     // Create the directory in the file system.
-    QDir dir = QDir( thisStorageItem->m_path );
-    if( !dir.exists() && !isRootDir )
+    QDir dir = QDir( path );
+    if( !dir.exists() )
     {
-        dir.mkpath( thisStorageItem->m_path );
-    }
-
-    // If this is the root dir, assign a handle of 0.
-    if( isRootDir )
-    {
-        thisStorageItem->m_handle = 0;
-    }
-    // Assign a handle for this item.
-    else
-    {
-        thisStorageItem->m_handle = requestNewObjectHandle();
-    }
-
-    addItemToMaps( thisStorageItem );
-
-    // Add the item to the watch descriptor maps.
-    addWatchDescriptor( thisStorageItem );
-
-    // Send an event to the MTP intitator if this file got added not due to the initiator.
-    if( sendEvent )
-    {
-        QVector<quint32> eventParams;
-        eventParams.append( thisStorageItem->m_handle );
-        emit eventGenerated(MTP_EV_ObjectAdded, eventParams, QString());
-    }
-
-    // Recursively add the contents of the dir to the file system.
-    dir.setFilter( QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden );
-    QFileInfoList dirContents = dir.entryInfoList();
-    // Ignore "." and ".."
-    for( int i = 0; i < dirContents.size(); ++i )
-    {
-        QFileInfo dirContent = dirContents.at(i);
-        // Create the storageItem.
-        StorageItem *dirEntry = new StorageItem;
-        dirEntry->m_path = dirContent.absoluteFilePath();
-        linkChildStorageItem( dirEntry, thisStorageItem );
-        populateObjectInfo( dirEntry );
-
-        if( dirContent.isFile() )
+        if ( !dir.mkpath( path ) )
         {
-           // TODO Should we record this file in changeDB?
-           addFileToStorage( dirEntry, sendEvent, createIfNotExist );
-        }
-        else if( dirContent.isDir() )
-        {
-           addDirToStorage( dirEntry, false, sendEvent );
+            return MTP_RESP_GeneralError;
         }
     }
-
-    // Dates from our device
-    thisStorageItem->m_objectInfo->mtpCaptureDate = getCreatedDate( thisStorageItem );
-    thisStorageItem->m_objectInfo->mtpModificationDate = getModifiedDate( thisStorageItem );
 
     return MTP_RESP_OK;
 }
@@ -794,47 +702,119 @@ StorageItem* FSStoragePlugin::findStorageItemByPath( const QString &path )
 /************************************************************
  * MTPrespCode FSStoragePlugin::addToStorage
  ***********************************************************/
-MTPResponseCode FSStoragePlugin::addToStorage( StorageItem *&storageItem, MTPObjectInfo *info )
+MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
+        StorageItem **storageItem, MTPObjectInfo *info, bool sendEvent,
+        bool createIfNotExist )
 {
-    QString parentPath = "";
-    StorageItem *parentStorageItem = 0;
-
-    // Find the absolute path of this item
-    if( checkHandle( info->mtpParentObject ) )
+    if ( m_excludePaths.contains(path) )
     {
-        parentStorageItem = m_objectHandlesMap[info->mtpParentObject];
-        parentPath = parentStorageItem->m_path + "/";
+        return MTP_RESP_AccessDenied;
     }
 
-    // Create the storageItem.
-    storageItem = new StorageItem;
-    storageItem->m_path = parentPath + info->mtpFileName;
-    storageItem->m_objectInfo = new MTPObjectInfo;
-    *(storageItem->m_objectInfo) = *info;
-
-    // In case the path already exits...
-    if( m_pathNamesMap.contains( storageItem->m_path ) )
+    // If we already have StorageItem for given path...
+    if( m_pathNamesMap.contains( path ) )
     {
-        delete storageItem;
-        storageItem = findStorageItemByPath(parentPath + info->mtpFileName);
+        if (storageItem) {
+            *storageItem = findStorageItemByPath(path);
+        }
         return MTP_RESP_OK;
     }
 
-    linkChildStorageItem( storageItem, parentStorageItem );
+    QScopedPointer<StorageItem> item(new StorageItem);
+    item->m_path = path;
+    if ( info )
+    {
+        item->m_objectInfo = new MTPObjectInfo( *info );
+    }
+    else
+    {
+        populateObjectInfo( item.data() );
+    }
+
+    // Root of the storage should have handle of 0.
+    if( path == m_storagePath )
+    {
+        item->m_handle = 0;
+    }
+    // Assign a handle for this item and link to parent item.
+    else
+    {
+        item->m_handle = requestNewObjectHandle();
+
+        QString parentPath(item->m_path.left(item->m_path.lastIndexOf('/')));
+        StorageItem *parentItem = findStorageItemByPath(parentPath);
+
+        linkChildStorageItem( item.data(), parentItem ? parentItem : m_root );
+    }
+
+    MTPResponseCode result;
     // Create file or directory
-    switch( info->mtpObjectFormat )
+    switch( item->m_objectInfo->mtpObjectFormat )
     {
         // Directory.
         case MTP_OBF_FORMAT_Association:
         {
-            return addDirToStorage( storageItem, false, false, true );
+            if (createIfNotExist)
+            {
+                result = createDirectory( item->m_path );
+                if ( result != MTP_RESP_OK )
+                {
+                    return result;
+                }
+
+                addWatchDescriptor( item.data() );
+            }
+
+            addItemToMaps( item.data() );
+
+            // Recursively add StorageItems for the contents of the directory.
+            QDir dir( item->m_path );
+            dir.setFilter( QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden );
+            QFileInfoList dirContents = dir.entryInfoList();
+            foreach ( const QFileInfo &info, dirContents )
+            {
+                addToStorage(info.absoluteFilePath(), 0, 0, createIfNotExist, sendEvent);
+            }
+            break;
         }
         // File.
         default:
-        {
-            return addFileToStorage( storageItem, false, true);
-        }
+            if (createIfNotExist)
+            {
+                result = createFile( item->m_path );
+                if ( result != MTP_RESP_OK )
+                {
+                    return result;
+                }
+            }
+
+            addItemToMaps( item.data() );
+            // Add this PUOID to the PUOID->Object Handles map
+            m_puoidToHandleMap[item->m_puoid] = item->m_handle;
+            break;
     }
+
+    if( sendEvent )
+    {
+        QVector<quint32> eventParams;
+        eventParams.append( item->m_handle );
+        emit eventGenerated(MTP_EV_ObjectAdded, eventParams, QString());
+    }
+
+    // Dates from our device
+    item->m_objectInfo->mtpCaptureDate = getCreatedDate( item.data() );
+    item->m_objectInfo->mtpModificationDate = getModifiedDate( item.data() );
+
+    if ( storageItem )
+    {
+        *storageItem = item.take();
+    }
+    else
+    {
+        item.take();
+    }
+
+    return MTP_RESP_OK;
 }
 
 void FSStoragePlugin::addItemToMaps( StorageItem *item )
@@ -884,8 +864,11 @@ MTPResponseCode FSStoragePlugin::addItem( ObjHandle &parentHandle, ObjHandle &ha
         return MTP_RESP_InvalidParentObject;
     }
 
+    QString path = m_objectHandlesMap[info->mtpParentObject]->m_path + "/"
+            + info->mtpFileName;
+
     // Add the object ( file/dir ) to the filesystem storage.
-    response = addToStorage( storageItem, info );
+    response = addToStorage( path, &storageItem, info, false, true );
     if( storageItem )
     {
         handle = storageItem->m_handle;
@@ -1526,7 +1509,7 @@ MTPResponseCode FSStoragePlugin::getObjectInfo( const ObjHandle &handle, const M
 /************************************************************
  * MTPResponseCode FSStoragePlugin::populateObjectInfo
  ***********************************************************/
-void FSStoragePlugin::populateObjectInfo( StorageItem *&storageItem )
+void FSStoragePlugin::populateObjectInfo( StorageItem *storageItem )
 {
     if( !storageItem )
     {
@@ -2770,20 +2753,9 @@ void FSStoragePlugin::handleFSCreate(const struct inotify_event *event, const ch
             QString addedPath = parentNode->m_path + QString("/") + QString(name);
             if( !m_pathNamesMap.contains(addedPath) )
             {
-                StorageItem *addedNode = new StorageItem;
-                addedNode->m_path = addedPath;
-                linkChildStorageItem( addedNode, parentNode );
-                populateObjectInfo(addedNode);
                 MTP_LOG_INFO("Handle FS create, adding file::" << name);
-                // We must recurse into new directories (They may appear fully populated)
-                if (event->mask & IN_ISDIR)
-                {
-                    addDirToStorage(addedNode, false, true);
-                }
-                else
-                {
-                    addFileToStorage(addedNode, true, false);
-                }
+                addToStorage(addedPath, 0, 0, true);
+
                 // Emit storageinfo changed events, free space may be different from before now
                 QVector<quint32> params;
                 params.append(m_storageId);

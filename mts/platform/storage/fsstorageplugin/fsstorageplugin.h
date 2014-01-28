@@ -197,20 +197,17 @@ private:
     /// After reading puoids the db, this gets rid of any puoids that are no longer valid ( the corresponding object doesn't exist ).
     void removeUnusedPuoids();
 
-    /// Adds a directory to our filesystem storage.
-    /// \param storageItem [out] pointer to the newly created StorageItem.
-    /// \param isRootDir [in] boolean that indicates if this is the root folder.
-    /// \param sendEvent [in] indicates whether to send an event to the MTP initiator or not.
-    /// \param createIfNotExist [in] boolean which indicates whether to create the item on the filesystem if one does not exist.
+    /// Creates a directory in the file system.
+    ///
+    /// \param path [in] filesystem path of the directory to create.
     /// \return MTP response.
-    MTPResponseCode addDirToStorage(  StorageItem *&thisStorageItem, bool isRootDir = false, bool sendEvent = false, bool createIfNotExist = false );
+    MTPResponseCode createDirectory( const QString &path );
 
-    /// Adds a file to our filesystem storage.
-    /// \param storageItem [in/out] pointer to the newly created StorageItem.
-    /// \param sendEvent [in] indicates whether to send an event to the MTP initiator or not.
-    /// \param createIfNotExist [in] boolean which indicates whether to create the item on the filesystem if one does not exist.
+    /// Creates a file in the file system.
+    ///
+    /// \param path [in] filesystem path of the file to create.
     /// \return MTP response.
-    MTPResponseCode addFileToStorage( StorageItem *&thisStorageItem, bool sendEvent = false, bool createIfNotExist = false );
+    MTPResponseCode createFile( const QString &path );
 
     /// Gets a new object handle that can be assigned to an item.
     /// \return the object handle
@@ -242,11 +239,23 @@ private:
     /// \return the storage item.
     StorageItem* findStorageItemByPath( const QString &path );
 
-    /// Creates a file or dir in the filesystem.
-    /// \param storageItem [in/out] pointer to the newly created StorageItem.
-    /// \param info [in] the object's objectinfo dataset.
-    /// \return MTP response.
-    MTPResponseCode addToStorage( StorageItem *&storageItem, MTPObjectInfo *info );
+    /// Creates new StorageItem representing a file or directory at \c path
+    /// and creates the file or directory if asked to do so.
+    ///
+    /// \param path [in] absolute filesystem path to represent in the storage.
+    /// \param storageItem [out] pointer where the new StorageItem is stored;
+    ///                    can be null.
+    /// \param info [in] if not null, the data in MTPObjectInfo are used to
+    ///             initialize the StorageItem; otherwise the object info is
+    ///             populated by default values (see populateObjectInfo()).
+    /// \param sendEvent [in] if true, ObjectAdded event is sent to the MTP
+    ///                  initiator.
+    /// \param createIfNotExist [in] if true, the filesystem item at \c path is
+    ///                         created if it doesn't exist yet.
+    /// \return MTP response code.
+    MTPResponseCode addToStorage( const QString &path,
+            StorageItem **storageItem = 0, MTPObjectInfo *info = 0,
+            bool sendEvent = false, bool createIfNotExist = false);
 
     /// Inserts a storage item into internal data structures for faster search.
     ///
@@ -260,7 +269,7 @@ private:
 
     /// Populates the object info for a storage item if that's not done by the initiator.
     /// \param storageItem [in] the item's whose object info needs to be populated.
-    void populateObjectInfo( StorageItem *&storageItem );
+    void populateObjectInfo( StorageItem *storageItem );
 
     /// This method helps recursively modify the "path" field of a StorageItem ther has been moved.
     /// \param newAncestorPath [in] the new ancestor for the moved item and it's children.
