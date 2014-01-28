@@ -375,7 +375,6 @@ void FSStoragePlugin::populatePuoids()
 
     // Read the last used puoid
     bytesRead = file.read( reinterpret_cast<char*>(&m_largestPuoid), sizeof(MtpInt128) );
-            quint32 id = *(reinterpret_cast<quint32*>(&m_largestPuoid));
     if( 0 >= bytesRead )
     {
         return;
@@ -409,7 +408,6 @@ void FSStoragePlugin::populatePuoids()
 
         // read the puoid
         bytesRead = file.read( reinterpret_cast<char*>(&puoid), sizeof(MtpInt128) );
-            id = *(reinterpret_cast<quint32*>(&puoid));
         if( 0 >= bytesRead )
         {
             delete [] name;
@@ -460,7 +458,6 @@ void FSStoragePlugin::storePuoids()
 
     // Write the last used puoid.
     bytesWritten = file.write( reinterpret_cast<const char*>(&m_largestPuoid), sizeof(MtpInt128) );
-            quint32 id = *(reinterpret_cast<quint32*>(&m_largestPuoid));
     if( -1 == bytesWritten )
     {
         MTP_LOG_WARNING("ERROR writing last used puoid to db!!");
@@ -510,7 +507,6 @@ void FSStoragePlugin::storePuoids()
 
         // Write puoid
         bytesWritten = file.write( reinterpret_cast<const char*>(&puoid), sizeof(MtpInt128) );
-            id = *(reinterpret_cast<quint32*>(&puoid));
         if( -1 == bytesWritten )
         {
             MTP_LOG_WARNING("ERROR writing puoid to db!!");
