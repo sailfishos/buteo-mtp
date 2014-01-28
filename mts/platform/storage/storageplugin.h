@@ -52,10 +52,14 @@ class StoragePlugin : public QObject
 
 public:
     /// Constructor.
-    StoragePlugin(){}
+    StoragePlugin(quint32 storageId): m_storageId(storageId) {}
 
     /// Destructor.
     virtual ~StoragePlugin(){}
+
+    quint32 storageId() const {
+        return m_storageId;
+    }
 
     /// Enumerate the storage.
     /// \return true or false depending on whether storage succeeded or failed.
@@ -111,8 +115,11 @@ public:
     /// Copies an object within or across storages.
     /// \param handle [in] object to be copied.
     /// \param parentHandle [in] parent in destination location.
-    /// \param storageId [in] destination storage.
-    virtual MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, ObjHandle &copiedObjectHandle, quint32 recursionDepth = 0) = 0;
+    /// \param destinationStorage [in] destination storage; NULL means copy
+    ///                           happens within a single storage.
+    /// \param copiedObjectHandle [out] The handle to the copied object is returned in this
+    /// \param recursionCounter [in] The recursion depth
+    virtual MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage, ObjHandle &copiedObjectHandle, quint32 recursionDepth = 0) = 0;
 
     /// Moves an object within or across storages.
     /// \param handle [in] object to be moved.
@@ -189,6 +196,8 @@ public Q_SLOTS:
     virtual void getLargestPuoid( MtpInt128& puoid ) = 0;
 
 protected:
+    /// Storage id assigned to this storage by the storage factory.
+    quint32 m_storageId;
     MTPStorageInfo m_storageInfo;
     QString m_storagePath;
     QHash<ObjHandle, QVector<ObjHandle> > m_objectReferencesMap; ///< this map maintains references (if any) for each object.

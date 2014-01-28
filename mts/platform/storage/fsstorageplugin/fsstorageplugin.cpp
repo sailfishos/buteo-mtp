@@ -60,7 +60,7 @@ static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x0000-\\x
  ***********************************************************/
 FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType, QString storagePath,
                                   QString volumeLabel, QString storageDescription ) :
-                                  m_storageId(storageId), m_root(0), m_rootFolderPath(storagePath),
+                                  StoragePlugin(storageId), m_root(0), m_rootFolderPath(storagePath),
                                   m_uniqueObjectHandle(0), m_writeObjectHandle(0),
                                   m_largestPuoid(0), m_dataFile(0)
 {
@@ -1226,15 +1226,19 @@ MTPResponseCode FSStoragePlugin::storageInfo( MTPStorageInfo &info )
 /************************************************************
  * MTPResponseCode FSStoragePlugin::copyObject
  ***********************************************************/
-MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, ObjHandle &copiedObjectHandle, quint32 recursionCounter /*= 0*/)
+MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle,
+        const ObjHandle &parentHandle, StoragePlugin *destinationStorage,
+        ObjHandle &copiedObjectHandle, quint32 recursionCounter /*= 0*/)
 {
-    bool txCancelled = false;
-
     if( !checkHandle( handle ) )
     {
         return MTP_RESP_InvalidObjectHandle;
     }
-    if( !checkHandle( parentHandle ) )
+    if( !destinationStorage )
+    {
+        destinationStorage = this;
+    }
+    if( !destinationStorage->checkHandle( parentHandle ) )
     {
         return MTP_RESP_InvalidParentObject;
     }
@@ -1250,60 +1254,85 @@ MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle, const ObjH
 
     // Get the source object's objectinfo dataset.
     MTPObjectInfo objectInfo  = *m_objectHandlesMap[handle]->m_objectInfo;
-    QString destinationPath = m_objectHandlesMap[parentHandle]->m_path + "/" + objectInfo.mtpFileName;
 
-    // FIXME freeSpace not accurate, Check if the object fits.
-    /*quint64 freeSpaceRemaining = 0;
-    MTPResponseCode resp;
-    resp = freeSpace( freeSpaceRemaining );
-    if( freeSpaceRemaining < objectInfo.mtpObjectCompressedSize )
+    MTPStorageInfo storageInfo;
+    if( destinationStorage->storageInfo(storageInfo) != MTP_RESP_OK )
+    {
+        return MTP_RESP_GeneralError;
+    }
+    if( storageInfo.freeSpace < objectInfo.mtpObjectCompressedSize )
     {
         return MTP_RESP_StoreFull;
-    }*/
+    }
+
+    QString destinationPath;
+    if ( destinationStorage->getPath(parentHandle, destinationPath) != MTP_RESP_OK )
+    {
+        return MTP_RESP_InvalidParentObject;
+    }
+    destinationPath += '/' + objectInfo.mtpFileName;
 
     if( ( 0 == recursionCounter ) && MTP_OBF_FORMAT_Association == objectInfo.mtpObjectFormat )
     {
-        // Check if we copy a dir to a place where it already exists; don't allow that
-        if( m_pathNamesMap.contains( destinationPath ) )
+        // Check if we copy a dir to a place where it already exists; don't
+        // allow that.
+        QVector<ObjHandle> handles;
+        if ( destinationStorage->getObjectHandles( 0, parentHandle, handles ) == MTP_RESP_OK )
         {
-            return MTP_RESP_InvalidParentObject;
+            foreach( ObjHandle handle, handles )
+            {
+                QString path;
+                if ( destinationStorage->getPath(handle, path) != MTP_RESP_OK)
+                {
+                    continue;
+                }
+                if ( path == destinationPath )
+                {
+                    return MTP_RESP_InvalidParentObject;
+                }
+            }
         }
     }
 
     // Modify the objectinfo dataset to include the new storageId and new parent object.
     objectInfo.mtpParentObject = parentHandle;
-    objectInfo.mtpStorageId = destinationStorageId;
+    objectInfo.mtpStorageId = destinationStorage->storageId();
 
-    // Work-around : remove wd on the destination dir so that we don't
-    // receive inotify signals, this prevents adding them twice
-    StorageItem *parentItem = m_objectHandlesMap[parentHandle];
-    removeWatchDescriptor( parentItem );
+    // Workaround: remove watch descriptor on the destination directory so that
+    // we don't receive inotify signals. This prevents adding them twice.
+    FSStoragePlugin *destinationFsStorage =
+            dynamic_cast<FSStoragePlugin *>( destinationStorage );
+    StorageItem *parentItem = 0;
+    if ( destinationFsStorage )
+    {
+        parentItem = destinationFsStorage->m_objectHandlesMap[parentHandle];
+        destinationFsStorage->removeWatchDescriptor( parentItem );
+    }
 
     // Write the content to the new item.
     MTPResponseCode response = MTP_RESP_OK;
-    QString sourcePath = storageItem->m_path;
 
     // Apply metadata for the destination path
-    m_tracker->copy(sourcePath, destinationPath);
-    // Ask tracker to ignore the next update on the destination path
-    //m_tracker->ignoreNextUpdate(QStringList(m_tracker->generateIri(destinationPath)));
+    m_tracker->copy(storageItem->m_path, destinationPath);
 
-    // If this is a directory, copy recursively.
-    if( MTP_OBF_FORMAT_Association == objectInfo.mtpObjectFormat )
+    // Create the new item.
+    ObjHandle ignoredHandle;
+    response = destinationStorage->addItem( ignoredHandle, copiedObjectHandle,
+            &objectInfo );
+    if( MTP_RESP_OK != response )
     {
-        // Create the new item.
-        response = addItem( const_cast<ObjHandle&>(parentHandle), copiedObjectHandle, &objectInfo );
-        if( MTP_RESP_OK != response )
-        {
-            return response;
-        }
-
+        // Error.
+    }
+    // If this is a directory, copy recursively.
+    else if( MTP_OBF_FORMAT_Association == objectInfo.mtpObjectFormat )
+    {
         // Save the directory handle
         ObjHandle parentHandle = copiedObjectHandle;
         StorageItem *childItem = storageItem->m_firstChild;
         for( ; childItem; childItem = childItem->m_nextSibling )
         {
-            response = copyObject( childItem->m_handle, parentHandle, destinationStorageId, copiedObjectHandle, ++recursionCounter );
+            response = copyObject( childItem->m_handle, parentHandle,
+                    destinationStorage, copiedObjectHandle, ++recursionCounter );
             if( MTP_RESP_OK != response )
             {
                 copiedObjectHandle = parentHandle;
@@ -1316,16 +1345,11 @@ MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle, const ObjH
     // this is a file, copy the data
     else
     {
-        response = addItem( const_cast<ObjHandle&>(parentHandle), copiedObjectHandle, &objectInfo );
-        if( MTP_RESP_OK != response )
-        {
-            return response;
-        }
-
         quint64 sourceObjSize = storageItem->m_objectInfo->mtpObjectCompressedSize;
         quint32 readOffset = 0, remainingLen = sourceObjSize;
         qint32 readLen = MAX_READ_LEN;
         char readBuffer[MAX_READ_LEN];
+        bool txCancelled = false;
 
         while( remainingLen && response == MTP_RESP_OK )
         {
@@ -1336,24 +1360,31 @@ MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle, const ObjH
             if( txCancelled )
             {
                 MTP_LOG_WARNING("CopyObject cancelled, aborting file copy...");
-                response = deleteItem( copiedObjectHandle, MTP_OBF_FORMAT_Undefined );
+                response = destinationStorage->deleteItem( copiedObjectHandle,
+                        MTP_OBF_FORMAT_Undefined );
                 return MTP_RESP_GeneralError;
             }
 
             if( MTP_RESP_OK == response )
             {
                 remainingLen -= readLen;
-                response = writeData( copiedObjectHandle, readBuffer, readLen, readOffset == 0, false );
+                response = destinationStorage->writeData( copiedObjectHandle,
+                        readBuffer, readLen, readOffset == 0, false );
                 readOffset += readLen;
                 if( !remainingLen )
                 {
-                    response = writeData( copiedObjectHandle, 0, 0, false, true );
+                    response = destinationStorage->writeData( copiedObjectHandle,
+                            0, 0, false, true );
                 }
             }
         }
     }
 
-    addWatchDescriptor( parentItem );
+    if ( destinationFsStorage )
+    {
+        destinationFsStorage->addWatchDescriptor( parentItem );
+    }
+
     return response;
 }
 

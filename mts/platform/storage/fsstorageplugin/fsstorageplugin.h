@@ -120,10 +120,11 @@ public:
     /// Copies an object within or across storages.
     /// \param handle [in] object to be copied.
     /// \param parentHandle [in] parent in destination location.
-    /// \param destinationStorageId [in] destination storage.
+    /// \param destinationStorage [in] destination storage; NULL means copy
+    ///                           happens within a single storage.
     /// \param copiedObjectHandle [out] The handle to the copied object is returned in this
     /// \param recursionCounter [in] The recursion depth
-    MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, ObjHandle &copiedObjectHandle , quint32 recursionCounter = 0);
+    MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage, ObjHandle &copiedObjectHandle , quint32 recursionCounter = 0);
 
     /// Moves an object within or across storages.
     /// \param handle [in] object to be moved.
@@ -413,7 +414,6 @@ private:
     MTPResponseCode deleteItemHelper( const ObjHandle& handle, bool removePhysically = true, bool sendEvent = false );
     bool isFileNameValid(const QString &fileName, const StorageItem *parent);
 
-    quint32 m_storageId; ///< storage id assigned to this storage by the storage factory.
     QHash<int,ObjHandle> m_watchDescriptorMap; ///< map from an inotify watch on an object to it's object handle.
     QHash<QString,ObjHandle> m_pathNamesMap;
     QHash<QString,MtpInt128> m_puoidsMap;
