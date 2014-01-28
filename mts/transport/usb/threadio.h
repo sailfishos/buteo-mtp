@@ -89,7 +89,7 @@ class BulkWriterThread : public IOThread {
 public:
     explicit BulkWriterThread(QObject *parent = 0);
 
-    void setData(const quint8 *buffer, quint32 dataLen);
+    void setData(const quint8 *buffer, quint32 dataLen, bool terminateTransfer = false);
     bool resultReady();
     bool getResult();
 
@@ -101,6 +101,7 @@ private:
     quint32 m_dataLen;
     QAtomicInt m_result_ready;
     bool m_result;
+    bool m_terminateTransfer;
 };
 
 class InterruptWriterThread : public IOThread {
