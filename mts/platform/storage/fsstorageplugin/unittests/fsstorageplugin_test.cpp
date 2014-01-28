@@ -1730,22 +1730,28 @@ void FSStoragePlugin_test::testThumbnailer()
         QSignalSpy spy(m_storage, SIGNAL(eventGenerated(MTPEventCode, const QVector<quint32>&, QString)));
         QList<QVariant> arguments;
         QVERIFY(spy.isValid());
-        int maxsignals = 20;
-        while (maxsignals > 0)
+        int maxsignals = 20; // prevent infinite loop if signals keep coming
+        bool got_signal = false;
+        while (!got_signal && maxsignals > 0)
         {
-            bool emitted = spy.wait();
+            bool emitted = spy.wait(1000); // wait 1 second for new signals
             QVERIFY2(emitted, "thumbnail-ready signal not received");
-            arguments = spy.takeFirst();
-            // Skip other events; we might get some inotify ones as a side
-            // effect of generating the signal.
-            if (arguments.at(0).value<MTPEventCode>() == MTP_EV_ObjectPropChanged)
-                break;
+            while( spy.count() > 0 )
+            {
+                arguments = spy.takeFirst();
+                if (arguments.at(0).value<MTPEventCode>() == MTP_EV_ObjectPropChanged)
+                {
+                    QVector<quint32> params = arguments.at(1).value<QVector<quint32> >();
+                    QCOMPARE(params.count(), 2);
+                    QCOMPARE(params[0], handle);
+                    QCOMPARE(params[1], (unsigned) MTP_OBJ_PROP_Rep_Sample_Data);
+                    got_signal = true;
+                    break;
+                }
+            }
             --maxsignals;
         }
-        QVector<quint32> params = arguments.at(1).value<QVector<quint32> >();
-        QCOMPARE(params.count(), 2);
-        QCOMPARE(params[0], handle);
-        QCOMPARE(params[1], (unsigned) MTP_OBJ_PROP_Rep_Sample_Data);
+        QVERIFY2(got_signal, "thumbnail-ready signal not received");
         response = m_storage->getObjectPropertyValueFromStorage( handle,
             MTP_OBJ_PROP_Rep_Sample_Data, value, MTP_DATA_TYPE_UNDEF);
         QVERIFY(!value.isNull());
