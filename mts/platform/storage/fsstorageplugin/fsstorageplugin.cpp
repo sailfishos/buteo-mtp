@@ -725,6 +725,7 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
     if ( info )
     {
         item->m_objectInfo = new MTPObjectInfo( *info );
+        item->m_objectInfo->mtpStorageId = storageId();
     }
     else
     {
