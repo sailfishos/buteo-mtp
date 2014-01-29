@@ -79,6 +79,7 @@ SOURCES += fsstorageplugin_test.cpp \
            ../thumbnailerproxy.cpp \
            ../storagetracker.cpp \
            ../../storagefactory.cpp \
+           ../../storageplugin.cpp \
            mts.cpp \
            protocol/mtpevent.cpp \
            protocol/mtpresponder.cpp \

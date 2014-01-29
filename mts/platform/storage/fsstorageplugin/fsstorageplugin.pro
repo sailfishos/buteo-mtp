@@ -42,6 +42,9 @@ SOURCES += fsstorageplugin.cpp \
            fsinotify.cpp \
            storageitem.cpp
 
+LIBPATH += ../../..
+LIBS    += -lmeegomtp
+
 #install
 target.path = /usr/lib/mtp
 

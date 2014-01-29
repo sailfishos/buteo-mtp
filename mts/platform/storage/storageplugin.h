@@ -210,6 +210,16 @@ public Q_SLOTS:
     virtual void getLargestPuoid( MtpInt128& puoid ) = 0;
 
 protected:
+    /// Copies data between two storages and objects.
+    ///
+    /// \param sourceStorage [in] StoragePlugin from which to copy.
+    /// \param source [in] handle of an object from which to copy data.
+    /// \param destinationStorage [in] StoragePlugin into which to copy.
+    /// \param destination [in] handle of an object to be filled with data.
+    static MTPResponseCode copyData(StoragePlugin *sourceStorage,
+            ObjHandle source, StoragePlugin *destinationStorage,
+            ObjHandle destination);
+
     /// Storage id assigned to this storage by the storage factory.
     quint32 m_storageId;
     MTPStorageInfo m_storageInfo;

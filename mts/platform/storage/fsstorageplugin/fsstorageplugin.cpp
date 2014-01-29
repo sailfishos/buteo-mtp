@@ -50,7 +50,6 @@ const quint32 THUMB_MAX_SIZE  =    (1024 * 48);/* max thumbnailsize */
 // Default width and height for thumbnails
 const quint32 THUMB_WIDTH     =    100;
 const quint32 THUMB_HEIGHT    =    100;
-const quint32 MAX_READ_LEN    =    64 * 1024;
 
 static quint32 fourcc_wmv3 = 0x574D5633;
 static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x0000-\\x001F]");
@@ -1302,38 +1301,10 @@ MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle,
     // this is a file, copy the data
     else
     {
-        quint64 sourceObjSize = storageItem->m_objectInfo->mtpObjectCompressedSize;
-        quint32 readOffset = 0, remainingLen = sourceObjSize;
-        qint32 readLen = MAX_READ_LEN;
-        char readBuffer[MAX_READ_LEN];
-        bool txCancelled = false;
-
-        while( remainingLen && response == MTP_RESP_OK )
+        response = copyData( this, handle, destinationStorage, copiedObjectHandle );
+        if ( response != MTP_RESP_OK )
         {
-            readLen = remainingLen >= MAX_READ_LEN ? MAX_READ_LEN : remainingLen;
-            response = readData( handle, readBuffer, readLen, readOffset );
-
-            emit checkTransportEvents( txCancelled );
-            if( txCancelled )
-            {
-                MTP_LOG_WARNING("CopyObject cancelled, aborting file copy...");
-                response = destinationStorage->deleteItem( copiedObjectHandle,
-                        MTP_OBF_FORMAT_Undefined );
-                return MTP_RESP_GeneralError;
-            }
-
-            if( MTP_RESP_OK == response )
-            {
-                remainingLen -= readLen;
-                response = destinationStorage->writeData( copiedObjectHandle,
-                        readBuffer, readLen, readOffset == 0, false );
-                readOffset += readLen;
-                if( !remainingLen )
-                {
-                    response = destinationStorage->writeData( copiedObjectHandle,
-                            0, 0, false, true );
-                }
-            }
+            return response;
         }
     }
 
