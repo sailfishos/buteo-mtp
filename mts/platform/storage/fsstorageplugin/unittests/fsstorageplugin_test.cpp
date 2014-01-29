@@ -1421,13 +1421,14 @@ void FSStoragePlugin_test::testInotifyCreate()
     QEventLoop loop;
     quint32 getOutOfHere = 0;
     loop.processEvents();
-    while( !m_storage->m_pathNamesMap["/tmp/mtptests/tmpfile"] && getOutOfHere < 20 )
+    while( !m_storage->m_pathNamesMap.contains("/tmp/mtptests/tmpfile") &&
+           getOutOfHere < 20 )
     {
         system("touch /tmp/mtptests/tmpfile");
         loop.processEvents();
         ++getOutOfHere;
     }
-    QCOMPARE( m_storage->m_pathNamesMap["/tmp/mtptests/tmpfile"] > 0, true );
+    QVERIFY( m_storage->m_pathNamesMap.contains("/tmp/mtptests/tmpfile") );
 }
 
 void FSStoragePlugin_test::testInotifyModify()
