@@ -252,10 +252,13 @@ private:
     ///                  initiator.
     /// \param createIfNotExist [in] if true, the filesystem item at \c path is
     ///                         created if it doesn't exist yet.
+    /// \param handle [in] when nonzero, assigns the specific object handle to
+    ///               the newly created StorageItem.
     /// \return MTP response code.
     MTPResponseCode addToStorage( const QString &path,
             StorageItem **storageItem = 0, MTPObjectInfo *info = 0,
-            bool sendEvent = false, bool createIfNotExist = false);
+            bool sendEvent = false, bool createIfNotExist = false,
+            ObjHandle handle = 0 );
 
     /// Inserts a storage item into internal data structures for faster search.
     ///

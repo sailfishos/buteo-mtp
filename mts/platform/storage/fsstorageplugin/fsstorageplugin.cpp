@@ -704,7 +704,7 @@ StorageItem* FSStoragePlugin::findStorageItemByPath( const QString &path )
  ***********************************************************/
 MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
         StorageItem **storageItem, MTPObjectInfo *info, bool sendEvent,
-        bool createIfNotExist )
+        bool createIfNotExist, ObjHandle handle )
 {
     if ( m_excludePaths.contains(path) )
     {
@@ -740,7 +740,7 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
     // Assign a handle for this item and link to parent item.
     else
     {
-        item->m_handle = requestNewObjectHandle();
+        item->m_handle = handle ? handle : requestNewObjectHandle();
 
         QString parentPath(item->m_path.left(item->m_path.lastIndexOf('/')));
         StorageItem *parentItem = findStorageItemByPath(parentPath);
