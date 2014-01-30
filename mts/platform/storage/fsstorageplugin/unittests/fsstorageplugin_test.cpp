@@ -978,6 +978,61 @@ void FSStoragePlugin_test::testFileMove()
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
 
+void FSStoragePlugin_test::testFileMoveAcrossStorage()
+{
+    QEventLoop loop;
+
+    const QByteArray TEXT( "some text for comparison" );
+
+    QDir dir( "/tmp/mtptests-second" );
+    dir.removeRecursively();
+
+    dir.mkpath("/tmp/mtptests-second");
+    dir.mkdir( "dir1" );
+
+    QFile file( "/tmp/mtptests/fileToMove" );
+    file.remove();
+    file.open(QFile::WriteOnly);
+    file.write(TEXT);
+    file.close();
+
+    loop.processEvents();
+
+    FSStoragePlugin secondStorage( 2, MTP_STORAGE_TYPE_FixedRAM,
+            "/tmp/mtptests-second", "second", "Second Storage" );
+    secondStorage.enumerateStorage();
+
+    StorageItem *item = m_storage->findStorageItemByPath( "/tmp/mtptests/fileToMove" );
+
+    ObjHandle originalHandle = item->m_handle;
+    MTPObjectInfo originalInfo = *item->m_objectInfo;
+
+    QCOMPARE( m_storage->moveObject( originalHandle,
+            secondStorage.m_pathNamesMap["/tmp/mtptests-second/dir1"], &secondStorage ),
+            (MTPResponseCode)MTP_RESP_OK);
+
+    QVERIFY( !m_storage->checkHandle( originalHandle ) );
+
+    StorageItem *movedItem =
+            secondStorage.findStorageItemByPath( "/tmp/mtptests-second/dir1/fileToMove" );
+    StorageItem *parentItem =
+            secondStorage.findStorageItemByPath( "/tmp/mtptests-second/dir1" );
+
+    QVERIFY( movedItem );
+    QVERIFY( parentItem );
+    QCOMPARE ( movedItem->m_handle, originalHandle );
+
+    MTPObjectInfo *movedInfo = movedItem->m_objectInfo;
+    QCOMPARE ( movedInfo->mtpStorageId, secondStorage.storageId() );
+    QCOMPARE ( movedInfo->mtpParentObject, parentItem->m_handle );
+    QCOMPARE ( movedInfo->mtpFileName, originalInfo.mtpFileName );
+
+    QFile copiedFile( "/tmp/mtptests-second/dir1/fileToMove" );
+    copiedFile.open( QFile::ReadOnly );
+    QByteArray text( copiedFile.readAll() );
+    QVERIFY( text == TEXT );
+}
+
 void FSStoragePlugin_test::testDirMove()
 {
     MTPResponseCode response;
@@ -985,6 +1040,66 @@ void FSStoragePlugin_test::testDirMove()
     response = m_storage->moveObject( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/D1"],
             m_storage->m_pathNamesMap["/tmp/mtptests/D1"], m_storage );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
+}
+
+void FSStoragePlugin_test::testDirMoveAcrossStorage()
+{
+    QEventLoop loop;
+
+    QDir dir( "/tmp/mtptests-second" );
+    dir.removeRecursively();
+    dir.mkpath( "/tmp/mtptests-second" );
+    dir.mkdir( "dir" );
+
+    dir.cd( "/tmp/mtptests/d1" );
+    dir.removeRecursively();
+    dir.mkpath( "/tmp/mtptests/d1/d2" );
+    QFile file( "/tmp/mtptests/d1/d2/f1" );
+    file.open( QFile::WriteOnly );
+    file.close();
+
+    loop.processEvents();
+
+    FSStoragePlugin secondStorage( 2, MTP_STORAGE_TYPE_FixedRAM,
+            "/tmp/mtptests-second", "second", "Second Storage" );
+    secondStorage.enumerateStorage();
+
+    StorageItem *item;
+
+    item = m_storage->findStorageItemByPath( "/tmp/mtptests/d1" );
+    ObjHandle hOrigD1 = item->m_handle;
+    MTPObjectInfo iOrigD1 = *item->m_objectInfo;
+
+    item = m_storage->findStorageItemByPath( "/tmp/mtptests/d1/d2" );
+    ObjHandle hOrigD2 = item->m_handle;
+    MTPObjectInfo iOrigD2 = *item->m_objectInfo;
+
+    item = m_storage->findStorageItemByPath( "/tmp/mtptests/d1/d2/f1" );
+    ObjHandle hOrigF1 = item->m_handle;
+    MTPObjectInfo iOrigF1 = *item->m_objectInfo;
+
+    QCOMPARE( m_storage->moveObject( hOrigD1,
+            secondStorage.m_pathNamesMap["/tmp/mtptests-second/dir"], &secondStorage ),
+            (MTPResponseCode)MTP_RESP_OK);
+
+    QVERIFY( !m_storage->checkHandle( hOrigD1 ) &&
+             !m_storage->checkHandle( hOrigD2 ) &&
+             !m_storage->checkHandle( hOrigF1 ) );
+
+    StorageItem *parentItem =
+            secondStorage.findStorageItemByPath( "/tmp/mtptests-second/dir" );
+
+    StorageItem *movedD1 = secondStorage.m_objectHandlesMap[ hOrigD1 ];
+    QCOMPARE ( movedD1->m_objectInfo->mtpParentObject, parentItem->m_handle );
+    QCOMPARE ( movedD1->m_objectInfo->mtpFileName, iOrigD1.mtpFileName );
+
+    StorageItem *movedD2 = secondStorage.m_objectHandlesMap[ hOrigD2 ];
+    QCOMPARE ( movedD2->m_objectInfo->mtpParentObject, movedD1->m_handle );
+    QCOMPARE ( movedD2->m_objectInfo->mtpFileName, iOrigD2.mtpFileName );
+
+    StorageItem *movedF1 = secondStorage.m_objectHandlesMap[ hOrigF1 ];
+    QCOMPARE ( movedF1->m_objectInfo->mtpParentObject, movedD2->m_handle );
+    QCOMPARE ( movedF1->m_objectInfo->mtpFileName, iOrigF1.mtpFileName );
 }
 
 void FSStoragePlugin_test::testGetLargestObjectHandle()
@@ -1777,6 +1892,7 @@ void FSStoragePlugin_test::cleanupTestCase()
     delete m_storage;
     system("rm -rf ~/.local/mtp");
     system("rm -rf /tmp/mtptests");
+    QDir( "/tmp/mtptests-second" ).removeRecursively();
     system("tracker-control -r");
     sleep(2);
     system("tracker-control -s");
