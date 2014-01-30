@@ -65,33 +65,57 @@ public:
     /// \return true or false depending on whether storage succeeded or failed.
     virtual bool enumerateStorage() = 0;
 
-    /// Adds an item to the Storage Factory.
-    /// \param storageId [in/out] which storage this item goes to.
-    /// \param handle [out] the handle of the item's parent.
-    /// \param parentHandle [out] the handle of this item.
+    /// Adds an item to the storage.
+    ///
+    /// \param parentHandle [out] the handle of the item's parent.
+    /// \param handle [out] the handle of this item.
     /// \param info pointer to a structure holding the object info dataset
     /// for this item.
+    ///
     /// \return MTP response.
     virtual MTPResponseCode addItem( ObjHandle &parentHandle, ObjHandle &handle, MTPObjectInfo *info ) = 0;
 
-    /// Deletes an item from the Storage Factory
+    /// Deletes an item from the storage.
+    ///
     /// \param handle [in] the handle of the object that needs to be deleted.
     /// \param formatCode [in] this optional arg can be used to delete all objects of a certain format.
     /// \return MTP response.
     virtual MTPResponseCode deleteItem( const ObjHandle& handle, const MTPObjFormatCode& formatCode ) = 0;
 
-    /// Returns the no. of items belonging to a certain format and/or contained in a certain folder.
-    /// \return storageId [in] which storage to look for.
-    /// \param formatCode [in] this optional arg can be used to delete all objects of a certain format.
-    /// \param associationHandle [in] this optional argument can specify the containing folder.
-    /// \param noOfObjects [out] no. of objects found.
+    /// Recursively copies objects from another storage.
+    ///
+    /// The duplicated object hierarchy will retain its original object handles.
+    /// It is a responsibility of the method's caller to ensure the handles are
+    /// kept unique from the initiator's point of view, and thus disowned from
+    /// their previous storage.
+    ///
+    /// \param sourceStorage [in] a source StoragePlugin.
+    /// \param source [in] handle of the object to duplicate into this storage.
+    /// \param parent [in] handle of an existing association in this storage
+    ///               that will become parent of the copied object hierarchy.
+    ///
+    /// \return MTP response.
+    virtual MTPResponseCode copyHandle( StoragePlugin *sourceStorage,
+            ObjHandle source, ObjHandle parent ) = 0;
+
+    /// Fills a collection with handles of child object of a given association
+    /// (folder).
+    ///
+    /// \param formatCode [in] if not zero, filters the set of handles only to
+    ///                   objects of particular type.
+    /// \param associationHandle [in] the association whose children to get.
+    /// \param objectHandles [out] method fills this collection with the
+    ///                      requested object handles.
+    ///
     /// \return MTP response.
     virtual MTPResponseCode getObjectHandles( const MTPObjFormatCode& formatCode, const quint32& associationHandle,
                                               QVector<ObjHandle> &objectHandles ) const = 0;
 
-    /// Searches for the given handle in all storages.
+    /// Searches for the given object handle in this storage.
+    ///
     /// \param handle [in] the object handle.
-    /// \return MTP response.
+    ///
+    /// \return true if this object handle exists, false otherwise.
     virtual bool checkHandle( const ObjHandle &handle ) const = 0;
 
     /// Gets the storage info.
@@ -124,8 +148,8 @@ public:
     /// Moves an object within or across storages.
     /// \param handle [in] object to be moved.
     /// \param parentHandle [in] parent in destination location.
-    /// \param storageId [in] destination storage.
-    virtual MTPResponseCode moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, bool movePhysically = true ) = 0;
+    /// \param destinationStorage [in] destination storage.
+    virtual MTPResponseCode moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage, bool movePhysically = true ) = 0;
 
     /// Given an object handle, provides it's absolute path in its storage.
     /// \param handle [in] object handle.
@@ -141,16 +165,22 @@ public:
 
     /// Writes data onto a storage item.
     /// \param handle [in] the object handle.
-    /// \writeBuffer [in] the data to be written.
-    /// \bufferLen [in] the length of the data to be written.
-    /// \param isFirstSegment [in] If true, this is the first segment in a multi segment write operation
-    /// \param isLastSegment [in] If true, this is the final segment in a multi segment write operation
+    /// \param writeBuffer [in] the data to be written.
+    /// \param bufferLen [in] the length of the data to be written.
+    /// \param isFirstSegment [in] If true, this is the first segment in
+    ///                       a multi-segment write operation
+    /// \param isLastSegment [in] If true, this is the final segment in
+    ///                      a multi-segment write operation
     virtual MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment, bool isLastSegment ) = 0;
 
     /// Reads data from a storage item.
     /// \param handle [in] the object handle.
-    /// \readBuffer [in] the buffer where data will written. The buffer must be allocated by the caller
-    /// \readBufferLen [in, out] the length of the input buffer. At most this amount of data will be read from the object. The function will return the actual number of bytes read in this buffer
+    /// \param readBuffer [in] the buffer where data will written; must be
+    ///                   allocated by the caller.
+    /// \param readBufferLen [in, out] the length of the input buffer. At most
+    ///                      this number of bytes will be read from the object.
+    ///                      The method stores the actual number of read bytes
+    ///                      into this argument.
     /// \param readOffset [in] The offset, in bytes, into the object to start reading from
     virtual MTPResponseCode readData( const ObjHandle &handle, char *readBuffer, qint32 &readBufferLen, quint32 readOffset ) = 0;
 
@@ -196,6 +226,16 @@ public Q_SLOTS:
     virtual void getLargestPuoid( MtpInt128& puoid ) = 0;
 
 protected:
+    /// Copies data between two storages and objects.
+    ///
+    /// \param sourceStorage [in] StoragePlugin from which to copy.
+    /// \param source [in] handle of an object from which to copy data.
+    /// \param destinationStorage [in] StoragePlugin into which to copy.
+    /// \param destination [in] handle of an object to be filled with data.
+    static MTPResponseCode copyData(StoragePlugin *sourceStorage,
+            ObjHandle source, StoragePlugin *destinationStorage,
+            ObjHandle destination);
+
     /// Storage id assigned to this storage by the storage factory.
     quint32 m_storageId;
     MTPStorageInfo m_storageInfo;
