@@ -65,16 +65,18 @@ public:
     /// \return true or false depending on whether storage succeeded or failed.
     virtual bool enumerateStorage() = 0;
 
-    /// Adds an item to the Storage Factory.
-    /// \param storageId [in/out] which storage this item goes to.
-    /// \param handle [out] the handle of the item's parent.
-    /// \param parentHandle [out] the handle of this item.
+    /// Adds an item to the storage.
+    ///
+    /// \param parentHandle [out] the handle of the item's parent.
+    /// \param handle [out] the handle of this item.
     /// \param info pointer to a structure holding the object info dataset
     /// for this item.
+    ///
     /// \return MTP response.
     virtual MTPResponseCode addItem( ObjHandle &parentHandle, ObjHandle &handle, MTPObjectInfo *info ) = 0;
 
-    /// Deletes an item from the Storage Factory
+    /// Deletes an item from the storage.
+    ///
     /// \param handle [in] the handle of the object that needs to be deleted.
     /// \param formatCode [in] this optional arg can be used to delete all objects of a certain format.
     /// \return MTP response.
@@ -93,9 +95,11 @@ public:
     virtual MTPResponseCode getObjectHandles( const MTPObjFormatCode& formatCode, const quint32& associationHandle,
                                               QVector<ObjHandle> &objectHandles ) const = 0;
 
-    /// Searches for the given handle in all storages.
+    /// Searches for the given object handle in this storage.
+    ///
     /// \param handle [in] the object handle.
-    /// \return MTP response.
+    ///
+    /// \return true if this object handle exists, false otherwise.
     virtual bool checkHandle( const ObjHandle &handle ) const = 0;
 
     /// Gets the storage info.
@@ -145,16 +149,22 @@ public:
 
     /// Writes data onto a storage item.
     /// \param handle [in] the object handle.
-    /// \writeBuffer [in] the data to be written.
-    /// \bufferLen [in] the length of the data to be written.
-    /// \param isFirstSegment [in] If true, this is the first segment in a multi segment write operation
-    /// \param isLastSegment [in] If true, this is the final segment in a multi segment write operation
+    /// \param writeBuffer [in] the data to be written.
+    /// \param bufferLen [in] the length of the data to be written.
+    /// \param isFirstSegment [in] If true, this is the first segment in
+    ///                       a multi-segment write operation
+    /// \param isLastSegment [in] If true, this is the final segment in
+    ///                      a multi-segment write operation
     virtual MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment, bool isLastSegment ) = 0;
 
     /// Reads data from a storage item.
     /// \param handle [in] the object handle.
-    /// \readBuffer [in] the buffer where data will written. The buffer must be allocated by the caller
-    /// \readBufferLen [in, out] the length of the input buffer. At most this amount of data will be read from the object. The function will return the actual number of bytes read in this buffer
+    /// \param readBuffer [in] the buffer where data will written; must be
+    ///                   allocated by the caller.
+    /// \param readBufferLen [in, out] the length of the input buffer. At most
+    ///                      this number of bytes will be read from the object.
+    ///                      The method stores the actual number of read bytes
+    ///                      into this argument.
     /// \param readOffset [in] The offset, in bytes, into the object to start reading from
     virtual MTPResponseCode readData( const ObjHandle &handle, char *readBuffer, qint32 &readBufferLen, quint32 readOffset ) = 0;
 
