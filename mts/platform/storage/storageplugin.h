@@ -80,11 +80,15 @@ public:
     /// \return MTP response.
     virtual MTPResponseCode deleteItem( const ObjHandle& handle, const MTPObjFormatCode& formatCode ) = 0;
 
-    /// Returns the no. of items belonging to a certain format and/or contained in a certain folder.
-    /// \return storageId [in] which storage to look for.
-    /// \param formatCode [in] this optional arg can be used to delete all objects of a certain format.
-    /// \param associationHandle [in] this optional argument can specify the containing folder.
-    /// \param noOfObjects [out] no. of objects found.
+    /// Fills a collection with handles of child object of a given association
+    /// (folder).
+    ///
+    /// \param formatCode [in] if not zero, filters the set of handles only to
+    ///                   objects of particular type.
+    /// \param associationHandle [in] the association whose children to get.
+    /// \param objectHandles [out] method fills this collection with the
+    ///                      requested object handles.
+    ///
     /// \return MTP response.
     virtual MTPResponseCode getObjectHandles( const MTPObjFormatCode& formatCode, const quint32& associationHandle,
                                               QVector<ObjHandle> &objectHandles ) const = 0;
