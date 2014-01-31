@@ -2752,7 +2752,6 @@ void FSStoragePlugin::receiveThumbnail(const QString &path)
     }
 }
 
-// TODO: Implement the below
 void FSStoragePlugin::handleFSDelete(const struct inotify_event *event, const char* name)
 {
     if(event->mask & (IN_DELETE | IN_MOVED_FROM))
