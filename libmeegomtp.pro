@@ -13,6 +13,7 @@ mtpserver.depends = sub-mts
 
 mts_fsstorage_plugin.subdir = mts/platform/storage/fsstorageplugin
 mts_fsstorage_plugin.target = sub-mts-fsstorage-plugin
+mts_fsstorage_plugin.depends = sub-mts
 
 mts_fsstorage_tests.subdir = mts/platform/storage/fsstorageplugin/unittests
 mts_fsstorage_tests.target = sub-mts-fsstorage-tests
