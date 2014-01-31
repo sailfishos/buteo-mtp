@@ -1153,7 +1153,7 @@ void FSStoragePlugin_test::testGetObjectPropertyValueFromStorage()
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Parent_Obj, v, MTP_DATA_TYPE_UNDEF );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( v.toUInt(), m_storage->m_pathNamesMap["/tmp/mtptests/"] );
+    QCOMPARE( v.toUInt(), m_storage->m_pathNamesMap["/tmp/mtptests"] );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Obj_Size, v, MTP_DATA_TYPE_UNDEF );
