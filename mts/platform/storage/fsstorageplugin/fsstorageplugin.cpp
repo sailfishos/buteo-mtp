@@ -761,9 +761,9 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
                 {
                     return result;
                 }
-
-                addWatchDescriptor( item.data() );
             }
+
+            addWatchDescriptor( item.data() );
 
             addItemToMaps( item.data() );
 
