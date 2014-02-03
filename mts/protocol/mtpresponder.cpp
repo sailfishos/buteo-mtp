@@ -2184,15 +2184,46 @@ void MTPResponder::sendObjectData(quint8* data, quint32 dataLen, bool isFirstPac
             const MtpObjPropDesc *propDesc = 0;
             for( quint32 i = 0 ; i < m_objPropListInfo->noOfElements; i++)
             {
-                if( MTP_OBJ_PROP_Obj_File_Name == m_objPropListInfo->objPropList[i].objectPropCode)
+                ObjPropListInfo::ObjectPropList &propList =
+                        m_objPropListInfo->objPropList[i];
+
+                switch(propList.objectPropCode)
                 {
-                    // This has already been set
-                    continue;
+                    case MTP_OBJ_PROP_Obj_File_Name:
+                        // This has already been set
+                        continue;
+                    case MTP_OBJ_PROP_Name:
+                    {
+                        // Some initiators send media file properties with Name
+                        // equal to Object File Name, even though the tags
+                        // embedded in the file may contain a value more
+                        // suitable for display in a player as a song or movie
+                        // title than a mere filename.
+                        //
+                        // Thus, when we encounter a filename in the Name
+                        // property, we don't store the value and let Tracker
+                        // try extracting the name from the file's embedded
+                        // metadata.
+                        const MTPObjectInfo *info;
+                        if( m_storageServer->getObjectInfo( handle, info ) != MTP_RESP_OK )
+                        {
+                            break;
+                        }
+
+                        if( propList.value->toString() == info->mtpFileName )
+                        {
+                            continue;
+                        }
+                        break;
+                    }
+                    default:
+                        break;
                 }
+
                 // Get the object prop desc for this property
-                if(MTP_RESP_OK == m_propertyPod->getObjectPropDesc(category, m_objPropListInfo->objPropList[i].objectPropCode, propDesc))
+                if(MTP_RESP_OK == m_propertyPod->getObjectPropDesc(category, propList.objectPropCode, propDesc))
                 {
-                    propValList.append(MTPObjPropDescVal(propDesc, *m_objPropListInfo->objPropList[i].value));
+                    propValList.append(MTPObjPropDescVal(propDesc, *propList.value));
                 }
             }
             m_storageServer->setObjectPropertyValue(handle, propValList, true);
