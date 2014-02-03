@@ -86,20 +86,24 @@ MTPResponder* MTPResponder::instance()
     return m_instance;
 }
 
-MTPResponder::MTPResponder() : m_storageServer(0), m_transporter(0), m_copiedObjHandle(0),
-                               m_state(RESPONDER_IDLE), m_objPropListInfo(0), m_sendObjectSequencePtr(0),
-                               m_prevState(RESPONDER_IDLE), m_isLastPacket(false), m_containerToBeResent(false)
-
+MTPResponder::MTPResponder(): m_storageServer(0),
+    m_transporter(0),
+    m_devInfoProvider(new DeviceInfoProvider),
+    m_propertyPod(PropertyPod::instance(m_devInfoProvider, m_extensionManager)),
+    m_propCache(ObjectPropertyCache::instance()),
+    m_extensionManager(new MTPExtensionManager),
+    m_copiedObjHandle(0),
+    m_containerToBeResent(false),
+    m_isLastPacket(false),
+    m_state(RESPONDER_IDLE),
+    m_prevState(RESPONDER_IDLE),
+    m_objPropListInfo(0),
+    m_sendObjectSequencePtr(0),
+    m_transactionSequence(new MTPTransactionSequence)
 {
     MTP_FUNC_TRACE();
 
     createCommandHandler();
-    m_transactionSequence = new MTPTransactionSequence;
-
-    m_devInfoProvider = new DeviceInfoProvider();
-    m_extensionManager = new MTPExtensionManager();
-    m_propertyPod = PropertyPod::instance(m_devInfoProvider, m_extensionManager);
-    m_propCache = ObjectPropertyCache::instance();
 }
 
 bool MTPResponder::initTransport( TransportType transport )
