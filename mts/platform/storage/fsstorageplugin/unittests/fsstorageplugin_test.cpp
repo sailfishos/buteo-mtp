@@ -981,6 +981,7 @@ void FSStoragePlugin_test::testFileMove()
 void FSStoragePlugin_test::testFileMoveAcrossStorage()
 {
     QEventLoop loop;
+    while ( loop.processEvents() );
 
     const QByteArray TEXT( "some text for comparison" );
 
@@ -996,7 +997,8 @@ void FSStoragePlugin_test::testFileMoveAcrossStorage()
     file.write(TEXT);
     file.close();
 
-    loop.processEvents();
+    // Process all accumulated events.
+    while ( loop.processEvents() );
 
     FSStoragePlugin secondStorage( 2, MTP_STORAGE_TYPE_FixedRAM,
             "/tmp/mtptests-second", "second", "Second Storage" );
@@ -1153,7 +1155,7 @@ void FSStoragePlugin_test::testGetObjectPropertyValueFromStorage()
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Parent_Obj, v, MTP_DATA_TYPE_UNDEF );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( v.toUInt(), m_storage->m_pathNamesMap["/tmp/mtptests/"] );
+    QCOMPARE( v.toUInt(), m_storage->m_pathNamesMap["/tmp/mtptests"] );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Obj_Size, v, MTP_DATA_TYPE_UNDEF );
@@ -1536,35 +1538,47 @@ void FSStoragePlugin_test::testGetInvalidObjectPropertyValueFromStorage()
 void FSStoragePlugin_test::testInotifyCreate()
 {
     QEventLoop loop;
-    quint32 getOutOfHere = 0;
-    loop.processEvents();
-    while( !m_storage->m_pathNamesMap.contains("/tmp/mtptests/tmpfile") &&
-           getOutOfHere < 20 )
-    {
-        system("touch /tmp/mtptests/tmpfile");
-        loop.processEvents();
-        ++getOutOfHere;
-    }
-    QVERIFY( m_storage->m_pathNamesMap.contains("/tmp/mtptests/tmpfile") );
+
+    QDir dir;
+    dir.mkpath( "/tmp/mtptests/inotifydir" );
+
+    while( loop.processEvents() );
+
+    QFile file( "/tmp/mtptests/inotifydir/tmpfile" );
+    file.open( QFile::ReadWrite );
+    file.close();
+
+    while( loop.processEvents() );
+
+    QVERIFY( m_storage->m_pathNamesMap.contains("/tmp/mtptests/inotifydir/tmpfile") );
 }
 
 void FSStoragePlugin_test::testInotifyModify()
 {
     QEventLoop loop;
-    quint32 getOutOfHere = 0;
-    quint64 size = 0;
     loop.processEvents();
-    const MTPObjectInfo *objInfo;
-    system("echo \"tmp\" > /tmp/mtptests/tmpfile");
-    while( size !=3 && getOutOfHere < 20 )
-    {
-        // Recalculate object Info
-        m_storage->getObjectInfo(m_storage->m_pathNamesMap["/tmp/mtptests/tmpfile"], objInfo);
-        size = objInfo->mtpObjectCompressedSize;
-        loop.processEvents();
-        ++getOutOfHere;
-    }
-    QCOMPARE( size, static_cast<quint64>(4) );
+
+    QFile file( "/tmp/mtptests/tmpfile" );
+    file.open( QFile::ReadWrite );
+    file.close();
+
+    loop.processEvents();
+
+    StorageItem *item =
+            m_storage->findStorageItemByPath("/tmp/mtptests/tmpfile");
+    QVERIFY( item );
+    QCOMPARE( item->m_objectInfo->mtpObjectCompressedSize,
+              static_cast<quint64>(0) );
+
+    const QString TEXT( "some text to be written into the file" );
+    file.open( QFile::ReadWrite );
+    file.write( TEXT.toUtf8() );
+    file.close();
+
+    loop.processEvents();
+
+    QCOMPARE( item->m_objectInfo->mtpObjectCompressedSize,
+              static_cast<quint64>(TEXT.size()) );
 }
 
 void FSStoragePlugin_test::testInotifyMove()
