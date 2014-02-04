@@ -300,13 +300,14 @@ BulkWriterThread::BulkWriterThread(QObject *parent)
     connect(this, SIGNAL(finished()), SLOT(quit()), Qt::QueuedConnection);
 }
 
-void BulkWriterThread::setData(const quint8 *buffer, quint32 dataLen)
+void BulkWriterThread::setData(const quint8 *buffer, quint32 dataLen, bool terminateTransfer)
 {
     // This runs in the main thread. The caller makes sure that the
     // writer thread is not running yet.
 
     m_buffer = buffer;
     m_dataLen = dataLen;
+    m_terminateTransfer = terminateTransfer;
     m_result = false;
     m_result_ready.store(0);
 }
@@ -317,8 +318,18 @@ void BulkWriterThread::execute()
 
     int bytesWritten = 0;
     char *dataptr = (char*)m_buffer;
+    // PTP compatibility requires that a transfer is terminated by a
+    // "short packet" (a packet of less than maximum length). This
+    // happens naturally for most transfers, but if the transfer size
+    // is a multiple of the packet size then a zero-length packet
+    // should be added. Note: this logic requires that all previous
+    // buffers for the current transfer were also multiples of the
+    // packet size, which is generally not a problem because powers
+    // of two are used.
+    // TODO: Get the real packet size from the kernel
+    bool zeropacket = m_terminateTransfer && m_dataLen % PTP_HS_DATA_PKT_SIZE == 0;
 
-    while (m_dataLen && !m_shouldExit) {
+    while ((m_dataLen || zeropacket) && !m_shouldExit) {
         bytesWritten = write(m_fd, dataptr, m_dataLen);
         if(bytesWritten == -1)
         {
@@ -340,6 +351,8 @@ void BulkWriterThread::execute()
             MTP_LOG_CRITICAL("BulkWriterThread exiting: errno " << errno);
             break;
         }
+        if (m_dataLen == 0)
+            zeropacket = false;
         dataptr += bytesWritten;
         m_dataLen -= bytesWritten;
     }

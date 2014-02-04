@@ -32,6 +32,7 @@
 #include <QtCore/QVector>
 #include <QtCore/QString>
 #include <QtCore/QCoreApplication>
+#include <QtAlgorithms>
 #include <qglobal.h>
 
 #include "mtpresponder.h"
@@ -60,25 +61,49 @@ MTPResponder* MTPResponder::instance()
     MTP_FUNC_TRACE();
     if(0 == m_instance)
     {
+        /* Do all the metatype registration here to ensure we have all the
+         * needed symbols defined in libmtp-server.so rather than in some
+         * storage plugin that doesn't have to be loaded all the time. */
+        qRegisterMetaType<char>();
+        qRegisterMetaType<MtpInt128>();
+        qRegisterMetaType<MTPEventCode>();
+        qRegisterMetaType<MtpEnumForm>();
+        qRegisterMetaType<MtpRangeForm>();
+
+        qRegisterMetaType<QVector<char> >();
+        qRegisterMetaType<QVector<qint8> >();
+        qRegisterMetaType<QVector<qint16> >();
+        qRegisterMetaType<QVector<qint32> >();
+        qRegisterMetaType<QVector<qint64> >();
+        qRegisterMetaType<QVector<quint8> >();
+        qRegisterMetaType<QVector<quint16> >();
+        qRegisterMetaType<QVector<quint32> >();
+        qRegisterMetaType<QVector<quint64> >();
+        qRegisterMetaType<QVector<MtpInt128> >();
+
         m_instance = new MTPResponder();
     }
     return m_instance;
 }
 
-MTPResponder::MTPResponder() : m_storageServer(0), m_transporter(0), m_copiedObjHandle(0),
-                               m_state(RESPONDER_IDLE), m_objPropListInfo(0), m_sendObjectSequencePtr(0),
-                               m_prevState(RESPONDER_IDLE), m_isLastPacket(false), m_containerToBeResent(false)
-
+MTPResponder::MTPResponder(): m_storageServer(0),
+    m_transporter(0),
+    m_devInfoProvider(new DeviceInfoProvider),
+    m_propertyPod(PropertyPod::instance(m_devInfoProvider, m_extensionManager)),
+    m_propCache(ObjectPropertyCache::instance()),
+    m_extensionManager(new MTPExtensionManager),
+    m_copiedObjHandle(0),
+    m_containerToBeResent(false),
+    m_isLastPacket(false),
+    m_state(RESPONDER_IDLE),
+    m_prevState(RESPONDER_IDLE),
+    m_objPropListInfo(0),
+    m_sendObjectSequencePtr(0),
+    m_transactionSequence(new MTPTransactionSequence)
 {
     MTP_FUNC_TRACE();
 
     createCommandHandler();
-    m_transactionSequence = new MTPTransactionSequence;
-
-    m_devInfoProvider = new DeviceInfoProvider();
-    m_extensionManager = new MTPExtensionManager();
-    m_propertyPod = PropertyPod::instance(m_devInfoProvider, m_extensionManager);
-    m_propCache = ObjectPropertyCache::instance();
 }
 
 bool MTPResponder::initTransport( TransportType transport )
@@ -687,7 +712,6 @@ void MTPResponder::getDeviceInfoReq()
     // Capture Formats (array)
     quint32 captureFormatsNumElem = 0;
     quint32 captureFormatsLen = 0;
-    quint16 *captureFormats = 0;
 
     // Image Formats (array)
     QVector<quint16> imageFormats = m_devInfoProvider->supportedFormats();
@@ -788,7 +812,6 @@ void MTPResponder::closeSessionReq()
 {
     MTP_FUNC_TRACE();
     quint16 code =  MTP_RESP_OK;
-    MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
     if(MTP_INITIAL_SESSION_ID == m_transactionSequence->mtpSessionId)
     {
@@ -1015,6 +1038,10 @@ void MTPResponder::getObjectHandlesReq()
     bool sent = true;
     if( MTP_RESP_OK == code )
     {
+        // At least one PTP client (iPhoto) only shows all pictures if
+        // the handles are sorted. It's probably related to having parent
+        // folders listed before the objects they contain.
+        qSort(handles);
         // DATA PHASE
         payloadLength = ( handles.size() + 1 ) * sizeof(quint32);
         MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
@@ -1100,7 +1127,9 @@ void MTPResponder::getObjectReq()
         if( MTP_OP_GetPartialObject == reqContainer->code() )
         {
             startingOffset = params[1];
+            // clamp payloadLength to remaining length of file
             payloadLength = startingOffset > payloadLength ? 0 : payloadLength - startingOffset;
+            // clamp payloadLength to maximum length in request
             payloadLength = payloadLength > params[2] ? params[2] : payloadLength;
         }
     }
@@ -1113,7 +1142,7 @@ void MTPResponder::getObjectReq()
         {
             // segmentation needed
             // set the segmentation info
-            m_segmentedSender.totalDataLen = payloadLength;
+            m_segmentedSender.totalDataLen = startingOffset + payloadLength;
             m_segmentedSender.payloadLen = BUFFER_MAX_LEN - MTP_HEADER_SIZE;
             m_segmentedSender.objHandle = params[0];
             m_segmentedSender.offset = startingOffset;
@@ -1165,9 +1194,52 @@ void MTPResponder::getObjectReq()
 void MTPResponder::getThumbReq()
 {
     MTP_FUNC_TRACE();
+    bool sent = false;
+    MTPResponseCode code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
-    // FIXME: Implement this!
-    sendResponse(MTP_RESP_OperationNotSupported);
+
+    code = preCheck(m_transactionSequence->mtpSessionId,
+            reqContainer->transactionId());
+    if( MTP_RESP_OK == code )
+    {
+        QVector<quint32> params;
+        reqContainer->params( params );
+
+        const MtpObjPropDesc *propDesc = 0;
+        m_propertyPod->getObjectPropDesc( MTP_IMAGE_FORMAT,
+                MTP_OBJ_PROP_Rep_Sample_Data, propDesc );
+
+        QList<MTPObjPropDescVal> propValList;
+        propValList.append( MTPObjPropDescVal ( propDesc ) );
+
+        code = m_storageServer->getObjectPropertyValue( params[0], propValList );
+        if( MTP_RESP_OK == code )
+        {
+            QVector<quint8> thumbnailData =
+                    propValList[0].propVal.value<QVector<quint8> >();
+
+            int payloadLength = thumbnailData.size();
+
+            MTPTxContainer dataContainer( MTP_CONTAINER_TYPE_DATA,
+                    reqContainer->code(), reqContainer->transactionId(),
+                    payloadLength );
+
+            memcpy( dataContainer.payload(), thumbnailData.constData(),
+                    payloadLength );
+
+            dataContainer.seek( payloadLength );
+            sent = sendContainer( dataContainer );
+            if( false == sent )
+            {
+                MTP_LOG_CRITICAL("Could not send thumbnail data");
+            }
+        }
+    }
+
+    if( true == sent )
+    {
+        sendResponse(code);
+    }
 }
 
 void MTPResponder::deleteObjectReq()
@@ -1639,7 +1711,6 @@ void MTPResponder::getObjectPropListReq()
     ObjHandle objHandle = 0;
     MTPObjFormatCode format = MTP_OBF_FORMAT_Undefined;
     MTPObjPropertyCode propCode;
-    quint16 propGroupCode = 0;
     quint32 depth = 0;
     MTPResponseCode resp = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
@@ -1650,7 +1721,6 @@ void MTPResponder::getObjectPropListReq()
     objHandle = static_cast<ObjHandle>(params[0]);
     format = static_cast<MTPObjFormatCode>(params[1]);
     propCode = static_cast<MTPObjPropertyCode>(params[2]);
-    propGroupCode = static_cast<quint16>(params[3]);
     depth = (params[4]);
     bool sent = true;
 
@@ -1844,7 +1914,6 @@ void MTPResponder::setObjectPropListReq()
 void MTPResponder::getInterdependentPropDescReq()
 {
     MTP_FUNC_TRACE();
-    MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     // FIXME: Implement this!
     sendResponse(MTP_RESP_OperationNotSupported);
 }
@@ -1857,7 +1926,6 @@ void MTPResponder::sendObjectPropListReq()
     quint64 objectSize = 0x00000000;
     ObjHandle parentHandle = 0x00000000;
     MTPObjFormatCode format = MTP_OBF_FORMAT_Undefined;
-    MTPObjectFormatCategory category = MTP_UNSUPPORTED_FORMAT;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
     // check if everthing is ok, so that cmd can be processed
@@ -1885,7 +1953,6 @@ void MTPResponder::sendObjectPropListReq()
             {
                 // Fetch object format code and category
                 format = static_cast<MTPObjFormatCode>(params[2]);
-                category = static_cast<MTPObjectFormatCategory>(m_devInfoProvider->getFormatCodeCategory(format));
                 // Get the object size
                 quint64 msb = params[3];
                 quint64 lsb = params[4];
@@ -2052,7 +2119,6 @@ void MTPResponder::sendObjectData(quint8* data, quint32 dataLen, bool isFirstPac
     quint32 objectLen = 0;
     MTPResponseCode code =  MTP_RESP_OK;
     MTPContainerWrapper container(data);
-    MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     ObjHandle handle = 0;
 
     // error if no ObjectInfo or objectproplist dataset has been sent before
@@ -2118,15 +2184,46 @@ void MTPResponder::sendObjectData(quint8* data, quint32 dataLen, bool isFirstPac
             const MtpObjPropDesc *propDesc = 0;
             for( quint32 i = 0 ; i < m_objPropListInfo->noOfElements; i++)
             {
-                if( MTP_OBJ_PROP_Obj_File_Name == m_objPropListInfo->objPropList[i].objectPropCode)
+                ObjPropListInfo::ObjectPropList &propList =
+                        m_objPropListInfo->objPropList[i];
+
+                switch(propList.objectPropCode)
                 {
-                    // This has already been set
-                    continue;
+                    case MTP_OBJ_PROP_Obj_File_Name:
+                        // This has already been set
+                        continue;
+                    case MTP_OBJ_PROP_Name:
+                    {
+                        // Some initiators send media file properties with Name
+                        // equal to Object File Name, even though the tags
+                        // embedded in the file may contain a value more
+                        // suitable for display in a player as a song or movie
+                        // title than a mere filename.
+                        //
+                        // Thus, when we encounter a filename in the Name
+                        // property, we don't store the value and let Tracker
+                        // try extracting the name from the file's embedded
+                        // metadata.
+                        const MTPObjectInfo *info;
+                        if( m_storageServer->getObjectInfo( handle, info ) != MTP_RESP_OK )
+                        {
+                            break;
+                        }
+
+                        if( propList.value->toString() == info->mtpFileName )
+                        {
+                            continue;
+                        }
+                        break;
+                    }
+                    default:
+                        break;
                 }
+
                 // Get the object prop desc for this property
-                if(MTP_RESP_OK == m_propertyPod->getObjectPropDesc(category, m_objPropListInfo->objPropList[i].objectPropCode, propDesc))
+                if(MTP_RESP_OK == m_propertyPod->getObjectPropDesc(category, propList.objectPropCode, propDesc))
                 {
-                    propValList.append(MTPObjPropDescVal(propDesc, *m_objPropListInfo->objPropList[i].value));
+                    propValList.append(MTPObjPropDescVal(propDesc, *propList.value));
                 }
             }
             m_storageServer->setObjectPropertyValue(handle, propValList, true);
@@ -2155,7 +2252,6 @@ void MTPResponder::setObjectPropListData()
     MTPObjectFormatCategory category;
     const MtpObjPropDesc* propDesc = 0;
     quint32 i = 0;
-    MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     MTPRxContainer *recvContainer = m_transactionSequence->dataContainer;
 
     // Deserialize the no. of elements for which we need to set object property values
@@ -2694,7 +2790,6 @@ bool MTPResponder::serializePropListQuantum(ObjHandle currentObj, QList<MTPObjPr
     MTP_FUNC_TRACE();
 
     QList<MTPObjPropDescVal> notFoundList;
-    quint32 propCount = propValList.count();
     bool allProps = !(propValList.count() == 1);
     // Ignore below return value
     if( allProps )

@@ -83,6 +83,7 @@ SOURCES += mts.cpp \
            platform/deviceinfo/deviceinfoprovider.cpp \
            platform/deviceinfo/xmlhandler.cpp \
            platform/storage/storagefactory.cpp \
+           platform/storage/storageplugin.cpp \
            transport/usb/descriptor.c \
            transport/usb/threadio.cpp
 

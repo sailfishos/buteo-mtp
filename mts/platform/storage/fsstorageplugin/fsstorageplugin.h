@@ -68,99 +68,37 @@ public:
     /// Destructor.
     ~FSStoragePlugin();
 
-    /// Enumerate the storage.
-    /// \return true or false depending on whether storage succeeded or failed.
     bool enumerateStorage();
 
-    /// Adds an item to the Storage Server.
-    /// \param parentHandle [out] the handle of the item's parent.
-    /// \param handle [out] the handle of this item.
-    /// \param info pointer to a structure holding the object info dataset
-    /// for this item.
-    /// \return MTP response.
     MTPResponseCode addItem( ObjHandle &parentHandle, ObjHandle &handle, MTPObjectInfo *info );
 
-    /// Deletes an item from the Storage Server
-    /// \param handle [in] the handle of the object that needs to be deleted.
-    /// \param formatCode [in] this optional arg can be used to delete all objects of a certain format.
-    /// \return MTP response.
     MTPResponseCode deleteItem( const ObjHandle& handle, const MTPObjFormatCode& formatCode );
 
-    /// Returns the no. of items belonging to a certain format and/or contained in a certain folder.
-    /// \return storageId [in] which storage to look for.
-    /// \param formatCode [in] this optional arg can be used to delete all objects of a certain format.
-    /// \param associationHandle [in] this optional argument can specify the containing folder.
-    /// \param noOfObjects [out] no. of objects found.
-    /// \return MTP response.
+    MTPResponseCode copyHandle( StoragePlugin *sourceStorage, ObjHandle source,
+            ObjHandle parent );
+
     MTPResponseCode getObjectHandles( const MTPObjFormatCode& formatCode, const quint32& associationHandle, QVector<ObjHandle> &objectHandles ) const;
 
-    /// Searches for the given object handle in this storage.
-    /// \param handle [in] the object handle.
-    /// \return true if this object handle exists, false otherwise.
     bool checkHandle( const ObjHandle &handle ) const;
 
-    /// Gets the storage info.
-    /// \param storageId [in] storage id.
-    /// \param storageType [out] populated storage info structure.
-    /// \return MTP response.
     MTPResponseCode storageInfo( MTPStorageInfo &info );
 
-    /// Given an object handle, gets the objects referenced by this object in a storage.
-    /// \param handle [in] object handle.
-    /// \param references [out] list of object references.
-    /// \return MTP response.
     MTPResponseCode getReferences( const ObjHandle &handle , QVector<ObjHandle> &references );
 
-    /// For an object handle, sets objects references in a storage.
-    /// \param handle [in] object handle.
-    /// \param references [in] list of object references.
-    /// \return MTP response.
     MTPResponseCode setReferences( const ObjHandle &handle , const QVector<ObjHandle> &references );
 
-    /// Copies an object within or across storages.
-    /// \param handle [in] object to be copied.
-    /// \param parentHandle [in] parent in destination location.
-    /// \param destinationStorageId [in] destination storage.
-    /// \param copiedObjectHandle [out] The handle to the copied object is returned in this
-    /// \param recursionCounter [in] The recursion depth
-    MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, ObjHandle &copiedObjectHandle , quint32 recursionCounter = 0);
+    MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage, ObjHandle &copiedObjectHandle , quint32 recursionCounter = 0);
 
-    /// Moves an object within or across storages.
-    /// \param handle [in] object to be moved.
-    /// \param parentHandle [in] parent in destination location.
-    /// \param storageId [in] destination storage.
-    MTPResponseCode moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, bool movePhysically = true );
+    MTPResponseCode moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage, bool movePhysically = true );
 
-    /// Given an object handle, provides it's absolute path in its storage.
-    /// \param handle [in] object handle.
-    /// \param path [out] the absolute path.
-    /// \return MTP response.
     MTPResponseCode getPath( const quint32 &handle, QString &path ) const;
 
-    /// Given an object handle, provides the object's objectinfo dataset.
-    /// \param handle [in] the object handle.
-    /// \param objectInfo [out] pointer to a structure holding the objectinfo dataset.
-    /// \return MTP response.
     MTPResponseCode getObjectInfo( const ObjHandle &handle, const MTPObjectInfo *&objectInfo );
 
-    /// Writes data onto a storage item.
-    /// \param handle [in] the object handle.
-    /// \writeBuffer [in] the data to be written.
-    /// \bufferLen [in] the length of the data to be written.
-    /// \param isFirstSegment [in] If true, this is the first segment in a multi segment write operation
-    /// \param isLastSegment [in] If true, this is the final segment in a multi segment write operation
     MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment, bool isLastSegment );
 
-    /// Reads data from a storage item.
-    /// \param handle [in] the object handle.
-    /// \readBuffer [in] the buffer where data will written. The buffer must be allocated by the caller
-    /// \readBufferLen [in, out] the length of the input buffer. At most this amount of data will be read from the object. The function will return the actual number of bytes read in this buffer
-    /// \param readOffset [in] The offset, in bytes, into the object to start reading from
     MTPResponseCode readData( const ObjHandle &handle, char *readBuffer, qint32 &readBufferLen, quint32 readOffset );
 
-    /// Truncates an item to a certain size.
-    /// \param handle [in] the object handle.
-    /// \size [in] the size in bytes.
     MTPResponseCode truncateItem( const ObjHandle &handle, const quint32 &size );
 
     void excludePath( const QString & path );
@@ -196,20 +134,17 @@ private:
     /// After reading puoids the db, this gets rid of any puoids that are no longer valid ( the corresponding object doesn't exist ).
     void removeUnusedPuoids();
 
-    /// Adds a directory to our filesystem storage.
-    /// \param storageItem [out] pointer to the newly created StorageItem.
-    /// \param isRootDir [in] boolean that indicates if this is the root folder.
-    /// \param sendEvent [in] indicates whether to send an event to the MTP initiator or not.
-    /// \param createIfNotExist [in] boolean which indicates whether to create the item on the filesystem if one does not exist.
+    /// Creates a directory in the file system.
+    ///
+    /// \param path [in] filesystem path of the directory to create.
     /// \return MTP response.
-    MTPResponseCode addDirToStorage(  StorageItem *&thisStorageItem, bool isRootDir = false, bool sendEvent = false, bool createIfNotExist = false );
+    MTPResponseCode createDirectory( const QString &path );
 
-    /// Adds a file to our filesystem storage.
-    /// \param storageItem [in/out] pointer to the newly created StorageItem.
-    /// \param sendEvent [in] indicates whether to send an event to the MTP initiator or not.
-    /// \param createIfNotExist [in] boolean which indicates whether to create the item on the filesystem if one does not exist.
+    /// Creates a file in the file system.
+    ///
+    /// \param path [in] filesystem path of the file to create.
     /// \return MTP response.
-    MTPResponseCode addFileToStorage( StorageItem *&thisStorageItem, bool sendEvent = false, bool createIfNotExist = false );
+    MTPResponseCode createFile( const QString &path );
 
     /// Gets a new object handle that can be assigned to an item.
     /// \return the object handle
@@ -241,11 +176,31 @@ private:
     /// \return the storage item.
     StorageItem* findStorageItemByPath( const QString &path );
 
-    /// Creates a file or dir in the filesystem.
-    /// \param storageItem [in/out] pointer to the newly created StorageItem.
-    /// \param info [in] the object's objectinfo dataset.
-    /// \return MTP response.
-    MTPResponseCode addToStorage( StorageItem *&storageItem, MTPObjectInfo *info );
+    /// Creates new StorageItem representing a file or directory at \c path
+    /// and creates the file or directory if asked to do so.
+    ///
+    /// \param path [in] absolute filesystem path to represent in the storage.
+    /// \param storageItem [out] pointer where the new StorageItem is stored;
+    ///                    can be null.
+    /// \param info [in] if not null, the data in MTPObjectInfo are used to
+    ///             initialize the StorageItem; otherwise the object info is
+    ///             populated by default values (see populateObjectInfo()).
+    /// \param sendEvent [in] if true, ObjectAdded event is sent to the MTP
+    ///                  initiator.
+    /// \param createIfNotExist [in] if true, the filesystem item at \c path is
+    ///                         created if it doesn't exist yet.
+    /// \param handle [in] when nonzero, assigns the specific object handle to
+    ///               the newly created StorageItem.
+    /// \return MTP response code.
+    MTPResponseCode addToStorage( const QString &path,
+            StorageItem **storageItem = 0, MTPObjectInfo *info = 0,
+            bool sendEvent = false, bool createIfNotExist = false,
+            ObjHandle handle = 0 );
+
+    /// Inserts a storage item into internal data structures for faster search.
+    ///
+    /// \param item [in] a storage item.
+    void addItemToMaps( StorageItem *item );
 
     /// Removes a storage item.
     /// \param handle [in] the handle of the object that needs to be removed.
@@ -254,7 +209,7 @@ private:
 
     /// Populates the object info for a storage item if that's not done by the initiator.
     /// \param storageItem [in] the item's whose object info needs to be populated.
-    void populateObjectInfo( StorageItem *&storageItem );
+    void populateObjectInfo( StorageItem *storageItem );
 
     /// This method helps recursively modify the "path" field of a StorageItem ther has been moved.
     /// \param newAncestorPath [in] the new ancestor for the moved item and it's children.
@@ -413,7 +368,6 @@ private:
     MTPResponseCode deleteItemHelper( const ObjHandle& handle, bool removePhysically = true, bool sendEvent = false );
     bool isFileNameValid(const QString &fileName, const StorageItem *parent);
 
-    quint32 m_storageId; ///< storage id assigned to this storage by the storage factory.
     QHash<int,ObjHandle> m_watchDescriptorMap; ///< map from an inotify watch on an object to it's object handle.
     QHash<QString,ObjHandle> m_pathNamesMap;
     QHash<QString,MtpInt128> m_puoidsMap;

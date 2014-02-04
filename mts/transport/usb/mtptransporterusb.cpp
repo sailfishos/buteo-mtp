@@ -190,7 +190,7 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
     // remain responsive to events while the data is being written.
     // That's done by calling processEvents while waiting.
 
-    m_bulkWrite.setData(data, dataLen);
+    m_bulkWrite.setData(data, dataLen, isLastPacket);
     m_bulkWrite.start();
 
     // The bulk writer will make sure that processEvents is woken up
