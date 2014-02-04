@@ -598,7 +598,13 @@ MTPResponseCode FSStoragePlugin::createFile( const QString &path )
     QFile file( path );
     if ( !file.open( QIODevice::ReadWrite ) )
     {
-        return MTP_RESP_GeneralError;
+        switch( file.error() )
+        {
+            case QFileDevice::OpenError:
+                return MTP_RESP_AccessDenied;
+            default:
+                return MTP_RESP_GeneralError;
+        }
     }
 
 #if 0
@@ -759,6 +765,7 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
                 result = createDirectory( item->m_path );
                 if ( result != MTP_RESP_OK )
                 {
+                    unlinkChildStorageItem( item.data() );
                     return result;
                 }
             }
@@ -784,6 +791,7 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
                 result = createFile( item->m_path );
                 if ( result != MTP_RESP_OK )
                 {
+                    unlinkChildStorageItem( item.data() );
                     return result;
                 }
             }
@@ -1465,8 +1473,6 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle,
 
     // Invalidate the watch descriptor for this item and it's children, as their paths will change.
     removeWatchDescriptorRecursively( storageItem );
-    // unlink this item from it's current parent;
-    unlinkChildStorageItem( storageItem );
 
     // Do the move.
     if( movePhysically )
@@ -1474,11 +1480,16 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle,
         QDir dir;
         if ( !dir.rename( storageItem->m_path, destinationPath ) )
         {
+            // Move failed; restore original watch descriptors.
+            addWatchDescriptorRecursively( storageItem );
             return MTP_RESP_InvalidParentObject;
         }
     }
     m_pathNamesMap.remove( storageItem->m_path );
     m_pathNamesMap[destinationPath] = handle;
+
+    // Unlink this item from its current parent.
+    unlinkChildStorageItem( storageItem );
 
     StorageItem *itr = storageItem->m_firstChild;
     while( itr )
