@@ -232,7 +232,7 @@ void FSStoragePlugin_test::initTestCase()
 
 }
 
-void  FSStoragePlugin_test::testStorageCreation()
+void FSStoragePlugin_test::testStorageCreation()
 {
     m_storage = new FSStoragePlugin( 1, MTP_STORAGE_TYPE_FixedRAM, "/tmp/mtptests", "media", "Phone Memory" );
     QDir dir( m_storage->m_storagePath );
@@ -248,7 +248,14 @@ void  FSStoragePlugin_test::testStorageCreation()
     QVERIFY( m_storage->m_root->m_firstChild != 0 );
     QVERIFY( m_storage->m_root->m_nextSibling == 0 );
     QCOMPARE( m_storage->m_root->m_path, QString("/tmp/mtptests") );
-    //m_storage->dumpStorageItem( m_storage->m_root, true );
+
+    // Check whether child items are correctly linked to their parents.
+    StorageItem *parentItem =
+            m_storage->findStorageItemByPath("/tmp/mtptests/subdir1");
+    StorageItem *childItem =
+            m_storage->findStorageItemByPath("/tmp/mtptests/subdir1/file1");
+    QVERIFY( parentItem && childItem );
+    QCOMPARE( childItem->m_objectInfo->mtpParentObject, parentItem->m_handle );
 }
 
 void FSStoragePlugin_test::testDeleteAll()

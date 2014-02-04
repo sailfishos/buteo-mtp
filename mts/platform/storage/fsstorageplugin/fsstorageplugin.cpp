@@ -721,6 +721,11 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
 
     QScopedPointer<StorageItem> item(new StorageItem);
     item->m_path = path;
+
+    QString parentPath(item->m_path.left(item->m_path.lastIndexOf('/')));
+    StorageItem *parentItem = findStorageItemByPath(parentPath);
+    linkChildStorageItem( item.data(), parentItem ? parentItem : m_root );
+
     if ( info )
     {
         item->m_objectInfo = new MTPObjectInfo( *info );
@@ -740,11 +745,6 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
     else
     {
         item->m_handle = handle ? handle : requestNewObjectHandle();
-
-        QString parentPath(item->m_path.left(item->m_path.lastIndexOf('/')));
-        StorageItem *parentItem = findStorageItemByPath(parentPath);
-
-        linkChildStorageItem( item.data(), parentItem ? parentItem : m_root );
     }
 
     MTPResponseCode result;
