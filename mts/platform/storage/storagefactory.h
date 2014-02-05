@@ -239,6 +239,8 @@ private:
     /// \return the storage id.
     quint32 assignStorageId( quint16 storageNo, quint16 partitionNo = 0) const;
 
+    StoragePlugin *storageOfHandle(ObjHandle handle) const;
+
     ObjHandle m_largestObjectHandle;
     ObjHandle m_newObjectHandle;
     MtpInt128 m_newPuoid;
