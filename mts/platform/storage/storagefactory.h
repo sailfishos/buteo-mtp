@@ -43,6 +43,8 @@ class QDir;
 namespace meegomtp1dot0
 {
 class StoragePlugin;
+class ObjectPropertyCache;
+
 const QString pluginLocation = "/usr/lib/mtp";
 const QString CREATE_STORAGE_PLUGINS = "createStoragePlugins";
 const QString DESTROY_STORAGE_PLUGIN = "destroyStoragePlugin";
@@ -244,6 +246,8 @@ private:
     ObjHandle m_largestObjectHandle;
     ObjHandle m_newObjectHandle;
     MtpInt128 m_newPuoid;
+
+    ObjectPropertyCache &m_objectPropertyCache;
 };
 }
 

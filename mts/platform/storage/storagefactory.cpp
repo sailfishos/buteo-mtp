@@ -30,8 +30,11 @@
 */
 
 #include <dlfcn.h>
-#include "storagefactory.h"
+
 #include <QDir>
+
+#include "objectpropertycache.h"
+#include "storagefactory.h"
 #include "storageplugin.h"
 #include "mtpevent.h"
 #include "trace.h"
@@ -41,7 +44,9 @@ using namespace meegomtp1dot0;
 /*******************************************************
  * StorageFactory::StorageFactory
  ******************************************************/
-StorageFactory::StorageFactory() :  m_storageId(0), m_storagePluginsPath( pluginLocation ), m_newObjectHandle(0), m_newPuoid(0)
+StorageFactory::StorageFactory(): m_storageId(0),
+        m_storagePluginsPath(pluginLocation), m_newObjectHandle(0),
+        m_newPuoid(0), m_objectPropertyCache(*ObjectPropertyCache::instance())
 {
     //TODO For now handle only the file system storage plug-in. As we have more storages
     // make this generic.
@@ -284,6 +289,9 @@ MTPResponseCode StorageFactory::deleteItem( const ObjHandle& handle, const MTPOb
             }
         }
     }
+
+    m_objectPropertyCache.remove(handle);
+
     return response;
 }
 
@@ -429,8 +437,15 @@ MTPResponseCode StorageFactory::moveObject( const ObjHandle &handle, const ObjHa
 
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
-        return storage->moveObject(handle, parentHandle,
+        MTPResponseCode response = storage->moveObject(handle, parentHandle,
                 m_allStorages[destinationStorageId]);
+        if (response == MTP_RESP_OK) {
+            // Invalidate the parent handle property in the cache. The other
+            // properties do not change.
+            m_objectPropertyCache.remove(handle, MTP_OBJ_PROP_Parent_Obj);
+        }
+
+        return response;
     }
 
     return MTP_RESP_InvalidObjectHandle;
@@ -505,9 +520,29 @@ MTPResponseCode StorageFactory::getObjectPropertyValue( const ObjHandle &handle,
                                                         QList<MTPObjPropDescVal> &propValList,
                                                         bool getFromObjInfo, bool getDynamically )
 {
+    QList<MTPObjPropDescVal> notFoundList;
+
+    if (propValList.count() == 1) {
+        if (m_objectPropertyCache.get(handle, propValList[0])) {
+            return MTP_RESP_OK;
+        }
+        notFoundList.swap(propValList);
+    } else {
+        m_objectPropertyCache.get(handle, propValList, notFoundList);
+        if (notFoundList.isEmpty()) {
+            return MTP_RESP_OK;
+        }
+    }
+
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
-        return storage->getObjectPropertyValue(handle, propValList, getFromObjInfo, getDynamically);
+        MTPResponseCode response =
+                storage->getObjectPropertyValue(handle, notFoundList);
+        if (response == MTP_RESP_OK) {
+            m_objectPropertyCache.add(handle, notFoundList);
+            propValList += notFoundList;
+        }
+        return response;
     }
 
     return MTP_RESP_InvalidObjectHandle;
@@ -519,7 +554,11 @@ MTPResponseCode StorageFactory::setObjectPropertyValue( const ObjHandle &handle,
 {
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
-        return storage->setObjectPropertyValue(handle, propValList, sendObjectPropList);
+        MTPResponseCode response =
+                storage->setObjectPropertyValue(handle, propValList, sendObjectPropList);
+        if (response == MTP_RESP_OK) {
+            m_objectPropertyCache.add(handle, propValList);
+        }
     }
 
     return MTP_RESP_InvalidObjectHandle;

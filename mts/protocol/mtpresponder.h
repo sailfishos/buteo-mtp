@@ -81,9 +81,6 @@ class MTPResponder : public QObject
         /// \param container [in] The container to be sent
         bool sendContainer(MTPTxContainer &container, bool isLastPacket = true);
         
-        /// Invalidates the object property cache (one property thereof)
-        void invalidatePropertyCache(ObjHandle objHandle, MTPObjPropertyCode propCode);
-
         /// Initiliazes the transport mechanism over which MTP traffic is exchange.
 	/// Call this method after construction the responder.
 	bool initTransport(TransportType transport);
@@ -148,7 +145,6 @@ class MTPResponder : public QObject
         MTPTransporter*                                 m_transporter;      ///< Pointer to the transport layer
         DeviceInfo*                                     m_devInfoProvider;  ///< Pointer to the device info class
         PropertyPod*                                    m_propertyPod;      ///< Pointer to the MTP properties utility class
-        ObjectPropertyCache*                            m_propCache;
         MTPExtensionManager*                            m_extensionManager; ///< Pointer to the MTP extension manager class
         ObjHandle                                       m_copiedObjHandle;  ///< Stored in case the copied object needs to be deleted due to cancel tx
         bool                                            m_containerToBeResent;
