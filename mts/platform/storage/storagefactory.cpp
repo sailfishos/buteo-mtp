@@ -65,9 +65,9 @@ StorageFactory::StorageFactory() :  m_storageId(0), m_storagePluginsPath( plugin
             continue;
         }
         CREATE_STORAGE_PLUGIN_FPTR createStoragePluginFptr = ( CREATE_STORAGE_PLUGIN_FPTR )dlsym( pluginHandle, CREATE_STORAGE_PLUGIN.toStdString().c_str() );
-        if( dlerror() )
+        if( char * error = dlerror() )
         {
-            MTP_LOG_WARNING("Failed to dlsym because " << dlerror());
+            MTP_LOG_WARNING("Failed to dlsym because " << error);
             dlclose( pluginHandle );
             continue;
         }
@@ -99,12 +99,9 @@ StorageFactory::StorageFactory() :  m_storageId(0), m_storagePluginsPath( plugin
     }
     else
     {
-        STORAGE_CONFIGURATIONS_FPTR storageConfigurationsFptr =
-                ( STORAGE_CONFIGURATIONS_FPTR )dlsym( pluginHandle,
-                        STORAGE_CONFIGURATIONS.toUtf8().constData() );
-        if( dlerror() )
+        if( char *error = dlerror() )
         {
-            MTP_LOG_WARNING("Failed to dlsym because " << dlerror());
+            MTP_LOG_WARNING("Failed to dlsym because " << error);
             dlclose( pluginHandle );
         }
         else
@@ -156,9 +153,9 @@ StorageFactory::~StorageFactory()
         DESTROY_STORAGE_PLUGIN_FPTR destroyStoragePluginFptr =
                 ( DESTROY_STORAGE_PLUGIN_FPTR )dlsym( pluginHandlesInfo.storagePluginHandle,
                                                       DESTROY_STORAGE_PLUGIN.toUtf8().constData() );
-        if( dlerror() )
+        if( char *error = dlerror() )
         {
-            MTP_LOG_WARNING( "Failed to destroy storage because" << dlerror() );
+            MTP_LOG_WARNING( "Failed to destroy storage because" << error );
             continue;
         }
 
