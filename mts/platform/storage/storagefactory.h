@@ -44,12 +44,10 @@ namespace meegomtp1dot0
 {
 class StoragePlugin;
 const QString pluginLocation = "/usr/lib/mtp";
-const QString STORAGE_CONFIGURATIONS = "storageConfigurations";
-const QString CREATE_STORAGE_PLUGIN = "createStoragePlugin";
+const QString CREATE_STORAGE_PLUGINS = "createStoragePlugins";
 const QString DESTROY_STORAGE_PLUGIN = "destroyStoragePlugin";
 
-typedef QList<QString> (*STORAGE_CONFIGURATIONS_FPTR)();
-typedef StoragePlugin* (*CREATE_STORAGE_PLUGIN_FPTR)( QString configFileName, quint32 storageId );
+typedef QList<StoragePlugin*> (*CREATE_STORAGE_PLUGINS_FPTR)( quint32 startingStorageId );
 typedef void (*DESTROY_STORAGE_PLUGIN_FPTR)( StoragePlugin *storagePlugin );
 }
 

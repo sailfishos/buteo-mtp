@@ -40,8 +40,7 @@ class StoragePlugin;
 
 class FSStoragePluginFactory {
 public:
-    static QList<QString> configFiles();
-    static StoragePlugin *create(QString configFileName, quint32 storageId);
+    static QList<StoragePlugin *> create(quint32 startingStorageId);
 
 private:
     FSStoragePluginFactory();
@@ -57,15 +56,9 @@ extern "C" {
 /// A single storage plug-in library may offer multiple StoragePlugin instances,
 /// e.g. one for internal memory of a device and another for removable memory
 /// card. Each storage has its configuration stored in a separate XML file.
-///
-/// This function allows the StorageFactory to obtain a list of configuration
-/// files available for the storage plug-in.
-QList<QString> storageConfigurations();
-
-/// The StorageFactory uses this interface to create a new storage plug-in
-/// instance based on a configuration in given file.
-meegomtp1dot0::StoragePlugin* createStoragePlugin(QString configFileName,
-                                                  quint32 storageId);
+/// This function returns a list of created instances, with have storage ids
+/// numbered sequentially from storageId.
+QList<meegomtp1dot0::StoragePlugin *> createStoragePlugins(quint32 storageId);
 
 /// The StorageFactory uses this interface to destroy loaded storage plug-ins.
 void destroyStoragePlugin(meegomtp1dot0::StoragePlugin *storagePlugin);
