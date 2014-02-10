@@ -56,7 +56,7 @@ extern "C" {
 /// A single storage plug-in library may offer multiple StoragePlugin instances,
 /// e.g. one for internal memory of a device and another for removable memory
 /// card. Each storage has its configuration stored in a separate XML file.
-/// This function returns a list of created instances, with have storage ids
+/// This function returns a list of created instances, which have storage ids
 /// numbered sequentially from storageId.
 QList<meegomtp1dot0::StoragePlugin *> createStoragePlugins(quint32 storageId);
 

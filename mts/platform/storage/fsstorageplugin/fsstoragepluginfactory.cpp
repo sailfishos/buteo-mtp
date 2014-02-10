@@ -73,7 +73,14 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
         if (!storage.hasAttribute("path")
             && !storage.hasAttribute("blockdev")) {
             MTP_LOG_WARNING("Storage" << fileName << "has neither 'path' nor"
-                    "'blockdev' attributes.");
+                    " 'blockdev' attributes.");
+            continue;
+        }
+
+        if (storage.hasAttribute("path")
+            && storage.hasAttribute("blockdev")) {
+            MTP_LOG_WARNING("Storage" << fileName << "has mutually exclusive"
+                    " 'path' and 'blockdev' attributes.");
             continue;
         }
 
@@ -113,9 +120,10 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
             }
         }
 
-        QStringList paths;
+        // "descs" maps from user-visible storage names to exported paths
+        QMap<QString, QString> descs;
         if (storage.hasAttribute("path")) {
-            paths.append(storage.attribute("path"));
+            descs[storage.attribute("description")] = storage.attribute("path");
         } else {
             // TODO: use QStorageInfo here once it provides enough information
             // to be useful.
@@ -126,22 +134,31 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
                 continue;
             }
             while (struct mntent *ent = getmntent(mntf)) {
+                QString devname(ent->mnt_fsname);
                 // Use startsWith to catch partitions of the main dev
-                if (QString(ent->mnt_fsname).startsWith(blockdev))
-                    paths.append(ent->mnt_dir);
+                if (devname.startsWith(blockdev)) {
+                    // Build the desc from the description attribtute
+                    // and the partition part of the device name.
+                    // TODO: look up fs label using libblkid?
+                    devname.remove(0, blockdev.size());
+                    QString description = storage.attribute("description");
+                    if (!devname.isEmpty() && devname != "p1")
+                        description.append(" ").append(devname);
+                    descs[description] = ent->mnt_dir;
+                }
             }
         }
 
-        foreach (QString path, paths) {
-            // TODO: for blockdev configs, add partition number to name
-            // or look up fs label (using libblkid?)
+        foreach (QString desc, descs.keys()) {
+            // The description is the important part; name is mostly internal.
+            // descs[desc] is the directory to export.
             FSStoragePlugin *plugin =
                 new FSStoragePlugin(storageId,
                     removable ? MTP_STORAGE_TYPE_RemovableRAM
                               : MTP_STORAGE_TYPE_FixedRAM,
-                    path,
+                    descs[desc],
                     storage.attribute("name"),
-                    storage.attribute("description"));
+                    desc);
 
             foreach (QString line, blacklistPaths) {
                 plugin->excludePath(line);
