@@ -36,28 +36,15 @@ using namespace meegomtp1dot0;
 
 const MTPObjPropertyCode ALLPROPS = 0xFFFF;
 
-ObjectPropertyCache* ObjectPropertyCache::m_instance = 0;
-
 ObjectPropertyCache* ObjectPropertyCache::instance()
 {
     MTP_FUNC_TRACE();
 
-    if( !m_instance )
-    {
-        m_instance = new ObjectPropertyCache;
+    static QScopedPointer<ObjectPropertyCache> instance;
+    if(!instance) {
+        instance.reset(new ObjectPropertyCache);
     }
-    return m_instance;
-}
-
-void ObjectPropertyCache::destroyInstance()
-{
-    MTP_FUNC_TRACE();
-
-    if( m_instance )
-    {
-        delete m_instance;
-        m_instance = 0;
-    }
+    return instance.data();
 }
 
 void ObjectPropertyCache::add( ObjHandle handle, MTPObjPropertyCode propertyCode, const QVariant &value )
@@ -177,3 +164,5 @@ void ObjectPropertyCache::setAllProps( ObjHandle handle )
 {
     m_propertyMap[handle].insert( ALLPROPS, 0 );
 }
+
+ObjectPropertyCache::~ObjectPropertyCache() {}

@@ -177,12 +177,6 @@ MTPResponder::~MTPResponder()
         m_propertyPod = 0;
     }
 
-    if(m_propCache)
-    {
-        ObjectPropertyCache::destroyInstance();
-        m_propCache = 0;
-    }
-
     if(m_devInfoProvider)
     {
         delete m_devInfoProvider;

@@ -56,9 +56,6 @@ class ObjectPropertyCache
         /// \return returns a pointer to the ObjectPropertyCache object
         static ObjectPropertyCache* instance();
 
-        /// Destroys the single object.
-        static void destroyInstance();
-
         /// Add/Modify a property-value pair for an object to the cache.
         /// \param handle [in] the object handle which needs to be added/modified
         /// \param propertyCode [in] object property code
@@ -132,12 +129,11 @@ class ObjectPropertyCache
         /// Sets the all properties cached flag for an object
         void setAllProps( ObjHandle handle );
 
+        ~ObjectPropertyCache();
+
     private:
         /// Private Constructor
         ObjectPropertyCache(){}
-
-        /// Private Destructor
-        ~ObjectPropertyCache(){}
 
         /// The cache!
         QHash<ObjHandle, QHash<MTPObjPropertyCode,QVariant> > m_propertyMap;
