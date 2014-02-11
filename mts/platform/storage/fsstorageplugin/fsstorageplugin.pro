@@ -49,7 +49,7 @@ LIBS    += -lmeegomtp
 target.path = /usr/lib/mtp
 
 configuration.path = /etc/fsstorage.d
-configuration.files = phone-memory.xml homedir-blacklist.conf
+configuration.files = phone-memory.xml homedir-blacklist.conf sd-card.xml
 
 INSTALLS += target configuration
 
