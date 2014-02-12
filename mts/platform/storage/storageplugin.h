@@ -189,6 +189,15 @@ public:
     /// \size [in] the size in bytes.
     virtual MTPResponseCode truncateItem( const ObjHandle &handle, const quint32 &size ) = 0;
 
+    /// Retrieves the values of given object properties.
+    ///
+    /// \param handle [in] an object handle.
+    /// \param propValList [in, out] a list of MTPObjPropDescVal objects whose
+    ///                    descriptions determine the object property to
+    ///                    retrieve. The values should be invalid QVariants,
+    ///                    which will be filled by the method.
+    ///
+    /// \return MTP response.
     virtual MTPResponseCode getObjectPropertyValue(const ObjHandle &handle,
             QList<MTPObjPropDescVal> &propValList) = 0;
 
