@@ -37,137 +37,144 @@
 #include <QDirIterator>
 #include <QDomDocument>
 #include <sys/stat.h>
+#include <mntent.h>
 
 using namespace meegomtp1dot0;
 
 const char *FSStoragePluginFactory::CONFIG_DIR = "/etc/fsstorage.d";
 
-QList<QString> FSStoragePluginFactory::configFiles() {
-    QList<QString> result;
-
+QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
+{
+    QList<StoragePlugin *> result;
     QDirIterator it(CONFIG_DIR, QDir::Files);
     while (it.hasNext()) {
         QString fileName(it.next());
-        if (fileName.endsWith(".xml", Qt::CaseInsensitive)) {
-            result.append(fileName);
-        }
-    }
+        if (!fileName.endsWith(".xml", Qt::CaseInsensitive))
+            continue;
 
-    MTP_LOG_INFO("Found" << result.size() << "FSStoragePlugin configurations.");
+        MTP_LOG_INFO("FSStoragePlugin configuring " << fileName);
 
-    return result;
-}
-
-StoragePlugin *FSStoragePluginFactory::create(QString configFileName,
-                                              quint32 storageId) {
-
-    QFile configFile(configFileName);
-    if (!configFile.exists()) {
-        MTP_LOG_CRITICAL(configFileName << "doesn't exist.");
-        return 0;
-    }
-
-    if (!configFile.open(QFile::ReadOnly)) {
-        MTP_LOG_CRITICAL(configFileName << "couldn't be opened for reading.");
-        return 0;
-    }
-
-    QDomDocument configuration;
-    configuration.setContent(&configFile);
-
-    QDomElement storage = configuration.documentElement();
-
-    if (storage.tagName() != "storage") {
-        MTP_LOG_CRITICAL(configFileName << "is not a storage configuration.");
-        return 0;
-    }
-
-    if (!storage.hasAttribute("path") ||
-        !storage.hasAttribute("name") ||
-        !storage.hasAttribute("description")) {
-        MTP_LOG_WARNING("Storage" << configFileName << "is missing some of "
-                "mandatory attributes 'name', 'path', and 'description'");
-        return 0;
-    }
-
-    QDir dir(storage.attribute("path"));
-
-    bool removable =
-            !storage.attribute("removable").compare("true", Qt::CaseInsensitive);
-
-    if (removable && !dir.isRoot()) {
-        if (!dir.exists()) {
-            MTP_LOG_WARNING("Storage path" << storage.attribute("path")
-                    << "is not a directory");
-            return 0;
-        }
-
-        struct stat storageStat;
-        if (stat(dir.absolutePath().toUtf8(), &storageStat) != 0) {
-            MTP_LOG_WARNING("Couldn't stat" << dir.absolutePath());
-            return 0;
-        }
-
-        if (!dir.cdUp()) {
-            MTP_LOG_WARNING("Couldn't get parent directory of " << dir);
-            return 0;
-        }
-
-        struct stat parentStat;
-        if (stat(dir.absolutePath().toUtf8(), &parentStat) != 0) {
-            MTP_LOG_WARNING("Couldn't stat" << dir.absolutePath());
-            return 0;
-        }
-
-        if (storageStat.st_dev == parentStat.st_dev) {
-            MTP_LOG_INFO(dir << "is not mounted");
-            return 0;
-        }
-    }
-
-    FSStoragePlugin *result =
-            new FSStoragePlugin(storageId,
-                    removable ? MTP_STORAGE_TYPE_RemovableRAM: MTP_STORAGE_TYPE_FixedRAM,
-                    storage.attribute("path"),
-                    storage.attribute("name"),
-                    storage.attribute("description"));
-
-    const QDomNodeList &blacklist = storage.elementsByTagName("blacklist");
-    for (int i = 0; i != blacklist.size(); ++i) {
-        QString blacklistFileName(blacklist.at(i).toElement().text().trimmed());
-        // Allow blacklist file paths relative to CONFIG_DIR.
-        if (!blacklistFileName.startsWith('/')) {
-            blacklistFileName.prepend('/').prepend(CONFIG_DIR);
-        }
-
-        QFile blacklistFile(blacklistFileName);
-        if (!blacklistFile.open(QFile::ReadOnly)) {
-            MTP_LOG_WARNING(blacklistFile.fileName() << "couldn't be opened "
-                    "for reading.");
+        QFile configFile(fileName);
+        if (!configFile.open(QFile::ReadOnly)) {
+            MTP_LOG_CRITICAL(fileName << "couldn't be opened for reading.");
             continue;
         }
 
-        while (!blacklistFile.atEnd()) {
-            QString line = blacklistFile.readLine();
-            if (line.startsWith('#')) {
-                // Comment line.
+        QDomDocument configuration;
+        configuration.setContent(&configFile);
+
+        QDomElement storage = configuration.documentElement();
+
+        if (storage.tagName() != "storage") {
+            MTP_LOG_CRITICAL(fileName << "is not a storage configuration.");
+            continue;
+        }
+
+        if (!storage.hasAttribute("path")
+            && !storage.hasAttribute("blockdev")) {
+            MTP_LOG_WARNING("Storage" << fileName << "has neither 'path' nor"
+                    " 'blockdev' attributes.");
+            continue;
+        }
+
+        if (storage.hasAttribute("path")
+            && storage.hasAttribute("blockdev")) {
+            MTP_LOG_WARNING("Storage" << fileName << "has mutually exclusive"
+                    " 'path' and 'blockdev' attributes.");
+            continue;
+        }
+
+        if (!storage.hasAttribute("name") ||
+            !storage.hasAttribute("description")) {
+            MTP_LOG_WARNING("Storage" << fileName << "is missing some of "
+                    "mandatory attributes 'name' and 'description'");
+            continue;
+        }
+
+        bool removable =
+            !storage.attribute("removable").compare("true", Qt::CaseInsensitive);
+
+        QStringList blacklistPaths;
+        const QDomNodeList &blacklist = storage.elementsByTagName("blacklist");
+        for (int i = 0; i != blacklist.size(); ++i) {
+            QString blacklistFileName(blacklist.at(i).toElement().text().trimmed());
+            // Allow blacklist file paths relative to CONFIG_DIR.
+            if (!blacklistFileName.startsWith('/'))
+                blacklistFileName.prepend('/').prepend(CONFIG_DIR);
+
+            QFile blacklistFile(blacklistFileName);
+            if (!blacklistFile.open(QFile::ReadOnly)) {
+                MTP_LOG_WARNING(blacklistFile.fileName()
+                        << "couldn't be opened for reading.");
                 continue;
             }
 
-            result->excludePath(line.trimmed());
+            while (!blacklistFile.atEnd()) {
+                QString line = blacklistFile.readLine();
+                if (line.startsWith('#')) {
+                    // Comment line.
+                    continue;
+                }
+
+                blacklistPaths.append(line.trimmed());
+            }
+        }
+
+        // "descs" maps from user-visible storage names to exported paths
+        QMap<QString, QString> descs;
+        if (storage.hasAttribute("path")) {
+            descs[storage.attribute("description")] = storage.attribute("path");
+        } else {
+            // TODO: use QStorageInfo here once it provides enough information
+            // to be useful.
+            QString blockdev = storage.attribute("blockdev");
+            FILE *mntf = setmntent(_PATH_MOUNTED, "r");
+            if (!mntf) {
+                MTP_LOG_WARNING("could not list mounted filesystems");
+                continue;
+            }
+            while (struct mntent *ent = getmntent(mntf)) {
+                QString devname(ent->mnt_fsname);
+                // Use startsWith to catch partitions of the main dev
+                if (devname.startsWith(blockdev)) {
+                    // Build the desc from the description attribtute
+                    // and the partition part of the device name.
+                    // TODO: look up fs label using libblkid?
+                    devname.remove(0, blockdev.size());
+                    QString description = storage.attribute("description");
+                    if (!devname.isEmpty() && devname != "p1")
+                        description.append(" ").append(devname);
+                    descs[description] = ent->mnt_dir;
+                }
+            }
+        }
+
+        foreach (QString desc, descs.keys()) {
+            // The description is the important part; name is mostly internal.
+            // descs[desc] is the directory to export.
+            FSStoragePlugin *plugin =
+                new FSStoragePlugin(storageId,
+                    removable ? MTP_STORAGE_TYPE_RemovableRAM
+                              : MTP_STORAGE_TYPE_FixedRAM,
+                    descs[desc],
+                    storage.attribute("name"),
+                    desc);
+
+            foreach (QString line, blacklistPaths) {
+                plugin->excludePath(line);
+            }
+
+            result.append(plugin);
+            storageId++;
         }
     }
 
     return result;
 }
 
-extern "C" QList<QString> storageConfigurations() {
-    return FSStoragePluginFactory::configFiles();
-}
-
-extern "C" StoragePlugin* createStoragePlugin(QString configFileName,
-                                              quint32 storageId) {
-    return FSStoragePluginFactory::create(configFileName, storageId);
+extern "C" QList<StoragePlugin*> createStoragePlugins(quint32 storageId)
+{
+    return FSStoragePluginFactory::create(storageId);
 }
 
 extern "C" void destroyStoragePlugin(StoragePlugin* storagePlugin) {

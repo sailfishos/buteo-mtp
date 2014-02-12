@@ -65,9 +65,9 @@ StorageFactory::StorageFactory() :  m_storageId(0), m_storagePluginsPath( plugin
             continue;
         }
         CREATE_STORAGE_PLUGIN_FPTR createStoragePluginFptr = ( CREATE_STORAGE_PLUGIN_FPTR )dlsym( pluginHandle, CREATE_STORAGE_PLUGIN.toStdString().c_str() );
-        if( dlerror() )
+        if( char * error = dlerror() )
         {
-            MTP_LOG_WARNING("Failed to dlsym because " << dlerror());
+            MTP_LOG_WARNING("Failed to dlsym because " << error);
             dlclose( pluginHandle );
             continue;
         }
@@ -99,46 +99,27 @@ StorageFactory::StorageFactory() :  m_storageId(0), m_storagePluginsPath( plugin
     }
     else
     {
-        STORAGE_CONFIGURATIONS_FPTR storageConfigurationsFptr =
-                ( STORAGE_CONFIGURATIONS_FPTR )dlsym( pluginHandle,
-                        STORAGE_CONFIGURATIONS.toUtf8().constData() );
-        if( dlerror() )
+        ba = CREATE_STORAGE_PLUGINS.toUtf8();
+        CREATE_STORAGE_PLUGINS_FPTR createStoragePluginsFptr =
+        ( CREATE_STORAGE_PLUGINS_FPTR )dlsym( pluginHandle, ba.constData() );
+        if( char *error = dlerror() )
         {
-            MTP_LOG_WARNING("Failed to dlsym because " << dlerror());
+            MTP_LOG_WARNING("Failed to dlsym because " << error);
             dlclose( pluginHandle );
         }
         else
         {
-            ba = CREATE_STORAGE_PLUGIN.toUtf8();
-            CREATE_STORAGE_PLUGIN_FPTR createStoragePluginFptr =
-            ( CREATE_STORAGE_PLUGIN_FPTR )dlsym( pluginHandle,
-                                                 ba.constData() );
-            if( dlerror() )
+            quint32 storageId = assignStorageId(1, 1);
+            QList<StoragePlugin *> storages = (*createStoragePluginsFptr)(storageId);
+            for( quint8 i = 0; i < storages.count(); ++i )
             {
-                MTP_LOG_WARNING("Failed to dlsym because " << dlerror());
-                dlclose( pluginHandle );
-            }
-            else
-            {
-                QList<QString> configFiles = (*storageConfigurationsFptr)();
-                for( quint8 i = 0; i < configFiles.count(); ++i )
-                {
-                    quint32 storageId = assignStorageId(1, i + 1);
-                    StoragePlugin *storagePlugin =
-                            (*createStoragePluginFptr)( configFiles[i], storageId );
-                    if (!storagePlugin) {
-                        MTP_LOG_WARNING("Couldn't create StoragePlugin for id" << i);
-                        continue;
-                    }
+                // Add this storage to all storages list.
+                m_allStorages[storageId + i] = storages[i];
 
-                    // Add this storage to all storages list.
-                    m_allStorages[storageId] = storagePlugin;
-
-                    PluginHandlesInfo_ pluginHandlesInfo;
-                    pluginHandlesInfo.storagePluginPtr = storagePlugin;
-                    pluginHandlesInfo.storagePluginHandle = pluginHandle;
-                    m_pluginHandlesInfoVector.append( pluginHandlesInfo );
-                }
+                PluginHandlesInfo_ pluginHandlesInfo;
+                pluginHandlesInfo.storagePluginPtr = storages[i];
+                pluginHandlesInfo.storagePluginHandle = pluginHandle;
+                m_pluginHandlesInfoVector.append( pluginHandlesInfo );
             }
         }
     }
@@ -156,9 +137,9 @@ StorageFactory::~StorageFactory()
         DESTROY_STORAGE_PLUGIN_FPTR destroyStoragePluginFptr =
                 ( DESTROY_STORAGE_PLUGIN_FPTR )dlsym( pluginHandlesInfo.storagePluginHandle,
                                                       DESTROY_STORAGE_PLUGIN.toUtf8().constData() );
-        if( dlerror() )
+        if( char *error = dlerror() )
         {
-            MTP_LOG_WARNING( "Failed to destroy storage because" << dlerror() );
+            MTP_LOG_WARNING( "Failed to destroy storage because" << error );
             continue;
         }
 
