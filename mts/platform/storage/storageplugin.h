@@ -192,6 +192,19 @@ public:
     virtual MTPResponseCode getObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool getFromObjInfo = true, bool getDynamically = true ) = 0;
     virtual MTPResponseCode setObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool sendObjectPropList = false ) = 0;
 
+    /// Retrieves the values of given object properties for all child objects of
+    /// given association.
+    ///
+    /// \param handle [in] a handle of an association
+    /// \param properties [in] a list describing the properties to retrieve.
+    /// \param values [out] the method fills this structure with the query
+    ///               result, where keys are handles of child objects and values
+    ///               are the properties of the object in the same order as the
+    ///               descriptions in the \c properties list have.
+    virtual MTPResponseCode getChildPropertyValues(ObjHandle handle,
+            const QList<const MtpObjPropDesc *>& properties,
+            QMap<ObjHandle, QList<QVariant> > &values) = 0;
+
 Q_SIGNALS:
     /// The signal must be emitted by the storage plugin whenever an MTP event is captured by it
     /// \param eventCode [in] The MTP event code to be sent

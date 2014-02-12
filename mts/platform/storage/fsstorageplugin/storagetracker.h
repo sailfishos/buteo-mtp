@@ -56,6 +56,9 @@ friend class FSStoragePlugin_test;
         void setPropVals(const QString &filePath, QList<MTPObjPropDescVal> &propValList);
         bool getObjectProperty(const QString& filePath, MTPObjPropertyCode ePropertyCode, MTPDataType type, QVariant& propVal);
         bool setObjectProperty(const QString& filePath, MTPObjPropertyCode ePropertyCode, MTPDataType type, const QVariant& propVal);
+        void getChildPropVals(const QString& parentPath,
+                const QList<const MtpObjPropDesc *>& properties,
+                QMap<QString, QList<QVariant> > &values);
         void ignoreNextUpdate(const QStringList &filePaths);
         QString savePlaylist(const QString &playlistPath, QStringList &entries);
         void getPlaylists(QStringList &playlistIds, QList<QStringList> &lists, bool getExisting = false);
@@ -72,6 +75,8 @@ friend class FSStoragePlugin_test;
         QHash<QString, int> m_trackerPropertyTable;
         void populateFunctionMap();
         QString buildQuery(const QString &filePath, QList<MTPObjPropDescVal> &propValList);
+        QString buildMassQuery(const QString &path,
+                const QList<const MtpObjPropDesc *> &properties);
         QString buildUpdateQuery(const QString &filePath, QList<MTPObjPropDescVal> &propValList);
         bool isTrackerPropertySupported(const QString &property);
         QDBusInterface m_minerInterface;

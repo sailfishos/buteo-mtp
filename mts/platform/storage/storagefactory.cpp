@@ -536,13 +536,54 @@ MTPResponseCode StorageFactory::getObjectPropertyValue( const ObjHandle &handle,
 
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
-        MTPResponseCode response =
-                storage->getObjectPropertyValue(handle, notFoundList);
-        if (response == MTP_RESP_OK) {
-            m_objectPropertyCache.add(handle, notFoundList);
+        MTPResponseCode response;
+
+        if (handle == 0) {
+            // Storage root has no parent.
+            response = storage->getObjectPropertyValue(handle, notFoundList);
+            if (response == MTP_RESP_OK) {
+                m_objectPropertyCache.add(handle, notFoundList);
+                propValList += notFoundList;
+            }
+            return response;
+        } else {
+            // Speculatively load the property values for all sibling objects.
+            const MTPObjectInfo *info;
+            response = storage->getObjectInfo(handle, info);
+            if (response != MTP_RESP_OK) {
+                return response;
+            }
+
+            QList<const MtpObjPropDesc *> properties;
+            foreach (const MTPObjPropDescVal &propVal, notFoundList) {
+                properties.append(propVal.propDesc);
+            }
+
+            QMap<ObjHandle, QList<QVariant> > values;
+            response = storage->getChildPropertyValues(info->mtpParentObject,
+                    properties, values);
+            if (response != MTP_RESP_OK) {
+                return response;
+            }
+
             propValList += notFoundList;
+
+            // Feed the object property cache.
+            QMap<ObjHandle, QList<QVariant> >::iterator it;
+            for (it = values.begin(); it != values.end(); ++it) {
+                const ObjHandle &childHandle = it.key();
+                const QList<QVariant> &childValues = it.value();
+
+                for (int i = 0; i != properties.count(); ++i) {
+                    m_objectPropertyCache.add(childHandle,
+                            properties[i]->uPropCode, childValues[i]);
+                }
+            }
+
+            // We have everything in the cache now, so let's call this method
+            // again in order to retrieve the values.
+            return getObjectPropertyValue(handle, propValList);
         }
-        return response;
     }
 
     return MTP_RESP_InvalidObjectHandle;

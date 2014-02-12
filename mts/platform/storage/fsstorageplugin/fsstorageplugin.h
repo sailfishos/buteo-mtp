@@ -109,6 +109,10 @@ public:
             QList<MTPObjPropDescVal> &propValList,
             bool sendObjectPropList = false);
 
+    MTPResponseCode getChildPropertyValues(ObjHandle handle,
+            const QList<const MtpObjPropDesc *>& properties,
+            QMap<ObjHandle, QList<QVariant> > &values);
+
     void excludePath( const QString & path );
 
 public slots:
