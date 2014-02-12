@@ -1806,7 +1806,7 @@ void MTPResponder::getObjectPropListReq()
                                     propValList.append(MTPObjPropDescVal(propDesc));
                                     QList<MTPObjPropDescVal> currPropValList = propValList.mid(pos);
                                     m_storageServer->getObjectPropertyValue(currentObj,
-                                            currPropValList, true, false);
+                                            currPropValList);
                                     ++pos;
                                 }
                             }

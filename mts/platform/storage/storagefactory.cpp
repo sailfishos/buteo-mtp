@@ -516,9 +516,8 @@ MTPResponseCode StorageFactory::readData( const ObjHandle &handle, char *readBuf
     return MTP_RESP_InvalidObjectHandle;
 }
 
-MTPResponseCode StorageFactory::getObjectPropertyValue( const ObjHandle &handle,
-                                                        QList<MTPObjPropDescVal> &propValList,
-                                                        bool getFromObjInfo, bool getDynamically )
+MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle,
+                                                       QList<MTPObjPropDescVal> &propValList)
 {
     QList<MTPObjPropDescVal> notFoundList;
 

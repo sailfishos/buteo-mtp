@@ -2633,9 +2633,8 @@ MTPResponseCode FSStoragePlugin::getObjectPropertyValueFromTracker( const ObjHan
     return code;
 }
 
-MTPResponseCode FSStoragePlugin::getObjectPropertyValue( const ObjHandle &handle,
-                                                         QList<MTPObjPropDescVal> &propValList,
-                                                         bool getFromObjInfo, bool getDynamically )
+MTPResponseCode FSStoragePlugin::getObjectPropertyValue(const ObjHandle &handle,
+        QList<MTPObjPropDescVal> &propValList)
 {
     MTPResponseCode code = MTP_RESP_OK;
     StorageItem *storageItem = m_objectHandlesMap.value( handle );
@@ -2645,22 +2644,16 @@ MTPResponseCode FSStoragePlugin::getObjectPropertyValue( const ObjHandle &handle
     }
     else
     {
-        // First, we try to check if the object property has a value in the object info data set
-        // or whether if it's statically defined ( hard-coded in other words ).
+        // First, fill in the property values that are in the object info data
+        // set or statically defined.
+        QList<MTPObjPropDescVal>::iterator i;
+        for (i = propValList.begin(); i != propValList.end(); ++i) {
+            code = getObjectPropertyValueFromStorage(handle,
+                    i->propDesc->uPropCode, i->propVal, i->propDesc->uDataType);
+        }
 
-        if( getFromObjInfo )
-        {
-            for(QList<MTPObjPropDescVal>::iterator i = propValList.begin();
-                    i != propValList.end(); ++i)
-            {
-                code = getObjectPropertyValueFromStorage( handle, i->propDesc->uPropCode, i->propVal, i->propDesc->uDataType );
-            }
-        }
-        // Fetch whatever else remains from tracker
-        if( getDynamically )
-        {
-            m_tracker->getPropVals(storageItem->m_path, propValList);
-        }
+        // Fetch whatever else remains from Tracker.
+        m_tracker->getPropVals(storageItem->m_path, propValList);
     }
     return code;
 }

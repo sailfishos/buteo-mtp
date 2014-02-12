@@ -183,7 +183,9 @@ public:
     /// \size [in] the size in bytes.
     MTPResponseCode truncateItem( const ObjHandle &handle, const quint32 &size ) const;
 
-    MTPResponseCode getObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool getFromObjInfo = true, bool getDynmaically = true);
+    MTPResponseCode getObjectPropertyValue(const ObjHandle &handle,
+            QList<MTPObjPropDescVal> &propValList);
+
     MTPResponseCode setObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool sendObjectPropList = false);
 
 

@@ -189,7 +189,9 @@ public:
     /// \size [in] the size in bytes.
     virtual MTPResponseCode truncateItem( const ObjHandle &handle, const quint32 &size ) = 0;
 
-    virtual MTPResponseCode getObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool getFromObjInfo = true, bool getDynamically = true ) = 0;
+    virtual MTPResponseCode getObjectPropertyValue(const ObjHandle &handle,
+            QList<MTPObjPropDescVal> &propValList) = 0;
+
     virtual MTPResponseCode setObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool sendObjectPropList = false ) = 0;
 
     /// Retrieves the values of given object properties for all child objects of

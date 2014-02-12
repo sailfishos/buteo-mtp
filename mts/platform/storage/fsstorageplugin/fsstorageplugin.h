@@ -102,8 +102,7 @@ public:
     MTPResponseCode truncateItem( const ObjHandle &handle, const quint32 &size );
 
     MTPResponseCode getObjectPropertyValue(const ObjHandle &handle,
-            QList<MTPObjPropDescVal> &propValList, bool getFromObjInfo = true,
-            bool getDynamically = true);
+            QList<MTPObjPropDescVal> &propValList);
 
     MTPResponseCode setObjectPropertyValue(const ObjHandle &handle,
             QList<MTPObjPropDescVal> &propValList,
