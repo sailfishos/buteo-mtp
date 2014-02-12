@@ -46,6 +46,13 @@ void DeviceInfoProvider_Test::initTestCase()
     m_xmlDoc = new QDomDocument();
     m_xmlFile = new QFile("/tmp/deviceinfo.xml");
     QCOMPARE(m_xmlDoc->setContent(m_xmlFile), true);
+
+    // Original deviceinfo.xml may be changed during the test execution, so
+    // backup its current state.
+    QFile originalDeviceInfoXml(DeviceInfo::getDeviceInfoXmlPath());
+    if (originalDeviceInfoXml.exists()) {
+        QCOMPARE(originalDeviceInfoXml.copy("/tmp/deviceinfo.xml.orig"), true);
+    }
 }
 
 void DeviceInfoProvider_Test::cleanupTestCase()
@@ -68,6 +75,14 @@ void DeviceInfoProvider_Test::cleanupTestCase()
     }
 
     QFile::remove("/tmp/deviceinfo.xml");
+
+    // Restore deviceinfo.xml to the state it had before the tests were run.
+    QFile::remove(DeviceInfo::getDeviceInfoXmlPath());
+    QFile originalDeviceInfoXml("/tmp/deviceinfo.xml.orig");
+    if (originalDeviceInfoXml.exists()) {
+        originalDeviceInfoXml.copy(DeviceInfo::getDeviceInfoXmlPath());
+        originalDeviceInfoXml.remove();
+    }
 }
 
 
