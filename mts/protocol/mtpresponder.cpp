@@ -2076,6 +2076,8 @@ void MTPResponder::sendObjectInfoData()
             responseParams[0] = params[0];
             // get the requested Parent ObjectHandle
             responseParams[1] = params[1];
+            // some clients (Nautilus 3.4.2) send an info with blank parent
+            objectInfo.mtpParentObject = params[1];
             // trigger creation of a file in Storage Server
             response = m_storageServer->addItem(responseParams[0], responseParams[1], responseParams[2],
                                                 &objectInfo);
