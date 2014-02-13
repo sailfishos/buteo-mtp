@@ -106,28 +106,25 @@ class ObjectPropertyCache
         /// \return bool true if this property in the MTPObjPropDescVal structure was cached and found, false otherwise
         bool get( ObjHandle handle, MTPObjPropDescVal &propDescVal );
 
-        /// Get the value for an object given the handle and a reference to a MTPObjPropDescVal structure.
-        /// The value is populated in the structure.
-        /// \param handle [in] the object handle
-        /// \param propDescValList [in/out] list of propDescVal structures, this gives the property codes,
-        /// values are populated here, upon return the list has those properties that were found
-	/// \param notFoundList [out] properties that were not found, can be used if both us and tracker can read/write metadata
-        /// \return bool false if this the first request for a list of props for this handle, true otherwise.
-	/// TODO The above return value is a workaround needed because the intiator not necessarily provides us the metadata 
-	/// for all properties, so there might always be a notFoundList, but we don't want to go to tracker since we didn't write
-	/// these. Also the intiator can use 0x9805 to fetch just one property, if that's the case we will have values in both
-	/// propValList and notFoundList, but we need to distinguish this from the case where some of all props were not cached,
-	/// we use a special entry of (0xFFFF,0xFFFF0 for the same.
-        bool get( ObjHandle handle, QList<MTPObjPropDescVal> &propDescValList, QList<MTPObjPropDescVal> &notFoundList );
+        /// Retrieves multiple property values of given object from the cache.
+        ///
+        /// The method fills in the property values into \c propDescValList.
+        /// Properties for which values aren't found in the cache are moved into
+        /// \c notFoundList, so both of these parameters must be provided.
+        ///
+        /// \param handle [in] the object handle.
+        /// \param propDescValList [in, out] list of propDescVal structures
+        ///                        whose values to retrieve.
+        /// \param notFoundList [out] properties that weren't found are moved
+        ///                     into this list.
+        ///
+        /// \return \c true if the cache was able to fill in all the properties
+        ///         (i.e. notFoundList is empty), otherwise \c false.
+        bool get(ObjHandle handle, QList<MTPObjPropDescVal> &propDescValList,
+                QList<MTPObjPropDescVal> &notFoundList);
 
         /// clear everything in the cache
         void clear();
-
-        /// Checks whether all properties have been cached for an object
-        bool containsAllProps( ObjHandle handle );
-
-        /// Sets the all properties cached flag for an object
-        void setAllProps( ObjHandle handle );
 
         ~ObjectPropertyCache();
 

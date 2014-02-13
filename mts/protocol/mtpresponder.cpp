@@ -2198,7 +2198,6 @@ void MTPResponder::sendObjectData(quint8* data, quint32 dataLen, bool isFirstPac
                 }
             }
             m_storageServer->setObjectPropertyValue(handle, propValList, true);
-            ObjectPropertyCache::instance()->setAllProps(handle);
         }
         // Trigger close file in the storage server... ignore return here
         m_storageServer->writeData( handle, 0, 0, false, true);
@@ -2758,9 +2757,6 @@ bool MTPResponder::serializePropListQuantum(ObjHandle currentObj, QList<MTPObjPr
     MTP_FUNC_TRACE();
 
     m_storageServer->getObjectPropertyValue(currentObj, propValList);
-    if (propValList.count() != 1) {
-        ObjectPropertyCache::instance()->setAllProps(currentObj);
-    }
     for(QList<MTPObjPropDescVal>::const_iterator i = propValList.constBegin(); i != propValList.constEnd(); ++i)
     {
         const MtpObjPropDesc *propDesc = i->propDesc;

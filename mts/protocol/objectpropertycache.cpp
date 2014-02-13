@@ -34,8 +34,6 @@
 
 using namespace meegomtp1dot0;
 
-const MTPObjPropertyCode ALLPROPS = 0xFFFF;
-
 ObjectPropertyCache* ObjectPropertyCache::instance()
 {
     MTP_FUNC_TRACE();
@@ -145,7 +143,7 @@ bool ObjectPropertyCache::get( ObjHandle handle, QList<MTPObjPropDescVal> &propD
             ++itr;
         }
     }
-    return containsAllProps( handle );
+    return notFoundList.isEmpty();
 }
 
 void ObjectPropertyCache::clear()
@@ -153,16 +151,6 @@ void ObjectPropertyCache::clear()
     MTP_FUNC_TRACE();
 
     m_propertyMap.clear();
-}
-
-bool ObjectPropertyCache::containsAllProps( ObjHandle handle )
-{
-    return m_propertyMap[handle].contains( ALLPROPS );
-}
-
-void ObjectPropertyCache::setAllProps( ObjHandle handle )
-{
-    m_propertyMap[handle].insert( ALLPROPS, 0 );
 }
 
 ObjectPropertyCache::~ObjectPropertyCache() {}
