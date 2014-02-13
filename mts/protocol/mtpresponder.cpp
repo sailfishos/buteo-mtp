@@ -1795,7 +1795,6 @@ void MTPResponder::getObjectPropListReq()
                         {
                             const MtpObjPropDesc *propDesc = 0;
                             QVector<MTPObjPropertyCode> propsSupported;
-                            int pos = 0;
 
                             resp = m_propertyPod->getObjectPropsSupportedByType(category, propsSupported);
                             for (int i = 0; ((i < propsSupported.size()) && (MTP_RESP_OK == resp)); i++)
@@ -1804,10 +1803,6 @@ void MTPResponder::getObjectPropListReq()
                                 if(MTP_OBJ_PROP_Rep_Sample_Data != propDesc->uPropCode)
                                 {
                                     propValList.append(MTPObjPropDescVal(propDesc));
-                                    QList<MTPObjPropDescVal> currPropValList = propValList.mid(pos);
-                                    m_storageServer->getObjectPropertyValue(currentObj,
-                                            currPropValList);
-                                    ++pos;
                                 }
                             }
                         }
