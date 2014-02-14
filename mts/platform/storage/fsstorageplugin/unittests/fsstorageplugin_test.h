@@ -67,6 +67,7 @@ private slots:
     void testObjectInfoAfterAddition();
     void testGetObjectPropertyValue();
     void testSetObjectPropertyValue();
+    void testGetChildPropertyValues();
     void testSetReferences();
     void testGetReferences();
     void testDeleteFile();
