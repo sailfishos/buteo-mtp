@@ -397,13 +397,19 @@ class MTPResponder : public QObject
         /// Serializes a list of property values into an MTP container.
         ///
         /// Each value is converted into an element quadruple as per MTP 1.1
-        /// specification E.2.1.1 ObjectPropList Dataset Table.
+        /// specification E.2.1.1 ObjectPropList Dataset Table. The method skips
+        /// any invalid QVariant values (their presence in the result set
+        /// usually means the object was queried for that property but doesn't
+        /// have it defined).
         ///
         /// \param handle [in] handle of an object the properties belong to.
         /// \param propValList [in] list of property descriptions and values.
         /// \param dataContainer [out] container into which the data will be
         ///                      serialized.
-        bool serializePropList(ObjHandle handle,
+        ///
+        /// \return the number of serialized properties, i.e. excluding invalid
+        /// QVariants.
+        quint32 serializePropList(ObjHandle handle,
                 QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer);
 
         /// Sends a large data packet in segments of max data packet size

@@ -1816,8 +1816,7 @@ void MTPResponder::getObjectPropListReq()
                         {
                             resp = m_storageServer->getObjectPropertyValue(currentObj, propValList);
                             if (resp == MTP_RESP_OK) {
-                                serializePropList(currentObj, propValList, dataContainer);
-                                numElements += propValList.size();
+                                numElements += serializePropList(currentObj, propValList, dataContainer);
                             }
                         }
                     }
@@ -2744,19 +2743,27 @@ void MTPResponder::handleDeviceReset()
     emit deviceStatusOK();
 }
 
-bool MTPResponder::serializePropList(ObjHandle currentObj,
+quint32 MTPResponder::serializePropList(ObjHandle currentObj,
         QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer)
 {
     MTP_FUNC_TRACE();
 
+    quint32 serializedCount = 0;
+
     for(QList<MTPObjPropDescVal>::const_iterator i = propValList.constBegin(); i != propValList.constEnd(); ++i)
     {
+        if (!i->propVal.isValid()) {
+            continue;
+        }
+
         const MtpObjPropDesc *propDesc = i->propDesc;
         dataContainer << currentObj << propDesc->uPropCode << propDesc->uDataType;
         dataContainer.serializeVariantByType(propDesc->uDataType, i->propVal);
+
+        ++serializedCount;
     }
-    //FIXME when do we return false
-    return true;
+
+    return serializedCount;
 }
 
 void MTPResponder::sendObjectSegmented()
