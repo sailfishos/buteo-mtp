@@ -1814,13 +1814,10 @@ void MTPResponder::getObjectPropListReq()
                         }
                         if(MTP_RESP_OK == resp)
                         {
-                            if(true == serializePropList(currentObj, propValList, dataContainer))
-                            {
+                            resp = m_storageServer->getObjectPropertyValue(currentObj, propValList);
+                            if (resp == MTP_RESP_OK) {
+                                serializePropList(currentObj, propValList, dataContainer);
                                 numElements += propValList.size();
-                            }
-                            else
-                            {
-                                resp = MTP_RESP_GeneralError;
                             }
                         }
                     }
@@ -2752,7 +2749,6 @@ bool MTPResponder::serializePropList(ObjHandle currentObj,
 {
     MTP_FUNC_TRACE();
 
-    m_storageServer->getObjectPropertyValue(currentObj, propValList);
     for(QList<MTPObjPropDescVal>::const_iterator i = propValList.constBegin(); i != propValList.constEnd(); ++i)
     {
         const MtpObjPropDesc *propDesc = i->propDesc;
