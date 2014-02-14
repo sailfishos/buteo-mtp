@@ -1814,7 +1814,7 @@ void MTPResponder::getObjectPropListReq()
                         }
                         if(MTP_RESP_OK == resp)
                         {
-                            if(true == serializePropListQuantum(currentObj, propValList, dataContainer))
+                            if(true == serializePropList(currentObj, propValList, dataContainer))
                             {
                                 numElements += propValList.size();
                             }
@@ -2747,7 +2747,8 @@ void MTPResponder::handleDeviceReset()
     emit deviceStatusOK();
 }
 
-bool MTPResponder::serializePropListQuantum(ObjHandle currentObj, QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer)
+bool MTPResponder::serializePropList(ObjHandle currentObj,
+        QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer)
 {
     MTP_FUNC_TRACE();
 

@@ -394,8 +394,17 @@ class MTPResponder : public QObject
         /// Checks segments of the sendObject data phase
         MTPResponseCode sendObjectCheck(ObjHandle handle, const quint32 dataLen, bool isLastPacket, MTPResponseCode code);
 
-        /// Used to serialize a single "element" in the Object property list dataset
-        bool serializePropListQuantum(ObjHandle currentObj, QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer);
+        /// Serializes a list of property values into an MTP container.
+        ///
+        /// Each value is converted into an element quadruple as per MTP 1.1
+        /// specification E.2.1.1 ObjectPropList Dataset Table.
+        ///
+        /// \param handle [in] handle of an object the properties belong to.
+        /// \param propValList [in] list of property descriptions and values.
+        /// \param dataContainer [out] container into which the data will be
+        ///                      serialized.
+        bool serializePropList(ObjHandle handle,
+                QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer);
 
         /// Sends a large data packet in segments of max data packet size
         void sendObjectSegmented();
