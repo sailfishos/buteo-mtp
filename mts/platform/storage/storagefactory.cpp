@@ -130,10 +130,17 @@ StorageFactory::StorageFactory() :  m_storageId(0), m_storagePluginsPath( plugin
  ******************************************************/
 StorageFactory::~StorageFactory()
 {
+    // Single storage plugin may serve multiple storages. We'll collect the
+    // plugin handles into this set to ensure we later dlclose() each of them
+    // only once.
+    QSet<void *> handlesToDlClose;
+
     for( int i = 0; i < m_pluginHandlesInfoVector.count() ; ++i )
     {
         PluginHandlesInfo_ &pluginHandlesInfo = m_pluginHandlesInfoVector[i];
-       
+
+        handlesToDlClose.insert(pluginHandlesInfo.storagePluginHandle);
+
         DESTROY_STORAGE_PLUGIN_FPTR destroyStoragePluginFptr =
                 ( DESTROY_STORAGE_PLUGIN_FPTR )dlsym( pluginHandlesInfo.storagePluginHandle,
                                                       DESTROY_STORAGE_PLUGIN.toUtf8().constData() );
@@ -146,10 +153,9 @@ StorageFactory::~StorageFactory()
         (*destroyStoragePluginFptr)( pluginHandlesInfo.storagePluginPtr );
     }
 
-    /* TODO: Make generic. We want to dlclose all plugins and each one only
-     * once. So far it doesn't matter as we have only file system storage
-     * plug-in. */
-    dlclose( m_pluginHandlesInfoVector[0].storagePluginHandle );
+    foreach (void *pluginHandle, handlesToDlClose) {
+        dlclose(pluginHandle);
+    }
 }
 
 /*******************************************************
