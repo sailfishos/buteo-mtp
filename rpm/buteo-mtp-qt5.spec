@@ -21,6 +21,7 @@ Requires: mtp-vendor-configuration
 # thumbnails on request; at least Windows 8 requires thumbnails to be
 # generated on the device.
 Requires: tumbler
+Requires: libqt5sparql-tracker-direct
 Requires(pre): shadow-utils
 Requires(pre): /usr/bin/groupadd-user
 Provides: buteo-mtp = %{version}
