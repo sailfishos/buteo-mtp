@@ -641,31 +641,25 @@ MTPResponseCode PropertyPod::getDevicePropDesc(MTPDevPropertyCode propCode, MtpD
 
 MTPResponseCode PropertyPod::getObjectPropDesc(MTPObjectFormatCategory category, MTPObjPropertyCode propCode, const MtpObjPropDesc*& propDesc)
 {
-    MTPResponseCode ret = MTP_RESP_OK;
-    propDesc = m_objPropMapCommon[propCode];
-    if(0 == propDesc)
-    {
-        switch(category)
-        {
-            case MTP_IMAGE_FORMAT:
-                propDesc = m_objPropMapImage[propCode];
-                break;
-            case MTP_AUDIO_FORMAT:
-                propDesc = m_objPropMapAudio[propCode];
-                break;
-            case MTP_VIDEO_FORMAT:
-                propDesc = m_objPropMapVideo[propCode];
-                break;
-            case MTP_UNSUPPORTED_FORMAT:
-            default:
-                break;
-        }
+    if ((propDesc = m_objPropMapCommon.value(propCode, 0))) {
+        return MTP_RESP_OK;
     }
-    if(0 == propDesc)
-    {
-        ret = MTP_RESP_Invalid_ObjectPropCode;
+
+    switch (category) {
+        case MTP_IMAGE_FORMAT:
+            propDesc = m_objPropMapImage.value(propCode, 0);
+            break;
+        case MTP_AUDIO_FORMAT:
+            propDesc = m_objPropMapAudio.value(propCode, 0);
+            break;
+        case MTP_VIDEO_FORMAT:
+            propDesc = m_objPropMapVideo.value(propCode, 0);
+            break;
+        default:
+            break;
     }
-    return ret;
+
+    return propDesc ? MTP_RESP_OK : MTP_RESP_Invalid_ObjectPropCode;
 }
 
 void PropertyPod::populateEnumDesc(MtpObjPropDesc* desc, MTPObjectFormatCategory category)
