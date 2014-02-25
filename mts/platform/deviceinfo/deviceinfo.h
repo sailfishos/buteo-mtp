@@ -63,14 +63,11 @@ class DeviceInfo : public QObject
 friend class XMLHandler;
 
 public:
-    /// Gets the form flag for battery level.
-    /// \param min [out] if the form flag is range, this has the least value in the range, else it's 0.
-    /// \param max [out] if the form flag is range, this has the largest value in the range, else it's 0.
-    /// \param stepSize [out] if the form flag is range, this has the step size for that range.
-    /// \param noOfVals [out] if the form flag is enum, this has the no. of values in the enum, else it's 0.
-    /// \param vals [out] if the form flag is enum, this has the list of values, else it's empty.
-    /// \return formFlag enum for the form flag which can be range or enum.
-    virtual quint8 getBatteryLevelForm( quint8& min, quint8& max, quint8& stepSize, quint32& noOfVals, QVector<quint8>& vals ) const;  
+    /// Gets MTP FORM (MTP 1.1 specification 5.1.2.1) of battery level property.
+    ///
+    /// \return a \c QVariant holding either \c MtpRangeForm or \c MtpEnumForm
+    /// structure depending on the actual format of the device property.
+    virtual QVariant getBatteryLevelForm() const;
 
     /// Gets the name of sync partner for this device.
     /// \param current [in] boolean which indicates whether to get the current
