@@ -586,56 +586,44 @@ MTPResponseCode PropertyPod::getInterdependentPropDesc(MTPObjectFormatCategory /
     return ret;
 }
 
-MTPResponseCode PropertyPod::getDevicePropDesc(MTPDevPropertyCode propCode, MtpDevPropDesc **propDesc)
+MTPResponseCode PropertyPod::getDevicePropDesc(MTPDevPropertyCode propCode,
+                                               MtpDevPropDesc **propDesc)
 {
-    MTPResponseCode ret = MTP_RESP_OK;
     *propDesc = m_devPropMap.value(propCode);
-    if(0 == *propDesc)
-    {
-        ret = MTP_RESP_DevicePropNotSupported;
+    if (!*propDesc) {
+        return MTP_RESP_DevicePropNotSupported;
     }
-    else
-    {
-        switch(propCode)
-        {
-            case MTP_DEV_PROPERTY_Device_Friendly_Name:
-            {
-                (*propDesc)->currentValue = QVariant::fromValue(QString(m_provider->deviceFriendlyName()));
-            }
+
+    switch (propCode) {
+        case MTP_DEV_PROPERTY_Synchronization_Partner:
+            (*propDesc)->currentValue = m_provider->syncPartner();
             break;
-            case MTP_DEV_PROPERTY_Synchronization_Partner:
-            {
-                (*propDesc)->currentValue = QVariant::fromValue(QString(m_provider->syncPartner()));
-            }
+        case MTP_DEV_PROPERTY_Device_Friendly_Name:
+            (*propDesc)->currentValue = m_provider->deviceFriendlyName();
             break;
-            case MTP_DEV_PROPERTY_DeviceIcon:
-            {
-                (*propDesc)->currentValue = QVariant::fromValue(QVector<quint8>(m_provider->deviceIcon()));
-            }
+        case MTP_DEV_PROPERTY_Volume:
+            // Do nothing.
             break;
-            case MTP_DEV_PROPERTY_Perceived_Device_Type:
-            {
-                (*propDesc)->currentValue = QVariant(m_provider->deviceType());
-            }
+        case MTP_DEV_PROPERTY_DeviceIcon:
+            (*propDesc)->currentValue =
+                    QVariant::fromValue(m_provider->deviceIcon());
             break;
-            case MTP_DEV_PROPERTY_Volume:
-            {
-                //Do nothing
-            }
+        case MTP_DEV_PROPERTY_Perceived_Device_Type:
+            (*propDesc)->currentValue = m_provider->deviceType();
             break;
-            default:
-            {
-                // Fetch the current value from the extension...
-                if(false == m_extManager->getDevPropValue(propCode, (*propDesc)->currentValue, ret))
-                {
-                    // We should never get here!
-                    ret = MTP_RESP_DevicePropNotSupported;
-                }
+        default: {
+            // Fetch the current value from the extension.
+            MTPResponseCode result = MTP_RESP_OK;
+            if (!m_extManager->getDevPropValue(propCode, (*propDesc)->currentValue, result)) {
+                // We should never get here!
+                return MTP_RESP_DevicePropNotSupported;
             }
+            return result;
             break;
         }
     }
-    return ret;
+
+    return MTP_RESP_OK;
 }
 
 MTPResponseCode PropertyPod::getObjectPropDesc(MTPObjectFormatCategory category, MTPObjPropertyCode propCode, const MtpObjPropDesc*& propDesc)
