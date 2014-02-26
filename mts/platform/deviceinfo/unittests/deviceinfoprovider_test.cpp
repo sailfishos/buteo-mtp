@@ -197,7 +197,7 @@ void DeviceInfoProvider_Test::testSetDeviceFriendlyName()
 
 void DeviceInfoProvider_Test::testGetBatteryLevelForm()
 {
-    QVariant var = m_Provider->getBatteryLevelForm();
+    QVariant var = m_Provider->batteryLevelForm();
 
     QCOMPARE(var.userType(), qMetaTypeId<MtpRangeForm>());
 

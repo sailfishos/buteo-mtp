@@ -67,7 +67,7 @@ public:
     ///
     /// \return a \c QVariant holding either \c MtpRangeForm or \c MtpEnumForm
     /// structure depending on the actual format of the device property.
-    virtual QVariant getBatteryLevelForm() const;
+    virtual QVariant batteryLevelForm() const;
 
     /// Gets the name of sync partner for this device.
     /// \param current [in] boolean which indicates whether to get the current

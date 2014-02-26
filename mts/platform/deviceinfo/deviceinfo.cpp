@@ -529,7 +529,7 @@ void DeviceInfo::setDeviceInfoXmlPath(const QString path)
     m_deviceInfoXmlPath = path;
 }
 
-QVariant DeviceInfo::getBatteryLevelForm() const
+QVariant DeviceInfo::batteryLevelForm() const
 {
     return QVariant::fromValue(MtpRangeForm(0, 100, 10));
 }
