@@ -84,6 +84,9 @@ SOURCES += mts.cpp \
            transport/usb/descriptor.c \
            transport/usb/threadio.cpp
 
+DBUS_INTERFACES = \
+	platform/deviceinfo/org.freedesktop.UPower.Device.xml
+
 target.path = /usr/lib/
 INSTALLS += target
 

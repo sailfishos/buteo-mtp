@@ -65,6 +65,7 @@ HEADERS += mtpresponder_test.h \
            ../../transport/usb/mtptransporterusb.h \
            ../../transport/usb/threadio.h \
            ../../transport/dummy/mtptransporterdummy.h \
+           ../../device_interface.h \
                ../../mts.h
 
 SOURCES += mtpresponder_test.cpp \
@@ -84,6 +85,7 @@ SOURCES += mtpresponder_test.cpp \
            ../../transport/usb/descriptor.c \
            ../../transport/usb/threadio.cpp \
            ../../transport/dummy/mtptransporterdummy.cpp \
+           ../../device_interface.cpp \
                ../../mts.cpp
 
 target.path = /opt/tests/buteo-mtp/

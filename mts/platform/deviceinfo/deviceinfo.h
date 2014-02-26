@@ -69,6 +69,11 @@ public:
     /// structure depending on the actual format of the device property.
     virtual QVariant batteryLevelForm() const;
 
+    /// Gets the device's battery charge level.
+    ///
+    /// \return the battery charge value as specified by getBatteryLevelForm()
+    virtual quint8 batteryLevel() const;
+
     /// Gets the name of sync partner for this device.
     /// \param current [in] boolean which indicates whether to get the current
     /// value(the default behavior) or the default value.
@@ -274,7 +279,12 @@ public:
     /// Destructor.
     virtual ~DeviceInfo();
 
+signals:
+    void devicePropertyChanged(MTPDevPropertyCode property, QVariant value) const;
+
 protected:
+    void setBatteryLevel(quint8 level);
+
     QString m_copyrightInfo; ///< Device copyright info.
     QString m_syncPartner; ///< This device's sync partner.
     QString m_deviceFriendlyName; ///< The device's friendly name.
@@ -337,6 +347,8 @@ private:
     QVector<quint16> m_audioFormats; ///< supported audio formats.
     QVector <quint16> m_videoFormats; ///< supported video formats.
     QVector<quint16> m_supportedFormats; ///< supported object formats.
+
+    quint8 m_batteryLevel;
 
     bool m_xmlOk; ///< indicates the device info xml file was parsed succesfully.
 

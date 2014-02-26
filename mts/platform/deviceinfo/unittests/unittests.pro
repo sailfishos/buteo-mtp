@@ -31,12 +31,14 @@ INCLUDEPATH += . \
 HEADERS += deviceinfoprovider_test.h \
         ../deviceinfoprovider.h \
         ../deviceinfo.h \
-        ../xmlhandler.h
+        ../xmlhandler.h \
+        ../../../device_interface.h
 
 SOURCES += deviceinfoprovider_test.cpp \
         ../deviceinfoprovider.cpp \
         ../deviceinfo.cpp \
-        ../xmlhandler.cpp
+        ../xmlhandler.cpp \
+        ../../../device_interface.cpp
 
 target.path = /opt/tests/buteo-mtp/
 INSTALLS += target

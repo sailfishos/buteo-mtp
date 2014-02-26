@@ -534,6 +534,19 @@ QVariant DeviceInfo::batteryLevelForm() const
     return QVariant::fromValue(MtpRangeForm(0, 100, 10));
 }
 
+quint8 DeviceInfo::batteryLevel() const
+{
+    return m_batteryLevel;
+}
+
+void DeviceInfo::setBatteryLevel(quint8 level)
+{
+    if (m_batteryLevel != level) {
+        m_batteryLevel = level;
+        emit devicePropertyChanged(MTP_DEV_PROPERTY_BatteryLevel, level);
+    }
+}
+
 /*******************************************
  * m_formFlag DeviceInfo::getBatteryLevelForm
  ******************************************/

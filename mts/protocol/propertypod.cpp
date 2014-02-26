@@ -417,6 +417,12 @@ MtpObjPropDesc PropertyPod::m_videoPropDesc[] =
 MtpDevPropDesc PropertyPod::m_devicePropDesc[] =
 {
     {
+        MTP_DEV_PROPERTY_BatteryLevel,
+        static_cast<MTPDataType>(MTP_DATA_TYPE_UINT8), false,
+        QVariant(), QVariant(),
+        MTP_FORM_FLAG_NONE, QVariant()
+    },
+    {
         MTP_DEV_PROPERTY_Synchronization_Partner,
         static_cast<MTPDataType>(MTP_DATA_TYPE_STR), true,
         QVariant(), QVariant(),
@@ -510,6 +516,17 @@ PropertyPod::PropertyPod(DeviceInfo* devInfoProvider, MTPExtensionManager* extMa
         m_devPropMap.insert(propDescDev->uPropCode, propDescDev);
 
         switch (propDescDev->uPropCode) {
+            case MTP_DEV_PROPERTY_BatteryLevel: {
+                propDescDev->formField = m_provider->batteryLevelForm();
+
+                int type = propDescDev->formField.userType();
+                if (type == qMetaTypeId<MtpRangeForm>()) {
+                    propDescDev->formFlag = MTP_FORM_FLAG_RANGE;
+                } else if (type == qMetaTypeId<MtpEnumForm>()) {
+                    propDescDev->formFlag = MTP_FORM_FLAG_ENUM;
+                }
+                break;
+            }
             case MTP_DEV_PROPERTY_Synchronization_Partner:
                 propDescDev->defValue = m_provider->syncPartner();
                 break;
@@ -595,6 +612,9 @@ MTPResponseCode PropertyPod::getDevicePropDesc(MTPDevPropertyCode propCode,
     }
 
     switch (propCode) {
+        case MTP_DEV_PROPERTY_BatteryLevel:
+            (*propDesc)->currentValue = m_provider->batteryLevel();
+            break;
         case MTP_DEV_PROPERTY_Synchronization_Partner:
             (*propDesc)->currentValue = m_provider->syncPartner();
             break;

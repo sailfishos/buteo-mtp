@@ -47,6 +47,8 @@ QTM_USE_NAMESPACE
 
 #include <SyncDBusConnection.h>
 
+#include "device_interface.h" // generated
+
 using namespace meegomtp1dot0;
 
 
@@ -60,13 +62,20 @@ using namespace meegomtp1dot0;
 /**********************************************
  * DeviceInfoProvider::DeviceInfoProvider
  *********************************************/
-DeviceInfoProvider::DeviceInfoProvider()
+DeviceInfoProvider::DeviceInfoProvider():
+  battery(new OrgFreedesktopUPowerDeviceInterface("org.freedesktop.UPower",
+          "/org/freedesktop/UPower/devices/battery_battery",
+          QDBusConnection::systemBus(), this))
 {
     getSystemInfo();
 
     // Get the BT adapter interface, this interface can later be used to get the BT name
     // which will serve as the device friendly name.
     getBTAdapterInterface();
+
+    setBatteryLevel(battery->percentage());
+    connect(battery, &OrgFreedesktopUPowerDeviceInterface::Changed,
+            this, &DeviceInfoProvider::onBatteryChanged);
 }
 
 /**********************************************
@@ -168,3 +177,7 @@ const QString& DeviceInfoProvider::deviceFriendlyName( bool /*current*/ )
 }
 #endif
 
+void DeviceInfoProvider::onBatteryChanged()
+{
+    setBatteryLevel(battery->percentage());
+}

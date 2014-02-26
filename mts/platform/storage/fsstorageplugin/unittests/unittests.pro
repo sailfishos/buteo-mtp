@@ -51,6 +51,7 @@ HEADERS += fsstorageplugin_test.h \
            ../thumbnailerproxy.h \
            ../storagetracker.h \
            ../../storagefactory.h \
+           ../../../../device_interface.h \
            ../storageitem.h \
            mts.h \
            protocol/mtpresponder.h \
@@ -79,6 +80,7 @@ SOURCES += fsstorageplugin_test.cpp \
            ../storagetracker.cpp \
            ../../storagefactory.cpp \
            ../../storageplugin.cpp \
+           ../../../../device_interface.cpp \
            mts.cpp \
            protocol/mtpresponder.cpp \
            protocol/mtpcontainer.cpp \
