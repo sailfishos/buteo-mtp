@@ -414,6 +414,9 @@ MtpObjPropDesc PropertyPod::m_videoPropDesc[] =
 #endif
 };
 
+/* Appendix C of MTP 1.1 defines all device property values as having a size of
+ * UINT32. Beware that this is a bug in specification and the real size varies
+ * by the Datatype of given property. */
 MtpDevPropDesc PropertyPod::m_devicePropDesc[] =
 {
     {
