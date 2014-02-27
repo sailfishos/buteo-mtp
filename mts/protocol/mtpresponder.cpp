@@ -90,7 +90,6 @@ MTPResponder::MTPResponder(): m_storageServer(0),
     m_transporter(0),
     m_devInfoProvider(new DeviceInfoProvider),
     m_propertyPod(PropertyPod::instance(m_devInfoProvider, m_extensionManager)),
-    m_propCache(ObjectPropertyCache::instance()),
     m_extensionManager(new MTPExtensionManager),
     m_copiedObjHandle(0),
     m_containerToBeResent(false),
@@ -175,12 +174,6 @@ MTPResponder::~MTPResponder()
     {
         PropertyPod::releaseInstance();
         m_propertyPod = 0;
-    }
-
-    if(m_propCache)
-    {
-        ObjectPropertyCache::destroyInstance();
-        m_propCache = 0;
     }
 
     if(m_devInfoProvider)
@@ -1254,7 +1247,6 @@ void MTPResponder::deleteObjectReq()
         QVector<quint32> params;
         reqContainer->params(params);
         code = m_storageServer->deleteItem(params[0], static_cast<MTPObjFormatCode>(params[1]));
-        m_propCache->removeFromCache( params[0] );
     }
     sendResponse(code);
 }
@@ -1442,12 +1434,6 @@ void MTPResponder::moveObjectReq()
         else
         {
             code = m_storageServer->moveObject(params[0], params[2], params[1]);
-            if( MTP_RESP_OK == code )
-            {
-                // Invalidate the parent handle property from the cache. The
-                // other properties do not change
-                m_propCache->removeFromCache( params[0], MTP_OBJ_PROP_Parent_Obj );
-            }
         }
     }
 
@@ -1620,18 +1606,7 @@ void MTPResponder::getObjPropValueReq()
 
             propValList.append(MTPObjPropDescVal(propDesc));
 
-            if( m_propCache->getFromCache( handle, propValList[0] ) )
-            {
-                code = MTP_RESP_OK;
-            }
-            else
-            {
-                code = m_storageServer->getObjectPropertyValue(handle, propValList);
-                if( MTP_RESP_OK == code )
-                {
-                    m_propCache->addToCache( handle, propValList[0] );
-                }
-            }
+            code = m_storageServer->getObjectPropertyValue(handle, propValList);
             if(MTP_RESP_ObjectProp_Not_Supported == code)
             {
                 QString path;
@@ -1820,7 +1795,6 @@ void MTPResponder::getObjectPropListReq()
                         {
                             const MtpObjPropDesc *propDesc = 0;
                             QVector<MTPObjPropertyCode> propsSupported;
-                            int pos = 0;
 
                             resp = m_propertyPod->getObjectPropsSupportedByType(category, propsSupported);
                             for (int i = 0; ((i < propsSupported.size()) && (MTP_RESP_OK == resp)); i++)
@@ -1829,16 +1803,6 @@ void MTPResponder::getObjectPropListReq()
                                 if(MTP_OBJ_PROP_Rep_Sample_Data != propDesc->uPropCode)
                                 {
                                     propValList.append(MTPObjPropDescVal(propDesc));
-                                    QList<MTPObjPropDescVal> currPropValList = propValList.mid(pos);
-                                    MTPResponseCode code = m_storageServer->getObjectPropertyValue(currentObj,
-                                                                                                   currPropValList,
-                                                                                                   true,
-                                                                                                   false);
-                                    if( MTP_RESP_OK == code )
-                                    {
-                                        m_propCache->addToCache( currentObj, currPropValList[0] );
-                                    }
-                                    ++pos;
                                 }
                             }
                         }
@@ -1850,13 +1814,9 @@ void MTPResponder::getObjectPropListReq()
                         }
                         if(MTP_RESP_OK == resp)
                         {
-                            if(true == serializePropListQuantum(currentObj, propValList, dataContainer))
-                            {
-                                numElements += propValList.size();
-                            }
-                            else
-                            {
-                                resp = MTP_RESP_GeneralError;
+                            resp = m_storageServer->getObjectPropertyValue(currentObj, propValList);
+                            if (resp == MTP_RESP_OK) {
+                                numElements += serializePropList(currentObj, propValList, dataContainer);
                             }
                         }
                     }
@@ -2229,8 +2189,6 @@ void MTPResponder::sendObjectData(quint8* data, quint32 dataLen, bool isFirstPac
                 }
             }
             m_storageServer->setObjectPropertyValue(handle, propValList, true);
-            m_propCache->addToCache( handle, propValList );
-            m_propCache->setAllProps( handle );
         }
         // Trigger close file in the storage server... ignore return here
         m_storageServer->writeData( handle, 0, 0, false, true);
@@ -2289,7 +2247,6 @@ void MTPResponder::setObjectPropListData()
                     recvContainer->deserializeVariantByType(datatype, propValList[0].propVal);
                     // Set the object property value
                     respCode = m_storageServer->setObjectPropertyValue(objHandle, propValList);
-                    m_propCache->addToCache( objHandle, propValList );
                 }
             }
         }
@@ -2478,7 +2435,6 @@ void MTPResponder::setObjPropValueData()
                 propValList.append(MTPObjPropDescVal(propDesc));
                 recvContainer->deserializeVariantByType(propDesc->uDataType, propValList[0].propVal);
                 respCode = m_storageServer->setObjectPropertyValue(objHandle, propValList);
-                m_propCache->addToCache( objHandle, propValList[0] );
                 if(MTP_RESP_ObjectProp_Not_Supported == respCode)
                 {
                     QString path;
@@ -2787,57 +2743,27 @@ void MTPResponder::handleDeviceReset()
     emit deviceStatusOK();
 }
 
-bool MTPResponder::serializePropListQuantum(ObjHandle currentObj, QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer)
+quint32 MTPResponder::serializePropList(ObjHandle currentObj,
+        QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer)
 {
     MTP_FUNC_TRACE();
 
-    QList<MTPObjPropDescVal> notFoundList;
-    bool allProps = !(propValList.count() == 1);
-    // Ignore below return value
-    if( allProps )
-    {
-        if( m_propCache->getFromCache( currentObj, propValList, notFoundList ) )
-        {
-            ;//Do Nothing
-        }
-        // Not cached yet
-        else
-        {
-            MTP_LOG_INFO("All properties not cached yet, fetch from tracker");
-            MTPResponseCode code = m_storageServer->getObjectPropertyValue(currentObj, notFoundList, false, true);
-            if( MTP_RESP_OK == code )
-            {
-                m_propCache->addToCache( currentObj, notFoundList );
-                m_propCache->setAllProps( currentObj );
-                propValList += notFoundList;
-            }
-        }
-    }
-    else
-    {
-        if( m_propCache->getFromCache( currentObj, propValList[0] ) )
-        {
-            ;//Do Nothing
-        }
-        // Not cached yet
-        else
-        {
-            MTP_LOG_INFO("Property not cached yet, fetch from storage/tracker");
-            MTPResponseCode code = m_storageServer->getObjectPropertyValue(currentObj, propValList);
-            if( MTP_RESP_OK == code )
-            {
-                m_propCache->addToCache( currentObj, propValList[0] );
-            }
-        }
-    }
+    quint32 serializedCount = 0;
+
     for(QList<MTPObjPropDescVal>::const_iterator i = propValList.constBegin(); i != propValList.constEnd(); ++i)
     {
+        if (!i->propVal.isValid()) {
+            continue;
+        }
+
         const MtpObjPropDesc *propDesc = i->propDesc;
         dataContainer << currentObj << propDesc->uPropCode << propDesc->uDataType;
         dataContainer.serializeVariantByType(propDesc->uDataType, i->propVal);
+
+        ++serializedCount;
     }
-    //FIXME when do we return false
-    return true;
+
+    return serializedCount;
 }
 
 void MTPResponder::sendObjectSegmented()
@@ -2993,8 +2919,3 @@ void MTPResponder::unregisterMetaTypes()
     QMetaType::unregisterType("QVector<MtpInt128>");
 }
 #endif
-
-void MTPResponder::invalidatePropertyCache(ObjHandle objHandle, MTPObjPropertyCode propCode)
-{
-    m_propCache->removeFromCache(objHandle, propCode);
-}

@@ -549,6 +549,45 @@ QString StorageTracker::buildQuery(const QString &filePath, QList<MTPObjPropDesc
     }
 }
 
+QString StorageTracker::buildMassQuery(const QString &path,
+                                       const QList<const MtpObjPropDesc *> &properties)
+{
+    QString select;
+    QString where;
+    int variableId = 0;
+    bool hasNullQuery = false;
+
+    foreach (const MtpObjPropDesc *property, properties) {
+        if (m_handlerTable.contains(property->uPropCode)) {
+            const QString &variable = QString("?f%1 ").arg(variableId++);
+            const QString &predicate =
+                    m_handlerTable[property->uPropCode](QString());
+
+            select += variable;
+            where += QString("OPTIONAL{?x %1 %2 %3}")
+                    .arg(predicate).arg(variable)
+                    .arg(predicate.contains('[') ? ']' : ' ');
+        } else {
+            select += "?null ";
+            if (!hasNullQuery) {
+                where += " OPTIONAL{?null nie:url '123null321'}";
+                hasNullQuery = true;
+            }
+        }
+    }
+
+    if (variableId == 0) {
+        // Nothing to query.
+        return QString();
+    }
+
+    return QString("SELECT ?iri %1 WHERE { "
+                   "?x a nie:DataObject; nie:url ?iri. "
+                   "%2 "
+                   "FILTER regex(?iri, '^%3/[^/]*$') }")
+                   .arg(select).arg(where).arg(generateIriForTracker(path));
+}
+
 bool StorageTracker::getPropVals(const QString &filePath, QList<MTPObjPropDescVal> &propValList)
 {
     bool ret = false;
@@ -586,6 +625,38 @@ bool StorageTracker::getPropVals(const QString &filePath, QList<MTPObjPropDescVa
         }
     }
     return ret;
+}
+
+void StorageTracker::getChildPropVals(const QString& parentPath,
+        const QList<const MtpObjPropDesc *>& properties,
+        QMap<QString, QList<QVariant> > &values)
+{
+    QString query(buildMassQuery(parentPath, properties));
+    if (query.isEmpty()) {
+        return;
+    }
+
+    QVector<QStringList> result;
+    trackerQuery(query, result);
+
+    QVector<QStringList>::iterator it;
+    for (it = result.begin(); it != result.end(); ++it) {
+        QStringList &row = *it;
+        const QString &path = QUrl::fromEncoded(row[0].toUtf8()).toLocalFile();
+        QList<QVariant> &resultRow =
+                values.insert(path, QList<QVariant>()).value();
+
+        for (int i = 1; i != row.size(); ++i) {
+            resultRow.append(QVariant());
+
+            QString &val = row[i];
+            if (!val.isEmpty()) {
+                const MtpObjPropDesc *desc = properties[i - 1];
+                convertResultByTypeAndCode(path, val, desc->uDataType,
+                        desc->uPropCode, resultRow.last());
+            }
+        }
+    }
 }
 
 // Fetch the property value for the object referenced by the iri (ex: file:///home/user/MyDocs/1.mp3).
@@ -1642,6 +1713,11 @@ void StorageTracker::move(const QString &fromPath, const QString &toPath)
 QString StorageTracker::generateIri(const QString &path)
 {
     return generateIriForTracker(path);
+}
+
+bool StorageTracker::supportsProperty(MTPObjPropertyCode code) const
+{
+    return m_handlerTable.contains(code);
 }
 
 void StorageTracker::copy(const QString &fromPath, const QString &toPath)

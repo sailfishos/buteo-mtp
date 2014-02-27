@@ -43,6 +43,8 @@ class QDir;
 namespace meegomtp1dot0
 {
 class StoragePlugin;
+class ObjectPropertyCache;
+
 const QString pluginLocation = "/usr/lib/mtp";
 const QString CREATE_STORAGE_PLUGINS = "createStoragePlugins";
 const QString DESTROY_STORAGE_PLUGIN = "destroyStoragePlugin";
@@ -181,7 +183,9 @@ public:
     /// \size [in] the size in bytes.
     MTPResponseCode truncateItem( const ObjHandle &handle, const quint32 &size ) const;
 
-    MTPResponseCode getObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool getFromObjInfo = true, bool getDynmaically = true);
+    MTPResponseCode getObjectPropertyValue(const ObjHandle &handle,
+            QList<MTPObjPropDescVal> &propValList);
+
     MTPResponseCode setObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool sendObjectPropList = false);
 
 
@@ -239,9 +243,13 @@ private:
     /// \return the storage id.
     quint32 assignStorageId( quint16 storageNo, quint16 partitionNo = 0) const;
 
+    StoragePlugin *storageOfHandle(ObjHandle handle) const;
+
     ObjHandle m_largestObjectHandle;
     ObjHandle m_newObjectHandle;
     MtpInt128 m_newPuoid;
+
+    ObjectPropertyCache &m_objectPropertyCache;
 };
 }
 

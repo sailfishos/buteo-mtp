@@ -828,6 +828,72 @@ void FSStoragePlugin_test::testSetObjectPropertyValue()
     QCOMPARE( filename, QString("file1") );
 }
 
+void FSStoragePlugin_test::testGetChildPropertyValues()
+{
+    MTPObjectInfo info;
+    info.mtpFileName = "childDirectory";
+    info.mtpObjectFormat = MTP_OBF_FORMAT_Association;
+
+    ObjHandle unused;
+    ObjHandle directoryHandle;
+
+    QCOMPARE(m_storage->addItem(unused, directoryHandle, &info),
+            (MTPResponseCode)MTP_RESP_OK);
+
+    info.mtpObjectFormat = MTP_OBF_FORMAT_Text;
+    info.mtpParentObject = directoryHandle;
+
+    ObjHandle file1Handle;
+    info.mtpFileName = "childFile1";
+    QCOMPARE(m_storage->addItem(unused, file1Handle, &info),
+            (MTPResponseCode)MTP_RESP_OK);
+
+    ObjHandle file2Handle;
+    info.mtpFileName = "childFile2";
+    QCOMPARE(m_storage->addItem(unused, file2Handle, &info),
+            (MTPResponseCode)MTP_RESP_OK);
+
+    MtpObjPropDesc desc;
+    desc.uPropCode = MTP_OBJ_PROP_Obj_File_Name;
+    desc.uDataType = MTP_DATA_TYPE_STR;
+
+    QList<MTPObjPropDescVal> propValList;
+    propValList.append(MTPObjPropDescVal(&desc, QVariant()));
+
+    propValList.last().propVal = "filename1";
+    QCOMPARE(m_storage->setObjectPropertyValue(file1Handle, propValList),
+            (MTPResponseCode)MTP_RESP_OK);
+
+    propValList.last().propVal = "filename2";
+    QCOMPARE(m_storage->setObjectPropertyValue(file2Handle, propValList),
+            (MTPResponseCode)MTP_RESP_OK);
+
+    // Some additional property we know we haven't set.
+    MtpObjPropDesc descWeDontWantToBeReturned;
+    descWeDontWantToBeReturned.uPropCode = MTP_OBJ_PROP_Genre;
+    descWeDontWantToBeReturned.uDataType = MTP_DATA_TYPE_STR;
+
+    QList<const MtpObjPropDesc *> properties;
+    properties.append(&descWeDontWantToBeReturned);
+    properties.append(&desc);
+
+    QMap<ObjHandle, QList<QVariant> > values;
+    QCOMPARE(m_storage->getChildPropertyValues(directoryHandle, properties,
+            values), (MTPResponseCode)MTP_RESP_OK);
+
+    QVERIFY(values.size() == 2);
+    QVERIFY(values.contains(file1Handle) && values.contains(file2Handle));
+    QVERIFY(values[file1Handle].size() == 2 && values[file2Handle].size() == 2);
+
+    QVERIFY(!values[file1Handle][0].isValid());
+    QCOMPARE(values[file1Handle][1].toString(), QString("filename1"));
+    QVERIFY(!values[file2Handle][0].isValid());
+    QCOMPARE(values[file2Handle][1].toString(), QString("filename2"));
+
+
+    m_storage->deleteItem(directoryHandle, MTP_OBF_FORMAT_Undefined);
+}
+
 void FSStoragePlugin_test::testSetReferences()
 {
     MTPResponseCode response;

@@ -34,33 +34,18 @@
 
 using namespace meegomtp1dot0;
 
-const MTPObjPropertyCode ALLPROPS = 0xFFFF;
-
-ObjectPropertyCache* ObjectPropertyCache::m_instance = 0;
-
 ObjectPropertyCache* ObjectPropertyCache::instance()
 {
     MTP_FUNC_TRACE();
 
-    if( !m_instance )
-    {
-        m_instance = new ObjectPropertyCache;
+    static QScopedPointer<ObjectPropertyCache> instance;
+    if(!instance) {
+        instance.reset(new ObjectPropertyCache);
     }
-    return m_instance;
+    return instance.data();
 }
 
-void ObjectPropertyCache::destroyInstance()
-{
-    MTP_FUNC_TRACE();
-
-    if( m_instance )
-    {
-        delete m_instance;
-        m_instance = 0;
-    }
-}
-
-void ObjectPropertyCache::addToCache( ObjHandle handle, MTPObjPropertyCode propertyCode, const QVariant &value )
+void ObjectPropertyCache::add( ObjHandle handle, MTPObjPropertyCode propertyCode, const QVariant &value )
 {
     MTP_FUNC_TRACE();
 
@@ -68,25 +53,25 @@ void ObjectPropertyCache::addToCache( ObjHandle handle, MTPObjPropertyCode prope
     m_propertyMap[handle].insert( propertyCode,value );
 }
 
-void ObjectPropertyCache::addToCache( ObjHandle handle, const MTPObjPropDescVal &propDescVal )
+void ObjectPropertyCache::add( ObjHandle handle, const MTPObjPropDescVal &propDescVal )
 {
     MTP_FUNC_TRACE();
 
-    addToCache( handle, propDescVal.propDesc->uPropCode, propDescVal.propVal );
+    add( handle, propDescVal.propDesc->uPropCode, propDescVal.propVal );
 }
 
-void ObjectPropertyCache::addToCache( ObjHandle handle, QList<MTPObjPropDescVal> propDescValList )
+void ObjectPropertyCache::add( ObjHandle handle, QList<MTPObjPropDescVal> propDescValList )
 {
     MTP_FUNC_TRACE();
 
     for( QList<MTPObjPropDescVal>::const_iterator itr = propDescValList.constBegin();
          itr != propDescValList.constEnd(); ++itr )
     {
-        addToCache( handle, *itr );
+        add( handle, *itr );
     }
 }
 
-void ObjectPropertyCache::removeFromCache( ObjHandle handle, MTPObjPropertyCode propertyCode )
+void ObjectPropertyCache::remove( ObjHandle handle, MTPObjPropertyCode propertyCode )
 {
     MTP_FUNC_TRACE();
 
@@ -98,25 +83,25 @@ void ObjectPropertyCache::removeFromCache( ObjHandle handle, MTPObjPropertyCode 
     }
 }
 
-void ObjectPropertyCache::removeFromCache( ObjHandle handle, const MTPObjPropDescVal &propDescVal )
+void ObjectPropertyCache::remove( ObjHandle handle, const MTPObjPropDescVal &propDescVal )
 {
     MTP_FUNC_TRACE();
 
-    removeFromCache( handle, propDescVal.propDesc->uPropCode );
+    remove( handle, propDescVal.propDesc->uPropCode );
 }
 
-void ObjectPropertyCache::removeFromCache( ObjHandle handle, QList<MTPObjPropDescVal> propDescValList )
+void ObjectPropertyCache::remove( ObjHandle handle, QList<MTPObjPropDescVal> propDescValList )
 {
     MTP_FUNC_TRACE();
 
     for( QList<MTPObjPropDescVal>::const_iterator itr = propDescValList.constBegin();
          itr != propDescValList.constEnd(); ++itr )
     {
-        removeFromCache( handle, *itr );
+        remove( handle, *itr );
     }
 }
 
-bool ObjectPropertyCache::getFromCache( ObjHandle handle, MTPObjPropertyCode propertyCode, QVariant &value )
+bool ObjectPropertyCache::get( ObjHandle handle, MTPObjPropertyCode propertyCode, QVariant &value )
 {
     MTP_FUNC_TRACE();
 
@@ -134,21 +119,21 @@ bool ObjectPropertyCache::getFromCache( ObjHandle handle, MTPObjPropertyCode pro
     return found;
 }
 
-bool ObjectPropertyCache::getFromCache( ObjHandle handle, MTPObjPropDescVal &propDescVal )
+bool ObjectPropertyCache::get( ObjHandle handle, MTPObjPropDescVal &propDescVal )
 {
     MTP_FUNC_TRACE();
 
-    return getFromCache( handle, propDescVal.propDesc->uPropCode, propDescVal.propVal );
+    return get( handle, propDescVal.propDesc->uPropCode, propDescVal.propVal );
 }
 
-bool ObjectPropertyCache::getFromCache( ObjHandle handle, QList<MTPObjPropDescVal> &propDescValList,  QList<MTPObjPropDescVal> &notFoundList )
+bool ObjectPropertyCache::get( ObjHandle handle, QList<MTPObjPropDescVal> &propDescValList,  QList<MTPObjPropDescVal> &notFoundList )
 {
     MTP_FUNC_TRACE();
 
     for( QList<MTPObjPropDescVal>::iterator itr = propDescValList.begin();
          itr != propDescValList.end(); )
     {
-        if( !getFromCache( handle, *itr ) )
+        if( !get( handle, *itr ) )
         {
             notFoundList.append( *itr );
             itr = propDescValList.erase( itr );
@@ -158,22 +143,14 @@ bool ObjectPropertyCache::getFromCache( ObjHandle handle, QList<MTPObjPropDescVa
             ++itr;
         }
     }
-    return containsAllProps( handle );
+    return notFoundList.isEmpty();
 }
 
-void ObjectPropertyCache::clearCache()
+void ObjectPropertyCache::clear()
 {
     MTP_FUNC_TRACE();
 
     m_propertyMap.clear();
 }
 
-bool ObjectPropertyCache::containsAllProps( ObjHandle handle )
-{
-    return m_propertyMap[handle].contains( ALLPROPS );
-}
-
-void ObjectPropertyCache::setAllProps( ObjHandle handle )
-{
-    m_propertyMap[handle].insert( ALLPROPS, 0 );
-}
+ObjectPropertyCache::~ObjectPropertyCache() {}

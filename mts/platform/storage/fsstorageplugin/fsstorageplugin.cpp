@@ -2633,9 +2633,8 @@ MTPResponseCode FSStoragePlugin::getObjectPropertyValueFromTracker( const ObjHan
     return code;
 }
 
-MTPResponseCode FSStoragePlugin::getObjectPropertyValue( const ObjHandle &handle,
-                                                         QList<MTPObjPropDescVal> &propValList,
-                                                         bool getFromObjInfo, bool getDynamically )
+MTPResponseCode FSStoragePlugin::getObjectPropertyValue(const ObjHandle &handle,
+        QList<MTPObjPropDescVal> &propValList)
 {
     MTPResponseCode code = MTP_RESP_OK;
     StorageItem *storageItem = m_objectHandlesMap.value( handle );
@@ -2645,24 +2644,89 @@ MTPResponseCode FSStoragePlugin::getObjectPropertyValue( const ObjHandle &handle
     }
     else
     {
-        // First, we try to check if the object property has a value in the object info data set
-        // or whether if it's statically defined ( hard-coded in other words ).
+        // First, fill in the property values that are in the object info data
+        // set or statically defined.
+        QList<MTPObjPropDescVal>::iterator i;
+        for (i = propValList.begin(); i != propValList.end(); ++i) {
+            code = getObjectPropertyValueFromStorage(handle,
+                    i->propDesc->uPropCode, i->propVal, i->propDesc->uDataType);
+        }
 
-        if( getFromObjInfo )
-        {
-            for(QList<MTPObjPropDescVal>::iterator i = propValList.begin();
-                    i != propValList.end(); ++i)
-            {
-                code = getObjectPropertyValueFromStorage( handle, i->propDesc->uPropCode, i->propVal, i->propDesc->uDataType );
-            }
-        }
-        // Fetch whatever else remains from tracker
-        if( getDynamically )
-        {
-            m_tracker->getPropVals(storageItem->m_path, propValList);
-        }
+        // Fetch whatever else remains from Tracker.
+        m_tracker->getPropVals(storageItem->m_path, propValList);
     }
     return code;
+}
+
+MTPResponseCode FSStoragePlugin::getChildPropertyValues(ObjHandle handle,
+        const QList<const MtpObjPropDesc *>& properties,
+        QMap<ObjHandle, QList<QVariant> > &values)
+{
+    if (!checkHandle(handle))
+    {
+        return MTP_RESP_InvalidObjectHandle;
+    }
+
+    StorageItem *item = m_objectHandlesMap[handle];
+    if (item->m_objectInfo->mtpObjectFormat != MTP_OBF_FORMAT_Association) {
+        // Not an association.
+        return MTP_RESP_InvalidObjectHandle;
+    }
+
+    StorageItem *child = item->m_firstChild;
+    for (; child; child = child->m_nextSibling) {
+        QList<QVariant> &childValues =
+                values.insert(child->m_handle, QList<QVariant>()).value();
+        foreach (const MtpObjPropDesc *desc, properties) {
+            childValues.append(QVariant());
+            getObjectPropertyValueFromStorage(child->m_handle, desc->uPropCode,
+                    childValues.last(), desc->uDataType);
+        }
+    }
+
+    QList<const MtpObjPropDesc *> trackerSupportedProperties;
+    foreach (const MtpObjPropDesc *desc, properties) {
+        if (m_tracker->supportsProperty(desc->uPropCode)) {
+            trackerSupportedProperties.append(desc);
+        }
+    }
+
+    QMap<QString, QList<QVariant> > trackerValues;
+    m_tracker->getChildPropVals(item->m_path, trackerSupportedProperties,
+            trackerValues);
+    if (trackerValues.isEmpty()) {
+        // Nothing more in Tracker, return immediately.
+        return MTP_RESP_OK;
+    }
+
+    // Merge the results.
+    QMap<ObjHandle, QList<QVariant> >::iterator it;
+    for (it = values.begin(); it != values.end(); ++it) {
+        StorageItem *child = m_objectHandlesMap[it.key()];
+        QList<QVariant> &childValues = it.value();
+        if (!trackerValues.contains(child->m_path)) {
+            MTP_LOG_INFO("Object" << child->m_path << "not found in tracker "
+                    "result set.");
+            continue;
+        }
+
+        QList<QVariant>::iterator trackerValuesIt =
+                trackerValues[child->m_path].begin();
+        for (int i = 0; i != properties.size(); ++i) {
+            if (!m_tracker->supportsProperty(properties[i]->uPropCode)) {
+                // Not in Tracker result set.
+                continue;
+            }
+
+            QVariant &value = childValues[i];
+            if (value.isNull()) {
+                value = *trackerValuesIt;
+            }
+            ++trackerValuesIt;
+        }
+    }
+
+    return MTP_RESP_OK;
 }
 
 MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle,

@@ -81,9 +81,6 @@ class MTPResponder : public QObject
         /// \param container [in] The container to be sent
         bool sendContainer(MTPTxContainer &container, bool isLastPacket = true);
         
-        /// Invalidates the object property cache (one property thereof)
-        void invalidatePropertyCache(ObjHandle objHandle, MTPObjPropertyCode propCode);
-
         /// Initiliazes the transport mechanism over which MTP traffic is exchange.
 	/// Call this method after construction the responder.
 	bool initTransport(TransportType transport);
@@ -148,7 +145,6 @@ class MTPResponder : public QObject
         MTPTransporter*                                 m_transporter;      ///< Pointer to the transport layer
         DeviceInfo*                                     m_devInfoProvider;  ///< Pointer to the device info class
         PropertyPod*                                    m_propertyPod;      ///< Pointer to the MTP properties utility class
-        ObjectPropertyCache*                            m_propCache;
         MTPExtensionManager*                            m_extensionManager; ///< Pointer to the MTP extension manager class
         ObjHandle                                       m_copiedObjHandle;  ///< Stored in case the copied object needs to be deleted due to cancel tx
         bool                                            m_containerToBeResent;
@@ -398,8 +394,23 @@ class MTPResponder : public QObject
         /// Checks segments of the sendObject data phase
         MTPResponseCode sendObjectCheck(ObjHandle handle, const quint32 dataLen, bool isLastPacket, MTPResponseCode code);
 
-        /// Used to serialize a single "element" in the Object property list dataset
-        bool serializePropListQuantum(ObjHandle currentObj, QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer);
+        /// Serializes a list of property values into an MTP container.
+        ///
+        /// Each value is converted into an element quadruple as per MTP 1.1
+        /// specification E.2.1.1 ObjectPropList Dataset Table. The method skips
+        /// any invalid QVariant values (their presence in the result set
+        /// usually means the object was queried for that property but doesn't
+        /// have it defined).
+        ///
+        /// \param handle [in] handle of an object the properties belong to.
+        /// \param propValList [in] list of property descriptions and values.
+        /// \param dataContainer [out] container into which the data will be
+        ///                      serialized.
+        ///
+        /// \return the number of serialized properties, i.e. excluding invalid
+        /// QVariants.
+        quint32 serializePropList(ObjHandle handle,
+                QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer);
 
         /// Sends a large data packet in segments of max data packet size
         void sendObjectSegmented();

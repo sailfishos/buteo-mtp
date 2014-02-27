@@ -101,6 +101,17 @@ public:
 
     MTPResponseCode truncateItem( const ObjHandle &handle, const quint32 &size );
 
+    MTPResponseCode getObjectPropertyValue(const ObjHandle &handle,
+            QList<MTPObjPropDescVal> &propValList);
+
+    MTPResponseCode setObjectPropertyValue(const ObjHandle &handle,
+            QList<MTPObjPropDescVal> &propValList,
+            bool sendObjectPropList = false);
+
+    MTPResponseCode getChildPropertyValues(ObjHandle handle,
+            const QList<const MtpObjPropDesc *>& properties,
+            QMap<ObjHandle, QList<QVariant> > &values);
+
     void excludePath( const QString & path );
 
 public slots:
@@ -335,8 +346,6 @@ private:
     /// Clears the internal iNotify event cache
     void clearCachedInotifyEvent();
 
-    MTPResponseCode getObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool getFromObjInfo = true, bool getDynamically = true );
-    MTPResponseCode setObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool sendObjectPropList = false);
     MTPResponseCode getObjectPropertyValueFromStorage( const ObjHandle &handle,
                                                        MTPObjPropertyCode propCode,
                                                        QVariant &value, MTPDataType type );
