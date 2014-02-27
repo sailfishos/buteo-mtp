@@ -69,6 +69,7 @@ friend class FSStoragePlugin_test;
         void move(const QString &fromPath, const QString &toPath);
         void copy(const QString &fromPath, const QString &toPath);
         QString generateIri(const QString &path);
+        bool supportsProperty(MTPObjPropertyCode code) const;
     private:
         QHash<MTPObjPropertyCode, fpTrackerQueryHandler> m_handlerTable;
         QHash<MTPObjPropertyCode, fpTrackerUpdateQueryHandler> m_handlerTableUpdate;

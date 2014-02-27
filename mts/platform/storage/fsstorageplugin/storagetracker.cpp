@@ -1715,6 +1715,11 @@ QString StorageTracker::generateIri(const QString &path)
     return generateIriForTracker(path);
 }
 
+bool StorageTracker::supportsProperty(MTPObjPropertyCode code) const
+{
+    return m_handlerTable.contains(code);
+}
+
 void StorageTracker::copy(const QString &fromPath, const QString &toPath)
 {
     QString fromIri = generateIriForTracker(fromPath);

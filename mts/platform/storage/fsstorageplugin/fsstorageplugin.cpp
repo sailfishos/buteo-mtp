@@ -2684,8 +2684,16 @@ MTPResponseCode FSStoragePlugin::getChildPropertyValues(ObjHandle handle,
         }
     }
 
+    QList<const MtpObjPropDesc *> trackerSupportedProperties;
+    foreach (const MtpObjPropDesc *desc, properties) {
+        if (m_tracker->supportsProperty(desc->uPropCode)) {
+            trackerSupportedProperties.append(desc);
+        }
+    }
+
     QMap<QString, QList<QVariant> > trackerValues;
-    m_tracker->getChildPropVals(item->m_path, properties, trackerValues);
+    m_tracker->getChildPropVals(item->m_path, trackerSupportedProperties,
+            trackerValues);
     if (trackerValues.isEmpty()) {
         // Nothing more in Tracker, return immediately.
         return MTP_RESP_OK;
@@ -2701,12 +2709,20 @@ MTPResponseCode FSStoragePlugin::getChildPropertyValues(ObjHandle handle,
                     "result set.");
             continue;
         }
-        QList<QVariant> &trackerChildValues = trackerValues[child->m_path];
+
+        QList<QVariant>::iterator trackerValuesIt =
+                trackerValues[child->m_path].begin();
         for (int i = 0; i != properties.size(); ++i) {
+            if (!m_tracker->supportsProperty(properties[i]->uPropCode)) {
+                // Not in Tracker result set.
+                continue;
+            }
+
             QVariant &value = childValues[i];
             if (value.isNull()) {
-                value = trackerChildValues[i];
+                value = *trackerValuesIt;
             }
+            ++trackerValuesIt;
         }
     }
 
