@@ -606,6 +606,11 @@ MTPResponseCode StorageFactory::setObjectPropertyValue( const ObjHandle &handle,
 
 void StorageFactory::eventReceived(MTPEventCode eventCode, const QVector<quint32> &params)
 {
+    if(eventCode == MTP_EV_ObjectPropChanged) {
+        // Invalidate cache for this object property.
+        m_objectPropertyCache.remove(params[0], params[1]);
+    }
+
     MTPEvent event(eventCode, MTP_NO_SESSION_ID, MTP_NO_TRANSACTION_ID, params);
     event.dispatchEvent();
 }

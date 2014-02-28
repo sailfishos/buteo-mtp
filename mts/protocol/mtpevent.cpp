@@ -33,7 +33,6 @@
 #include "mtptypes.h"
 #include "mtpresponder.h"
 #include "mtptxcontainer.h"
-#include "objectpropertycache.h"
 #include "trace.h"
 
 using namespace meegomtp1dot0;
@@ -60,11 +59,6 @@ void MTPEvent::dispatchEvent()
     for(int i = 0; i < m_eventParams.size(); i++)
     {
         eventContainer << m_eventParams[i];
-    }
-    if(MTP_EV_ObjectPropChanged == m_eventCode)
-    {
-        // Invalidate cache for this object property.
-        ObjectPropertyCache::instance()->remove(m_eventParams[0], m_eventParams[1]);
     }
     bool sent = MTPResponder::instance()->sendContainer(eventContainer);
     if( !sent )
