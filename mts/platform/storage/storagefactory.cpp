@@ -178,8 +178,6 @@ bool StorageFactory::enumerateStorages( QVector<quint32>& failedStorageIds )
     for( ; itr != m_allStorages.constEnd(); ++itr )
     {
         // Connect the storage plugin's eventGenerated signal
-        qRegisterMetaType<MTPEventCode>("MTPEventCode");
-        qRegisterMetaType<QVector<quint32> >("QVector<quint32>");
         connect(itr.value(), &StoragePlugin::eventGenerated,
                 this, &StorageFactory::onStorageEvent,
                 Qt::QueuedConnection);
