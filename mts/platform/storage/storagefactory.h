@@ -190,11 +190,6 @@ public:
 
 
 public Q_SLOTS:
-    /// This slots receives (MTP) events from the underlying storage plugin and further routes them to the initiator.
-    /// \param eventCode [in] The MTP event code.
-    /// \param params [in] A vector of event parameters.
-    void eventReceived(MTPEventCode eventCode, const QVector<quint32> &params);
-
     /// This slot will take care of providing an object handle which a storage plug-in can assign to an object.
     /// A storage plug-in will emit an objectCreated signal when it needs a handle.
     /// \param handle [out] the populated object handle
@@ -249,6 +244,14 @@ private:
     MtpInt128 m_newPuoid;
 
     ObjectPropertyCache &m_objectPropertyCache;
+
+private slots:
+    /// This slot is called when some of the underlying storage plugins
+    /// generates an MTP event.
+    ///
+    /// \param event [in] an MTP event code.
+    /// \param params [in] a collection of event parameters.
+    void onStorageEvent(MTPEventCode event, const QVector<quint32> &params);
 };
 }
 

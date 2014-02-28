@@ -2894,6 +2894,12 @@ void MTPResponder::resume()
     m_transporter->resume();
 }
 
+void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &params)
+{
+    MTPEvent e(event, MTP_NO_SESSION_ID, MTP_NO_TRANSACTION_ID, params);
+    e.dispatchEvent();
+}
+
 #if 0
 // This was added as a workaround for the QMetaType bug in QT (NB #169065)
 // However, the workaround for it is now also in sync-fw. So this unregistartion
