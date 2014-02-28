@@ -48,8 +48,7 @@ public:
     //Constructors.
     MTPEvent();
     MTPEvent(quint16 evCode, quint32 sessID,
-             quint32 transID, QVector<quint32> params,
-             QString key = "");
+             quint32 transID, QVector<quint32> params);
     //Destructor.
     ~MTPEvent();
 
@@ -67,13 +66,6 @@ public:
     void setSessionID(quint32 sessID);
     void setEventParams(QVector<quint32> params);
 
-    //Map of a key <-> poiner to MTPEvent object.
-    //This is used to associate the right transaction id's
-    //for events like ObjectAdded, ObjectRemoved, etc.
-    //The key is a string concactenation of the object's filename
-    //and parent handle.
-    static QHash<QString,MTPEvent*> transMap;
-
 private:
     //This event's code.
     quint16 m_eventCode; 
@@ -83,9 +75,6 @@ private:
     quint32 m_transactionID;
     //Event parameters, if this event has any.
     QVector<quint32> m_eventParams;
-
-    //Object file name, see the comments for the next member.
-    QString m_key;
 };
 }
 

@@ -604,21 +604,10 @@ MTPResponseCode StorageFactory::setObjectPropertyValue( const ObjHandle &handle,
     return MTP_RESP_InvalidObjectHandle;
 }
 
-void StorageFactory::eventReceived(MTPEventCode eventCode, const QVector<quint32> &params, QString filePath)
+void StorageFactory::eventReceived(MTPEventCode eventCode, const QVector<quint32> &params)
 {
-    // Try to get an already exiting event object
-    MTPEvent *event = MTPEvent::transMap.value(filePath);
-    if(0 != event)
-    {
-        event->setEventParams(params);
-        event->setEventCode(eventCode);
-    }
-    else
-    {
-        event = new MTPEvent(eventCode, MTP_NO_SESSION_ID, MTP_NO_TRANSACTION_ID, params);
-    }
-    event->dispatchEvent();
-    delete event;
+    MTPEvent event(eventCode, MTP_NO_SESSION_ID, MTP_NO_TRANSACTION_ID, params);
+    event.dispatchEvent();
 }
 
 void StorageFactory::getObjectHandle( ObjHandle& handle )

@@ -38,33 +38,19 @@
 
 using namespace meegomtp1dot0;
 
-//static transMap's definition.
-QHash<QString,MTPEvent*> MTPEvent::transMap;
-
 //Constructors
 MTPEvent::MTPEvent():m_eventCode(MTP_EV_Undefined), m_sessionID(MTP_NO_SESSION_ID), m_transactionID(MTP_NO_TRANSACTION_ID)
 {
 }
 
-MTPEvent::MTPEvent(quint16 evCode, quint32 sessID, quint32 transID, QVector<quint32> params,
-                   QString theKey) : m_eventCode(evCode), m_sessionID(sessID), m_transactionID(transID), m_eventParams(params), m_key(theKey)
-{
-    //We need to remember this event as it might be triggered at a later stage,
-    //this is especially for operations like SendObject, SetObjectPropValue.
-    if("" != m_key)
-    {
-        transMap[m_key] = this;
-    }
-}
+MTPEvent::MTPEvent(quint16 evCode, quint32 sessID, quint32 transID, QVector<quint32> params):
+  m_eventCode(evCode), m_sessionID(sessID), m_transactionID(transID),
+  m_eventParams(params)
+{}
 
 //Destructor
 MTPEvent::~MTPEvent()
-{
-    if("" != m_key)
-    {
-        transMap.remove(m_key);
-    }
-}
+{}
 
 void MTPEvent::dispatchEvent()
 {

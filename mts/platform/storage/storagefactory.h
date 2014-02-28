@@ -193,8 +193,7 @@ public Q_SLOTS:
     /// This slots receives (MTP) events from the underlying storage plugin and further routes them to the initiator.
     /// \param eventCode [in] The MTP event code.
     /// \param params [in] A vector of event parameters.
-    /// \param filePath [in] The key (= file name + parent handle + storage id) to the file that caused this event. For events not associated to a specific file, this must be an empty QString
-    void eventReceived(MTPEventCode eventCode, const QVector<quint32> &params, QString filePath);
+    void eventReceived(MTPEventCode eventCode, const QVector<quint32> &params);
 
     /// This slot will take care of providing an object handle which a storage plug-in can assign to an object.
     /// A storage plug-in will emit an objectCreated signal when it needs a handle.
