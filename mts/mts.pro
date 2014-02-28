@@ -46,8 +46,6 @@ INCLUDEPATH += . \
 headers.files += mts.h common/trace.h common/mtptypes.h
 HEADERS += mts.h \
            common/trace.h \
-           protocol/mtpevent.h \
-           protocol/mtpeventthread.h \
            protocol/mtpresponder.h \
            protocol/propertypod.h \
            protocol/objectpropertycache.h \
@@ -68,7 +66,6 @@ HEADERS += mts.h \
            platform/storage/storageplugin.h
 
 SOURCES += mts.cpp \
-           protocol/mtpevent.cpp \
            protocol/mtpresponder.cpp \
            protocol/propertypod.cpp \
            protocol/objectpropertycache.cpp \

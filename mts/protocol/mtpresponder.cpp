@@ -39,7 +39,6 @@
 #include "mtpcontainerwrapper.h"
 #include "mtptxcontainer.h"
 #include "mtprxcontainer.h"
-#include "mtpevent.h"
 #include "storagefactory.h"
 #include "trace.h"
 #include "deviceinfoprovider.h"
@@ -2896,8 +2895,15 @@ void MTPResponder::resume()
 
 void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &params)
 {
-    MTPEvent e(event, MTP_NO_SESSION_ID, MTP_NO_TRANSACTION_ID, params);
-    e.dispatchEvent();
+    MTPTxContainer container(MTP_CONTAINER_TYPE_EVENT, event,
+            MTP_NO_TRANSACTION_ID, params.size() * sizeof (quint32));
+    foreach (quint32 param, params) {
+        container << param;
+    }
+
+    if(!sendContainer(container)) {
+        MTP_LOG_CRITICAL("Couldn't dispatch event" << event);
+    }
 }
 
 #if 0

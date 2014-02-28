@@ -53,7 +53,6 @@ HEADERS += fsstorageplugin_test.h \
            ../../storagefactory.h \
            ../storageitem.h \
            mts.h \
-           protocol/mtpevent.h \
            protocol/mtpresponder.h \
            protocol/mtpcontainer.h \
            protocol/mtpcontainerwrapper.h \
@@ -81,7 +80,6 @@ SOURCES += fsstorageplugin_test.cpp \
            ../../storagefactory.cpp \
            ../../storageplugin.cpp \
            mts.cpp \
-           protocol/mtpevent.cpp \
            protocol/mtpresponder.cpp \
            protocol/mtpcontainer.cpp \
            protocol/mtpcontainerwrapper.cpp \

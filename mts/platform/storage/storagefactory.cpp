@@ -36,7 +36,6 @@
 #include "objectpropertycache.h"
 #include "storagefactory.h"
 #include "storageplugin.h"
-#include "mtpevent.h"
 #include "mtpresponder.h"
 #include "trace.h"
 

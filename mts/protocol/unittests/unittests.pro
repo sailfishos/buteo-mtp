@@ -51,7 +51,6 @@ HEADERS += mtpresponder_test.h \
            ../mtpcontainerwrapper.h \
            ../mtprxcontainer.h \
            ../mtptxcontainer.h \
-           ../mtpevent.h \
            ../propertypod.h \
            ../objectpropertycache.h \
            ../mtpextensionmanager.h \
@@ -74,7 +73,6 @@ SOURCES += mtpresponder_test.cpp \
            ../mtpcontainerwrapper.cpp \
            ../mtprxcontainer.cpp \
            ../mtptxcontainer.cpp \
-           ../mtpevent.cpp \
            ../propertypod.cpp \
            ../objectpropertycache.cpp \
            ../mtpextensionmanager.cpp \
