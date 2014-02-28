@@ -138,7 +138,8 @@ class MTPResponder : public QObject
 
         void handleSuspend();
         void handleResume();
-        
+
+        void onDevicePropertyChanged(MTPDevPropertyCode property);
 
     private:
         Q_DISABLE_COPY(MTPResponder)

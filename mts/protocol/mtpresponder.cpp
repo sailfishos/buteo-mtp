@@ -102,6 +102,9 @@ MTPResponder::MTPResponder(): m_storageServer(0),
     MTP_FUNC_TRACE();
 
     createCommandHandler();
+
+    connect(m_devInfoProvider, &DeviceInfo::devicePropertyChanged,
+            this, &MTPResponder::onDevicePropertyChanged);
 }
 
 bool MTPResponder::initTransport( TransportType transport )
@@ -2637,6 +2640,11 @@ void MTPResponder::handleResume()
         }
         delete[] m_resendBuffer;
     }
+}
+
+void MTPResponder::onDevicePropertyChanged(MTPDevPropertyCode property)
+{
+    dispatchEvent(MTP_EV_DevicePropChanged, QVector<quint32>() << property);
 }
 
 void MTPResponder::handleCancelTransaction()
