@@ -17,12 +17,15 @@ mts_fsstorage_plugin.depends = sub-mts
 
 mts_fsstorage_tests.subdir = mts/platform/storage/fsstorageplugin/unittests
 mts_fsstorage_tests.target = sub-mts-fsstorage-tests
+mts_fsstorage_tests.depends = sub-mts
 
 mts_deviceinfo_tests.subdir = mts/platform/deviceinfo/unittests
 mts_deviceinfo_tests.target = sub-mts-deviceinfo-tests
+mts_deviceinfo_tests.depends = sub-mts
 
 mts_protocol_tests.subdir = mts/protocol/unittests
 mts_protocol_tests.target = sub-mts-protocol-tests
+mts_protocol_tests.depends = sub-mts
 
 service.subdir = service
 service.target = sub-service

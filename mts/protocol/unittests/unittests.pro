@@ -51,7 +51,6 @@ HEADERS += mtpresponder_test.h \
            ../mtpcontainerwrapper.h \
            ../mtprxcontainer.h \
            ../mtptxcontainer.h \
-           ../mtpevent.h \
            ../propertypod.h \
            ../objectpropertycache.h \
            ../mtpextensionmanager.h \
@@ -66,6 +65,7 @@ HEADERS += mtpresponder_test.h \
            ../../transport/usb/mtptransporterusb.h \
            ../../transport/usb/threadio.h \
            ../../transport/dummy/mtptransporterdummy.h \
+           ../../device_interface.h \
                ../../mts.h
 
 SOURCES += mtpresponder_test.cpp \
@@ -74,7 +74,6 @@ SOURCES += mtpresponder_test.cpp \
            ../mtpcontainerwrapper.cpp \
            ../mtprxcontainer.cpp \
            ../mtptxcontainer.cpp \
-           ../mtpevent.cpp \
            ../propertypod.cpp \
            ../objectpropertycache.cpp \
            ../mtpextensionmanager.cpp \
@@ -86,6 +85,7 @@ SOURCES += mtpresponder_test.cpp \
            ../../transport/usb/descriptor.c \
            ../../transport/usb/threadio.cpp \
            ../../transport/dummy/mtptransporterdummy.cpp \
+           ../../device_interface.cpp \
                ../../mts.cpp
 
 target.path = /opt/tests/buteo-mtp/

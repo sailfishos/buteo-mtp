@@ -197,19 +197,15 @@ void DeviceInfoProvider_Test::testSetDeviceFriendlyName()
 
 void DeviceInfoProvider_Test::testGetBatteryLevelForm()
 {
-    quint8 form = 0;
-    quint8 min = 0;
-    quint8 max = 0;
-    quint8 step = 0;
-    quint32 noVals = 0;
-    QVector<quint8> vals;
-    form = m_Provider->getBatteryLevelForm(min, max, step, noVals, vals);
-    QCOMPARE(min, (quint8)0);
-    QCOMPARE(max, (quint8)100);
-    QCOMPARE(step, (quint8)10);
-    QCOMPARE(form, (quint8)DeviceInfo::FORM_RANGE);
-    QCOMPARE(noVals, (quint32)0);
-    QCOMPARE(vals.size(), 0);
+    QVariant var = m_Provider->batteryLevelForm();
+
+    QCOMPARE(var.userType(), qMetaTypeId<MtpRangeForm>());
+
+    MtpRangeForm batteryLevelForm = var.value<MtpRangeForm>();
+
+    QCOMPARE(batteryLevelForm.minValue.toInt(), 0);
+    QCOMPARE(batteryLevelForm.maxValue.toInt(), 100);
+    QCOMPARE(batteryLevelForm.stepSize.toInt(), 10);
 }
 
 void DeviceInfoProvider_Test::testGetMTPOperationsSupported()

@@ -39,7 +39,6 @@
 #include "mtpcontainerwrapper.h"
 #include "mtptxcontainer.h"
 #include "mtprxcontainer.h"
-#include "mtpevent.h"
 #include "storagefactory.h"
 #include "trace.h"
 #include "deviceinfoprovider.h"
@@ -103,6 +102,9 @@ MTPResponder::MTPResponder(): m_storageServer(0),
     MTP_FUNC_TRACE();
 
     createCommandHandler();
+
+    connect(m_devInfoProvider, &DeviceInfo::devicePropertyChanged,
+            this, &MTPResponder::onDevicePropertyChanged);
 }
 
 bool MTPResponder::initTransport( TransportType transport )
@@ -2640,6 +2642,11 @@ void MTPResponder::handleResume()
     }
 }
 
+void MTPResponder::onDevicePropertyChanged(MTPDevPropertyCode property)
+{
+    dispatchEvent(MTP_EV_DevicePropChanged, QVector<quint32>() << property);
+}
+
 void MTPResponder::handleCancelTransaction()
 {
     if( !m_transactionSequence->reqContainer )
@@ -2892,6 +2899,19 @@ void MTPResponder::suspend()
 void MTPResponder::resume()
 {
     m_transporter->resume();
+}
+
+void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &params)
+{
+    MTPTxContainer container(MTP_CONTAINER_TYPE_EVENT, event,
+            MTP_NO_TRANSACTION_ID, params.size() * sizeof (quint32));
+    foreach (quint32 param, params) {
+        container << param;
+    }
+
+    if(!sendContainer(container)) {
+        MTP_LOG_CRITICAL("Couldn't dispatch event" << event);
+    }
 }
 
 #if 0

@@ -529,15 +529,22 @@ void DeviceInfo::setDeviceInfoXmlPath(const QString path)
     m_deviceInfoXmlPath = path;
 }
 
-/*******************************************
- * m_formFlag DeviceInfo::getBatteryLevelForm
- ******************************************/
-quint8 DeviceInfo::getBatteryLevelForm( quint8& min, quint8& max, quint8& stepSize, quint32& /*noOfVals*/, QVector<quint8>& /*vals*/ ) const
+QVariant DeviceInfo::batteryLevelForm() const
 {
-    min = 0;
-    max = 100;
-    stepSize = 10;
-    return FORM_RANGE;
+    return QVariant::fromValue(MtpRangeForm(0, 100, 10));
+}
+
+quint8 DeviceInfo::batteryLevel() const
+{
+    return m_batteryLevel;
+}
+
+void DeviceInfo::setBatteryLevel(quint8 level)
+{
+    if (m_batteryLevel != level) {
+        m_batteryLevel = level;
+        emit devicePropertyChanged(MTP_DEV_PROPERTY_BatteryLevel, level);
+    }
 }
 
 /*******************************************

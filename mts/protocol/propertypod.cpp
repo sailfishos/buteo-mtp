@@ -414,8 +414,17 @@ MtpObjPropDesc PropertyPod::m_videoPropDesc[] =
 #endif
 };
 
+/* Appendix C of MTP 1.1 defines all device property values as having a size of
+ * UINT32. Beware that this is a bug in specification and the real size varies
+ * by the Datatype of given property. */
 MtpDevPropDesc PropertyPod::m_devicePropDesc[] =
 {
+    {
+        MTP_DEV_PROPERTY_BatteryLevel,
+        static_cast<MTPDataType>(MTP_DATA_TYPE_UINT8), false,
+        QVariant(), QVariant(),
+        MTP_FORM_FLAG_NONE, QVariant()
+    },
     {
         MTP_DEV_PROPERTY_Synchronization_Partner,
         static_cast<MTPDataType>(MTP_DATA_TYPE_STR), true,
@@ -508,22 +517,32 @@ PropertyPod::PropertyPod(DeviceInfo* devInfoProvider, MTPExtensionManager* extMa
     {
         propDescDev = &m_devicePropDesc[i];
         m_devPropMap.insert(propDescDev->uPropCode, propDescDev);
-        if(MTP_DEV_PROPERTY_Synchronization_Partner == propDescDev->uPropCode)
-        {
-            propDescDev->defValue = QVariant::fromValue(QString(m_provider->syncPartner()));
-        }
-        else if(MTP_DEV_PROPERTY_Device_Friendly_Name == propDescDev->uPropCode)
-        {
-            propDescDev->defValue = QVariant::fromValue(QString(m_provider->deviceFriendlyName()));
-        }
-        // Hard coded to "mobile handset"
-        else if(MTP_DEV_PROPERTY_Perceived_Device_Type == propDescDev->uPropCode)
-        {
-            propDescDev->defValue = QVariant(m_provider->deviceType());
-        }
-        else if(MTP_DEV_PROPERTY_Volume == propDescDev->uPropCode)
-        {
-            propDescDev->defValue = QVariant::fromValue(MtpRangeForm(QVariant(0), QVariant(100), QVariant(1)));
+
+        switch (propDescDev->uPropCode) {
+            case MTP_DEV_PROPERTY_BatteryLevel: {
+                propDescDev->formField = m_provider->batteryLevelForm();
+
+                int type = propDescDev->formField.userType();
+                if (type == qMetaTypeId<MtpRangeForm>()) {
+                    propDescDev->formFlag = MTP_FORM_FLAG_RANGE;
+                } else if (type == qMetaTypeId<MtpEnumForm>()) {
+                    propDescDev->formFlag = MTP_FORM_FLAG_ENUM;
+                }
+                break;
+            }
+            case MTP_DEV_PROPERTY_Synchronization_Partner:
+                propDescDev->defValue = m_provider->syncPartner();
+                break;
+            case MTP_DEV_PROPERTY_Device_Friendly_Name:
+                propDescDev->defValue = m_provider->deviceFriendlyName();
+                break;
+            case MTP_DEV_PROPERTY_Volume:
+                propDescDev->defValue =
+                        QVariant::fromValue(MtpRangeForm(0, 100, 1));
+                break;
+            case MTP_DEV_PROPERTY_Perceived_Device_Type:
+                propDescDev->defValue = m_provider->deviceType();
+                break;
         }
     }
 }
@@ -587,56 +606,47 @@ MTPResponseCode PropertyPod::getInterdependentPropDesc(MTPObjectFormatCategory /
     return ret;
 }
 
-MTPResponseCode PropertyPod::getDevicePropDesc(MTPDevPropertyCode propCode, MtpDevPropDesc **propDesc)
+MTPResponseCode PropertyPod::getDevicePropDesc(MTPDevPropertyCode propCode,
+                                               MtpDevPropDesc **propDesc)
 {
-    MTPResponseCode ret = MTP_RESP_OK;
     *propDesc = m_devPropMap.value(propCode);
-    if(0 == *propDesc)
-    {
-        ret = MTP_RESP_DevicePropNotSupported;
+    if (!*propDesc) {
+        return MTP_RESP_DevicePropNotSupported;
     }
-    else
-    {
-        switch(propCode)
-        {
-            case MTP_DEV_PROPERTY_Device_Friendly_Name:
-            {
-                (*propDesc)->currentValue = QVariant::fromValue(QString(m_provider->deviceFriendlyName()));
-            }
+
+    switch (propCode) {
+        case MTP_DEV_PROPERTY_BatteryLevel:
+            (*propDesc)->currentValue = m_provider->batteryLevel();
             break;
-            case MTP_DEV_PROPERTY_Synchronization_Partner:
-            {
-                (*propDesc)->currentValue = QVariant::fromValue(QString(m_provider->syncPartner()));
-            }
+        case MTP_DEV_PROPERTY_Synchronization_Partner:
+            (*propDesc)->currentValue = m_provider->syncPartner();
             break;
-            case MTP_DEV_PROPERTY_DeviceIcon:
-            {
-                (*propDesc)->currentValue = QVariant::fromValue(QVector<quint8>(m_provider->deviceIcon()));
-            }
+        case MTP_DEV_PROPERTY_Device_Friendly_Name:
+            (*propDesc)->currentValue = m_provider->deviceFriendlyName();
             break;
-            case MTP_DEV_PROPERTY_Perceived_Device_Type:
-            {
-                (*propDesc)->currentValue = QVariant(m_provider->deviceType());
-            }
+        case MTP_DEV_PROPERTY_Volume:
+            // Do nothing.
             break;
-            case MTP_DEV_PROPERTY_Volume:
-            {
-                //Do nothing
-            }
+        case MTP_DEV_PROPERTY_DeviceIcon:
+            (*propDesc)->currentValue =
+                    QVariant::fromValue(m_provider->deviceIcon());
             break;
-            default:
-            {
-                // Fetch the current value from the extension...
-                if(false == m_extManager->getDevPropValue(propCode, (*propDesc)->currentValue, ret))
-                {
-                    // We should never get here!
-                    ret = MTP_RESP_DevicePropNotSupported;
-                }
+        case MTP_DEV_PROPERTY_Perceived_Device_Type:
+            (*propDesc)->currentValue = m_provider->deviceType();
+            break;
+        default: {
+            // Fetch the current value from the extension.
+            MTPResponseCode result = MTP_RESP_OK;
+            if (!m_extManager->getDevPropValue(propCode, (*propDesc)->currentValue, result)) {
+                // We should never get here!
+                return MTP_RESP_DevicePropNotSupported;
             }
+            return result;
             break;
         }
     }
-    return ret;
+
+    return MTP_RESP_OK;
 }
 
 MTPResponseCode PropertyPod::getObjectPropDesc(MTPObjectFormatCategory category, MTPObjPropertyCode propCode, const MtpObjPropDesc*& propDesc)

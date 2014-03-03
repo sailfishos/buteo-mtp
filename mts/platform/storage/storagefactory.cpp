@@ -36,7 +36,7 @@
 #include "objectpropertycache.h"
 #include "storagefactory.h"
 #include "storageplugin.h"
-#include "mtpevent.h"
+#include "mtpresponder.h"
 #include "trace.h"
 
 using namespace meegomtp1dot0;
@@ -177,10 +177,12 @@ bool StorageFactory::enumerateStorages( QVector<quint32>& failedStorageIds )
     for( ; itr != m_allStorages.constEnd(); ++itr )
     {
         // Connect the storage plugin's eventGenerated signal
-        qRegisterMetaType<MTPEventCode>("MTPEventCode");
-        qRegisterMetaType<QVector<quint32> >("QVector<quint32>");
-        QObject::connect( itr.value(), SIGNAL(eventGenerated(MTPEventCode, const QVector<quint32>&, QString)),
-                          this, SLOT(eventReceived(MTPEventCode, const QVector<quint32>&, QString)), Qt::QueuedConnection );
+        connect(itr.value(), &StoragePlugin::eventGenerated,
+                this, &StorageFactory::onStorageEvent,
+                Qt::QueuedConnection);
+        connect(itr.value(), &StoragePlugin::eventGenerated,
+                MTPResponder::instance(), &MTPResponder::dispatchEvent,
+                Qt::QueuedConnection);
 
         // Connects for assigning object handles
         QObject::connect( itr.value(), SIGNAL(objectHandle( ObjHandle& )),
@@ -604,21 +606,12 @@ MTPResponseCode StorageFactory::setObjectPropertyValue( const ObjHandle &handle,
     return MTP_RESP_InvalidObjectHandle;
 }
 
-void StorageFactory::eventReceived(MTPEventCode eventCode, const QVector<quint32> &params, QString filePath)
+void StorageFactory::onStorageEvent(MTPEventCode event, const QVector<quint32> &params)
 {
-    // Try to get an already exiting event object
-    MTPEvent *event = MTPEvent::transMap.value(filePath);
-    if(0 != event)
-    {
-        event->setEventParams(params);
-        event->setEventCode(eventCode);
+    if(event == MTP_EV_ObjectPropChanged) {
+        // Invalidate cache for this object property.
+        m_objectPropertyCache.remove(params[0], params[1]);
     }
-    else
-    {
-        event = new MTPEvent(eventCode, MTP_NO_SESSION_ID, MTP_NO_TRANSACTION_ID, params);
-    }
-    event->dispatchEvent();
-    delete event;
 }
 
 void StorageFactory::getObjectHandle( ObjHandle& handle )

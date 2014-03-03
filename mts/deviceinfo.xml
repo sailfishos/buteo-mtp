@@ -90,6 +90,9 @@
                 </EventsSupported>
 
                 <DevPropsSupported>
+                        <DevProp><!-- Battery Level -->
+                                <DevPropCode>0x5001</DevPropCode>
+                        </DevProp>
                         <DevProp><!--Friendly name-->
                                 <DevPropCode>0xD402</DevPropCode>
                                 <DevPropValue id="friendlyname">Friendly</DevPropValue>
