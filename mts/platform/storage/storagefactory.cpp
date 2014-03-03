@@ -598,6 +598,7 @@ MTPResponseCode StorageFactory::setObjectPropertyValue( const ObjHandle &handle,
         if (response == MTP_RESP_OK) {
             m_objectPropertyCache.add(handle, propValList);
         }
+        return response;
     }
 
     return MTP_RESP_InvalidObjectHandle;
