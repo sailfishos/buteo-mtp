@@ -86,8 +86,9 @@ void DeviceInfoProvider::getSystemInfo()
 
     /// @todo hardcoded to first IMEI for now
     m_serialNo = di.imei(0).isEmpty() ? m_serialNo : di.imei(0);
-    m_deviceVersion = di.version(QDeviceInfo::Firmware).isEmpty()
-        ? m_deviceVersion : di.version(QDeviceInfo::Firmware);
+
+    m_deviceVersion = QString("%1 HW: %2").arg(di.version(QDeviceInfo::Os))
+                                          .arg(di.version(QDeviceInfo::Firmware));
 
     m_manufacturer = di.manufacturer().isEmpty() ? m_manufacturer : di.manufacturer();
     m_model = di.model().isEmpty() ? m_model : di.model();
