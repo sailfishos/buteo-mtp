@@ -71,17 +71,70 @@ public:
     explicit BulkReaderThread(QObject *parent = 0);
     ~BulkReaderThread();
 
-    void releaseBuffer(); // receiver of dataRead is done processing data
+    // Sets *bufferp and *size to received data
+    // Sets to NULL and 0 if no data available
+    void getData(char **bufferp, int *size);
+    void releaseData(int size); // receiver of data has processed it
+    void resetData(); // discard all data in the buffer
     virtual void interrupt();
 
 protected:
     virtual void execute();
 
 private:
-    QMutex m_lock; // used with m_wait
     QWaitCondition m_wait;
+    QMutex m_bufferLock;
+    // The buffer logic:
+    //
+    // It's similar to a ring buffer
+    // Received data starts at m_buffer[m_dataStart] for m_dataSize1 bytes.
+    // If m_dataStart > 0, then additional data starts at m_buffer[0]
+    // for m_dataSize2 bytes.
+    // These data ranges must never overlap.
+    //
+    // The main thread will consume data by advancing m_dataStart and
+    // reducing m_dataSize1, until m_dataSize1 is 0. Then, if m_dataSize2 > 0,
+    // it will set m_dataStart to 0 and move m_dataSize2 to m_dataSize 1.
+    // (Otherwise, it will wait for the next dataReady signal)
+    //
+    // The reader thread will add data after m_dataStart+m_dataSize1
+    // as long as there is enough space there. If it gets to the end
+    // of the buffer, it will try to add data after m_dataSize2.
+    // If there is not enough space there either, it will wait on m_wait
+    // until releaseData() wakes it.
+    //
+    // Both threads will take m_bufferLock while manipulating the m_data*
+    // members, and will then release the lock while working on their
+    // respective parts of the buffer. Since their activity will always
+    // only grow the buffer space available to the other thread, never
+    // shrink it, they can work in m_buffer at the same time.
+    //
+    // m_buffer is allocated for the lifetime of this object.
+    //
+    // Some diagrams:
+    // The buffer some time after reader and main thread have been active:
+    //  |--------+++++++++++++++++-----------------|
+    //  |        |               |
+    //  0        dataStart       +dataSize1
+    // Valid data marked by +
+    //
+    // The buffer after the reader has gotten to the end of the buffer
+    // and wrapped around:
+    //  |++++++--------------+++++++++++++++++-----|
+    //  |     |              |               |
+    //  0     dataSize2      dataStart       +dataSize1
+    // Note how the reader left some space at the end unused, because
+    // it was smaller than the minimum read size.
+    //
+    char *m_buffer;
+    int m_dataStart; // protected by m_bufferLock
+    int m_dataSize1; // protected by m_bufferLock
+    int m_dataSize2; // protected by m_bufferLock
+
+    int _getOffset_locked();
+    bool _addData(int offset, int size);
 signals:
-    void dataRead(char *buffer, int size);
+    void dataReady();
 };
 
 class BulkWriterThread : public IOThread {

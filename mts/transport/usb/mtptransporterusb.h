@@ -92,8 +92,7 @@ class MTPTransporterUSB : public MTPTransporter
         void resume();
 
     private:
-        /// Private function to process data received from the USB driver
-        void processReceivedData(quint8* data, quint32 dataLen);
+        void processReceivedData();  // Helper function for handleDataReady()
 
         enum IOState{
             ACTIVE,
@@ -101,9 +100,16 @@ class MTPTransporterUSB : public MTPTransporter
             SUSPENDED
         };
 
+        enum ReaderBusyState {
+            READER_FREE,
+            READER_BUSY,
+            READER_POSTPONED,
+        };
+
         IOState                 m_ioState; ///< The current state of the IO device
 
         quint64                 m_containerReadLen; ///< The data, in bytes remaining to be received for a data packet
+        int                     m_resetCount;   ///< Distinguishes new data from old
 
         int                     m_ctrlFd;
         int                     m_intrFd;
@@ -112,6 +118,7 @@ class MTPTransporterUSB : public MTPTransporter
 
         ControlReaderThread     m_ctrl;         ///< Threaded IO for Control EP
         BulkReaderThread        m_bulkRead;     ///< Threaded Reader for Bulk Out EP
+        ReaderBusyState         m_reader_busy;
         BulkWriterThread        m_bulkWrite;    ///< Threaded Writer for Bulk In EP
         bool                    m_writer_busy;
         InterruptWriterThread   m_intrWrite;    ///< Threaded Writer for Interrupt EP
@@ -137,8 +144,8 @@ class MTPTransporterUSB : public MTPTransporter
         /// Stop the reader thread
         void stopRead();
 
-        // The slot handles incoming data on the USB fd that was alrady read
-        void handleDataRead(char*, int);
+        // Handle incoming data from m_bulkRead
+        void handleDataReady();
 
         /// Handle high priority requests from the underlying transport driver.
         void handleHighPriorityData();
