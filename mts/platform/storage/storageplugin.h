@@ -216,12 +216,16 @@ public:
             const QList<const MtpObjPropDesc *>& properties,
             QMap<ObjHandle, QList<QVariant> > &values) = 0;
 
-Q_SIGNALS:
-    /// The signal must be emitted by the storage plugin whenever an MTP event is captured by it
-    /// \param eventCode [in] The MTP event code to be sent
-    /// \param params [in] A vector of event parameters
-    /// \param filePath [in] The key (= file name + parent handle + storage id) to the file that generated this event. For events that do not have a file associated with them, this must be an empty QString
-    void eventGenerated(MTPEventCode eventCode, const QVector<quint32> &params, QString filePath);
+signals:
+    /// Emitted whenever the storage plugin generates an MTP event.
+    ///
+    /// This happens for example when a new object has been created in the
+    /// storage or an object property changed without the initiator's
+    /// involvement.
+    ///
+    /// \param eventCode [in] an event code of the event
+    /// \param params [in] the event parameters
+    void eventGenerated(MTPEventCode eventCode, const QVector<quint32> &params);
 
     /// A storage plug-in emits this signal when it needs to get an object handle to assign to one of the objects.
     /// Since object handles need to be unique across storages, the storage factory assigns them to different storages.
