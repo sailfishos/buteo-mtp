@@ -806,7 +806,7 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
     {
         QVector<quint32> eventParams;
         eventParams.append( item->m_handle );
-        emit eventGenerated(MTP_EV_ObjectAdded, eventParams, QString());
+        emit eventGenerated(MTP_EV_ObjectAdded, eventParams);
     }
 
     // Dates from our device
@@ -1115,7 +1115,7 @@ MTPResponseCode FSStoragePlugin::removeFromStorage( const ObjHandle& handle, boo
     {
         QVector<quint32> eventParams;
         eventParams.append( handle );
-        emit eventGenerated(MTP_EV_ObjectRemoved, eventParams, QString());
+        emit eventGenerated(MTP_EV_ObjectRemoved, eventParams);
     }
 
     return MTP_RESP_OK;
@@ -2820,10 +2820,10 @@ void FSStoragePlugin::receiveThumbnail(const QString &path)
 
         QVector<quint32> params;
         params.append(handle);
-        emit eventGenerated(MTP_EV_ObjectInfoChanged, params, QString());
+        emit eventGenerated(MTP_EV_ObjectInfoChanged, params);
 
         params.append(MTP_OBJ_PROP_Rep_Sample_Data);
-        emit eventGenerated(MTP_EV_ObjectPropChanged, params, QString());
+        emit eventGenerated(MTP_EV_ObjectPropChanged, params);
     }
 }
 
@@ -2850,7 +2850,7 @@ void FSStoragePlugin::handleFSDelete(const struct inotify_event *event, const ch
                 // Emit storageinfo changed events, free space may be different from before now
                 QVector<quint32> params;
                 params.append(m_storageId);
-                emit eventGenerated(MTP_EV_StorageInfoChanged, params, QString() );
+                emit eventGenerated(MTP_EV_StorageInfoChanged, params);
             }
         }
     }
@@ -2876,7 +2876,7 @@ void FSStoragePlugin::handleFSCreate(const struct inotify_event *event, const ch
                 // Emit storageinfo changed events, free space may be different from before now
                 QVector<quint32> params;
                 params.append(m_storageId);
-                emit eventGenerated(MTP_EV_StorageInfoChanged, params, QString() );
+                emit eventGenerated(MTP_EV_StorageInfoChanged, params);
             }
         }
     }
@@ -2952,7 +2952,7 @@ void FSStoragePlugin::handleFSMove(const struct inotify_event *fromEvent, const 
                 // Emit an object info changed signal
                 QVector<quint32> evtParams;
                 evtParams.append(movedHandle);
-                emit eventGenerated(MTP_EV_ObjectInfoChanged, evtParams, QString());
+                emit eventGenerated(MTP_EV_ObjectInfoChanged, evtParams);
             }
         }
     }
@@ -2982,7 +2982,7 @@ void FSStoragePlugin::handleFSModify(const struct inotify_event *event, const ch
                 // Emit an object info changed event
                 QVector<quint32> eventParams;
                 eventParams.append(changedHandle);
-                emit eventGenerated(MTP_EV_ObjectInfoChanged, eventParams, QString() );
+                emit eventGenerated(MTP_EV_ObjectInfoChanged, eventParams);
 
                 static quint64 freeSpace = m_storageInfo.freeSpace;
                 MTPStorageInfo info;
@@ -2995,7 +2995,7 @@ void FSStoragePlugin::handleFSModify(const struct inotify_event *event, const ch
                     freeSpace = m_storageInfo.freeSpace;
                     eventParams.clear();
                     eventParams.append(m_storageId);
-                    emit eventGenerated(MTP_EV_StorageInfoChanged, eventParams, QString() );
+                    emit eventGenerated(MTP_EV_StorageInfoChanged, eventParams);
                 }
             }
         }

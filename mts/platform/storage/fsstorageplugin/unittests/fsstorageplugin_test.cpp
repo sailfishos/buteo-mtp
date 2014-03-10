@@ -1932,7 +1932,7 @@ void FSStoragePlugin_test::testThumbnailer()
         // Thumbnail was not generated synchronously, so wait for
         // it to be ready. Readiness should be signaled to the initiator
         // via an ObjectPropChanged event.
-        QSignalSpy spy(m_storage, SIGNAL(eventGenerated(MTPEventCode, const QVector<quint32>&, QString)));
+        QSignalSpy spy(m_storage, SIGNAL(eventGenerated(MTPEventCode, const QVector<quint32>&)));
         QList<QVariant> arguments;
         QVERIFY(spy.isValid());
         int maxsignals = 20; // prevent infinite loop if signals keep coming
