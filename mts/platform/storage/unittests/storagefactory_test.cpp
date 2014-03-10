@@ -25,6 +25,11 @@
 #include "storagefactory.h"
 #include "mtptypes.h"
 
+using namespace meegomtp1dot0;
+
+static const quint32 STORAGE_ID = 0x10001;
+static const quint32 INVALID_STORAGE_ID = 0xEEEEE;
+
 void StorageFactory_test::initTestCase()
 {
     m_storageFactory = new StorageFactory;
@@ -32,50 +37,37 @@ void StorageFactory_test::initTestCase()
 
 void StorageFactory_test::testStorageIds()
 {
-    MTPResponseCode response;
     QVector<quint32> storageIds;
-    response = m_storageFactory->storageIds( storageIds );
-    QCOMPARE( response, MTP_RESP_OK );
-    QCOMPARE( storageIds.size(), 1 );
-    QCOMPARE( storageIds[0], static_cast<quint32>(1) );
+
+    QCOMPARE(m_storageFactory->storageIds(storageIds),
+            static_cast<MTPResponseCode>(MTP_RESP_OK));
+
+    QVERIFY(storageIds.size() > 0);
+
+    qSort(storageIds);
+    QCOMPARE(storageIds.at(0), STORAGE_ID);
 }
 
 void StorageFactory_test::testGetObjectHandles()
 {
-    MTPResponseCode response;
     QVector<ObjHandle> handles;
-    quint32 noOfObjects = 0;
-    response = m_storageFactory->getObjectHandles( 1, static_cast<MTPObjFormatCode>(0x00000000),
-                                                  0, noOfObjects, handles );
-    QCOMPARE( response, MTP_RESP_OK );
-    QCOMPARE( noOfObjects, static_cast<quint32>(2) );
-    QCOMPARE( handles.size(), 2 );
-    for( int i = 0 ; i < handles.size(); i++ )
-    {
+
+    // Try invalid storage ID first.
+    QCOMPARE(m_storageFactory->getObjectHandles(INVALID_STORAGE_ID,
+            static_cast<MTPObjFormatCode>(0x00000000), 0, handles),
+            static_cast<MTPResponseCode>(MTP_RESP_InvalidStorageID));
+
+    handles.clear();
+
+    QCOMPARE(m_storageFactory->getObjectHandles(STORAGE_ID,
+            static_cast<MTPObjFormatCode>(0x00000000), 0, handles),
+            static_cast<MTPResponseCode>(MTP_RESP_OK));
+
+    foreach (ObjHandle handle, handles) {
         QString path;
-        m_storageFactory->getPath( handles[i], path );
+        QCOMPARE(m_storageFactory->getPath(handle, path),
+                static_cast<MTPResponseCode>(MTP_RESP_OK));
     }
-}
-
-void StorageFactory_test::testMaxCapacity()
-{
-    quint64 maxCapacity;
-    MTPResponseCode response = m_storageFactory->maxCapacity( 1, maxCapacity );
-    QCOMPARE( response, MTP_RESP_OK );
-}
-
-void StorageFactory_test::testFreeSpace()
-{
-    quint64 freeSpace;
-    MTPResponseCode response = m_storageFactory->freeSpace( 1, freeSpace );
-    QCOMPARE( response, MTP_RESP_OK );
-}
-
-void StorageFactory_test::testStorageDescription()
-{
-    QString description;
-    MTPResponseCode response = m_storageFactory->storageDescription( 1, description );
-    QCOMPARE( response, MTP_RESP_OK );
 }
 
 void StorageFactory_test::cleanupTestCase()
