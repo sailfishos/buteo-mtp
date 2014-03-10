@@ -39,6 +39,7 @@ private slots:
     void initTestCase();
     void testStorageIds();
     void testGetObjectHandles();
+    void testGetDevicePropValueAfterObjectInfoChanged();
     void cleanupTestCase();
 
 private:
