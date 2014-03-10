@@ -37,8 +37,6 @@
 #include <QVariant>
 #include <QMap>
 
-#include <SyncDBusConnection.h>
-
 #include "device_interface.h" // generated
 
 using namespace meegomtp1dot0;
@@ -100,7 +98,8 @@ void DeviceInfoProvider::getSystemInfo()
 void DeviceInfoProvider::getBTAdapterInterface()
 {
     // Get the DBUS interface for BT manager.
-    QDBusInterface managerInterface( BLUEZ_DEST, "/", BLUEZ_MANAGER_INTERFACE, Buteo::SyncDBusConnection::systemBus() );
+    QDBusInterface managerInterface(BLUEZ_DEST, "/", BLUEZ_MANAGER_INTERFACE,
+            QDBusConnection::systemBus());
     if( !managerInterface.isValid() )
     {
         m_defaultAdapterPath = "";
@@ -129,7 +128,8 @@ QString DeviceInfoProvider::getBTFriendlyName()
     }
 
     // Get the DBUS interface for BT adapter.
-    QDBusInterface adapterInterface( BLUEZ_DEST, m_defaultAdapterPath, BLUEZ_ADAPTER_INTERFACE, Buteo::SyncDBusConnection::systemBus() );
+    QDBusInterface adapterInterface(BLUEZ_DEST, m_defaultAdapterPath,
+            BLUEZ_ADAPTER_INTERFACE, QDBusConnection::systemBus());
 
     // Call appropriate method on BT adapter interface to get the BT friendly name.
     QDBusReply<QMap<QString,QVariant> > propReply = adapterInterface.call( QLatin1String( GET_PROPERTIES ) );
