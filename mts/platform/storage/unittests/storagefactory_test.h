@@ -44,6 +44,7 @@ private slots:
 
 private:
     StorageFactory *m_storageFactory;
+    QString m_storageRoot;
 };
 
 } // namespace meegomtp1dot0

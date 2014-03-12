@@ -38,6 +38,17 @@ void StorageFactory_test::initTestCase()
 
     QVector<quint32> failedStorages;
     QVERIFY(m_storageFactory->enumerateStorages(failedStorages));
+
+    // Remember filesystem root of the first storage.
+    QVector<ObjHandle> handles;
+    QCOMPARE(m_storageFactory->getObjectHandles(STORAGE_ID, 0, 0xFFFFFFFF,
+            handles), static_cast<MTPResponseCode>(MTP_RESP_OK));
+
+    QVERIFY(!handles.isEmpty());
+
+    QCOMPARE(m_storageFactory->getPath(handles.at(0), m_storageRoot),
+            static_cast<MTPResponseCode>(MTP_RESP_OK));
+    m_storageRoot.truncate(m_storageRoot.lastIndexOf("/") + 1);
 }
 
 void StorageFactory_test::testStorageIds()
@@ -79,17 +90,6 @@ void StorageFactory_test::testGetDevicePropValueAfterObjectInfoChanged()
 {
     QString filePath(QStringLiteral("tmpFsModifyFile"));
 
-    QVector<ObjHandle> handles;
-    QCOMPARE(m_storageFactory->getObjectHandles(STORAGE_ID, 0, 0xFFFFFFFF,
-            handles), static_cast<MTPResponseCode>(MTP_RESP_OK));
-
-    QVERIFY(!handles.isEmpty());
-
-    QString rootStoragePath;
-    QCOMPARE(m_storageFactory->getPath(handles.at(0), rootStoragePath),
-            static_cast<MTPResponseCode>(MTP_RESP_OK));
-    rootStoragePath.truncate(rootStoragePath.lastIndexOf("/") + 1);
-
     MTPObjectInfo objInfo;
     objInfo.mtpStorageId = 0x00010001;
     objInfo.mtpObjectCompressedSize = 0;
@@ -97,7 +97,7 @@ void StorageFactory_test::testGetDevicePropValueAfterObjectInfoChanged()
     objInfo.mtpFileName = filePath;
     objInfo.mtpParentObject = 0;
 
-    filePath.prepend(rootStoragePath);
+    filePath.prepend(m_storageRoot);
     QFile::remove(filePath);
 
     QEventLoop loop;
