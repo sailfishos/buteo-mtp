@@ -94,7 +94,8 @@ private:
     //
     // The main thread will consume data by advancing m_dataStart and
     // reducing m_dataSize1, until m_dataSize1 is 0. Then, if m_dataSize2 > 0,
-    // it will set m_dataStart to 0 and move m_dataSize2 to m_dataSize 1.
+    // it will set m_dataStart to 0, move m_dataSize2 to m_dataSize1,
+    // and reset m_dataSize2 to 0.
     // (Otherwise, it will wait for the next dataReady signal)
     //
     // The reader thread will add data after m_dataStart+m_dataSize1
@@ -132,7 +133,7 @@ private:
     int m_dataSize2; // protected by m_bufferLock
 
     int _getOffset_locked();
-    bool _addData(int offset, int size);
+    bool _markNewData(int offset, int size);
 signals:
     void dataReady();
 };

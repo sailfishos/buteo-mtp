@@ -257,7 +257,7 @@ int BulkReaderThread::_getOffset_locked()
     return -1;
 }
 
-bool BulkReaderThread::_addData(int offset, int size)
+bool BulkReaderThread::_markNewData(int offset, int size)
 {
     QMutexLocker locker(&m_bufferLock);
 
@@ -305,7 +305,7 @@ void BulkReaderThread::execute()
             break;
         }
 
-        if (!_addData(offset, readSize)) {
+        if (!_markNewData(offset, readSize)) {
             MTP_LOG_CRITICAL("BulkReaderThread bad offset" << offset << m_dataStart << m_dataSize1 << m_dataSize2);
             break;
         }
