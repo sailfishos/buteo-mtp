@@ -9,26 +9,21 @@
 
 #include "trace.h"
 
-#define cpu_to_le16(x)  htole16(x)
-#define cpu_to_le32(x)  htole32(x)
-#define le32_to_cpu(x)  le32toh(x)
-#define le16_to_cpu(x)  le16toh(x)
-
-#define MAX_DATA_IN_SIZE (16 * 1024)  // Matches USB transfer size
-#define MAX_CONTROL_IN_SIZE 64
-#define MAX_EVENTS_STORED 16
+const int MAX_DATA_IN_SIZE = 16 * 1024;  // Matches USB transfer size
+const int MAX_CONTROL_IN_SIZE = 64;
+const int MAX_EVENTS_STORED = 16;
 // Give BulkReaderThread some space to acquire chunks while the main
 // thread is working, but still small enough for the main thread to
 // process as one event.
-#define READER_BUFFER_SIZE (MAX_DATA_IN_SIZE * 16)
+const int READER_BUFFER_SIZE = MAX_DATA_IN_SIZE * 16;
 
 const struct ptp_device_status_data status_data[] = {
-/* OK     */ { cpu_to_le16(0x0004),
-               cpu_to_le16(PTP_RC_OK), 0, 0 },
-/* BUSY   */ { cpu_to_le16(0x0004),
-               cpu_to_le16(PTP_RC_DEVICE_BUSY), 0, 0 },
-/* CANCEL */ { cpu_to_le16(0x0004),
-               cpu_to_le16(PTP_RC_TRANSACTION_CANCELLED), 0, 0 }
+/* OK     */ { htole16(0x0004),
+               htole16(PTP_RC_OK), 0, 0 },
+/* BUSY   */ { htole16(0x0004),
+               htole16(PTP_RC_DEVICE_BUSY), 0, 0 },
+/* CANCEL */ { htole16(0x0004),
+               htole16(PTP_RC_TRANSACTION_CANCELLED), 0, 0 }
 };
 
 static const char *const event_names[] = {
