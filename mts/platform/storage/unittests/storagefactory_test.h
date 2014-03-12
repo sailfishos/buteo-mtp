@@ -45,6 +45,7 @@ private slots:
 private:
     StorageFactory *m_storageFactory;
     QString m_storageRoot;
+    QList<MTPObjPropDescVal> m_queryForObjSize;
 };
 
 } // namespace meegomtp1dot0

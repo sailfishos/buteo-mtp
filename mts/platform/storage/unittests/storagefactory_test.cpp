@@ -49,6 +49,12 @@ void StorageFactory_test::initTestCase()
     QCOMPARE(m_storageFactory->getPath(handles.at(0), m_storageRoot),
             static_cast<MTPResponseCode>(MTP_RESP_OK));
     m_storageRoot.truncate(m_storageRoot.lastIndexOf("/") + 1);
+
+    static MtpObjPropDesc desc;
+    desc.uPropCode = MTP_OBJ_PROP_Obj_Size;
+    desc.uDataType = MTP_DATA_TYPE_UINT64;
+
+    m_queryForObjSize.append(MTPObjPropDescVal(&desc, QVariant()));
 }
 
 void StorageFactory_test::testStorageIds()
@@ -109,20 +115,11 @@ void StorageFactory_test::testGetDevicePropValueAfterObjectInfoChanged()
     QCOMPARE(m_storageFactory->addItem(storage, parentHandle, handle, &objInfo),
             static_cast<MTPResponseCode>(MTP_RESP_OK));
 
-    MtpObjPropDesc desc;
-    desc.uPropCode = MTP_OBJ_PROP_Obj_Size;
-    desc.uDataType = MTP_DATA_TYPE_UINT64;
-
-    MTPObjPropDescVal value;
-    value.propDesc = &desc;
-
-    QList<MTPObjPropDescVal> values;
-    values.append(value);
-
-    QCOMPARE(m_storageFactory->getObjectPropertyValue(handle, values),
+    QCOMPARE(m_storageFactory->getObjectPropertyValue(handle, m_queryForObjSize),
             static_cast<MTPResponseCode>(MTP_RESP_OK));
 
-    QCOMPARE(values[0].propVal.value<quint64>(), static_cast<quint64>(0));
+    QCOMPARE(m_queryForObjSize[0].propVal.value<quint64>(),
+            static_cast<quint64>(0));
 
     QString filePathFromFactory;
     QCOMPARE(m_storageFactory->getPath(handle, filePathFromFactory),
@@ -137,10 +134,10 @@ void StorageFactory_test::testGetDevicePropValueAfterObjectInfoChanged()
 
     while (loop.processEvents());
 
-    QCOMPARE(m_storageFactory->getObjectPropertyValue(handle, values),
+    QCOMPARE(m_storageFactory->getObjectPropertyValue(handle, m_queryForObjSize),
             static_cast<MTPResponseCode>(MTP_RESP_OK));
 
-    QCOMPARE(values[0].propVal.value<quint64>(),
+    QCOMPARE(m_queryForObjSize[0].propVal.value<quint64>(),
             static_cast<quint64>(TEST_STRING.size()));
 
     file.remove();
