@@ -9,22 +9,21 @@
 
 #include "trace.h"
 
-#define cpu_to_le16(x)  htole16(x)
-#define cpu_to_le32(x)  htole32(x)
-#define le32_to_cpu(x)  le32toh(x)
-#define le16_to_cpu(x)  le16toh(x)
-
-#define MAX_DATA_IN_SIZE (16 * 1024)
-#define MAX_CONTROL_IN_SIZE 64
-#define MAX_EVENTS_STORED 16
+const int MAX_DATA_IN_SIZE = 16 * 1024;  // Matches USB transfer size
+const int MAX_CONTROL_IN_SIZE = 64;
+const int MAX_EVENTS_STORED = 16;
+// Give BulkReaderThread some space to acquire chunks while the main
+// thread is working, but still small enough for the main thread to
+// process as one event.
+const int READER_BUFFER_SIZE = MAX_DATA_IN_SIZE * 16;
 
 const struct ptp_device_status_data status_data[] = {
-/* OK     */ { cpu_to_le16(0x0004),
-               cpu_to_le16(PTP_RC_OK), 0, 0 },
-/* BUSY   */ { cpu_to_le16(0x0004),
-               cpu_to_le16(PTP_RC_DEVICE_BUSY), 0, 0 },
-/* CANCEL */ { cpu_to_le16(0x0004),
-               cpu_to_le16(PTP_RC_TRANSACTION_CANCELLED), 0, 0 }
+/* OK     */ { htole16(0x0004),
+               htole16(PTP_RC_OK), 0, 0 },
+/* BUSY   */ { htole16(0x0004),
+               htole16(PTP_RC_DEVICE_BUSY), 0, 0 },
+/* CANCEL */ { htole16(0x0004),
+               htole16(PTP_RC_TRANSACTION_CANCELLED), 0, 0 }
 };
 
 static const char *const event_names[] = {
@@ -224,63 +223,132 @@ void ControlReaderThread::setupRequest(void *data)
 BulkReaderThread::BulkReaderThread(QObject *parent)
     : IOThread(parent)
 {
+    m_buffer = new char[READER_BUFFER_SIZE];
+    resetData();
 }
 
 BulkReaderThread::~BulkReaderThread()
 {
+    delete[] m_buffer;
+}
+
+// Should be called by the receiver thread while the reader is not running
+void BulkReaderThread::resetData()
+{
+    m_dataStart = 0;
+    m_dataSize1 = 0;
+    m_dataSize2 = 0;
+}
+
+// Find a usable place in m_buffer to read MAX_DATA_IN_SIZE bytes.
+// Return -1 if there's no space.
+int BulkReaderThread::_getOffset_locked()
+{
+    // See the class definition for the story of how m_buffer is handled.
+    if (READER_BUFFER_SIZE - (m_dataStart + m_dataSize1) >= MAX_DATA_IN_SIZE)
+        return m_dataStart + m_dataSize1;
+    if (m_dataStart - m_dataSize2 >= MAX_DATA_IN_SIZE)
+        return m_dataSize2;
+    return -1;
+}
+
+bool BulkReaderThread::_markNewData(int offset, int size)
+{
+    QMutexLocker locker(&m_bufferLock);
+
+    // See the class definition for the story of how m_buffer is handled.
+    // If nobody messed up then 'offset' should be pointing to the
+    // end of one of the buffer pieces.
+
+    if (offset == m_dataStart + m_dataSize1)
+        m_dataSize1 += size;
+    else if (offset == m_dataSize2)
+        m_dataSize2 += size;
+    else
+        return false;
+    return true;
 }
 
 void BulkReaderThread::execute()
 {
     int readSize;
-    bool bufferSent = false;
 
-    char* inbuf = new char[MAX_DATA_IN_SIZE];
-    // m_wait controls message flow between bulkreader and main thread.
-    // This thread fills inbuf, then hands the buffer over to the main
-    // thread by emitting dataRead.
-    // When the main thread is done with the buffer, it will wake up
-    // this thread again by calling releaseBuffer() which uses m_wait
-    // to notify this thread.
     while (!m_shouldExit) {
-        readSize = read(m_fd, inbuf, MAX_DATA_IN_SIZE); // Read Header
+        int offset;
+        m_bufferLock.lock();
+        offset = _getOffset_locked();
+        while (!m_shouldExit && offset < 0) {
+            m_wait.wait(&m_bufferLock);
+            offset = _getOffset_locked();
+        }
+        m_bufferLock.unlock();
+        if (m_shouldExit)
+            break;
+
+        readSize = read(m_fd, m_buffer + offset, MAX_DATA_IN_SIZE);
         if (m_shouldExit)
             break;
         if (readSize == -1) {
             if (errno == EINTR)
                 continue;
             if (errno == EAGAIN || errno == ESHUTDOWN) {
-                MTP_LOG_WARNING("BulkReaderThread delaying: errno " << errno);
+                MTP_LOG_WARNING("BulkReaderThread delaying: errno" << errno);
                 msleep(1);
                 continue;
             }
-            MTP_LOG_CRITICAL("BulkReaderThread exiting: errno " << errno);
+            MTP_LOG_CRITICAL("BulkReaderThread exiting: errno" << errno);
             break;
         }
 
-        bufferSent = true;
-        m_lock.lock();
-        emit dataRead(inbuf, readSize);
-        m_wait.wait(&m_lock);
-        m_lock.unlock();
-        bufferSent = false;
-    }
+        if (!_markNewData(offset, readSize)) {
+            MTP_LOG_CRITICAL("BulkReaderThread bad offset" << offset << m_dataStart << m_dataSize1 << m_dataSize2);
+            break;
+        }
 
-    // FIXME: We can't free the buffer if there may still be a
-    // dataRead event on the main thread's queue that references it. 
-    // Avoid a segfault there by leaking the buffer. Not an ideal solution.
-    if (!bufferSent)
-        delete[] inbuf;
+        emit dataReady();
+    }
 }
 
-// Called by the main thread when it's done with the buffer it got
-// from the dataRead signal.
-void BulkReaderThread::releaseBuffer()
+// Called by the main thread to request more data to process.
+// getData() should not be called again until all of it has been
+// released with releaseData().
+void BulkReaderThread::getData(char **bufferp, int *size)
 {
-    // The reader thread will take the lock before emitting dataRead,
-    // and will release it inside m_wait, so taking the lock here ensures
-    // that the reader is already waiting and will notice our wakeAll.
-    QMutexLocker locker(&m_lock);
+    QMutexLocker locker(&m_bufferLock);
+
+    if (m_dataSize1 == 0 && m_dataSize2 > 0) {
+        // The primary data area has been consumed and the reader has
+        // already started filling the secondary data area, which means
+        // it's safe to switch over.
+        m_dataStart = 0;
+        m_dataSize1 = m_dataSize2;
+        m_dataSize2 = 0;
+    }
+
+    if (m_dataSize1 > 0) {
+        *bufferp = m_buffer + m_dataStart;
+        *size = m_dataSize1;
+    } else {
+        *bufferp = 0;
+        *size = 0;
+    }
+}
+
+// Called by the main thread to say that it has processed some of the
+// data in m_buffer.
+void BulkReaderThread::releaseData(int size)
+{
+    QMutexLocker locker(&m_bufferLock);
+    m_dataStart += size;
+    m_dataSize1 -= size;
+    if (m_dataSize1 == 0 && m_dataSize2 > 0) {
+        // The primary data area has been consumed and the reader has
+        // already started filling the secondary data area, which means
+        // it's safe to switch over.
+        m_dataStart = 0;
+        m_dataSize1 = m_dataSize2;
+        m_dataSize2 = 0;
+    }
     m_wait.wakeAll();
 }
 

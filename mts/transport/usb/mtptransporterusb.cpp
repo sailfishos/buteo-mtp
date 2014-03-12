@@ -65,10 +65,11 @@ static void catchUserSignal()
 }
 
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
-    m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1), m_writer_busy(false)
+    m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1),
+    m_writer_busy(false), m_reader_busy(READER_FREE)
 {
-    QObject::connect(&m_bulkRead, SIGNAL(dataRead(char*,int)),
-        this, SLOT(handleDataRead(char*,int)), Qt::QueuedConnection);
+    QObject::connect(&m_bulkRead, SIGNAL(dataReady()),
+        this, SLOT(handleDataReady()), Qt::QueuedConnection);
 }
 
 bool MTPTransporterUSB::activate()
@@ -156,12 +157,14 @@ void MTPTransporterUSB::enableRW()
 
 void MTPTransporterUSB::reset()
 {
-    m_ioState = ACTIVE;
-    m_containerReadLen = 0;
-
     m_bulkRead.exitThread();
     m_bulkWrite.exitThread();
     m_intrWrite.exitThread();
+
+    m_ioState = ACTIVE;
+    m_containerReadLen = 0;
+    m_bulkRead.resetData();
+    m_resetCount++;
 
     m_intrWrite.start();
     m_bulkRead.start();
@@ -212,12 +215,28 @@ bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLa
     return true;
 }
 
-void MTPTransporterUSB::handleDataRead(char* buffer, int size)
+void MTPTransporterUSB::handleDataReady()
 {
-    // TODO: Merge this with processReceivedData
-    if(size > 0)
-        processReceivedData((quint8 *)buffer, size);
-    m_bulkRead.releaseBuffer();
+    // The buffer protocol shared with the reader does not allow nested
+    // getData requests; all received data must be released before the
+    // next getData. This makes recursive calls a problem. They can happen
+    // if the handler for dataReceived calls processEvents and there is
+    // another dataReady queued. Deal with it by not getting any new
+    // data in a recursive call; the MTP responder doesn't want such data
+    // anyway while it's still busy.
+    if (m_reader_busy != READER_FREE) {
+        m_reader_busy = READER_POSTPONED;
+        return;
+    }
+
+    do {
+        m_reader_busy = READER_BUSY;
+        processReceivedData();
+        // Loop because a READER_POSTPONED state means we skipped a dataReady
+        // signal, and we have to handle it now.
+    } while (m_reader_busy == READER_POSTPONED);
+
+    m_reader_busy = READER_FREE;
 }
 
 void MTPTransporterUSB::suspend()
@@ -247,14 +266,16 @@ void MTPTransporterUSB::sendDeviceTxCancelled()
     m_ctrl.setStatus(MTPFS_STATUS_TXCANCEL);
 }
 
-void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
+void MTPTransporterUSB::processReceivedData()
 {
+    char *data;
+    int dataLen;
     bool isFirstPacket = false;
+    int resetCount = m_resetCount;
+
+    m_bulkRead.getData(&data, &dataLen);
     //MTP_LOG_INFO("data=" << (void*)data << "dataLen=" << dataLen);
 
-    // In case of operations having data phases, the intitiator sends us 2 seperate mtp usb containers
-    // for the operation and then the data successively. We need the while loop and the container/chunk length
-    // logic below in order to send these one after the other to mtpresponder even though we read both as one data chunk.
     while (dataLen > 0)
     {
         quint32 chunkLen;
@@ -267,7 +288,7 @@ void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
             {
                 // For object transfers > 4GB
                 quint64 objectSize = 0;
-                emit fetchObjectSize(data, &objectSize);
+                emit fetchObjectSize((quint8 *)data, &objectSize);
                 if(objectSize > (0xFFFFFFFF - MTP_HEADER_SIZE))
                 {
                     m_containerReadLen = objectSize + MTP_HEADER_SIZE;
@@ -277,13 +298,21 @@ void MTPTransporterUSB::processReceivedData(quint8* data, quint32 dataLen)
             //MTP_LOG_INFO("start container m_containerReadLen=" << m_containerReadLen << "dataLen=" << dataLen);
         }
 
-        chunkLen = (dataLen < m_containerReadLen) ? dataLen : m_containerReadLen;
+        chunkLen = ((quint32) dataLen < m_containerReadLen) ? dataLen : m_containerReadLen;
         m_containerReadLen -= chunkLen;
 
         emit dataReceived((quint8*)data, chunkLen, isFirstPacket, (m_containerReadLen == 0));
 
+        // The connection might have been reset during data handling,
+        // which makes the current buffer invalid.
+        if (resetCount != m_resetCount)
+            break;
+
         data += chunkLen;
-        dataLen  -= chunkLen;
+        dataLen -= chunkLen;
+        // The dataReceived signal was handled synchronously,
+        // so it's safe to release the data now.
+        m_bulkRead.releaseData(chunkLen);
     }
 }
 
@@ -357,6 +386,8 @@ void MTPTransporterUSB::stopRead()
 {
     emit cleanup();
     m_containerReadLen = 0;
+    m_bulkRead.resetData();
+    m_resetCount++;
 }
 
 void MTPTransporterUSB::handleHighPriorityData()
