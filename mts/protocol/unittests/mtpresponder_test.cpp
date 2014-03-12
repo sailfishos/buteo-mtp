@@ -40,10 +40,7 @@ using namespace meegomtp1dot0;
 
 static void cleanDirs()
 {
-    QString mtpHiddenPath = QDir::homePath() + "/.local/mtp";
-    QString removeMtpHiddenPath = "rm -rf " + mtpHiddenPath;
-    system(removeMtpHiddenPath.toUtf8().data());
-    system("rm -rf /home/user/MyDocs/*");
+    QDir(QDir::homePath() + "/.local/mtp").removeRecursively();
 }
 
 void MTPResponder_test::copyAndSendContainer(MTPTxContainer *container)

@@ -11,6 +11,9 @@ mtpserver.subdir = mtpserver
 mtpserver.target = sub-mtpserver
 mtpserver.depends = sub-mts
 
+mts_storage_tests.subdir = mts/platform/storage/unittests
+mts_storage_tests.depends= sub-mts
+
 mts_fsstorage_plugin.subdir = mts/platform/storage/fsstorageplugin
 mts_fsstorage_plugin.target = sub-mts-fsstorage-plugin
 mts_fsstorage_plugin.depends = sub-mts
@@ -38,6 +41,7 @@ SUBDIRS += \
     mts \
     test \
     mtpserver \
+    mts_storage_tests \
     mts_fsstorage_plugin \
     mts_fsstorage_tests \
     mts_deviceinfo_tests \

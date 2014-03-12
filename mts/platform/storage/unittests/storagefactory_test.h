@@ -27,6 +27,8 @@
 #include <QtTest/QtTest>
 #include <QObject>
 
+namespace meegomtp1dot0 {
+
 class StorageFactory;
 
 class StorageFactory_test : public QObject
@@ -37,13 +39,13 @@ private slots:
     void initTestCase();
     void testStorageIds();
     void testGetObjectHandles();
-    void testMaxCapacity();
-    void testFreeSpace();
-    void testStorageDescription();
+    void testGetDevicePropValueAfterObjectInfoChanged();
     void cleanupTestCase();
 
 private:
     StorageFactory *m_storageFactory;
 };
+
+} // namespace meegomtp1dot0
 
 #endif
