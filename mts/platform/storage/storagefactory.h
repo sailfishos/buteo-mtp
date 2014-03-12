@@ -245,6 +245,10 @@ private:
 
     ObjectPropertyCache &m_objectPropertyCache;
 
+    /// Improves performance by preventing repeat mass fills of object property
+    /// cache with StoragePlugin::getChildPropertyValues().
+    QSet<ObjHandle> m_massQueriedAssociations;
+
 private slots:
     /// This slot is called when some of the underlying storage plugins
     /// generates an MTP event.
