@@ -256,11 +256,10 @@ StoragePlugin *StorageFactory::storageOfHandle(ObjHandle handle) const
 MTPResponseCode StorageFactory::addItem( quint32& storageId, ObjHandle &parentHandle, ObjHandle &handle, MTPObjectInfo *info ) const
 {
     MTPResponseCode response = MTP_RESP_GeneralError;
-    // Add the item in the right storage.
-    // Responder can choose the storage in this case
-    if( 0x00000000 == info->mtpStorageId )
-    {
-        // Choose the first storage as of now.
+
+    if(storageId == 0x00000000) {
+        // It was left up to us to choose the storage. As of now, pick the first
+        // one.
         // FIXME Not a good idea to just pick the first storage. Maybe we should choose one has enough available space, etc.
         storageId = assignStorageId(1,1);
     }
