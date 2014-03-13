@@ -537,8 +537,20 @@ MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle,
     if (storage) {
         MTPResponseCode response;
 
-        if (handle == 0) {
-            // Storage root has no parent.
+        const MTPObjectInfo *info;
+        response = storage->getObjectInfo(handle, info);
+        if (response != MTP_RESP_OK) {
+            return response;
+        }
+
+        if (m_massQueriedAssociations.contains(info->mtpParentObject) ||
+            handle == 0) {
+            // We've done one mass query on this object's parent. For
+            // performance reasons revert now to querying individual objects, as
+            // repeated big queries would rather degrade the performance than
+            // improve it. Storage roots always go in this branch since they
+            // have no parent.
+
             response = storage->getObjectPropertyValue(handle, notFoundList);
             if (response == MTP_RESP_OK) {
                 m_objectPropertyCache.add(handle, notFoundList);
@@ -547,12 +559,6 @@ MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle,
             return response;
         } else {
             // Speculatively load the property values for all sibling objects.
-            const MTPObjectInfo *info;
-            response = storage->getObjectInfo(handle, info);
-            if (response != MTP_RESP_OK) {
-                return response;
-            }
-
             QList<const MtpObjPropDesc *> properties;
             foreach (const MTPObjPropDescVal &propVal, notFoundList) {
                 properties.append(propVal.propDesc);
@@ -564,6 +570,8 @@ MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle,
             if (response != MTP_RESP_OK) {
                 return response;
             }
+
+            m_massQueriedAssociations.insert(info->mtpParentObject);
 
             propValList += notFoundList;
 
@@ -614,6 +622,10 @@ void StorageFactory::onStorageEvent(MTPEventCode event, const QVector<quint32> &
             break;
         case MTP_EV_ObjectInfoChanged:
             // Invalidate all cached properties for the object.
+            m_objectPropertyCache.remove(params[0]);
+            break;
+        case MTP_EV_ObjectRemoved:
+            m_massQueriedAssociations.remove(params[0]);
             m_objectPropertyCache.remove(params[0]);
             break;
     }

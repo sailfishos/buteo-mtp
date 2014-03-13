@@ -245,6 +245,10 @@ private:
 
     ObjectPropertyCache &m_objectPropertyCache;
 
+    /// Improves performance by preventing repeat mass fills of object property
+    /// cache with StoragePlugin::getChildPropertyValues().
+    QSet<ObjHandle> m_massQueriedAssociations;
+
 private slots:
     /// This slot is called when some of the underlying storage plugins
     /// generates an MTP event.
@@ -252,6 +256,10 @@ private slots:
     /// \param event [in] an MTP event code.
     /// \param params [in] a collection of event parameters.
     void onStorageEvent(MTPEventCode event, const QVector<quint32> &params);
+
+#ifdef UT_ON
+    friend class StorageFactory_test;
+#endif
 };
 }
 
