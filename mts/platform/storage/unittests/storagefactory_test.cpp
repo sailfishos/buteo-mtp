@@ -24,7 +24,10 @@
 #include "storagefactory_test.h"
 #include "storagefactory.h"
 #include "mtpresponder.h"
-#include "mtptypes.h"
+
+#include <QDir>
+#include <QFile>
+#include <QTest>
 
 using namespace meegomtp1dot0;
 
@@ -143,9 +146,69 @@ void StorageFactory_test::testGetDevicePropValueAfterObjectInfoChanged()
     file.remove();
 }
 
+void StorageFactory_test::testMassObjectPropertyQueryThrottle()
+{
+    QString dirName(QStringLiteral("massDirectory"));
+    QString dirPath(m_storageRoot + dirName);
+    QDir dir(dirPath);
+    QVERIFY(dir.mkpath(dirPath));
+
+    foreach (const QString &file, QStringList() << "f1" << "f2" << "f3") {
+        QVERIFY(QFile(dirPath + '/' + file).open(QFile::WriteOnly));
+    }
+
+    QEventLoop loop;
+    while (loop.processEvents());
+
+    ObjHandle massDirHandle = handleForFilename(0xFFFFFFFF, dirName);
+    QVERIFY(massDirHandle != 0);
+
+    ObjHandle f1Handle = handleForFilename(massDirHandle, "f1");
+    QVERIFY(f1Handle != 0);
+
+    QVERIFY(!m_storageFactory->m_massQueriedAssociations.contains(massDirHandle));
+
+    QCOMPARE(m_storageFactory->getObjectPropertyValue(f1Handle, m_queryForObjSize),
+            static_cast<MTPResponseCode>(MTP_RESP_OK));
+
+    QVERIFY(m_storageFactory->m_massQueriedAssociations.contains(massDirHandle));
+
+    dir.removeRecursively();
+
+    while (loop.processEvents());
+
+    QVERIFY(!m_storageFactory->m_massQueriedAssociations.contains(massDirHandle));
+}
+
 void StorageFactory_test::cleanupTestCase()
 {
     delete m_storageFactory;
+}
+
+ObjHandle StorageFactory_test::handleForFilename(ObjHandle parent,
+                                                 const QString &name) const
+{
+    MTPResponseCode resp;
+
+    QVector<ObjHandle> handles;
+    resp = m_storageFactory->getObjectHandles(STORAGE_ID, 0, parent, handles);
+    if (resp != MTP_RESP_OK) {
+        return 0;
+    }
+
+    foreach (ObjHandle handle, handles) {
+        const MTPObjectInfo *info;
+        resp = m_storageFactory->getObjectInfo(handle, info);
+        if (resp != MTP_RESP_OK) {
+            return 0;
+        }
+
+        if (info->mtpFileName == name) {
+            return handle;
+        }
+    }
+
+    return 0;
 }
 
 QTEST_MAIN(StorageFactory_test);

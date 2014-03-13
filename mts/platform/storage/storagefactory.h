@@ -256,6 +256,10 @@ private slots:
     /// \param event [in] an MTP event code.
     /// \param params [in] a collection of event parameters.
     void onStorageEvent(MTPEventCode event, const QVector<quint32> &params);
+
+#ifdef UT_ON
+    friend class StorageFactory_test;
+#endif
 };
 }
 

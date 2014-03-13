@@ -24,8 +24,7 @@
  *
  */
 
-#include <QtTest/QtTest>
-#include <QObject>
+#include "mtptypes.h"
 
 namespace meegomtp1dot0 {
 
@@ -40,9 +39,12 @@ private slots:
     void testStorageIds();
     void testGetObjectHandles();
     void testGetDevicePropValueAfterObjectInfoChanged();
+    void testMassObjectPropertyQueryThrottle();
     void cleanupTestCase();
 
 private:
+    ObjHandle handleForFilename(ObjHandle parent, const QString &name) const;
+
     StorageFactory *m_storageFactory;
     QString m_storageRoot;
     QList<MTPObjPropDescVal> m_queryForObjSize;
