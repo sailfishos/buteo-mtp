@@ -2636,11 +2636,10 @@ MTPResponseCode FSStoragePlugin::getObjectPropertyValueFromTracker( const ObjHan
 MTPResponseCode FSStoragePlugin::getObjectPropertyValue(const ObjHandle &handle,
         QList<MTPObjPropDescVal> &propValList)
 {
-    MTPResponseCode code = MTP_RESP_OK;
     StorageItem *storageItem = m_objectHandlesMap.value( handle );
     if( !storageItem || storageItem->m_path.isEmpty() )
     {
-        code = MTP_RESP_GeneralError;
+        return MTP_RESP_GeneralError;
     }
     else
     {
@@ -2648,14 +2647,20 @@ MTPResponseCode FSStoragePlugin::getObjectPropertyValue(const ObjHandle &handle,
         // set or statically defined.
         QList<MTPObjPropDescVal>::iterator i;
         for (i = propValList.begin(); i != propValList.end(); ++i) {
-            code = getObjectPropertyValueFromStorage(handle,
+            MTPResponseCode response = getObjectPropertyValueFromStorage(handle,
                     i->propDesc->uPropCode, i->propVal, i->propDesc->uDataType);
+            if (response != MTP_RESP_OK &&
+                response != MTP_RESP_ObjectProp_Not_Supported) {
+                // Ignore ObjectProp_Not_Supported since the value may still be
+                // available in Tracker.
+                return response;
+            }
         }
 
         // Fetch whatever else remains from Tracker.
         m_tracker->getPropVals(storageItem->m_path, propValList);
     }
-    return code;
+    return MTP_RESP_OK;
 }
 
 MTPResponseCode FSStoragePlugin::getChildPropertyValues(ObjHandle handle,
