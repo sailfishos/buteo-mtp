@@ -46,7 +46,7 @@ using namespace meegomtp1dot0;
  ******************************************************/
 StorageFactory::StorageFactory(): m_storageId(0),
         m_storagePluginsPath(pluginLocation), m_newObjectHandle(0),
-        m_newPuoid(0), m_objectPropertyCache(*ObjectPropertyCache::instance())
+        m_newPuoid(0), m_objectPropertyCache(new ObjectPropertyCache)
 {
     //TODO For now handle only the file system storage plug-in. As we have more storages
     // make this generic.
@@ -291,7 +291,7 @@ MTPResponseCode StorageFactory::deleteItem( const ObjHandle& handle, const MTPOb
         }
     }
 
-    m_objectPropertyCache.remove(handle);
+    m_objectPropertyCache->remove(handle);
 
     return response;
 }
@@ -443,7 +443,7 @@ MTPResponseCode StorageFactory::moveObject( const ObjHandle &handle, const ObjHa
         if (response == MTP_RESP_OK) {
             // Invalidate the parent handle property in the cache. The other
             // properties do not change.
-            m_objectPropertyCache.remove(handle, MTP_OBJ_PROP_Parent_Obj);
+            m_objectPropertyCache->remove(handle, MTP_OBJ_PROP_Parent_Obj);
         }
 
         return response;
@@ -523,12 +523,12 @@ MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle,
     QList<MTPObjPropDescVal> notFoundList;
 
     if (propValList.count() == 1) {
-        if (m_objectPropertyCache.get(handle, propValList[0])) {
+        if (m_objectPropertyCache->get(handle, propValList[0])) {
             return MTP_RESP_OK;
         }
         notFoundList.swap(propValList);
     } else {
-        if (m_objectPropertyCache.get(handle, propValList, notFoundList)) {
+        if (m_objectPropertyCache->get(handle, propValList, notFoundList)) {
             return MTP_RESP_OK;
         }
     }
@@ -553,7 +553,7 @@ MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle,
 
             response = storage->getObjectPropertyValue(handle, notFoundList);
             if (response == MTP_RESP_OK) {
-                m_objectPropertyCache.add(handle, notFoundList);
+                m_objectPropertyCache->add(handle, notFoundList);
                 propValList += notFoundList;
             }
             return response;
@@ -582,7 +582,7 @@ MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle,
                 const QList<QVariant> &childValues = it.value();
 
                 for (int i = 0; i != properties.count(); ++i) {
-                    m_objectPropertyCache.add(childHandle,
+                    m_objectPropertyCache->add(childHandle,
                             properties[i]->uPropCode, childValues[i]);
                 }
             }
@@ -605,7 +605,7 @@ MTPResponseCode StorageFactory::setObjectPropertyValue( const ObjHandle &handle,
         MTPResponseCode response =
                 storage->setObjectPropertyValue(handle, propValList, sendObjectPropList);
         if (response == MTP_RESP_OK) {
-            m_objectPropertyCache.add(handle, propValList);
+            m_objectPropertyCache->add(handle, propValList);
         }
         return response;
     }
@@ -618,15 +618,15 @@ void StorageFactory::onStorageEvent(MTPEventCode event, const QVector<quint32> &
     switch (event) {
         case MTP_EV_ObjectPropChanged:
             // Invalidate cache for this object property.
-            m_objectPropertyCache.remove(params[0], params[1]);
+            m_objectPropertyCache->remove(params[0], params[1]);
             break;
         case MTP_EV_ObjectInfoChanged:
             // Invalidate all cached properties for the object.
-            m_objectPropertyCache.remove(params[0]);
+            m_objectPropertyCache->remove(params[0]);
             break;
         case MTP_EV_ObjectRemoved:
             m_massQueriedAssociations.remove(params[0]);
-            m_objectPropertyCache.remove(params[0]);
+            m_objectPropertyCache->remove(params[0]);
             break;
     }
 }

@@ -243,7 +243,7 @@ private:
     ObjHandle m_newObjectHandle;
     MtpInt128 m_newPuoid;
 
-    ObjectPropertyCache &m_objectPropertyCache;
+    QScopedPointer<ObjectPropertyCache> m_objectPropertyCache;
 
     /// Improves performance by preventing repeat mass fills of object property
     /// cache with StoragePlugin::getChildPropertyValues().

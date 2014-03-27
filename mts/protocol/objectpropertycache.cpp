@@ -34,17 +34,6 @@
 
 using namespace meegomtp1dot0;
 
-ObjectPropertyCache* ObjectPropertyCache::instance()
-{
-    MTP_FUNC_TRACE();
-
-    static QScopedPointer<ObjectPropertyCache> instance;
-    if(!instance) {
-        instance.reset(new ObjectPropertyCache);
-    }
-    return instance.data();
-}
-
 void ObjectPropertyCache::add( ObjHandle handle, MTPObjPropertyCode propertyCode, const QVariant &value )
 {
     MTP_FUNC_TRACE();

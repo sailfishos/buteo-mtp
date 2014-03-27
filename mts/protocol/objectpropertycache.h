@@ -52,9 +52,7 @@ namespace meegomtp1dot0
 class ObjectPropertyCache
 {
     public:
-        /// Returns an instance to the single ObjectPropertyCache object
-        /// \return returns a pointer to the ObjectPropertyCache object
-        static ObjectPropertyCache* instance();
+        ObjectPropertyCache() {}
 
         /// Add/Modify a property-value pair for an object to the cache.
         /// \param handle [in] the object handle which needs to be added/modified
@@ -129,13 +127,8 @@ class ObjectPropertyCache
         ~ObjectPropertyCache();
 
     private:
-        /// Private Constructor
-        ObjectPropertyCache(){}
-
         /// The cache!
         QHash<ObjHandle, QHash<MTPObjPropertyCode,QVariant> > m_propertyMap;
-        /// Pointer to the single instance of this object;
-        static ObjectPropertyCache* m_instance;
 };
 }
 #endif
