@@ -80,7 +80,6 @@ private slots:
     void testFileMoveAcrossStorage();
     void testDirMove();
     void testDirMoveAcrossStorage();
-    void testGetLargestObjectHandle();
     void testGetLargestPuoid();
     void testTruncateItem();
     void testGetPath();

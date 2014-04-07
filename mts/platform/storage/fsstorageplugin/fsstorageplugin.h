@@ -118,7 +118,6 @@ public slots:
     /// This slot gets notified when an inotify event is received, and takes appropriate action.
     void inotifyEventSlot( struct inotify_event* );
     void receiveThumbnail(const QString &path);
-    void getLargestObjectHandle( ObjHandle& handle );
     void getLargestPuoid( MtpInt128& puoid );
 
 private:

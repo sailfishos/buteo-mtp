@@ -582,11 +582,6 @@ void FSStoragePlugin::requestNewPuoid( MtpInt128& newPuoid )
 }
 
 
-void FSStoragePlugin::getLargestObjectHandle( ObjHandle& handle )
-{
-    handle = m_uniqueObjectHandle;
-}
-
 void FSStoragePlugin::getLargestPuoid( MtpInt128& puoid )
 {
     puoid = m_largestPuoid;

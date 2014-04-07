@@ -202,12 +202,6 @@ public Q_SLOTS:
     void getPuoid( MtpInt128& puoid );
 
 Q_SIGNALS:
-    /// Storage factory will emit this signal when it needs to know the largest value of an object handle
-    /// a storage plug-in used. This is so that for this session it can assign handles greater than the
-    /// previous session's largest value, in case we are preserving handles across sessions.
-    /// \param handle [out] the populated object handle
-    void largestObjectHandle( ObjHandle& );
-
     /// Storage factory will emit this signal when it needs to know the largest value of a puoid
     /// a storage plug-in used for an object. This is so that for this session it can assign handles greater than the
     /// previous session's largest value, in case we are preserving puoids across sessions.
@@ -239,7 +233,6 @@ private:
 
     StoragePlugin *storageOfHandle(ObjHandle handle) const;
 
-    ObjHandle m_largestObjectHandle;
     ObjHandle m_newObjectHandle;
     MtpInt128 m_newPuoid;
 

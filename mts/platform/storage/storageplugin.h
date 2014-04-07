@@ -243,11 +243,6 @@ signals:
     void checkTransportEvents( bool &txCancelled );
 
 public Q_SLOTS:
-    /// This slot gets called when storagefactory needs to know the value of the largest
-    /// object handle a plug-in used in the previous MTP session.
-    /// \param handle [out] largest object handle
-    virtual void getLargestObjectHandle( ObjHandle& handle ) = 0;
-
     /// This slot gets called when the storage factory needs to know the value of the largest
     /// puoid used for any object in a storage plug-in.
     /// \param puoid[out] the largest puoid assigned to any object handle in this storage plug-in.

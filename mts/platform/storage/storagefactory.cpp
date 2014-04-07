@@ -171,7 +171,6 @@ bool StorageFactory::enumerateStorages( QVector<quint32>& failedStorageIds )
     //TODO For now handle only the file system storage plug-in. As we have more storages
     // make this generic.
     bool result = true;
-    ObjHandle handle;
 
     QHash<quint32,StoragePlugin*>::const_iterator itr = m_allStorages.constBegin();
     for( ; itr != m_allStorages.constEnd(); ++itr )
@@ -187,8 +186,6 @@ bool StorageFactory::enumerateStorages( QVector<quint32>& failedStorageIds )
         // Connects for assigning object handles
         QObject::connect( itr.value(), SIGNAL(objectHandle( ObjHandle& )),
                           this, SLOT(getObjectHandle( ObjHandle& )) );
-        QObject::connect( this, SIGNAL(largestObjectHandle( ObjHandle& )),
-                          itr.value(), SLOT(getLargestObjectHandle( ObjHandle& )) );
 
         // Connect for puoids
         QObject::connect( itr.value(), SIGNAL(puoid( MtpInt128& )),
@@ -200,15 +197,6 @@ bool StorageFactory::enumerateStorages( QVector<quint32>& failedStorageIds )
         QObject::connect( itr.value(), SIGNAL(checkTransportEvents( bool& )),
                           this, SIGNAL(checkTransportEvents( bool& )) );
 
-        // This needs to be done before enumerating the storage plug-in, so that the storage factory
-        // knows the largest object handle used while assigning new object handles to the storage plug-in
-        // during enumeration.
-        emit largestObjectHandle( handle );
-        if( handle > m_newObjectHandle )
-        {
-            m_newObjectHandle = handle;
-        }
-
         MtpInt128 puoid;
         emit largestPuoid( puoid );
         if( 0 < puoid.compare(m_newPuoid) )
@@ -216,7 +204,6 @@ bool StorageFactory::enumerateStorages( QVector<quint32>& failedStorageIds )
             m_newPuoid = puoid;
         }
 
-        QObject::disconnect( this, SIGNAL(largestObjectHandle( ObjHandle & )), 0, 0 );
         QObject::disconnect( this, SIGNAL(largestPuoid( MtpInt128& )), 0, 0 );
 
         if( !itr.value()->enumerateStorage() )

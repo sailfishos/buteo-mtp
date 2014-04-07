@@ -1177,13 +1177,6 @@ void FSStoragePlugin_test::testDirMoveAcrossStorage()
     QCOMPARE ( movedF1->m_objectInfo->mtpFileName, iOrigF1.mtpFileName );
 }
 
-void FSStoragePlugin_test::testGetLargestObjectHandle()
-{
-    ObjHandle handle;
-    m_storage->getLargestObjectHandle( handle );
-    QCOMPARE( handle > 0, true );
-}
-
 void FSStoragePlugin_test::testGetLargestPuoid()
 {
     MtpInt128 puoid;
