@@ -146,12 +146,17 @@ bool MTPResponder::initStorages()
 
     connect(m_storageServer, &StorageFactory::checkTransportEvents,
         this, &MTPResponder::processTransportEvents);
+    connect(m_storageServer, &StorageFactory::storageReady,
+        this, &MTPResponder::onStorageReady);
 
     QVector<quint32> failedStorageIds;
     bool result = m_storageServer->enumerateStorages(failedStorageIds);
     if (!result) {
         //TODO What action to take if enumeration fails?
         MTP_LOG_CRITICAL("Failed to enumerate storages");
+        foreach (quint32 storageId, failedStorageIds) {
+            MTP_LOG_CRITICAL("Failed storage:" << QString("0x%1").arg(storageId, 0, 16));
+        }
     }
     return result;
 }
@@ -409,7 +414,13 @@ void MTPResponder::receiveContainer(quint8* data, quint32 dataLen, bool isFirstP
             m_transporter->reset();
             break;
     }
-    //delete [] data;
+}
+
+void MTPResponder::onStorageReady(void)
+{
+    MTP_FUNC_TRACE();
+
+    MTP_LOG_INFO("Storage ready");
 }
 
 void MTPResponder::commandHandler()

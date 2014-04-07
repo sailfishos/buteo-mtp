@@ -193,6 +193,9 @@ bool StorageFactory::enumerateStorages(QVector<quint32>& failedStorageIds)
         connect(itr.value(), &StoragePlugin::checkTransportEvents,
             this, &StorageFactory::checkTransportEvents);
 
+        connect(itr.value(), &StoragePlugin::storagePluginReady,
+            this, &StorageFactory::onStoragePluginReady);
+
         MtpInt128 puoid;
         emit largestPuoid(puoid);
         if (puoid > m_newPuoid)
@@ -209,6 +212,18 @@ bool StorageFactory::enumerateStorages(QVector<quint32>& failedStorageIds)
     }
 
     return result;
+}
+
+bool StorageFactory::storageIsReady()
+{
+    return m_readyStorages.size() == m_allStorages.size();
+}
+
+void StorageFactory::onStoragePluginReady(quint32 storageId)
+{
+    m_readyStorages.insert(storageId);
+    if (storageIsReady())
+        emit storageReady();
 }
 
 /*******************************************************

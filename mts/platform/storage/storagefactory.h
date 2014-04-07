@@ -32,10 +32,12 @@
 #ifndef STORAGEFACTORY_H
 #define STORAGEFACTORY_H
 
-#include <QObject>
-#include <QVector>
-#include <QList>
 #include <QHash>
+#include <QList>
+#include <QObject>
+#include <QSet>
+#include <QVector>
+
 #include "mtptypes.h"
 
 class QDir;
@@ -188,6 +190,9 @@ public:
 
     MTPResponseCode setObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool sendObjectPropList = false);
 
+    /// \return true iff all storage plugins have completed enumeration
+    bool storageIsReady();
+
 
 public Q_SLOTS:
     /// This slot will take care of providing an object handle which a storage plug-in can assign to an object.
@@ -201,6 +206,10 @@ public Q_SLOTS:
     /// \param puoid [out] the puoid
     void getPuoid( MtpInt128& puoid );
 
+    /// Storage plugins are connected to this to announce that they're
+    /// done enumerating their object handles.
+    void onStoragePluginReady(quint32 storageId);
+
 Q_SIGNALS:
     /// Storage factory will emit this signal when it needs to know the largest value of a puoid
     /// a storage plug-in used for an object. This is so that for this session it can assign handles greater than the
@@ -212,6 +221,9 @@ Q_SIGNALS:
     /// TODO If needed this can be generalized to receive other transport specific events
     /// \param txCancelled [out] If set to true, this indicates that the current MTP tx got cancelled.
     void checkTransportEvents( bool &txCancelled );
+
+    /// Emitted when all storages have completed enumeration
+    void storageReady();
 
 private:
     quint32 m_storageId; ///< unique id for each storage.
@@ -225,6 +237,8 @@ private:
         void *storagePluginHandle;
     };
     QVector<PluginHandlesInfo_> m_pluginHandlesInfoVector; ///< This vector keeps track of all loaded plug-ins.
+
+    QSet<quint32> m_readyStorages; ///< Storage ids of plugins that have emitted storageReady
 
     /// Assigns a unique storage id for the next storage.
     /// Storage id's are in the range [0x00000000,0xFFFFFFFF];

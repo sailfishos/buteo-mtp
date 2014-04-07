@@ -97,6 +97,7 @@ class MTPResponder : public QObject
 
     public slots:
         void dispatchEvent(MTPEventCode event, const QVector<quint32> &params);
+        void onStorageReady();
 
     Q_SIGNALS:
         /// This signal is emitted by the mtpresponder to indicate that the responder is an OK state. 

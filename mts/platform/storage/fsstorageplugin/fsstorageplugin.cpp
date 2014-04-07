@@ -149,6 +149,7 @@ bool FSStoragePlugin::enumerateStorage()
     // Create playlist folders and sync .pla files with real playlists.
     assignPlaylistReferences();
 
+    emit storagePluginReady(m_storageId);
     return result;
 }
 
