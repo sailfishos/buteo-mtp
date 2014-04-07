@@ -195,7 +195,7 @@ bool StorageFactory::enumerateStorages(QVector<quint32>& failedStorageIds)
 
         MtpInt128 puoid;
         emit largestPuoid(puoid);
-        if (0 < puoid.compare(m_newPuoid))
+        if (puoid > m_newPuoid)
             m_newPuoid = puoid;
         disconnect(this, &StorageFactory::largestPuoid,
             itr.value(), &StoragePlugin::getLargestPuoid);
