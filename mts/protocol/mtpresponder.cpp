@@ -144,13 +144,13 @@ bool MTPResponder::initStorages()
 {
     m_storageServer = new StorageFactory();
 
-    QObject::connect(m_storageServer, SIGNAL(checkTransportEvents(bool&)), this, SLOT(processTransportEvents(bool&)));
+    connect(m_storageServer, &StorageFactory::checkTransportEvents,
+        this, &MTPResponder::processTransportEvents);
 
-    //TODO What action to take if enumeration fails?
     QVector<quint32> failedStorageIds;
-    bool result = m_storageServer->enumerateStorages( failedStorageIds );
-    if(false == result)
-    {
+    bool result = m_storageServer->enumerateStorages(failedStorageIds);
+    if (!result) {
+        //TODO What action to take if enumeration fails?
         MTP_LOG_CRITICAL("Failed to enumerate storages");
     }
     return result;
