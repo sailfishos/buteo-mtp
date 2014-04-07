@@ -202,6 +202,9 @@ private:
     /// \param handle [in] when nonzero, assigns the specific object handle to
     ///               the newly created StorageItem.
     /// \return MTP response code.
+    ///
+    /// This method will call processEvents() regularly when adding
+    /// a whole directory tree, so that the event loop remains responsive.
     MTPResponseCode addToStorage( const QString &path,
             StorageItem **storageItem = 0, MTPObjectInfo *info = 0,
             bool sendEvent = false, bool createIfNotExist = false,
@@ -371,6 +374,8 @@ private:
     /// Adds inotify watch on a directory.
     void addWatchDescriptor( StorageItem *item );
 
+private slots:
+    void enumerateStorage_worker();
     
 private:
     MTPResponseCode deleteItemHelper( const ObjHandle& handle, bool removePhysically = true, bool sendEvent = false );

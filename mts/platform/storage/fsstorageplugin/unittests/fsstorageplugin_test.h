@@ -37,6 +37,7 @@
 
 namespace meegomtp1dot0
 {
+class StoragePlugin;
 class FSStoragePlugin;
 }
 
@@ -100,6 +101,8 @@ private slots:
 
 private:
     FSStoragePlugin *m_storage;
+
+    void setupPlugin(StoragePlugin *plugin);
 };
 }
 #endif

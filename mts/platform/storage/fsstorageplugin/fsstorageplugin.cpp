@@ -43,6 +43,7 @@
 #include <QVariant>
 #include <QFileInfo>
 #include <QDateTime>
+#include <QMetaObject>
 
 using namespace meegomtp1dot0;
 
@@ -131,6 +132,16 @@ bool FSStoragePlugin::enumerateStorage()
         dir.mkdir( "Playlists" );
     }
 
+    // Do the real work asynchronously. Queue a call to it, so that
+    // it can run directly from the event loop without making our caller wait.
+    QMetaObject::invokeMethod(this, "enumerateStorage_worker",
+        Qt::QueuedConnection);
+
+    return result;
+}
+
+void FSStoragePlugin::enumerateStorage_worker()
+{
     // Now read all existing and new playlists from the device (tracker)
     m_tracker->getPlaylists(m_existingPlaylists.playlistPaths, m_existingPlaylists.playlistEntries, true);
     m_tracker->getPlaylists(m_newPlaylists.playlistNames, m_newPlaylists.playlistEntries, false);
@@ -150,7 +161,6 @@ bool FSStoragePlugin::enumerateStorage()
     assignPlaylistReferences();
 
     emit storagePluginReady(m_storageId);
-    return result;
 }
 
 /************************************************************
@@ -770,12 +780,17 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
 
             addItemToMaps( item.data() );
 
+            QCoreApplication::processEvents();
+
             // Recursively add StorageItems for the contents of the directory.
             QDir dir( item->m_path );
             dir.setFilter( QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden );
             QFileInfoList dirContents = dir.entryInfoList();
+            int work = 0;
             foreach ( const QFileInfo &info, dirContents )
             {
+                if (++work % 16 == 0)
+                    QCoreApplication::processEvents();
                 addToStorage(info.absoluteFilePath(), 0, 0, createIfNotExist, sendEvent);
             }
             break;

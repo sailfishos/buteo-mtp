@@ -156,6 +156,8 @@ class MTPResponder : public QObject
         bool                                            m_isLastPacket;
         quint8                                          *m_resendBuffer;
         quint32                                         m_resendBufferSize;
+        QByteArray                                      m_storageWaitData;  ///< holding area for data arriving during WAIT_STORAGE
+        bool                                            m_storageWaitDataComplete;  ///< m_storageWaitData holds a whole container
 
         enum ResponderState
         {
@@ -163,7 +165,8 @@ class MTPResponder : public QObject
             RESPONDER_WAIT_DATA = 1,                                        ///< Responder has received a request, and is now waiting for the data phase
             RESPONDER_WAIT_RESP = 2,                                        ///< Responder is waiting for the response phase
             RESPONDER_TX_CANCEL = 3,                                        ///< A transaction got cancelled
-            RESPONDER_SUSPEND = 4                                           ///< A suspended session
+            RESPONDER_SUSPEND = 4,                                          ///< A suspended session
+            RESPONDER_WAIT_STORAGE = 5,                                     ///< Responder has received a request, but cannot handle it before storage is ready
         }m_state;                                                           ///< Responder state
 
         ResponderState                                  m_prevState;
@@ -431,6 +434,8 @@ class MTPResponder : public QObject
         /// Returns true if the operation has an I->R data phase
         bool hasDataPhase(MTPOperationCode code);
 
+        /// Returns true if the operation needs to access m_storageServer
+        bool needsStorageReady(MTPOperationCode code);
 
 #if 0
         /// Unregister all the types we have registered with QMetaType. We noticed that not doing so can result in crashes:
