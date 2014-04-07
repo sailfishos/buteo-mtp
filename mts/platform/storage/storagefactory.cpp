@@ -170,8 +170,8 @@ bool StorageFactory::enumerateStorages(QVector<quint32>& failedStorageIds)
 {
     bool result = true;
 
-    QHash<quint32,StoragePlugin*>::const_iterator itr = m_allStorages.constBegin();
-    for ( ; itr != m_allStorages.constEnd(); ++itr) {
+    QHash<quint32,StoragePlugin*>::const_iterator itr;
+    for (itr = m_allStorages.constBegin(); itr != m_allStorages.constEnd(); ++itr) {
         // Connect the storage plugin's eventGenerated signal
         connect(itr.value(), &StoragePlugin::eventGenerated,
             this, &StorageFactory::onStorageEvent, Qt::QueuedConnection);
@@ -199,7 +199,9 @@ bool StorageFactory::enumerateStorages(QVector<quint32>& failedStorageIds)
             m_newPuoid = puoid;
         disconnect(this, &StorageFactory::largestPuoid,
             itr.value(), &StoragePlugin::getLargestPuoid);
+    }
 
+    for (itr = m_allStorages.constBegin(); itr != m_allStorages.constEnd(); ++itr) {
         if (!itr.value()->enumerateStorage()) {
              result = false;
              failedStorageIds.append(itr.key());
