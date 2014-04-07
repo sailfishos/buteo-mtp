@@ -66,7 +66,7 @@ static void catchUserSignal()
 
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
     m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1),
-    m_writer_busy(false), m_reader_busy(READER_FREE)
+    m_reader_busy(READER_FREE), m_writer_busy(false)
 {
     QObject::connect(&m_bulkRead, SIGNAL(dataReady()),
         this, SLOT(handleDataReady()), Qt::QueuedConnection);
