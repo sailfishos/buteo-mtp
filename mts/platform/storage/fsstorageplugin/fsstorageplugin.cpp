@@ -780,8 +780,6 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
 
             addItemToMaps( item.data() );
 
-            QCoreApplication::processEvents();
-
             // Recursively add StorageItems for the contents of the directory.
             QDir dir( item->m_path );
             dir.setFilter( QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot | QDir::Hidden );
@@ -789,7 +787,7 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
             int work = 0;
             foreach ( const QFileInfo &info, dirContents )
             {
-                if (++work % 16 == 0)
+                if (work++ % 16 == 0)
                     QCoreApplication::processEvents();
                 addToStorage(info.absoluteFilePath(), 0, 0, createIfNotExist, sendEvent);
             }
