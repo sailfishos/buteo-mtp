@@ -166,67 +166,64 @@ StorageFactory::~StorageFactory()
 /*******************************************************
  * bool StorageFactory::enumerateStorages
  ******************************************************/
-bool StorageFactory::enumerateStorages( QVector<quint32>& failedStorageIds )
+bool StorageFactory::enumerateStorages(QVector<quint32>& failedStorageIds)
 {
-    //TODO For now handle only the file system storage plug-in. As we have more storages
-    // make this generic.
     bool result = true;
-    ObjHandle handle;
 
-    QHash<quint32,StoragePlugin*>::const_iterator itr = m_allStorages.constBegin();
-    for( ; itr != m_allStorages.constEnd(); ++itr )
-    {
+    QHash<quint32,StoragePlugin*>::const_iterator itr;
+    for (itr = m_allStorages.constBegin(); itr != m_allStorages.constEnd(); ++itr) {
         // Connect the storage plugin's eventGenerated signal
         connect(itr.value(), &StoragePlugin::eventGenerated,
-                this, &StorageFactory::onStorageEvent,
-                Qt::QueuedConnection);
+            this, &StorageFactory::onStorageEvent, Qt::QueuedConnection);
         connect(itr.value(), &StoragePlugin::eventGenerated,
-                MTPResponder::instance(), &MTPResponder::dispatchEvent,
-                Qt::QueuedConnection);
+            MTPResponder::instance(), &MTPResponder::dispatchEvent,
+            Qt::QueuedConnection);
 
         // Connects for assigning object handles
-        QObject::connect( itr.value(), SIGNAL(objectHandle( ObjHandle& )),
-                          this, SLOT(getObjectHandle( ObjHandle& )) );
-        QObject::connect( this, SIGNAL(largestObjectHandle( ObjHandle& )),
-                          itr.value(), SLOT(getLargestObjectHandle( ObjHandle& )) );
+        connect(itr.value(), &StoragePlugin::objectHandle,
+            this, &StorageFactory::getObjectHandle);
 
         // Connect for puoids
-        QObject::connect( itr.value(), SIGNAL(puoid( MtpInt128& )),
-                          this, SLOT(getPuoid( MtpInt128& )) );
-        QObject::connect( this, SIGNAL(largestPuoid( MtpInt128& )),
-                          itr.value(), SLOT(getLargestPuoid( MtpInt128& )) );
+        connect(itr.value(), &StoragePlugin::puoid,
+            this, &StorageFactory::getPuoid);
+        connect(this, &StorageFactory::largestPuoid,
+            itr.value(), &StoragePlugin::getLargestPuoid);
 
         // Connect for transport events.
-        QObject::connect( itr.value(), SIGNAL(checkTransportEvents( bool& )),
-                          this, SIGNAL(checkTransportEvents( bool& )) );
+        connect(itr.value(), &StoragePlugin::checkTransportEvents,
+            this, &StorageFactory::checkTransportEvents);
 
-        // This needs to be done before enumerating the storage plug-in, so that the storage factory
-        // knows the largest object handle used while assigning new object handles to the storage plug-in
-        // during enumeration.
-        emit largestObjectHandle( handle );
-        if( handle > m_newObjectHandle )
-        {
-            m_newObjectHandle = handle;
-        }
+        connect(itr.value(), &StoragePlugin::storagePluginReady,
+            this, &StorageFactory::onStoragePluginReady);
 
         MtpInt128 puoid;
-        emit largestPuoid( puoid );
-        if( 0 < puoid.compare(m_newPuoid) )
-        {
+        emit largestPuoid(puoid);
+        if (puoid > m_newPuoid)
             m_newPuoid = puoid;
-        }
+        disconnect(this, &StorageFactory::largestPuoid,
+            itr.value(), &StoragePlugin::getLargestPuoid);
+    }
 
-        QObject::disconnect( this, SIGNAL(largestObjectHandle( ObjHandle & )), 0, 0 );
-        QObject::disconnect( this, SIGNAL(largestPuoid( MtpInt128& )), 0, 0 );
-
-        if( !itr.value()->enumerateStorage() )
-        {
+    for (itr = m_allStorages.constBegin(); itr != m_allStorages.constEnd(); ++itr) {
+        if (!itr.value()->enumerateStorage()) {
              result = false;
              failedStorageIds.append(itr.key());
         }
     }
 
     return result;
+}
+
+bool StorageFactory::storageIsReady()
+{
+    return m_readyStorages.size() == m_allStorages.size();
+}
+
+void StorageFactory::onStoragePluginReady(quint32 storageId)
+{
+    m_readyStorages.insert(storageId);
+    if (storageIsReady())
+        emit storageReady();
 }
 
 /*******************************************************

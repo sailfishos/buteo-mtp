@@ -93,6 +93,7 @@ MTPResponder::MTPResponder(): m_storageServer(0),
     m_copiedObjHandle(0),
     m_containerToBeResent(false),
     m_isLastPacket(false),
+    m_storageWaitDataComplete(false),
     m_state(RESPONDER_IDLE),
     m_prevState(RESPONDER_IDLE),
     m_objPropListInfo(0),
@@ -144,14 +145,19 @@ bool MTPResponder::initStorages()
 {
     m_storageServer = new StorageFactory();
 
-    QObject::connect(m_storageServer, SIGNAL(checkTransportEvents(bool&)), this, SLOT(processTransportEvents(bool&)));
+    connect(m_storageServer, &StorageFactory::checkTransportEvents,
+        this, &MTPResponder::processTransportEvents);
+    connect(m_storageServer, &StorageFactory::storageReady,
+        this, &MTPResponder::onStorageReady);
 
-    //TODO What action to take if enumeration fails?
     QVector<quint32> failedStorageIds;
-    bool result = m_storageServer->enumerateStorages( failedStorageIds );
-    if(false == result)
-    {
+    bool result = m_storageServer->enumerateStorages(failedStorageIds);
+    if (!result) {
+        //TODO What action to take if enumeration fails?
         MTP_LOG_CRITICAL("Failed to enumerate storages");
+        foreach (quint32 storageId, failedStorageIds) {
+            MTP_LOG_CRITICAL("Failed storage:" << QString("0x%1").arg(storageId, 0, 16));
+        }
     }
     return result;
 }
@@ -402,6 +408,19 @@ void MTPResponder::receiveContainer(quint8* data, quint32 dataLen, bool isFirstP
                 dataHandler(data, dataLen, isFirstPacket, isLastPacket);
             }
             break;
+        case RESPONDER_WAIT_STORAGE:
+            if (isFirstPacket) {
+                if (!m_storageWaitData.isEmpty()) {
+                    // Initiator apparently didn't wait for response
+                    m_state = RESPONDER_IDLE;
+                    MTP_LOG_CRITICAL("Received more than one container while waiting for storage");
+                    m_transporter->reset();
+                    break;
+                }
+            }
+            m_storageWaitData.append((char *) data, dataLen);
+            m_storageWaitDataComplete = isLastPacket;
+            break;
         case RESPONDER_WAIT_RESP:
         default:
             MTP_LOG_CRITICAL("Container received in wrong state!" << m_state);
@@ -409,7 +428,32 @@ void MTPResponder::receiveContainer(quint8* data, quint32 dataLen, bool isFirstP
             m_transporter->reset();
             break;
     }
-    //delete [] data;
+}
+
+void MTPResponder::onStorageReady(void)
+{
+    MTP_FUNC_TRACE();
+
+    MTP_LOG_INFO("Storage ready");
+
+    // Retry the last command, if one was waiting
+    if (m_state == RESPONDER_WAIT_STORAGE) {
+        if (hasDataPhase(m_transactionSequence->reqContainer->code()))
+            m_state = RESPONDER_WAIT_DATA;
+        else
+            m_state = RESPONDER_WAIT_RESP;
+        MTP_LOG_INFO("Retrying operation");
+        commandHandler();
+
+        // Replay any data that arrived while waiting for storageReady
+        if (!m_storageWaitData.isEmpty()) {
+            MTP_LOG_INFO("Replaying data," << m_storageWaitData.size() << "bytes");
+            receiveContainer((quint8 *) m_storageWaitData.data(),
+                m_storageWaitData.size(), true, m_storageWaitDataComplete);
+        }
+        m_storageWaitData.clear();
+        m_storageWaitDataComplete = false;
+    }
 }
 
 void MTPResponder::commandHandler()
@@ -434,6 +478,18 @@ void MTPResponder::commandHandler()
     // preset the response code - to be changed if the handler of the operation
     // detects an error in the operation phase
     m_transactionSequence->mtpResp = MTP_RESP_OK;
+
+    if (!m_storageServer->storageIsReady()) {
+        if (needsStorageReady(reqContainer->code())) {
+            MTP_LOG_INFO("Will wait for storageReady");
+            m_state = RESPONDER_WAIT_STORAGE;
+            m_storageWaitData.clear();
+            m_storageWaitDataComplete = false;
+            return; // onStorageReady will call again later
+        } else {
+            MTP_LOG_INFO("Storage not yet ready but operation is safe, continuing");
+        }
+    }
 
     if(m_opCodeTable.contains(reqContainer->code()))
     {
@@ -839,11 +895,6 @@ void MTPResponder::getStorageIDReq()
     // check if everything is ok, so that cmd can be processed
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
-    if (MTP_RESP_OK == code && !m_storageServer)
-    {
-        code = initStorages() ? code : MTP_RESP_StoreNotAvailable;
-    }
-
     if (MTP_RESP_OK == code)
     {
         // if session ID and transaction ID are valid
@@ -941,11 +992,6 @@ void MTPResponder::getNumObjectsReq()
     // check if everything is ok, so that cmd can be processed
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
-    if (MTP_RESP_OK == code && !m_storageServer)
-    {
-        code = initStorages() ? code : MTP_RESP_StoreNotAvailable;
-    }
-
     // Check the validity of the operation params.
     if( MTP_RESP_OK == code )
     {
@@ -993,11 +1039,6 @@ void MTPResponder::getObjectHandlesReq()
 
     // check if everything is ok, so that cmd can be processed
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
-
-    if (MTP_RESP_OK == code && !m_storageServer)
-    {
-        code = initStorages() ? code : MTP_RESP_StoreNotAvailable;
-    }
 
     // Check the validity of the operation params.
     if( MTP_RESP_OK == code )
@@ -2911,6 +2952,24 @@ void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &par
 
     if(!sendContainer(container)) {
         MTP_LOG_CRITICAL("Couldn't dispatch event" << event);
+    }
+}
+
+bool MTPResponder::needsStorageReady(MTPOperationCode code)
+{
+    switch (code) {
+    case MTP_OP_GetDeviceInfo:
+    case MTP_OP_OpenSession:
+    case MTP_OP_CloseSession:
+    case MTP_OP_GetStorageIDs:
+    case MTP_OP_GetStorageInfo:
+    case MTP_OP_GetDevicePropDesc:
+    case MTP_OP_GetDevicePropValue:
+    case MTP_OP_SetDevicePropValue:
+    case MTP_OP_ResetDevicePropValue:
+        return false;
+    default:
+        return true;
     }
 }
 

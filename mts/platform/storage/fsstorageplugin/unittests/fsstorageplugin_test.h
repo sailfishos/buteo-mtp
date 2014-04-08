@@ -37,6 +37,7 @@
 
 namespace meegomtp1dot0
 {
+class StoragePlugin;
 class FSStoragePlugin;
 }
 
@@ -80,7 +81,6 @@ private slots:
     void testFileMoveAcrossStorage();
     void testDirMove();
     void testDirMoveAcrossStorage();
-    void testGetLargestObjectHandle();
     void testGetLargestPuoid();
     void testTruncateItem();
     void testGetPath();
@@ -101,6 +101,8 @@ private slots:
 
 private:
     FSStoragePlugin *m_storage;
+
+    void setupPlugin(StoragePlugin *plugin);
 };
 }
 #endif

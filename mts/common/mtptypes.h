@@ -726,8 +726,18 @@ struct MtpInt128
         return (0 == compare(rhs)) ? true : false;
     }
 
+    bool operator<(const MtpInt128 &rhs) const
+    {
+        return compare(rhs) < 0;
+    }
+
+    bool operator>(const MtpInt128 &rhs) const
+    {
+        return compare(rhs) > 0;
+    }
+
     // Assignment operator
-    MtpInt128& operator=( MtpInt128 &rhs )
+    MtpInt128& operator=( const MtpInt128 &rhs )
     {
         for(qint32 i = 0; i < 16; i++)
         {

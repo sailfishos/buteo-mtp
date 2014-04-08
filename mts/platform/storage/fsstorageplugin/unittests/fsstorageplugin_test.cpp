@@ -39,6 +39,7 @@
 #include <QImage>
 #include <QPainter>
 #include <QRadialGradient>
+#include <QSignalSpy>
 
 
 using namespace meegomtp1dot0;
@@ -60,7 +61,7 @@ void FSStoragePlugin_test::initTestCase()
         {
             dir.mkdir( "Playlists" );
         }
-        m_storage->enumerateStorage();
+        setupPlugin(m_storage);
         QVERIFY( m_storage->m_root != 0 );
         QCOMPARE( m_storage->m_root->m_handle, static_cast<unsigned int>(0) );
         QCOMPARE( m_storage->m_objectHandlesMap.size(), m_storage->m_pathNamesMap.size() );
@@ -241,7 +242,7 @@ void FSStoragePlugin_test::testStorageCreation()
         dir.mkdir( "Playlists" );
     }
 
-    m_storage->enumerateStorage();
+    setupPlugin(m_storage);
     QVERIFY( m_storage->m_root != 0 );
     QCOMPARE( m_storage->m_root->m_handle, static_cast<unsigned int>(0) );
     QVERIFY( m_storage->m_root->m_parent == 0 );
@@ -1075,7 +1076,7 @@ void FSStoragePlugin_test::testFileMoveAcrossStorage()
 
     FSStoragePlugin secondStorage( 2, MTP_STORAGE_TYPE_FixedRAM,
             "/tmp/mtptests-second", "second", "Second Storage" );
-    secondStorage.enumerateStorage();
+    setupPlugin(&secondStorage);
 
     StorageItem *item = m_storage->findStorageItemByPath( "/tmp/mtptests/fileToMove" );
 
@@ -1137,7 +1138,7 @@ void FSStoragePlugin_test::testDirMoveAcrossStorage()
 
     FSStoragePlugin secondStorage( 2, MTP_STORAGE_TYPE_FixedRAM,
             "/tmp/mtptests-second", "second", "Second Storage" );
-    secondStorage.enumerateStorage();
+    setupPlugin(&secondStorage);
 
     StorageItem *item;
 
@@ -1177,19 +1178,12 @@ void FSStoragePlugin_test::testDirMoveAcrossStorage()
     QCOMPARE ( movedF1->m_objectInfo->mtpFileName, iOrigF1.mtpFileName );
 }
 
-void FSStoragePlugin_test::testGetLargestObjectHandle()
-{
-    ObjHandle handle;
-    m_storage->getLargestObjectHandle( handle );
-    QCOMPARE( handle > 0, true );
-}
-
 void FSStoragePlugin_test::testGetLargestPuoid()
 {
     MtpInt128 puoid;
     MtpInt128 zero(0);
-    m_storage->getLargestPuoid( puoid );
-    QCOMPARE( puoid.compare(zero) == 0, true );
+    m_storage->getLargestPuoid(puoid);
+    QVERIFY(puoid == zero);
 }
 
 void FSStoragePlugin_test::testTruncateItem()
@@ -1309,8 +1303,8 @@ void FSStoragePlugin_test::testGetObjectPropertyValueFromStorage()
                                                              MTP_OBJ_PROP_Persistent_Unique_ObjId, v, MTP_DATA_TYPE_UNDEF );
     MtpInt128 puoid = v.value<MtpInt128>();
     MtpInt128 zero(0);
-    QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( puoid.compare(zero) == 0, true );
+    QCOMPARE(response, (MTPResponseCode)MTP_RESP_OK);
+    QVERIFY(puoid == zero);
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Non_Consumable, v, MTP_DATA_TYPE_UNDEF );
@@ -1972,6 +1966,13 @@ void FSStoragePlugin_test::testThumbnailer()
     QVERIFY(!thumbnail.isNull());
     QVERIFY(thumbnail.width() <= THUMBNAIL_WIDTH);
     QVERIFY(thumbnail.height() <= THUMBNAIL_HEIGHT);
+}
+
+void FSStoragePlugin_test::setupPlugin(StoragePlugin *plugin)
+{
+    QSignalSpy readySpy(plugin, SIGNAL(storagePluginReady(quint32)));
+    plugin->enumerateStorage();
+    QVERIFY(readySpy.wait());
 }
 
 void FSStoragePlugin_test::cleanupTestCase()

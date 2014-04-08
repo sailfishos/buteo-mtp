@@ -28,6 +28,7 @@
 #include <QDir>
 #include <QFile>
 #include <QTest>
+#include <QSignalSpy>
 
 using namespace meegomtp1dot0;
 
@@ -39,8 +40,10 @@ void StorageFactory_test::initTestCase()
     MTPResponder::instance()->initTransport(DUMMY);
     m_storageFactory = new StorageFactory;
 
+    QSignalSpy readySpy(m_storageFactory, SIGNAL(storageReady()));
     QVector<quint32> failedStorages;
     QVERIFY(m_storageFactory->enumerateStorages(failedStorages));
+    QVERIFY(readySpy.wait());
 
     // Remember filesystem root of the first storage.
     QVector<ObjHandle> handles;
