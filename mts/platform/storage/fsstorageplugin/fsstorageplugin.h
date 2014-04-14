@@ -386,7 +386,6 @@ private:
     QHash<QString,MtpInt128> m_puoidsMap;
     QHash<MtpInt128, ObjHandle> m_puoidToHandleMap; ///< Maps the PUOID to the corresponding object handle
     StorageItem *m_root; ///< the root folder
-    QString m_rootFolderPath; ///< the root folder path
     QString m_puoidsDbPath; ///< path where puoids will be stored persistently.
     QString m_objectReferencesDbPath; ///< path where references will be stored persistently.
     QString m_playlistPath; ///< the path where playlists are stored.

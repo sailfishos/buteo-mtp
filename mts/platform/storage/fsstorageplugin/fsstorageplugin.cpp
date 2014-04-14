@@ -60,7 +60,7 @@ static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x0000-\\x
  ***********************************************************/
 FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType, QString storagePath,
                                   QString volumeLabel, QString storageDescription ) :
-                                  StoragePlugin(storageId), m_root(0), m_rootFolderPath(storagePath),
+                                  StoragePlugin(storageId), m_root(0),
                                   m_uniqueObjectHandle(0), m_writeObjectHandle(0),
                                   m_largestPuoid(0), m_dataFile(0)
 {
