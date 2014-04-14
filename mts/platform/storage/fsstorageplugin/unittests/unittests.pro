@@ -5,7 +5,7 @@
 CONFIG += warn_off debug_and_release link_pkgconfig
 CONFIG += qtsparql
 
-PKGCONFIG += buteosyncfw5 Qt5SystemInfo
+PKGCONFIG += blkid mount buteosyncfw5 Qt5SystemInfo
 
 LIBS += -ldl
 TEMPLATE = app

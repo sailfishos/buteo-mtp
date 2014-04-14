@@ -14,6 +14,8 @@ BuildRequires: pkgconfig(Qt5Qml)
 BuildRequires: pkgconfig(Qt5Test)
 BuildRequires: pkgconfig(buteosyncfw5)
 BuildRequires: pkgconfig(Qt5SystemInfo)
+BuildRequires: pkgconfig(blkid)
+BuildRequires: pkgconfig(mount)
 # for the thumbnailer unit test
 BuildRequires: pkgconfig(Qt5Gui)
 Requires: mtp-vendor-configuration

@@ -35,8 +35,10 @@
 #include "storageitem.h"
 #include "thumbnailer.h"
 #include "trace.h"
+
+#include <blkid.h>
+#include <libmount.h>
 #include <sys/statvfs.h>
-#include <sys/stat.h>
 #include <QDebug>
 #include <QFile>
 #include <QDir>
@@ -94,7 +96,9 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
         dir.mkpath( m_mtpPersistentDBPath );
     }
 
-    m_puoidsDbPath = m_mtpPersistentDBPath + "/mtppuoids";
+    m_puoidsDbPath = m_mtpPersistentDBPath + "/mtppuoids-" + volumeLabel + '-'
+            + filesystemUuid();
+
     m_objectReferencesDbPath = m_mtpPersistentDBPath + "/mtpreferences";
     m_internalPlaylistPath = m_mtpPersistentDBPath + "/Playlists";
     m_playlistPath = storagePath + "/Playlists";
@@ -3111,4 +3115,46 @@ void FSStoragePlugin::excludePath(const QString &path)
     m_excludePaths << (m_storagePath + "/" + path);
     MTP_LOG_INFO("Storage" << m_storageInfo.volumeLabel << "excluded"
             << path << "from being exported via MTP.");
+}
+
+QString FSStoragePlugin::filesystemUuid() const
+{
+    typedef QScopedPointer<char, QScopedPointerPodDeleter> CharPointer;
+
+    QString result;
+
+    CharPointer mountpoint(mnt_get_mountpoint(m_storagePath.toUtf8().constData()));
+    if (!mountpoint) {
+        MTP_LOG_WARNING("mnt_get_mountpoint failed.");
+        return result;
+    }
+
+    libmnt_table *mntTable = mnt_new_table_from_file("/proc/self/mountinfo");
+    if (!mntTable) {
+        MTP_LOG_WARNING("Couldn't parse /proc/self/mountinfo.");
+        return result;
+    }
+
+    libmnt_fs* fs = mnt_table_find_target(mntTable, mountpoint.data(),
+            MNT_ITER_FORWARD);
+    const char *devicePath = mnt_fs_get_source(fs);
+
+    if (devicePath) {
+        blkid_cache cache;
+        if (blkid_get_cache(&cache, NULL) != 0) {
+            MTP_LOG_WARNING("Couldn't get blkid cache.");
+        } else {
+            char *uuid = blkid_get_tag_value(cache, "UUID", devicePath);
+            blkid_put_cache(cache);
+
+            result = uuid;
+            free(uuid);
+        }
+    } else {
+        MTP_LOG_WARNING("Couldn't determine block device for storage.");
+    }
+
+    mnt_free_table(mntTable);
+
+    return result;
 }

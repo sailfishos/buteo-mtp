@@ -376,6 +376,7 @@ private slots:
 private:
     MTPResponseCode deleteItemHelper( const ObjHandle& handle, bool removePhysically = true, bool sendEvent = false );
     bool isFileNameValid(const QString &fileName, const StorageItem *parent);
+    QString filesystemUuid() const;
 
     QString m_storagePath;
     QHash<int,ObjHandle> m_watchDescriptorMap; ///< map from an inotify watch on an object to it's object handle.
