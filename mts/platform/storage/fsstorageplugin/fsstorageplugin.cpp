@@ -60,9 +60,12 @@ static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x0000-\\x
  ***********************************************************/
 FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType, QString storagePath,
                                   QString volumeLabel, QString storageDescription ) :
-                                  StoragePlugin(storageId), m_root(0),
-                                  m_writeObjectHandle(0), m_largestPuoid(0),
-                                  m_dataFile(0)
+  StoragePlugin(storageId),
+  m_storagePath(QDir(storagePath).absolutePath()),
+  m_root(0),
+  m_writeObjectHandle(0),
+  m_largestPuoid(0),
+  m_dataFile(0)
 {
     m_storageInfo.storageType = storageType;
     m_storageInfo.accessCapability = MTP_STORAGE_ACCESS_ReadWrite;
@@ -70,7 +73,6 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
     m_storageInfo.freeSpaceInObjects = 0xFFFFFFFF;
     m_storageInfo.storageDescription = storageDescription;
     m_storageInfo.volumeLabel = volumeLabel;
-    m_storagePath = storagePath;
 
     QByteArray ba = m_storagePath.toUtf8();
     struct statvfs stat;
