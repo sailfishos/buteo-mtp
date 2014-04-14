@@ -5,12 +5,7 @@
 CONFIG += warn_off debug_and_release link_pkgconfig
 CONFIG += qtsparql
 
-equals(QT_MAJOR_VERSION, 4): {
-    CONFIG += mobility
-    MOBILITY = systeminfo
-    PKGCONFIG += buteosyncfw
-}
-equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5 Qt5SystemInfo
+PKGCONFIG += buteosyncfw5 Qt5SystemInfo
 
 LIBS += -ldl
 TEMPLATE = app
