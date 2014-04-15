@@ -56,10 +56,6 @@ namespace meegomtp1dot0
 class FSStoragePlugin : public StoragePlugin
 {
     Q_OBJECT
-#ifdef UT_ON
-friend class FSStoragePlugin_test;
-#endif
-
 public:
     /// Constructor.
     FSStoragePlugin( quint32 storageId = 0, MTPStorageType storageType = MTP_STORAGE_TYPE_FixedRAM,
@@ -390,7 +386,6 @@ private:
     QString m_objectReferencesDbPath; ///< path where references will be stored persistently.
     QString m_playlistPath; ///< the path where playlists are stored.
     QString m_internalPlaylistPath; ///< the path where internal abstract playlists are stored.
-    ObjHandle m_uniqueObjectHandle; ///< The last alloted object handle
     ObjHandle m_writeObjectHandle; ///< The obj handle for which a write operation is currently is progress. 0 means invalid handle, NOT root node!!
     StorageTracker* m_tracker; ///< pointer to the tracker object
     Thumbnailer* m_thumbnailer; ///< pointer to the thumbnailer object
@@ -421,7 +416,11 @@ private:
     QFile *m_dataFile;
 
     QStringList m_excludePaths; ///< Paths that should not be indexed
-    
+
+#ifdef UT_ON
+    ObjHandle m_testHandleProvider;
+    friend class FSStoragePlugin_test;
+#endif
 };
 }
 

@@ -61,8 +61,8 @@ static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x0000-\\x
 FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType, QString storagePath,
                                   QString volumeLabel, QString storageDescription ) :
                                   StoragePlugin(storageId), m_root(0),
-                                  m_uniqueObjectHandle(0), m_writeObjectHandle(0),
-                                  m_largestPuoid(0), m_dataFile(0)
+                                  m_writeObjectHandle(0), m_largestPuoid(0),
+                                  m_dataFile(0)
 {
     m_storageInfo.storageType = storageType;
     m_storageInfo.accessCapability = MTP_STORAGE_ACCESS_ReadWrite;
@@ -110,6 +110,10 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
 
     MTP_LOG_INFO(storagePath << "exported as FS storage" << volumeLabel << '('
             << storageDescription << ')');
+
+#ifdef UT_ON
+    m_testHandleProvider = 0;
+#endif
 }
 
 /************************************************************
@@ -569,18 +573,11 @@ quint32 FSStoragePlugin::requestNewObjectHandle()
 {
     ObjHandle handle = 0;
     emit objectHandle( handle );
-    if( 0 < handle )
-    {
-        m_uniqueObjectHandle = handle;
-    }
 #ifdef UT_ON
-    // While ut'ing this, we won't have storagefactory giving us handles
-    // so we have our own object handle provider below. The 0 == handle
-    // check is to avoid recomputation of the handle in case of ut'ing along
-    // with the release image.
-    if( 0 == handle )
-    {
-        handle = ++m_uniqueObjectHandle;
+    if (handle == 0) {
+        /* During unit testing, we might not have a StorageFactory instance to
+         * give us handles. Use our own provider in this case. */
+        handle = ++m_testHandleProvider;
     }
 #endif
     return handle;
