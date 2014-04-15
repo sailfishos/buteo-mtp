@@ -96,8 +96,10 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
         dir.mkpath( m_mtpPersistentDBPath );
     }
 
-    m_puoidsDbPath = m_mtpPersistentDBPath + "/mtppuoids-" + volumeLabel + '-'
-            + filesystemUuid();
+    m_puoidsDbPath = m_mtpPersistentDBPath + "/mtppuoids";
+    // Remove legacy PUOID database if it exists.
+    QFile::remove(m_puoidsDbPath);
+    m_puoidsDbPath += '-' + volumeLabel + '-' + filesystemUuid();
 
     m_objectReferencesDbPath = m_mtpPersistentDBPath + "/mtpreferences";
     m_internalPlaylistPath = m_mtpPersistentDBPath + "/Playlists";
