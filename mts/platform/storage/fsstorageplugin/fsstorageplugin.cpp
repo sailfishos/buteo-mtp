@@ -76,6 +76,9 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
     m_storageInfo.storageDescription = storageDescription;
     m_storageInfo.volumeLabel = volumeLabel;
 
+    // Ensure root folder of this storage exists.
+    QDir().mkpath(m_storagePath);
+
     QByteArray ba = m_storagePath.toUtf8();
     struct statvfs stat;
     if( statvfs(ba.constData(), &stat) )
@@ -130,19 +133,9 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
 bool FSStoragePlugin::enumerateStorage()
 {
     bool result = true;
-    // Create the root folder for this storage, if it doesn't already exist.
-    QDir dir = QDir( m_storagePath );
-    if( !dir.exists() )
-    {
-        dir.mkpath( m_storagePath );
-    }
 
-    // Make the Playlists directory, if one does not exist
-    dir = QDir( m_storagePath );
-    if( !dir.exists( "Playlists" ) )
-    {
-        dir.mkdir( "Playlists" );
-    }
+    // Make Playlists directory, if one does not exist.
+    QDir(m_storagePath).mkdir("Playlists");
 
     // Do the real work asynchronously. Queue a call to it, so that
     // it can run directly from the event loop without making our caller wait.
