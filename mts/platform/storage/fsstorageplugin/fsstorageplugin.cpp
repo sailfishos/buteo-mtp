@@ -36,8 +36,6 @@
 #include "thumbnailer.h"
 #include "trace.h"
 
-#include <blkid.h>
-#include <libmount.h>
 #include <sys/statvfs.h>
 #include <QDebug>
 #include <QFile>
@@ -46,6 +44,11 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QMetaObject>
+
+#ifndef UT_ON
+#include <blkid.h>
+#include <libmount.h>
+#endif
 
 using namespace meegomtp1dot0;
 
@@ -3114,6 +3117,7 @@ void FSStoragePlugin::excludePath(const QString &path)
 
 QString FSStoragePlugin::filesystemUuid() const
 {
+#ifndef UT_ON
     typedef QScopedPointer<char, QScopedPointerPodDeleter> CharPointer;
 
     QString result;
@@ -3152,4 +3156,7 @@ QString FSStoragePlugin::filesystemUuid() const
     mnt_free_table(mntTable);
 
     return result;
+#else
+    return QStringLiteral("FAKE-TEST-UUID");
+#endif
 }
