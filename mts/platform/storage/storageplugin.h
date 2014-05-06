@@ -265,7 +265,6 @@ protected:
     /// Storage id assigned to this storage by the storage factory.
     quint32 m_storageId;
     MTPStorageInfo m_storageInfo;
-    QString m_storagePath;
     QHash<ObjHandle, QVector<ObjHandle> > m_objectReferencesMap; ///< this map maintains references (if any) for each object.
 };
 }

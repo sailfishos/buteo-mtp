@@ -35,8 +35,8 @@
 #include "storageitem.h"
 #include "thumbnailer.h"
 #include "trace.h"
+
 #include <sys/statvfs.h>
-#include <sys/stat.h>
 #include <QDebug>
 #include <QFile>
 #include <QDir>
@@ -44,6 +44,11 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QMetaObject>
+
+#ifndef UT_ON
+#include <blkid.h>
+#include <libmount.h>
+#endif
 
 using namespace meegomtp1dot0;
 
@@ -60,9 +65,12 @@ static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x0000-\\x
  ***********************************************************/
 FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType, QString storagePath,
                                   QString volumeLabel, QString storageDescription ) :
-                                  StoragePlugin(storageId), m_root(0), m_rootFolderPath(storagePath),
-                                  m_uniqueObjectHandle(0), m_writeObjectHandle(0),
-                                  m_largestPuoid(0), m_dataFile(0)
+  StoragePlugin(storageId),
+  m_storagePath(QDir(storagePath).absolutePath()),
+  m_root(0),
+  m_writeObjectHandle(0),
+  m_largestPuoid(0),
+  m_dataFile(0)
 {
     m_storageInfo.storageType = storageType;
     m_storageInfo.accessCapability = MTP_STORAGE_ACCESS_ReadWrite;
@@ -70,7 +78,9 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
     m_storageInfo.freeSpaceInObjects = 0xFFFFFFFF;
     m_storageInfo.storageDescription = storageDescription;
     m_storageInfo.volumeLabel = volumeLabel;
-    m_storagePath = storagePath;
+
+    // Ensure root folder of this storage exists.
+    QDir().mkpath(m_storagePath);
 
     QByteArray ba = m_storagePath.toUtf8();
     struct statvfs stat;
@@ -93,6 +103,10 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
     }
 
     m_puoidsDbPath = m_mtpPersistentDBPath + "/mtppuoids";
+    // Remove legacy PUOID database if it exists.
+    QFile::remove(m_puoidsDbPath);
+    m_puoidsDbPath += '-' + volumeLabel + '-' + filesystemUuid();
+
     m_objectReferencesDbPath = m_mtpPersistentDBPath + "/mtpreferences";
     m_internalPlaylistPath = m_mtpPersistentDBPath + "/Playlists";
     m_playlistPath = storagePath + "/Playlists";
@@ -110,6 +124,10 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
 
     MTP_LOG_INFO(storagePath << "exported as FS storage" << volumeLabel << '('
             << storageDescription << ')');
+
+#ifdef UT_ON
+    m_testHandleProvider = 0;
+#endif
 }
 
 /************************************************************
@@ -118,19 +136,9 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
 bool FSStoragePlugin::enumerateStorage()
 {
     bool result = true;
-    // Create the root folder for this storage, if it doesn't already exist.
-    QDir dir = QDir( m_storagePath );
-    if( !dir.exists() )
-    {
-        dir.mkpath( m_storagePath );
-    }
 
-    // Make the Playlists directory, if one does not exist
-    dir = QDir( m_storagePath );
-    if( !dir.exists( "Playlists" ) )
-    {
-        dir.mkdir( "Playlists" );
-    }
+    // Make Playlists directory, if one does not exist.
+    QDir(m_storagePath).mkdir("Playlists");
 
     // Do the real work asynchronously. Queue a call to it, so that
     // it can run directly from the event loop without making our caller wait.
@@ -569,18 +577,11 @@ quint32 FSStoragePlugin::requestNewObjectHandle()
 {
     ObjHandle handle = 0;
     emit objectHandle( handle );
-    if( 0 < handle )
-    {
-        m_uniqueObjectHandle = handle;
-    }
 #ifdef UT_ON
-    // While ut'ing this, we won't have storagefactory giving us handles
-    // so we have our own object handle provider below. The 0 == handle
-    // check is to avoid recomputation of the handle in case of ut'ing along
-    // with the release image.
-    if( 0 == handle )
-    {
-        handle = ++m_uniqueObjectHandle;
+    if (handle == 0) {
+        /* During unit testing, we might not have a StorageFactory instance to
+         * give us handles. Use our own provider in this case. */
+        handle = ++m_testHandleProvider;
     }
 #endif
     return handle;
@@ -3112,4 +3113,50 @@ void FSStoragePlugin::excludePath(const QString &path)
     m_excludePaths << (m_storagePath + "/" + path);
     MTP_LOG_INFO("Storage" << m_storageInfo.volumeLabel << "excluded"
             << path << "from being exported via MTP.");
+}
+
+QString FSStoragePlugin::filesystemUuid() const
+{
+#ifndef UT_ON
+    typedef QScopedPointer<char, QScopedPointerPodDeleter> CharPointer;
+
+    QString result;
+
+    CharPointer mountpoint(mnt_get_mountpoint(m_storagePath.toUtf8().constData()));
+    if (!mountpoint) {
+        MTP_LOG_WARNING("mnt_get_mountpoint failed.");
+        return result;
+    }
+
+    libmnt_table *mntTable = mnt_new_table_from_file("/proc/self/mountinfo");
+    if (!mntTable) {
+        MTP_LOG_WARNING("Couldn't parse /proc/self/mountinfo.");
+        return result;
+    }
+
+    libmnt_fs* fs = mnt_table_find_target(mntTable, mountpoint.data(),
+            MNT_ITER_FORWARD);
+    const char *devicePath = mnt_fs_get_source(fs);
+
+    if (devicePath) {
+        blkid_cache cache;
+        if (blkid_get_cache(&cache, NULL) != 0) {
+            MTP_LOG_WARNING("Couldn't get blkid cache.");
+        } else {
+            char *uuid = blkid_get_tag_value(cache, "UUID", devicePath);
+            blkid_put_cache(cache);
+
+            result = uuid;
+            free(uuid);
+        }
+    } else {
+        MTP_LOG_WARNING("Couldn't determine block device for storage.");
+    }
+
+    mnt_free_table(mntTable);
+
+    return result;
+#else
+    return QStringLiteral("FAKE-TEST-UUID");
+#endif
 }

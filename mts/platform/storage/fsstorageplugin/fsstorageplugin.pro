@@ -5,11 +5,12 @@
 TEMPLATE = lib
 TARGET = fsstorage
 
-CONFIG += plugin debug
-#QMAKE_CXXFLAGS += -O0 -Werror
+CONFIG += plugin link_pkgconfig debug qtsparql
+
 QT += dbus xml
 QT -= gui
-CONFIG += qtsparql
+
+PKGCONFIG += blkid mount
 
 DEPENDPATH += . \
               .. \

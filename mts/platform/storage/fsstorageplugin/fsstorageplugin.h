@@ -56,10 +56,6 @@ namespace meegomtp1dot0
 class FSStoragePlugin : public StoragePlugin
 {
     Q_OBJECT
-#ifdef UT_ON
-friend class FSStoragePlugin_test;
-#endif
-
 public:
     /// Constructor.
     FSStoragePlugin( quint32 storageId = 0, MTPStorageType storageType = MTP_STORAGE_TYPE_FixedRAM,
@@ -380,18 +376,18 @@ private slots:
 private:
     MTPResponseCode deleteItemHelper( const ObjHandle& handle, bool removePhysically = true, bool sendEvent = false );
     bool isFileNameValid(const QString &fileName, const StorageItem *parent);
+    QString filesystemUuid() const;
 
+    QString m_storagePath;
     QHash<int,ObjHandle> m_watchDescriptorMap; ///< map from an inotify watch on an object to it's object handle.
     QHash<QString,ObjHandle> m_pathNamesMap;
     QHash<QString,MtpInt128> m_puoidsMap;
     QHash<MtpInt128, ObjHandle> m_puoidToHandleMap; ///< Maps the PUOID to the corresponding object handle
     StorageItem *m_root; ///< the root folder
-    QString m_rootFolderPath; ///< the root folder path
     QString m_puoidsDbPath; ///< path where puoids will be stored persistently.
     QString m_objectReferencesDbPath; ///< path where references will be stored persistently.
     QString m_playlistPath; ///< the path where playlists are stored.
     QString m_internalPlaylistPath; ///< the path where internal abstract playlists are stored.
-    ObjHandle m_uniqueObjectHandle; ///< The last alloted object handle
     ObjHandle m_writeObjectHandle; ///< The obj handle for which a write operation is currently is progress. 0 means invalid handle, NOT root node!!
     StorageTracker* m_tracker; ///< pointer to the tracker object
     Thumbnailer* m_thumbnailer; ///< pointer to the thumbnailer object
@@ -422,7 +418,11 @@ private:
     QFile *m_dataFile;
 
     QStringList m_excludePaths; ///< Paths that should not be indexed
-    
+
+#ifdef UT_ON
+    ObjHandle m_testHandleProvider;
+    friend class FSStoragePlugin_test;
+#endif
 };
 }
 
