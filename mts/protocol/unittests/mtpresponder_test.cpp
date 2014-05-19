@@ -35,7 +35,7 @@
 #include "mtptransporterdummy.h"
 #include "mtptxcontainer.h"
 #include "mtprxcontainer.h"
-#include <QVariant>
+#include <limits>
 
 using namespace meegomtp1dot0;
 
@@ -664,8 +664,8 @@ void MTPResponder_test::testSetObjectReferences()
     MTPTxContainer *reqContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_COMMAND, MTP_OP_SetObjectReferences, nextTransactionId(), sizeof(quint32));
     *reqContainer << (quint32)m_objectHandle;
     copyAndSendContainer(reqContainer);
-    QVector<quint32> theRefs;
-    theRefs.append(1000);
+    QVector<ObjHandle> theRefs;
+    theRefs.append(std::numeric_limits<ObjHandle>::max());
     quint32 payloadLength = theRefs.size() * sizeof(quint32) + sizeof(quint32);
     MTPTxContainer *dataContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_DATA, MTP_OP_SetObjectReferences, m_transactionId, payloadLength);
     *dataContainer << theRefs;
