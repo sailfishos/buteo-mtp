@@ -31,12 +31,15 @@
 
 #include "mtpresponder_test.h"
 #include "mtpresponder.h"
+#include "storagefactory.h"
 #include "mtptransporterdummy.h"
 #include "mtptxcontainer.h"
 #include "mtprxcontainer.h"
-#include <QVariant>
+#include <limits>
 
 using namespace meegomtp1dot0;
+
+QEventLoop eventLoop;
 
 static void cleanDirs()
 {
@@ -51,6 +54,11 @@ void MTPResponder_test::copyAndSendContainer(MTPTxContainer *container)
     delete container;
 }
 
+void onStorageReady()
+{
+    eventLoop.exit(0);
+}
+
 void MTPResponder_test::initTestCase()
 {
     m_transactionId = 0x00000000;
@@ -61,8 +69,13 @@ void MTPResponder_test::initTestCase()
     m_responder = new MTPResponder();
     bool ok;
     ok = m_responder->initTransport(DUMMY);
-    ok = m_responder->initStorages();
     QObject::connect( m_responder->m_transporter, SIGNAL(dataReceived(quint8*, quint32, bool, bool)),this, SLOT(processReceivedData(quint8*, quint32, bool, bool)) );
+
+    /* Process events until storages are initialized. */
+    m_responder->initStorages();
+    connect(m_responder->m_storageServer, &StorageFactory::storageReady,
+            &onStorageReady);
+    eventLoop.exec();
 }
 
 void MTPResponder_test::cleanupTestCase()
@@ -651,8 +664,8 @@ void MTPResponder_test::testSetObjectReferences()
     MTPTxContainer *reqContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_COMMAND, MTP_OP_SetObjectReferences, nextTransactionId(), sizeof(quint32));
     *reqContainer << (quint32)m_objectHandle;
     copyAndSendContainer(reqContainer);
-    QVector<quint32> theRefs;
-    theRefs.append(1000);
+    QVector<ObjHandle> theRefs;
+    theRefs.append(std::numeric_limits<ObjHandle>::max());
     quint32 payloadLength = theRefs.size() * sizeof(quint32) + sizeof(quint32);
     MTPTxContainer *dataContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_DATA, MTP_OP_SetObjectReferences, m_transactionId, payloadLength);
     *dataContainer << theRefs;
@@ -710,4 +723,4 @@ void MTPResponder_test::testCloseSession()
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
 }
 
-QTEST_APPLESS_MAIN(MTPResponder_test);
+QTEST_MAIN(MTPResponder_test);
