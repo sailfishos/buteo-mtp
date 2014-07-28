@@ -3,7 +3,7 @@ TEMPLATE = app
 TARGET = storagefactory-test
 QT += testlib xml dbus
 QT -= gui
-PKGCONFIG += Qt5SystemInfo
+PKGCONFIG += Qt5SystemInfo buteosyncfw5
 
 DEFINES += UT_ON
 
