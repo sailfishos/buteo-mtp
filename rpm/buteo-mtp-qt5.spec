@@ -24,6 +24,7 @@ Requires: mtp-vendor-configuration
 # generated on the device.
 Requires: tumbler
 Requires: libqt5sparql-tracker-direct
+Requires: libqt5sparql-tracker
 Requires(pre): shadow-utils
 Requires(pre): /usr/bin/groupadd-user
 Provides: buteo-mtp = %{version}
