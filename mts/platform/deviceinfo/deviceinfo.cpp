@@ -63,6 +63,7 @@ using namespace meegomtp1dot0;
 #define VIDEO_MAX_WIDTH 1920
 #define VIDEO_MIN_HEIGHT 0
 #define VIDEO_MAX_HEIGHT 1080
+#define BATTERYLEVEL_DEFAULT 0
 
 
 quint16 DeviceInfo::m_operationsSupportedTable[] = {
@@ -238,7 +239,8 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
     m_audioMinBitRate(0), m_audioMaxBitRate(0xFFFFFFFF),
     m_videoAudioMinBitRate(0), m_videoAudioMaxBitRate(0xFFFFFFFF),
     m_videoMinKFD(0), m_videoMaxKFD(0xFFFFFFFF),
-    m_audioSampleRate(0)
+    m_audioSampleRate(0),
+    m_batteryLevel(BATTERYLEVEL_DEFAULT)
 {
     //Parse deviceinfo.xml to populate default device values.
 
