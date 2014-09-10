@@ -39,8 +39,6 @@
 
 using namespace meegomtp1dot0;
 
-QEventLoop eventLoop;
-
 static void cleanDirs()
 {
     QDir(QDir::homePath() + "/.local/mtp").removeRecursively();
@@ -52,11 +50,6 @@ void MTPResponder_test::copyAndSendContainer(MTPTxContainer *container)
     memcpy(buffer, container->buffer(), container->bufferSize());
     m_responder->receiveContainer(buffer, container->bufferSize(), true, true);
     delete container;
-}
-
-void onStorageReady()
-{
-    eventLoop.exit(0);
 }
 
 void MTPResponder_test::initTestCase()
@@ -73,8 +66,9 @@ void MTPResponder_test::initTestCase()
 
     /* Process events until storages are initialized. */
     m_responder->initStorages();
+    QEventLoop eventLoop;
     connect(m_responder->m_storageServer, &StorageFactory::storageReady,
-            &onStorageReady);
+            &eventLoop, &QEventLoop::quit);
     eventLoop.exec();
 }
 
