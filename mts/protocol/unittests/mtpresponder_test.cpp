@@ -58,6 +58,7 @@ void MTPResponder_test::initTestCase()
     m_storageId = 0x00000000;
     m_objectHandle = m_parentHandle = 0x00000000;
     m_responseCode = (MTPResponseCode)MTP_RESP_Undefined;
+    m_opcode = 0xFFFF;
     cleanDirs();
     m_responder = new MTPResponder();
     bool ok;
