@@ -1022,7 +1022,7 @@ MTPResponseCode FSStoragePlugin::deleteItem( const ObjHandle& handle, const MTPO
 /************************************************************
  * MTPResponseCode FSStoragePlugin::deleteItemHelper
  ***********************************************************/
-MTPResponseCode FSStoragePlugin::deleteItemHelper( const ObjHandle& handle, bool removePhysically, bool sendEvent )
+MTPResponseCode FSStoragePlugin::deleteItemHelper( ObjHandle handle, bool removePhysically, bool sendEvent )
 {
     MTPResponseCode response = MTP_RESP_GeneralError;
     bool itemNotDeleted = false;
@@ -1103,7 +1103,7 @@ MTPResponseCode FSStoragePlugin::deleteItemHelper( const ObjHandle& handle, bool
 /************************************************************
  * MTPResponseCode FSStoragePlugin::removeFromStorage
  ***********************************************************/
-MTPResponseCode FSStoragePlugin::removeFromStorage( const ObjHandle& handle, bool sendEvent )
+MTPResponseCode FSStoragePlugin::removeFromStorage( ObjHandle handle, bool sendEvent )
 {
     StorageItem *storageItem = 0;
     // Remove the item from object handles map and delete the corresponding storage item.
