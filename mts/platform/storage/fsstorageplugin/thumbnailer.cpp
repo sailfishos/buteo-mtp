@@ -33,11 +33,6 @@
 #include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <buteosyncfw5/SyncDBusConnection.h>
-#else
-#include <buteosyncfw/SyncDBusConnection.h>
-#endif
 #include "thumbnailer.h"
 #include "trace.h"
 
@@ -53,7 +48,7 @@ static const QString THUMB_DIR = "/.thumbnails";
 
 
 Thumbnailer::Thumbnailer() :
-    ThumbnailerProxy(THUMBNAILER_SERVICE, THUMBNAILER_GENERIC_PATH, Buteo::SyncDBusConnection::sessionBus()), MAX_REQ_MAP_SIZE(2000),
+    ThumbnailerProxy(THUMBNAILER_SERVICE, THUMBNAILER_GENERIC_PATH, QDBusConnection::sessionBus()), MAX_REQ_MAP_SIZE(2000),
     m_scheduler("foreground"), m_flavor("normal")
 {
     QString thumbBaseDir = QDir::homePath() + THUMB_DIR;

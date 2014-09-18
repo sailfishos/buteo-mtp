@@ -41,11 +41,6 @@
 #include <QSparqlQuery>
 #include <QSparqlResult>
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <buteosyncfw5/SyncDBusConnection.h>
-#else
-#include <buteosyncfw/SyncDBusConnection.h>
-#endif
 // Local headers
 #include "storagetracker.h"
 #include "trace.h"
@@ -109,7 +104,7 @@ static const QString MINER_DEST("org.freedesktop.Tracker1.Miner.Files");
 static const QString MINER_PATH("/org/freedesktop/Tracker1/Miner/Files");
 static const QString MINER_IF("org.freedesktop.Tracker1.Miner");
 
-StorageTracker::StorageTracker() : m_minerInterface(MINER_DEST, MINER_PATH, MINER_IF, Buteo::SyncDBusConnection::sessionBus())
+StorageTracker::StorageTracker() : m_minerInterface(MINER_DEST, MINER_PATH, MINER_IF, QDBusConnection::sessionBus())
 {
     populateFunctionMap();
 }
