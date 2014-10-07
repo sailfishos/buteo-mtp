@@ -29,7 +29,7 @@
 *
 */
 
-
+#include <unistd.h>
 #include "fsinotify.h"
 #include <QSocketNotifier>
 

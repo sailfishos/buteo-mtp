@@ -29,6 +29,7 @@
 *
 */
 
+#include <unistd.h>
 #include "fsstorageplugin_test.h"
 #include "fsstorageplugin.h"
 #include "storageitem.h"
