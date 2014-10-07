@@ -6,6 +6,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <endian.h>
+#include <unistd.h>
 
 #include "trace.h"
 
