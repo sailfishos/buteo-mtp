@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <testdefinition version="0.1">
-  <!-- Test suite, name libmeegomtp-tests, the same as test package name -->
   <suite name="libmeegomtp-tests" domain="synchronization"> 
-    <!-- At least one set per suite, name and description mandatory -->
     <set name="libmeegomtp-tests-set1" description="libmeegomtp-tests" feature="libmeegomtp unit tests">   
-      <!-- test cases for the testset -->
-      <case name="deviceinfo-test" type="Functional" description="Testing Device Info"  timeout="900" subfeature="">
-        <!-- Step for the tests-->
+      <case name="deviceinfo-test" type="Functional" description="Testing Device Info"  timeout="30" subfeature="">
         <step expected_result="0">/opt/tests/buteo-mtp/deviceinfo-test</step>
       </case>
       <case name="storage-test" type="Functional" description="Testing Storage" timeout="900" subfeature="">
         <step expected_result="0">/opt/tests/buteo-mtp/storage-test</step>
+      </case>
+      <case name="storagefactory-test" type="Functional" description="Testing Storage Factory" timeout="30" subfeature="">
+        <step expected_result="0">/opt/tests/buteo-mtp/storagefactory-test</step>
       </case>
       <case name="protocol-test" type="Functional" description="Testing Protocol Stack" timeout="900" subfeature="">
         <step expected_result="0">/opt/tests/buteo-mtp/protocol-test</step>

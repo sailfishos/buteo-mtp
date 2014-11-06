@@ -214,7 +214,7 @@ private:
     /// Removes a storage item.
     /// \param handle [in] the handle of the object that needs to be removed.
     /// \sendEvent [in] indicates whether to send an ObjectRemoved event to the inititiator.
-    MTPResponseCode removeFromStorage( const ObjHandle& handle, bool sendEvent = false );
+    MTPResponseCode removeFromStorage( ObjHandle handle, bool sendEvent = false );
 
     /// Populates the object info for a storage item if that's not done by the initiator.
     /// \param storageItem [in] the item's whose object info needs to be populated.
@@ -374,7 +374,7 @@ private slots:
     void enumerateStorage_worker();
     
 private:
-    MTPResponseCode deleteItemHelper( const ObjHandle& handle, bool removePhysically = true, bool sendEvent = false );
+    MTPResponseCode deleteItemHelper( ObjHandle handle, bool removePhysically = true, bool sendEvent = false );
     bool isFileNameValid(const QString &fileName, const StorageItem *parent);
     QString filesystemUuid() const;
 
