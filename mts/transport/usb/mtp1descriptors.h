@@ -17,14 +17,17 @@ static const char* in_file = "/dev/mtp/ep1";
 static const char* out_file = "/dev/mtp/ep2";
 static const char* interrupt_file = "/dev/mtp/ep3";
 
+struct mtp1_descs_s {
+   struct usb_interface_descriptor intf;
+   struct usb_endpoint_descriptor_no_audio mtp_ep_in;
+   struct usb_endpoint_descriptor_no_audio mtp_ep_out;
+   struct usb_endpoint_descriptor_no_audio mtp_ep_int;
+} __attribute__((packed));
+
 struct mtp1_descriptors_s {
    struct usb_functionfs_descs_head header;
-   struct {
-      struct usb_interface_descriptor intf;
-      struct usb_endpoint_descriptor_no_audio mtp_ep_in;
-      struct usb_endpoint_descriptor_no_audio mtp_ep_out;
-      struct usb_endpoint_descriptor_no_audio mtp_ep_int;
-   } __attribute__((packed)) fs_descs, hs_descs;
+   struct mtp1_descs_s fs_descs;
+   struct mtp1_descs_s hs_descs;
 } __attribute__((packed));
 
 extern const struct mtp1_descriptors_s mtp1descriptors;
@@ -38,5 +41,14 @@ struct mtp1strings_s {
 } __attribute__((packed));
 
 extern const struct mtp1strings_s mtp1strings;
+
+struct mtp1_descriptors_s_incompatible {
+   struct usb_functionfs_descs_head header;
+   // The following field is added to the header in some
+   // android kernels, which breaks compatibility.
+   __le32 ss_count;
+   struct mtp1_descs_s fs_descs;
+   struct mtp1_descs_s hs_descs;
+} __attribute__((packed));
 
 #endif
