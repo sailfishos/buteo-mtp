@@ -83,9 +83,8 @@ bool MTPTransporterUSB::writeMtpDescriptors()
             " trying 'ss_count' workaround");
         // Some android kernels changed the usb_functionfs_descs_head size
         // by adding an ss_count member. Try it that way.
-        struct mtp1_descriptors_s_incompatible descs;
-        descs.header = mtp1descriptors.header;
-        descs.ss_count = 0;
+        mtp1_descriptors_s_incompatible descs;
+        descs.header = mtp1descriptors_header_incompatible;
         descs.fs_descs = mtp1descriptors.fs_descs;
         descs.hs_descs = mtp1descriptors.hs_descs;
         if (write(m_ctrlFd, &descs, sizeof descs) >= 0)
