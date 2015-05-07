@@ -93,6 +93,8 @@ class MTPTransporterUSB : public MTPTransporter
 
     private:
         void processReceivedData();  // Helper function for handleDataReady()
+        bool writeMtpDescriptors();  // configure the USB endpoints for functionfs
+        bool writeMtpStrings();      // step 2 of functionfs configuration
 
         enum IOState{
             ACTIVE,

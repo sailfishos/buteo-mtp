@@ -32,6 +32,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -72,6 +73,39 @@ MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLe
         this, SLOT(handleDataReady()), Qt::QueuedConnection);
 }
 
+bool MTPTransporterUSB::writeMtpDescriptors()
+{
+    if (write(m_ctrlFd, &mtp1descriptors, sizeof mtp1descriptors) >= 0)
+        return true;
+
+    if (errno == EINVAL) {
+        MTP_LOG_WARNING("Kernel did not accept endpoint descriptors;"
+            " trying 'ss_count' workaround");
+        // Some android kernels changed the usb_functionfs_descs_head size
+        // by adding an ss_count member. Try it that way.
+        mtp1_descriptors_s_incompatible descs;
+        descs.header = mtp1descriptors_header_incompatible;
+        descs.fs_descs = mtp1descriptors.fs_descs;
+        descs.hs_descs = mtp1descriptors.hs_descs;
+        if (write(m_ctrlFd, &descs, sizeof descs) >= 0)
+            return true;
+    }
+
+    MTP_LOG_CRITICAL("Couldn't write descriptors to control endpoint file"
+        << control_file);
+    return false;
+}
+
+bool MTPTransporterUSB::writeMtpStrings()
+{
+    if (write(m_ctrlFd, &mtp1strings, sizeof(mtp1strings)) >= 0)
+        return true;
+
+    MTP_LOG_CRITICAL("Couldn't write strings to control endpoint file"
+        << control_file);
+    return false;
+}
+
 bool MTPTransporterUSB::activate()
 {
     MTP_LOG_CRITICAL("MTPTransporterUSB::activate");
@@ -84,23 +118,9 @@ bool MTPTransporterUSB::activate()
     }
     else
     {
-        if(-1 == write(m_ctrlFd, &mtp1descriptors, sizeof mtp1descriptors))
-        {
-            MTP_LOG_CRITICAL("Couldn't write descriptors to control endpoint file "
-                << control_file);
-        }
-        else
-        {
-            if(-1 == write(m_ctrlFd, &mtp1strings, sizeof(mtp1strings)))
-            {
-                MTP_LOG_CRITICAL("Couldn't write strings to control endpoint file "
-                    << control_file);
-            }
-            else
-            {
-                success = true;
-                MTP_LOG_INFO("mtp function set up");
-            }
+        if (writeMtpDescriptors() && writeMtpStrings()) {
+            success = true;
+            MTP_LOG_INFO("mtp function set up");
         }
     }
 
