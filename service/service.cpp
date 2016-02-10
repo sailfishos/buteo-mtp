@@ -37,6 +37,10 @@ using namespace meegomtp1dot0;
 
 void signalHandler(int signum, siginfo_t *info, void *context)
 {
+    Q_UNUSED(signum);
+    Q_UNUSED(info);
+    Q_UNUSED(context);
+
     // Is this async safe?
     Mts::destroyInstance();
     _exit(0);
