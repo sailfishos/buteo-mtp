@@ -49,6 +49,8 @@ using namespace meegomtp1dot0;
 
 static void signalHandler(int signum)
 {
+    Q_UNUSED(signum);
+
     return; // This handler just exists to make blocking I/O return with EINTR
 }
 
@@ -230,6 +232,8 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
 
 bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLastPacket)
 {
+    Q_UNUSED(isLastPacket);
+
     m_intrWrite.addData(data, dataLen);
 
     return true;
