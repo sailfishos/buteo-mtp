@@ -5,6 +5,8 @@
 QT += xml dbus
 QT -= gui
 
+LIBS += -lssu
+
 CONFIG += link_pkgconfig debug
 
 equals(QT_MAJOR_VERSION, 4): {
