@@ -336,6 +336,8 @@ protected:
         FORM_STRING
     };
 
+    bool m_newConfigFileWasCreated; ///< Whether a new copy of global configuration file was taken in use
+
 private:
     static QString m_devinceInfoXmlPath; ///< The xml file that stores default values for device properties.
     QVector<quint16> m_mtpOperationsSupported; ///< supported MTP operations.

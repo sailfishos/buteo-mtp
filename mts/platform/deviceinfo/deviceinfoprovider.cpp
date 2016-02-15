@@ -33,6 +33,7 @@
 #include <QDeviceInfo>
 #include <ssudeviceinfo.h>
 #include <contextproperty.h>
+#include "trace.h"
 
 using namespace meegomtp1dot0;
 
@@ -44,7 +45,9 @@ DeviceInfoProvider::DeviceInfoProvider():
 {
     QDeviceInfo di;
 
-    m_serialNo = SsuDeviceInfo().deviceUid();
+    SsuDeviceInfo ssuDeviceInfo;
+
+    m_serialNo = ssuDeviceInfo.deviceUid();
 
     m_deviceVersion = QString("%1 HW: %2").arg(di.version(QDeviceInfo::Os))
                                           .arg(di.version(QDeviceInfo::Firmware));
@@ -55,6 +58,15 @@ DeviceInfoProvider::DeviceInfoProvider():
     connect(battery, SIGNAL(valueChanged()), this, SLOT(onBatteryPercentageChanged()));
     // Initialize the battery charge value.
     onBatteryPercentageChanged();
+
+    if(m_newConfigFileWasCreated)
+    {
+        /* Query DeviceModel from SSU and use it to override the value of
+         * the friendly name -property defined in the XML configuration */
+        QString deviceModel = ssuDeviceInfo.displayName(Ssu::DeviceModel);
+        MTP_LOG_INFO("Setting MTP friendly name to:" << deviceModel);
+        setDeviceFriendlyName(deviceModel);
+    }
 }
 
 /**********************************************
