@@ -1,4 +1,5 @@
-CONFIG += link_pkgconfig
+include(../../../common.pri)
+
 TEMPLATE = app
 TARGET = storagefactory-test
 QT += testlib xml dbus
@@ -19,7 +20,7 @@ INCLUDEPATH += \
 	../../../transport/dummy \
 	../../../transport/usb \
 
-LIBS += -ldl
+LIBS += -ldl -lssu
 
 HEADERS += \
 	storagefactory_test.h \
@@ -28,7 +29,6 @@ HEADERS += \
 	../../deviceinfo/deviceinfo.h \
 	../../deviceinfo/deviceinfoprovider.h \
 	../../deviceinfo/xmlhandler.h \
-	../../../device_interface.h \
 	../../../protocol/mtpresponder.h \
 	../../../protocol/objectpropertycache.h \
 	../../../protocol/propertypod.h \
@@ -43,7 +43,6 @@ SOURCES += \
 	../../deviceinfo/deviceinfo.cpp \
 	../../deviceinfo/deviceinfoprovider.cpp \
 	../../deviceinfo/xmlhandler.cpp \
-	../../../device_interface.cpp \
 	../../../protocol/mtpcontainer.cpp \
 	../../../protocol/mtpcontainerwrapper.cpp \
 	../../../protocol/mtpextensionmanager.cpp \

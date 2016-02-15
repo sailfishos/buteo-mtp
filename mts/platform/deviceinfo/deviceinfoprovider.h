@@ -34,11 +34,11 @@
 
 #include "deviceinfo.h"
 
-class OrgFreedesktopUPowerDeviceInterface;
+class ContextProperty;
 
 /// This class implements DeviceInfo for getting and setting device info and properties for an MTP session.
 
-/// This class uses services like context subscriber, sysinfod, etc to get values for device
+/// This class uses services like context subscriber to get values for device
 /// properties ( the ones mentioned in MTP 1.0 spec ) dynamically. This extends DeviceInfo class,
 /// for properties that we don't get values from any system service, the default implementation falls back
 /// to DeviceInfo.
@@ -52,12 +52,6 @@ class DeviceInfoProvider : public DeviceInfo
         friend class DeviceInfoProvider_Test;
 #endif
 public:
-    /// Gets the friendly name of this device.
-    /// \param current [in] boolean which indicates whether to get the current
-    /// value(the default behavior) or the default value.
-    /// \return the device friendly name.
-    // const QString& deviceFriendlyName( bool current = true );
-
     /// Constructor.
     DeviceInfoProvider();
 
@@ -65,21 +59,10 @@ public:
     ~DeviceInfoProvider();
 
 private:
-    /// Gets device version and serial no from sysinfod.
-    void getSystemInfo();
-
-    /// Gets a handle to the BT adapter interface.
-    void getBTAdapterInterface();
-
-    /// Gets the BT friendly name of the device.
-    QString getBTFriendlyName();
-
-    QString m_defaultAdapterPath; ///< The BT default adapter interface path.
-
-    OrgFreedesktopUPowerDeviceInterface *battery;
+    ContextProperty *battery;
 
 private slots:
-    void onBatteryChanged();
+    void onBatteryPercentageChanged();
 };
 }
 

@@ -30,42 +30,31 @@
 */
 
 #include "deviceinfoprovider.h"
-#include "trace.h"
-#include <QDBusInterface>
-#include <QDBusReply>
 #include <QDeviceInfo>
-#include <QVariant>
-#include <QMap>
-
-#include "device_interface.h" // generated
+#include <ssudeviceinfo.h>
+#include <contextproperty.h>
 
 using namespace meegomtp1dot0;
-
-
-#define BLUEZ_DEST "org.bluez"
-#define BLUEZ_MANAGER_INTERFACE "org.bluez.Manager"
-#define BLUEZ_ADAPTER_INTERFACE "org.bluez.Adapter"
-#define GET_DEFAULT_ADAPTER "DefaultAdapter"
-#define GET_PROPERTIES "GetProperties"
-
 
 /**********************************************
  * DeviceInfoProvider::DeviceInfoProvider
  *********************************************/
 DeviceInfoProvider::DeviceInfoProvider():
-  battery(new OrgFreedesktopUPowerDeviceInterface("org.freedesktop.UPower",
-          "/org/freedesktop/UPower/devices/battery_battery",
-          QDBusConnection::systemBus(), this))
+  battery(new ContextProperty("Battery.ChargePercentage", this))
 {
-    getSystemInfo();
+    QDeviceInfo di;
 
-    // Get the BT adapter interface, this interface can later be used to get the BT name
-    // which will serve as the device friendly name.
-    getBTAdapterInterface();
+    m_serialNo = SsuDeviceInfo().deviceUid();
 
-    setBatteryLevel(battery->percentage());
-    connect(battery, &OrgFreedesktopUPowerDeviceInterface::Changed,
-            this, &DeviceInfoProvider::onBatteryChanged);
+    m_deviceVersion = QString("%1 HW: %2").arg(di.version(QDeviceInfo::Os))
+                                          .arg(di.version(QDeviceInfo::Firmware));
+
+    m_manufacturer = di.manufacturer().isEmpty() ? m_manufacturer : di.manufacturer();
+    m_model = di.model().isEmpty() ? m_model : di.model();
+
+    connect(battery, SIGNAL(valueChanged()), this, SLOT(onBatteryPercentageChanged()));
+    // Initialize the battery charge value.
+    onBatteryPercentageChanged();
 }
 
 /**********************************************
@@ -75,89 +64,7 @@ DeviceInfoProvider::~DeviceInfoProvider()
 {
 }
 
-/**********************************************
- * void DeviceInfoProvider::getSystemInfo
- *********************************************/
-void DeviceInfoProvider::getSystemInfo()
+void DeviceInfoProvider::onBatteryPercentageChanged()
 {
-    QDeviceInfo di;
-
-    /// @todo hardcoded to first IMEI for now
-    m_serialNo = di.imei(0).isEmpty() ? m_serialNo : di.imei(0);
-
-    m_deviceVersion = QString("%1 HW: %2").arg(di.version(QDeviceInfo::Os))
-                                          .arg(di.version(QDeviceInfo::Firmware));
-
-    m_manufacturer = di.manufacturer().isEmpty() ? m_manufacturer : di.manufacturer();
-    m_model = di.model().isEmpty() ? m_model : di.model();
-}
-
-/**********************************************
- * void DeviceInfoProvider::getBTAdapterInterface
- *********************************************/
-void DeviceInfoProvider::getBTAdapterInterface()
-{
-    // Get the DBUS interface for BT manager.
-    QDBusInterface managerInterface(BLUEZ_DEST, "/", BLUEZ_MANAGER_INTERFACE,
-            QDBusConnection::systemBus());
-    if( !managerInterface.isValid() )
-    {
-        m_defaultAdapterPath = "";
-        return;
-    }
-
-    QDBusReply<QDBusObjectPath> reply = managerInterface.call( QLatin1String( GET_DEFAULT_ADAPTER ) );
-    if( reply.isValid() ) {
-        m_defaultAdapterPath = reply.value().path();
-    }
-    else {
-        m_defaultAdapterPath = "";
-    }
-}
-
-// TODO Emit a devicePropChanged event when the BT name changes while the MTP session is active
-
-/**********************************************
- * QString DeviceInfoProvider::getBTFriendlyName
- *********************************************/
-QString DeviceInfoProvider::getBTFriendlyName()
-{
-    if( "" == m_defaultAdapterPath )
-    {
-        return "";
-    }
-
-    // Get the DBUS interface for BT adapter.
-    QDBusInterface adapterInterface(BLUEZ_DEST, m_defaultAdapterPath,
-            BLUEZ_ADAPTER_INTERFACE, QDBusConnection::systemBus());
-
-    // Call appropriate method on BT adapter interface to get the BT friendly name.
-    QDBusReply<QMap<QString,QVariant> > propReply = adapterInterface.call( QLatin1String( GET_PROPERTIES ) );
-    if( propReply.isValid() )
-    {
-        QMap<QString,QVariant> props = propReply;
-        QVariant name = props.value("Name");
-        return name.toString();
-    }
-    return "";
-}
-
-/**********************************************
- * const QString& DeviceInfoProvider::deviceFriendlyName
- *********************************************/
-#if 0
-const QString& DeviceInfoProvider::deviceFriendlyName( bool /*current*/ )
-{
-    QString name = getBTFriendlyName();
-    if( "" != name )
-    {
-        m_deviceFriendlyName = name;
-    }
-    return m_deviceFriendlyName;
-}
-#endif
-
-void DeviceInfoProvider::onBatteryChanged()
-{
-    setBatteryLevel(battery->percentage());
+    setBatteryLevel(battery->value().toUInt());
 }

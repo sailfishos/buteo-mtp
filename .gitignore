@@ -1,3 +1,5 @@
+*.o
+moc_*
 *.so
 *.so.*
 Makefile*
@@ -5,5 +7,10 @@ Makefile*
 deviceinfo-test
 storage-test
 protocol-test
+mts/device_interface.cpp
+mts/device_interface.h
 mtp_test
 mtp_service
+RPMS/
+installroot/
+mts/platform/storage/unittests/storagefactory-test
