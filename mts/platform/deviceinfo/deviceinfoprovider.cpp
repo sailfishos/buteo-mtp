@@ -36,11 +36,11 @@
 #include <QDeviceInfo>
 #include <QVariant>
 #include <QMap>
+#include <ssudeviceinfo.h>
 
 #include "device_interface.h" // generated
 
 using namespace meegomtp1dot0;
-
 
 #define BLUEZ_DEST "org.bluez"
 #define BLUEZ_MANAGER_INTERFACE "org.bluez.Manager"
@@ -82,8 +82,7 @@ void DeviceInfoProvider::getSystemInfo()
 {
     QDeviceInfo di;
 
-    /// @todo hardcoded to first IMEI for now
-    m_serialNo = di.imei(0).isEmpty() ? m_serialNo : di.imei(0);
+    m_serialNo = SsuDeviceInfo().deviceUid();
 
     m_deviceVersion = QString("%1 HW: %2").arg(di.version(QDeviceInfo::Os))
                                           .arg(di.version(QDeviceInfo::Firmware));

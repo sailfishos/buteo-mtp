@@ -7,7 +7,7 @@ CONFIG += qtsparql
 
 PKGCONFIG += buteosyncfw5 Qt5SystemInfo
 
-LIBS += -ldl
+LIBS += -ldl -lssu
 TEMPLATE = app
 TARGET = storage-test
 QT += dbus xml testlib

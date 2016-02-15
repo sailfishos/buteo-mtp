@@ -44,7 +44,7 @@ SOURCES += fsstorageplugin.cpp \
            storageitem.cpp
 
 LIBPATH += ../../..
-LIBS    += -lmeegomtp
+LIBS    += -lmeegomtp -lssu
 
 #install
 target.path = /usr/lib/mtp

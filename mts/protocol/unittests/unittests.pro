@@ -11,7 +11,7 @@ equals(QT_MAJOR_VERSION, 4): {
 }
 equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5 Qt5SystemInfo
 
-LIBS += -ldl
+LIBS += -ldl -lssu
 TEMPLATE = app
 TARGET = protocol-test
 QT += dbus xml testlib

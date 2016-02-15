@@ -19,7 +19,7 @@ INCLUDEPATH += \
 	../../../transport/dummy \
 	../../../transport/usb \
 
-LIBS += -ldl
+LIBS += -ldl -lssu
 
 HEADERS += \
 	storagefactory_test.h \

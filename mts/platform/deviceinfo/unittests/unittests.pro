@@ -13,6 +13,8 @@ equals(QT_MAJOR_VERSION, 4): {
 }
 equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5 Qt5SystemInfo
 
+LIBS += -lssu
+
 TEMPLATE = app
 TARGET = deviceinfo-test
 DEFINES += UT_ON
