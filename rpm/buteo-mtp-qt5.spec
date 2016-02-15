@@ -19,6 +19,7 @@ BuildRequires: pkgconfig(mount)
 # for the thumbnailer unit test
 BuildRequires: pkgconfig(Qt5Gui)
 BuildRequires: ssu-devel >= 0.37.9
+BuildRequires: pkgconfig(contextkit-statefs) >= 0.2.7
 Requires: mtp-vendor-configuration
 # buteo-mtp can use org.freedesktop.thumbnails.Thumbnailer1 to create
 # thumbnails on request; at least Windows 8 requires thumbnails to be

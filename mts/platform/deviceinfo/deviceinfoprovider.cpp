@@ -37,8 +37,7 @@
 #include <QVariant>
 #include <QMap>
 #include <ssudeviceinfo.h>
-
-#include "device_interface.h" // generated
+#include <contextproperty.h>
 
 using namespace meegomtp1dot0;
 
@@ -53,9 +52,7 @@ using namespace meegomtp1dot0;
  * DeviceInfoProvider::DeviceInfoProvider
  *********************************************/
 DeviceInfoProvider::DeviceInfoProvider():
-  battery(new OrgFreedesktopUPowerDeviceInterface("org.freedesktop.UPower",
-          "/org/freedesktop/UPower/devices/battery_battery",
-          QDBusConnection::systemBus(), this))
+  battery(new ContextProperty("Battery.ChargePercentage", this))
 {
     getSystemInfo();
 
@@ -63,9 +60,9 @@ DeviceInfoProvider::DeviceInfoProvider():
     // which will serve as the device friendly name.
     getBTAdapterInterface();
 
-    setBatteryLevel(battery->percentage());
-    connect(battery, &OrgFreedesktopUPowerDeviceInterface::Changed,
-            this, &DeviceInfoProvider::onBatteryChanged);
+    connect(battery, SIGNAL(valueChanged()), this, SLOT(onBatteryPercentageChanged()));
+    // Initialize the battery charge value.
+    onBatteryPercentageChanged();
 }
 
 /**********************************************
@@ -156,7 +153,7 @@ const QString& DeviceInfoProvider::deviceFriendlyName( bool /*current*/ )
 }
 #endif
 
-void DeviceInfoProvider::onBatteryChanged()
+void DeviceInfoProvider::onBatteryPercentageChanged()
 {
-    setBatteryLevel(battery->percentage());
+    setBatteryLevel(battery->value().toUInt());
 }

@@ -34,7 +34,7 @@
 
 #include "deviceinfo.h"
 
-class OrgFreedesktopUPowerDeviceInterface;
+class ContextProperty;
 
 /// This class implements DeviceInfo for getting and setting device info and properties for an MTP session.
 
@@ -76,10 +76,10 @@ private:
 
     QString m_defaultAdapterPath; ///< The BT default adapter interface path.
 
-    OrgFreedesktopUPowerDeviceInterface *battery;
+    ContextProperty *battery;
 
 private slots:
-    void onBatteryChanged();
+    void onBatteryPercentageChanged();
 };
 }
 
