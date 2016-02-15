@@ -383,6 +383,9 @@ void BulkWriterThread::setData(const quint8 *buffer, quint32 dataLen, bool termi
 
 void BulkWriterThread::execute()
 {
+    // Maximum length of individual writes
+    static quint32 writeMax = 64 << 10;
+
     // Call setData before starting the thread.
 
     int bytesWritten = 0;
@@ -399,9 +402,16 @@ void BulkWriterThread::execute()
     bool zeropacket = m_terminateTransfer && m_dataLen % PTP_HS_DATA_PKT_SIZE == 0;
 
     while ((m_dataLen || zeropacket) && !m_shouldExit) {
-        bytesWritten = write(m_fd, dataptr, m_dataLen);
+        quint32 writeNow = (m_dataLen < writeMax) ? m_dataLen : writeMax;
+        bytesWritten = write(m_fd, dataptr, writeNow);
         if(bytesWritten == -1)
         {
+            if(errno == EIO && writeMax > PTP_HS_DATA_PKT_SIZE )
+            {
+                writeMax >>= 1;
+                MTP_LOG_WARNING("BulkWriterThread limit writes to: " << writeMax);
+                continue;
+            }
             if(errno == EINTR)
                 continue;
             if(errno == EAGAIN)
