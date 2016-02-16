@@ -35,7 +35,6 @@
 #include <QDomDocument>
 #include <QTextStream>
 #include <QDir>
-#include <ssudeviceinfo.h>
 #include "xmlhandler.h"
 #include "deviceinfo.h"
 #include "trace.h"
@@ -241,12 +240,10 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
     m_videoAudioMinBitRate(0), m_videoAudioMaxBitRate(0xFFFFFFFF),
     m_videoMinKFD(0), m_videoMaxKFD(0xFFFFFFFF),
     m_audioSampleRate(0),
+    m_newConfigFileWasCreated(false),
     m_batteryLevel(BATTERYLEVEL_DEFAULT)
 {
     //Parse deviceinfo.xml to populate default device values.
-
-    // Whether a new copy of global configuration file was taken in use
-    bool newConfigFileWasCreated = false;
 
     // Kludge : till we know how and where to securely install a file
     // that can be modifed by an apllication.
@@ -256,7 +253,7 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
     if( !fileDst.exists() )
     {
         fileSrc.copy(m_deviceInfoXmlPath);
-        newConfigFileWasCreated = true;
+        m_newConfigFileWasCreated = true;
     }
 #endif // UT_ON
     fileDst.open(QIODevice::ReadOnly | QIODevice::Text);
@@ -317,15 +314,6 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
         m_xmlOk = true;
     }
     m_supportedFormats = m_imageFormats + m_audioFormats + m_videoFormats + m_commonFormats;
-
-    if(newConfigFileWasCreated)
-    {
-        /* Query DeviceModel from SSU and use it to override the value of
-         * the friendly name -property defined in the XML configuration */
-        QString deviceModel = SsuDeviceInfo().displayName(Ssu::DeviceModel);
-        MTP_LOG_INFO("Setting MTP friendly name to:" << deviceModel);
-        setDeviceFriendlyName(deviceModel);
-    }
 }
 
 /*******************************************
