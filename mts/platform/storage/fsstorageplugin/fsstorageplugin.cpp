@@ -44,6 +44,7 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QMetaObject>
+#include <QLocale>
 
 #ifndef UT_ON
 #include <blkid.h>
@@ -1831,7 +1832,7 @@ QString FSStoragePlugin::getCreatedDate( StorageItem *storageItem )
     QFileInfo fileInfo(storageItem->m_path);
     QDateTime dt = fileInfo.created();
     dt = dt.toUTC();
-    QString dateCreated = dt.toString("yyyyMMdd'T'hhmmss'Z'");
+    QString dateCreated = QLocale::c().toString(dt, "yyyyMMdd'T'hhmmss'Z'");
     return dateCreated;
 }
 
@@ -1844,7 +1845,7 @@ QString FSStoragePlugin::getModifiedDate( StorageItem *storageItem )
     QFileInfo fileInfo(storageItem->m_path);
     QDateTime dt = fileInfo.lastModified();
     dt = dt.toUTC();
-    QString dateModified = dt.toString("yyyyMMdd'T'hhmmss'Z'");
+    QString dateModified = QLocale::c().toString(dt, "yyyyMMdd'T'hhmmss'Z'");
     return dateModified;
 }
 
