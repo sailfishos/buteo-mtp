@@ -297,13 +297,21 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
     }
     else
     {
+        if(MTP_CONTAINER_TYPE_RESPONSE == container.containerType())
+        {
+            /* Data sending is done asynchronously from other thread. From protocol
+             * point of view the host can send the next request when that send finishes,
+             * not when buteo-mtp has managed to set some internal state -> we have
+             * a race to set the m_state to RESPONDER_IDLE ... as a workaround do
+             * the state transition before starting the transfer. */
+            m_state = RESPONDER_IDLE;
+        }
         m_transporter->sendData(container.buffer(), container.bufferSize(), isLastPacket);
     }
     if(MTP_CONTAINER_TYPE_RESPONSE == container.containerType())
     {
         // Restore state to IDLE to get ready to received the next operation
         emit deviceStatusOK();
-        m_state = RESPONDER_IDLE;
         deleteStoredRequest();
     }
     return true;
