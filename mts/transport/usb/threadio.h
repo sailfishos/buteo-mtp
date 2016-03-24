@@ -164,9 +164,14 @@ public:
     explicit InterruptWriterThread(QObject *parent = 0);
     ~InterruptWriterThread();
 
+    bool hasData();
+    void sendOne();
     void addData(const quint8 *buffer, quint32 dataLen);
     void reset();
     virtual void interrupt();
+
+signals:
+    void senderIdle(bool success);
 
 protected:
     virtual void execute();

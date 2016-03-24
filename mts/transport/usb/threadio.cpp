@@ -461,6 +461,19 @@ InterruptWriterThread::~InterruptWriterThread()
     reset();
 }
 
+bool InterruptWriterThread::hasData()
+{
+    QMutexLocker locker(&m_lock);
+    bool has_data = !m_buffers.empty();
+    return has_data;
+}
+
+void InterruptWriterThread::sendOne()
+{
+    QMutexLocker locker(&m_lock);
+    m_wait.wakeAll();
+}
+
 void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 {
     QMutexLocker locker(&m_lock);
@@ -479,8 +492,8 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
         delete pair.first;
     }
 
-    if(m_buffers.empty())
-        m_wait.wakeAll(); // restart processing after m_lock is released
+    /* Note that we just buffer the event data here, the
+     * actual transfer is interleaved with bulk writes. */
     m_buffers.append(QPair<quint8*,int>(copy, dataLen));
 }
 
@@ -488,13 +501,20 @@ void InterruptWriterThread::execute()
 {
     while(!m_shouldExit) {
         m_lock.lock();
-
-        while(!m_shouldExit && m_buffers.isEmpty())
-            m_wait.wait(&m_lock); // will release the lock while waiting
+        m_wait.wait(&m_lock); // will release the lock while waiting
 
         if (m_shouldExit) { // may have been woken up by exitThread()
             m_lock.unlock();
             break;
+        }
+
+        if (m_buffers.isEmpty()) {
+            /* We should really not get here. Log it and emit
+             * failure in order not to block the upper layers. */
+            MTP_LOG_WARNING("stray wakeup; this should not happen");
+            m_lock.unlock();
+            emit senderIdle(false);
+            continue;
         }
 
         QPair<quint8*,int> pair = m_buffers.takeFirst();
@@ -507,8 +527,12 @@ void InterruptWriterThread::execute()
             int bytesWritten = write(m_fd, dataptr, dataLen);
             if(bytesWritten == -1)
             {
-                if (errno == EINTR)
-                    continue;
+                if (errno == EINTR) {
+                    /* Assume this is caused by timeout at upper layers
+                     * and abandon the event send. */
+                    MTP_LOG_WARNING("InterruptWriterThread - interrupted");
+                    break;
+                }
                 if (errno == EAGAIN || errno == ESHUTDOWN) {
                     MTP_LOG_WARNING("InterruptWriterThread delaying:" << errno);
                     msleep(1);
@@ -522,6 +546,9 @@ void InterruptWriterThread::execute()
         }
 
         free(pair.first);
+
+        bool success = (dataLen == 0);
+        emit senderIdle(success);
     }
 }
 

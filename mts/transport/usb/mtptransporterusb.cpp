@@ -69,8 +69,22 @@ static void catchUserSignal()
 
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
     m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1),
-    m_reader_busy(READER_FREE), m_writer_busy(false)
+    m_reader_busy(READER_FREE), m_writer_busy(false), m_events_busy(false),
+    m_events_failed(0), m_inSession(false)
 {
+    // event write cancelation
+    m_event_cancel = new QTimer(this);
+    m_event_cancel->setInterval(1000);
+    m_event_cancel->setSingleShot(false);
+    QObject::connect(m_event_cancel, SIGNAL(timeout()),
+                     this, SLOT(eventTimeout()));
+
+    // event write completion
+    QObject::connect(&m_intrWrite, SIGNAL(senderIdle(bool)),
+                     this, SLOT(eventCompleted(bool)),
+                     Qt::QueuedConnection);
+
+    // bulk read data
     QObject::connect(&m_bulkRead, SIGNAL(dataReady()),
         this, SLOT(handleDataReady()), Qt::QueuedConnection);
 }
@@ -209,6 +223,17 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
     }
     m_writer_busy = true;
 
+    // wait until interrupt writer is done with event
+    if (m_events_busy) {
+        /* Serializing bulk and intr writes causes unwanted delays,
+         * especially if the host is not processing intr transfers.
+         * Make delays visible in verbose mode to help future tuning. */
+        MTP_LOG_INFO("intr writer is busy - wait");
+        while (m_events_busy)
+            QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
+        MTP_LOG_INFO("intr writer is idle - continue");
+    }
+
     // Unlike the other IO threads, the bulk writer is only alive
     // while processing one buffer and then finishes. It all happens
     // during this call. The reason for the extra thread is to
@@ -223,20 +248,107 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
     while(!m_bulkWrite.resultReady()) {
         QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
     }
+
     bool r = m_bulkWrite.getResult();
 
     m_bulkWrite.wait();
     m_writer_busy = false;
+
+    // check if there are events to send
+    sendQueuedEvent();
+
     return r;
+}
+
+void MTPTransporterUSB::sessionOpenChanged(bool isOpen)
+{
+    if (m_inSession != isOpen) {
+        m_inSession = isOpen;
+        if (m_inSession)
+            m_events_failed = 0;
+
+        /* If host does not close session due to errors or by design, it
+         * can create problems. Log changes to make it easier to spot. */
+        MTP_LOG_WARNING("mtp session" << (m_inSession ? "opened" : "closed"));
+    }
+}
+
+/* How many successive event send failures to tolerate */
+#define MAX_EVENT_SEND_FAILURES 3
+
+void MTPTransporterUSB::sendQueuedEvent()
+{
+    if (!m_inSession)
+        return;
+
+    if (m_writer_busy)
+        return;
+
+    if (m_events_busy)
+        return;
+
+    if (!m_intrWrite.hasData())
+        return;
+
+    if (m_events_failed > MAX_EVENT_SEND_FAILURES)
+        return;
+
+    m_events_busy = true;
+    m_event_cancel->start();
+    m_intrWrite.sendOne();
 }
 
 bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLastPacket)
 {
     Q_UNUSED(isLastPacket);
 
+    if (!m_inSession) {
+        /* In theory at least there Some events could/should be sent even if the
+         * host has not opened a session. But in order not to cause delays in the
+         * startup phase, ignore all events until session has been opened. */
+        MTP_LOG_WARNING("event ignored - no active session");
+        return false;
+    }
+
+    if (m_events_failed > MAX_EVENT_SEND_FAILURES) {
+        /* For example gphoto2 based gvfs-gphoto2-volume-monitor hardly ever
+         * reads intr data - at least in a timely manner. Since this creates
+         * repeated delays via timer based cancelation, after few repeated
+         * attempts we just ignore all events until session reopen. */
+        MTP_LOG_WARNING("event ignored - too many send failures");
+        return false;
+    }
+
+    // adds event to queue, but does not start sending
     m_intrWrite.addData(data, dataLen);
 
+    // if possible, start sending
+    sendQueuedEvent();
+
     return true;
+}
+void MTPTransporterUSB::eventTimeout()
+{
+    ++m_events_failed;
+
+    /* The intr write did not complete in expected time.
+     * Log the incident and interrupt the writer thread. */
+    MTP_LOG_WARNING("event write timeout" << m_events_failed
+                    << "/" << MAX_EVENT_SEND_FAILURES);
+    m_intrWrite.interrupt();
+}
+void MTPTransporterUSB::eventCompleted(bool success)
+{
+    // cancel timeout
+    m_event_cancel->stop();
+
+    // no longer busy
+    m_events_busy = false;
+    if (success)
+        m_events_failed = 0;
+
+    // check if more events can be sent
+    sendQueuedEvent();
 }
 
 void MTPTransporterUSB::handleDataReady()

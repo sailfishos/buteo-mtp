@@ -117,6 +117,10 @@ bool MTPResponder::initTransport( TransportType transport )
         transportOk = m_transporter->activate();
         if( transportOk )
         {
+            // Connect signals to the transporter
+            QObject::connect(this, SIGNAL(sessionOpenChanged(bool)),
+                             m_transporter, SLOT(sessionOpenChanged(bool)));
+
             // Connect signals from the transporter
             QObject::connect(m_transporter, SIGNAL(dataReceived(quint8*, quint32, bool, bool)),
                              this, SLOT(receiveContainer(quint8*, quint32, bool, bool)));
@@ -856,6 +860,9 @@ void MTPResponder::openSessionReq()
         m_transactionSequence->mtpSessionId = params[0];
         // TODO:: inform storage server that a new session has been opened
         sendResponse(MTP_RESP_OK);
+
+        // Enable event sending etc
+        emit sessionOpenChanged(true);
     }
 }
 
@@ -881,6 +888,9 @@ void MTPResponder::closeSessionReq()
         freeObjproplistInfo();
 
          // FIXME: Trigger the discarding of a file, which has been possibly created in StorageServer
+
+        // Disable event sending etc
+        emit sessionOpenChanged(false);
     }
     sendResponse(code);
 }
