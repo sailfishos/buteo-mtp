@@ -169,6 +169,10 @@ void FSStoragePlugin::enumerateStorage_worker()
     // Create playlist folders and sync .pla files with real playlists.
     assignPlaylistReferences();
 
+    /* Delay from waiting for "storage ready" is known cause
+     * of issues. To ease debugging log when it is finished. */
+    MTP_LOG_WARNING("storage" << m_storageId << "is ready");
+
     emit storagePluginReady(m_storageId);
 }
 
