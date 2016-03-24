@@ -489,7 +489,7 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
     // with the events. It removes the oldest events.
     while(m_buffers.count() >= MAX_EVENTS_STORED) {
         QPair<quint8*,int> pair = m_buffers.takeFirst();
-        delete pair.first;
+        free(pair.first);
     }
 
     /* Note that we just buffer the event data here, the
