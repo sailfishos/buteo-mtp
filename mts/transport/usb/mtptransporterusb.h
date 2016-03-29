@@ -35,6 +35,8 @@
 #include "mtptransporter.h"
 #include "threadio.h"
 
+#include <QTimer>
+
 /// \brief The MTPTransporterUSB class implements the transport layer for USB over MTP.
 ///
 /// The MTPTransporterUSB class implements the transport layer for MTP over USB protocol.
@@ -95,6 +97,7 @@ class MTPTransporterUSB : public MTPTransporter
         void processReceivedData();  // Helper function for handleDataReady()
         bool writeMtpDescriptors();  // configure the USB endpoints for functionfs
         bool writeMtpStrings();      // step 2 of functionfs configuration
+        void sendQueuedEvent();      // Buffering happens at sendEvent()
 
         enum IOState{
             ACTIVE,
@@ -119,11 +122,19 @@ class MTPTransporterUSB : public MTPTransporter
         int                     m_outFd;
 
         ControlReaderThread     m_ctrl;         ///< Threaded IO for Control EP
+
         BulkReaderThread        m_bulkRead;     ///< Threaded Reader for Bulk Out EP
         ReaderBusyState         m_reader_busy;
+
         BulkWriterThread        m_bulkWrite;    ///< Threaded Writer for Bulk In EP
         bool                    m_writer_busy;
+
         InterruptWriterThread   m_intrWrite;    ///< Threaded Writer for Interrupt EP
+        bool                    m_events_busy;
+        int                     m_events_failed;
+        QTimer                 *m_event_cancel;
+
+        bool                    m_inSession; ///< Is there active session
 
     public Q_SLOTS:
         /// The usb transporter catches the device ok status signal from the responder and informs the driver about the same.
@@ -151,6 +162,15 @@ class MTPTransporterUSB : public MTPTransporter
 
         /// Handle high priority requests from the underlying transport driver.
         void handleHighPriorityData();
+
+        /// Handle m_intrWrite timeouts
+        void eventTimeout();
+
+        /// Handle m_intrWrite completion
+        void eventCompleted(bool success);
+
+        /// Handle session open/close
+        void sessionOpenChanged(bool isOpen);
 };
 
 }

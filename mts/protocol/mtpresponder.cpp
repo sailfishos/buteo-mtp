@@ -117,6 +117,10 @@ bool MTPResponder::initTransport( TransportType transport )
         transportOk = m_transporter->activate();
         if( transportOk )
         {
+            // Connect signals to the transporter
+            QObject::connect(this, SIGNAL(sessionOpenChanged(bool)),
+                             m_transporter, SLOT(sessionOpenChanged(bool)));
+
             // Connect signals from the transporter
             QObject::connect(m_transporter, SIGNAL(dataReceived(quint8*, quint32, bool, bool)),
                              this, SLOT(receiveContainer(quint8*, quint32, bool, bool)));
@@ -293,13 +297,21 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
     }
     else
     {
+        if(MTP_CONTAINER_TYPE_RESPONSE == container.containerType())
+        {
+            /* Data sending is done asynchronously from other thread. From protocol
+             * point of view the host can send the next request when that send finishes,
+             * not when buteo-mtp has managed to set some internal state -> we have
+             * a race to set the m_state to RESPONDER_IDLE ... as a workaround do
+             * the state transition before starting the transfer. */
+            m_state = RESPONDER_IDLE;
+        }
         m_transporter->sendData(container.buffer(), container.bufferSize(), isLastPacket);
     }
     if(MTP_CONTAINER_TYPE_RESPONSE == container.containerType())
     {
         // Restore state to IDLE to get ready to received the next operation
         emit deviceStatusOK();
-        m_state = RESPONDER_IDLE;
         deleteStoredRequest();
     }
     return true;
@@ -856,6 +868,9 @@ void MTPResponder::openSessionReq()
         m_transactionSequence->mtpSessionId = params[0];
         // TODO:: inform storage server that a new session has been opened
         sendResponse(MTP_RESP_OK);
+
+        // Enable event sending etc
+        emit sessionOpenChanged(true);
     }
 }
 
@@ -881,6 +896,9 @@ void MTPResponder::closeSessionReq()
         freeObjproplistInfo();
 
          // FIXME: Trigger the discarding of a file, which has been possibly created in StorageServer
+
+        // Disable event sending etc
+        emit sessionOpenChanged(false);
     }
     sendResponse(code);
 }

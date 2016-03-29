@@ -109,6 +109,9 @@ class MTPResponder : public QObject
         /// This signal is emitted by the mtpresponder to indicate that a transaction was cancelled.
 	void deviceStatusTxCancelled();
 
+        /// This signal is emitted based on MTP_OP_OpenSession / MTP_OP_CloseSession handling
+        void sessionOpenChanged(bool isOpen);
+
     private Q_SLOTS:
         /// This slot acts as a callback to the transport layer, used to receive MTP containers
         /// \param data [in] The data received from the transport layer
