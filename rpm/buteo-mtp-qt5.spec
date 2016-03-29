@@ -1,5 +1,5 @@
 Name: buteo-mtp-qt5
-Version: 0.4.11
+Version: 0.4.14
 Release: 1
 Summary: MTP library
 Group: System/Libraries
