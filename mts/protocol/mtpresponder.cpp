@@ -94,7 +94,7 @@ MTPResponder::MTPResponder(): m_storageServer(0),
     m_containerToBeResent(false),
     m_isLastPacket(false),
     m_storageWaitDataComplete(false),
-    m_state(RESPONDER_IDLE),
+    m_state_accessor_only(RESPONDER_IDLE),
     m_prevState(RESPONDER_IDLE),
     m_objPropListInfo(0),
     m_sendObjectSequencePtr(0),
@@ -270,11 +270,11 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
         //m_transporter->disableRW();
         //QCoreApplication::processEvents();
         //m_transporter->enableRW();
-        if( RESPONDER_TX_CANCEL == m_state && MTP_CONTAINER_TYPE_EVENT != container.containerType())
+        if( RESPONDER_TX_CANCEL == getResponderState() && MTP_CONTAINER_TYPE_EVENT != container.containerType())
         {
             return false;
         }
-        if( RESPONDER_SUSPEND == m_state )
+        if( RESPONDER_SUSPEND == getResponderState() )
         {
             MTP_LOG_WARNING("Received suspend while sending");
             if( MTP_CONTAINER_TYPE_EVENT != container.containerType() )
@@ -304,7 +304,7 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
              * not when buteo-mtp has managed to set some internal state -> we have
              * a race to set the m_state to RESPONDER_IDLE ... as a workaround do
              * the state transition before starting the transfer. */
-            m_state = RESPONDER_IDLE;
+            setResponderState(RESPONDER_IDLE);
         }
         m_transporter->sendData(container.buffer(), container.bufferSize(), isLastPacket);
     }
@@ -357,13 +357,13 @@ void MTPResponder::receiveContainer(quint8* data, quint32 dataLen, bool isFirstP
     MTP_FUNC_TRACE();
     // TODO: Change this to handle event containers. Event containers can be
     // received in any state.
-    switch(m_state)
+    switch(getResponderState())
     {
         case RESPONDER_IDLE:
         case RESPONDER_TX_CANCEL:
         case RESPONDER_SUSPEND:
             {
-                m_state = RESPONDER_IDLE;
+                setResponderState(RESPONDER_IDLE);
                 // Delete any old request, just in case
                 if(0 != m_transactionSequence->reqContainer)
                 {
@@ -383,11 +383,11 @@ void MTPResponder::receiveContainer(quint8* data, quint32 dataLen, bool isFirstP
                         // initiator. We need to let the data phase complete even if
                         // there is an error in the request phase, before entering
                         // the response phase.
-                        m_state = RESPONDER_WAIT_DATA;
+                        setResponderState(RESPONDER_WAIT_DATA);
                     }
                     else
                     {
-                        m_state = RESPONDER_WAIT_RESP;
+                        setResponderState(RESPONDER_WAIT_RESP);
                     }
 
                     // Handle the command phase
@@ -396,7 +396,7 @@ void MTPResponder::receiveContainer(quint8* data, quint32 dataLen, bool isFirstP
                 }
                 else
                 {
-                    m_state = RESPONDER_IDLE;
+                    setResponderState(RESPONDER_IDLE);
                     MTP_LOG_CRITICAL("Invalid container received! Expected command, received data");
                     m_transporter->reset();
                 }
@@ -407,7 +407,7 @@ void MTPResponder::receiveContainer(quint8* data, quint32 dataLen, bool isFirstP
                 // If no valid request container, then exit...
                 if(0 == m_transactionSequence->reqContainer)
                 {
-                    m_state = RESPONDER_IDLE;
+                    setResponderState(RESPONDER_IDLE);
                     MTP_LOG_CRITICAL("Received a data container before a request container!");
                     m_transporter->reset();
                     break;
@@ -424,7 +424,7 @@ void MTPResponder::receiveContainer(quint8* data, quint32 dataLen, bool isFirstP
             if (isFirstPacket) {
                 if (!m_storageWaitData.isEmpty()) {
                     // Initiator apparently didn't wait for response
-                    m_state = RESPONDER_IDLE;
+                    setResponderState(RESPONDER_IDLE);
                     MTP_LOG_CRITICAL("Received more than one container while waiting for storage");
                     m_transporter->reset();
                     break;
@@ -435,8 +435,8 @@ void MTPResponder::receiveContainer(quint8* data, quint32 dataLen, bool isFirstP
             break;
         case RESPONDER_WAIT_RESP:
         default:
-            MTP_LOG_CRITICAL("Container received in wrong state!" << m_state);
-            m_state = RESPONDER_IDLE;
+            MTP_LOG_CRITICAL("Container received in wrong state!" << getResponderState());
+            setResponderState(RESPONDER_IDLE);
             m_transporter->reset();
             break;
     }
@@ -449,11 +449,11 @@ void MTPResponder::onStorageReady(void)
     MTP_LOG_INFO("Storage ready");
 
     // Retry the last command, if one was waiting
-    if (m_state == RESPONDER_WAIT_STORAGE) {
+    if (getResponderState() == RESPONDER_WAIT_STORAGE) {
         if (hasDataPhase(m_transactionSequence->reqContainer->code()))
-            m_state = RESPONDER_WAIT_DATA;
+            setResponderState(RESPONDER_WAIT_DATA);
         else
-            m_state = RESPONDER_WAIT_RESP;
+            setResponderState(RESPONDER_WAIT_RESP);
         MTP_LOG_INFO("Retrying operation");
         commandHandler();
 
@@ -494,7 +494,7 @@ void MTPResponder::commandHandler()
     if (!m_storageServer->storageIsReady()) {
         if (needsStorageReady(reqContainer->code())) {
             MTP_LOG_INFO("Will wait for storageReady");
-            m_state = RESPONDER_WAIT_STORAGE;
+            setResponderState(RESPONDER_WAIT_STORAGE);
             m_storageWaitData.clear();
             m_storageWaitDataComplete = false;
             return; // onStorageReady will call again later
@@ -1537,7 +1537,7 @@ void MTPResponder::copyObjectReq()
         }
     }
 
-    if( RESPONDER_TX_CANCEL == m_state )
+    if( RESPONDER_TX_CANCEL == getResponderState() )
     {
         return;
     }
@@ -2640,7 +2640,7 @@ void MTPResponder::closeSession()
     // FIXME: Decide on the cleanup needed here
     m_transactionSequence->mtpSessionId = MTP_INITIAL_SESSION_ID;
     deleteStoredRequest();
-    m_state = RESPONDER_IDLE;
+    setResponderState(RESPONDER_IDLE);
     if( m_sendObjectSequencePtr )
     {
         delete m_sendObjectSequencePtr;
@@ -2678,21 +2678,21 @@ void MTPResponder::fetchObjectSize(const quint8* data, quint64* objectSize)
 void MTPResponder::handleSuspend()
 {
     MTP_LOG_WARNING("Received suspend");
-    m_prevState = m_state;
-    m_state = RESPONDER_SUSPEND;
+    m_prevState = getResponderState();
+    setResponderState(RESPONDER_SUSPEND);
 }
 
 void MTPResponder::handleResume()
 {
     MTP_LOG_WARNING("Received resume");
-    m_state = m_prevState;
+    setResponderState(m_prevState);
     if( m_containerToBeResent )
     {
         m_containerToBeResent = false;
         //m_transporter->disableRW();
         //QCoreApplication::processEvents();
         //m_transporter->enableRW();
-        if( RESPONDER_TX_CANCEL != m_state )
+        if( RESPONDER_TX_CANCEL != getResponderState() )
         {
             MTP_LOG_WARNING("Resume sending");
             m_transporter->sendData( m_resendBuffer, m_resendBufferSize, m_isLastPacket );
@@ -2718,7 +2718,7 @@ void MTPResponder::handleCancelTransaction()
 
     MTP_LOG_CRITICAL("Received Cancel Transaction for operation " << QString("0x%1").arg( m_transactionSequence->reqContainer->code(), 0 , 16 ));
 
-    m_state = RESPONDER_TX_CANCEL;
+    setResponderState(RESPONDER_TX_CANCEL);
     switch( m_transactionSequence->reqContainer->code() )
     {
         // Host initiated cancel for host to device data transfer
@@ -2942,9 +2942,9 @@ void MTPResponder::processTransportEvents( bool &txCancelled )
     QCoreApplication::processEvents();
     m_transporter->enableRW();
 
-    txCancelled = RESPONDER_TX_CANCEL == m_state;
+    txCancelled = RESPONDER_TX_CANCEL == getResponderState();
 
-    if( RESPONDER_TX_CANCEL == m_state )
+    if( RESPONDER_TX_CANCEL == getResponderState() )
     {
         MTP_LOG_WARNING("Received a request to process transport events - processed a cancel");
     }
@@ -3016,3 +3016,33 @@ void MTPResponder::unregisterMetaTypes()
     QMetaType::unregisterType("QVector<MtpInt128>");
 }
 #endif
+
+
+const char *MTPResponder::responderStateName(MTPResponder::ResponderState state)
+{
+    const char *name = "RESPONDER_<unknown>";
+    switch (state) {
+    case RESPONDER_IDLE:         name = "RESPONDER_IDLE";         break;
+    case RESPONDER_WAIT_DATA:    name = "RESPONDER_WAIT_DATA";    break;
+    case RESPONDER_WAIT_RESP:    name = "RESPONDER_WAIT_RESP";    break;
+    case RESPONDER_TX_CANCEL:    name = "RESPONDER_TX_CANCEL";    break;
+    case RESPONDER_SUSPEND:      name = "RESPONDER_SUSPEND";      break;
+    case RESPONDER_WAIT_STORAGE: name = "RESPONDER_WAIT_STORAGE"; break;
+    default: break;
+    }
+    return name;
+}
+
+MTPResponder::ResponderState MTPResponder::getResponderState(void)
+{
+    return m_state_accessor_only;
+}
+
+void MTPResponder::setResponderState(MTPResponder::ResponderState state)
+{
+    if (m_state_accessor_only != state) {
+        MTP_LOG_INFO("state:" << responderStateName(m_state_accessor_only)
+                     << "->" << responderStateName(state));
+        m_state_accessor_only = state;
+    }
+}
