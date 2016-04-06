@@ -294,7 +294,7 @@ void MTPTransporterUSB::sendQueuedEvent()
     if (!m_intrWrite.hasData())
         return;
 
-    if (m_events_failed > MAX_EVENT_SEND_FAILURES)
+    if (m_events_failed >= MAX_EVENT_SEND_FAILURES)
         return;
 
     m_events_busy = true;
@@ -314,12 +314,11 @@ bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLa
         return false;
     }
 
-    if (m_events_failed > MAX_EVENT_SEND_FAILURES) {
+    if (m_events_failed >= MAX_EVENT_SEND_FAILURES) {
         /* For example gphoto2 based gvfs-gphoto2-volume-monitor hardly ever
          * reads intr data - at least in a timely manner. Since this creates
          * repeated delays via timer based cancelation, after few repeated
          * attempts we just ignore all events until session reopen. */
-        MTP_LOG_WARNING("event ignored - too many send failures");
         return false;
     }
 
@@ -339,6 +338,14 @@ void MTPTransporterUSB::eventTimeout()
      * Log the incident and interrupt the writer thread. */
     MTP_LOG_WARNING("event write timeout" << m_events_failed
                     << "/" << MAX_EVENT_SEND_FAILURES);
+
+    if( m_events_failed == MAX_EVENT_SEND_FAILURES ) {
+        MTP_LOG_WARNING("event sending disabled - too many send failures");
+
+        /* Clear the queue so that it won't spoil the next session */
+        m_intrWrite.flushData();
+    }
+
     m_intrWrite.interrupt();
 }
 void MTPTransporterUSB::eventCompleted(bool success)

@@ -167,6 +167,7 @@ public:
     bool hasData();
     void sendOne();
     void addData(const quint8 *buffer, quint32 dataLen);
+    void flushData();
     void reset();
     virtual void interrupt();
 
