@@ -93,6 +93,9 @@ class MTPTransporterUSB : public MTPTransporter
         /// Resume the suspended channel
         void resume();
 
+        /// Check if bulk reader should be started
+        void rethinkRead();
+
     private:
         void processReceivedData();  // Helper function for handleDataReady()
         bool writeMtpDescriptors();  // configure the USB endpoints for functionfs
@@ -134,7 +137,9 @@ class MTPTransporterUSB : public MTPTransporter
         int                     m_events_failed;
         QTimer                 *m_event_cancel;
 
-        bool                    m_inSession; ///< Is there active session
+        bool                    m_inSession;    ///< Is there active session
+        bool                    m_storageReady; ///< Is the storage plugin ready
+        bool                    m_readerEnabled;///< Has state machine enabled bulk reader
 
     public Q_SLOTS:
         /// The usb transporter catches the device ok status signal from the responder and informs the driver about the same.
@@ -145,6 +150,10 @@ class MTPTransporterUSB : public MTPTransporter
 
         /// The usb transporter catches the tx cancelled signal from the responder and informs the driver about the same.
         void sendDeviceTxCancelled();
+
+    public Q_SLOTS:
+        /// Propagate storage is ready state
+        void onStorageReady(void);
 
     private Q_SLOTS:
         /// Close the Bulk and Interrupt devices

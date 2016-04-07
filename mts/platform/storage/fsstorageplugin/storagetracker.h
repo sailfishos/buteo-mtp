@@ -35,6 +35,7 @@
 #include <QVariant>
 #include <QList>
 #include <QDBusInterface>
+#include <QDBusPendingCallWatcher>
 #include "mtptypes.h"
 
 class QString;
@@ -44,7 +45,7 @@ typedef void (*fpTrackerUpdateQueryHandler)(const QString&, QString&, QStringLis
 
 namespace meegomtp1dot0
 {
-class StorageTracker
+class StorageTracker : public QObject
 {
 #ifdef UT_ON
 friend class FSStoragePlugin_test;
@@ -70,6 +71,10 @@ friend class FSStoragePlugin_test;
         void copy(const QString &fromPath, const QString &toPath);
         QString generateIri(const QString &path);
         bool supportsProperty(MTPObjPropertyCode code) const;
+
+    public Q_SLOTS:
+        void ignoreNextUpdateFinished(QDBusPendingCallWatcher *pcw);
+
     private:
         QHash<MTPObjPropertyCode, fpTrackerQueryHandler> m_handlerTable;
         QHash<MTPObjPropertyCode, fpTrackerUpdateQueryHandler> m_handlerTableUpdate;

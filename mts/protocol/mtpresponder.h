@@ -170,7 +170,12 @@ class MTPResponder : public QObject
             RESPONDER_TX_CANCEL = 3,                                        ///< A transaction got cancelled
             RESPONDER_SUSPEND = 4,                                          ///< A suspended session
             RESPONDER_WAIT_STORAGE = 5,                                     ///< Responder has received a request, but cannot handle it before storage is ready
-        }m_state;                                                           ///< Responder state
+        } m_state_accessor_only;                                            ///< Responder state
+
+        const char *responderStateName(MTPResponder::ResponderState state);
+        ResponderState getResponderState(void);
+        void setResponderState(ResponderState state);
+
 
         ResponderState                                  m_prevState;
 

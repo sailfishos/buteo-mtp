@@ -474,6 +474,17 @@ void InterruptWriterThread::sendOne()
     m_wait.wakeAll();
 }
 
+
+void InterruptWriterThread::flushData()
+{
+    QMutexLocker locker(&m_lock);
+
+    while(m_buffers.count() ) {
+        QPair<quint8*,int> pair = m_buffers.takeFirst();
+        free(pair.first);
+    }
+}
+
 void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 {
     QMutexLocker locker(&m_lock);

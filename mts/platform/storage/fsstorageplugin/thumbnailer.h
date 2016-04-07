@@ -85,27 +85,29 @@ class Thumbnailer : public ThumbnailerProxy
         void slotRequestFinished(uint);
         ///< This slot handles the Error signal from the DBUS interface
         void slotError(uint, const QStringList&, int, const QString&);
+        ///< This slot handles async replies from thumbnailer
+        void requestThumbnailFinished(QDBusPendingCallWatcher *pcw);
+        ///< This slot handlers flushing of thumbnail request queue
+        void thumbnailDelayTimeout();
+
     private:
         ///< Checks if thumbnail for the requested path is already present in
         /// the system thumbnailer's cache.
         bool checkThumbnailPresent(const QString& filePath, QString& thumbPath);
-        ///< Records the thumbnail request into the internal map
-        void recordRequest(const QString&, uint);
         ///< A list of available thumbnail directories
         QStringList m_thumbnailDirs;
-        ///< Internal map to keep track of thumbnail requests by handle
-        QHash<uint, QString> m_requestMap;
-        ///< Internal map to keep track of thumbnail requests by URI
-        QHash<QString, uint> m_uriMap;
-        ///< The maximum number of pending requests possible. Requests beyond
-        /// this will be ignored.
-        const qint32 MAX_REQ_MAP_SIZE;
+        ///< Queue of images that are missing thumbnails
+        QStringList m_uriRequestQueue;
+        ///< Internal map to keep track of pending thumbnail requests
+        QHash<QString, uint> m_uriAlreadyRequested;
         ///< The scheduler to use for the system thumbnailer. The class
         /// currently fixes this to "foreground".
         const QString m_scheduler;
         ///< The "flavor" of the thumbnail needed. The class currently fixes
         /// this to "normal".
         const QString m_flavor;
+        ///< Timer for combining multiple image sources to one thumbnail request
+        QTimer *m_thumbnailTimer;
 };
 }
 #endif // THUMBNAILER_H
