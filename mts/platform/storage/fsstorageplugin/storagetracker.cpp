@@ -1479,16 +1479,24 @@ void setFramesPerThousandSecs (const QString& iri, QString& val, QStringList& do
     }
 }
 
+void StorageTracker::ignoreNextUpdateFinished(QDBusPendingCallWatcher *pcw)
+{
+    QDBusPendingReply<> reply = *pcw;
+
+    if (!reply.isValid())
+        MTP_LOG_WARNING("Ignore next update failed!!");
+
+    pcw->deleteLater();
+}
+
 void StorageTracker::ignoreNextUpdate(const QStringList &iris)
 {
     if(m_minerInterface.isValid())
     {
-        QDBusPendingReply<> reply = m_minerInterface.asyncCall("IgnoreNextUpdate", iris);
-        reply.waitForFinished();
-        if(false == reply.isValid())
-        {
-            MTP_LOG_WARNING("Ignore next update failed!!");
-        }
+        QDBusPendingCall pc = m_minerInterface.asyncCall("IgnoreNextUpdate", iris);
+        QDBusPendingCallWatcher *pcw = new QDBusPendingCallWatcher(pc, this);
+        connect(pcw, &QDBusPendingCallWatcher::finished,
+                this, &StorageTracker::ignoreNextUpdateFinished);
     }
 }
 
