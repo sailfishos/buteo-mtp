@@ -70,7 +70,9 @@ static void catchUserSignal()
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
     m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1),
     m_reader_busy(READER_FREE), m_writer_busy(false), m_events_busy(false),
-    m_events_failed(0), m_inSession(false)
+    m_events_failed(0), m_inSession(false),
+    m_storageReady(false),
+    m_readerEnabled(false)
 {
     // event write cancelation
     m_event_cancel = new QTimer(this);
@@ -188,11 +190,13 @@ void MTPTransporterUSB::disableRW()
 
 void MTPTransporterUSB::enableRW()
 {
-    m_bulkRead.start();
+    startRead();
 }
 
 void MTPTransporterUSB::reset()
 {
+    MTP_LOG_CRITICAL("reset ...");
+
     m_bulkRead.exitThread();
     m_bulkWrite.exitThread();
     m_intrWrite.exitThread();
@@ -203,9 +207,9 @@ void MTPTransporterUSB::reset()
     m_resetCount++;
 
     m_intrWrite.start();
-    m_bulkRead.start();
+    startRead();
 
-    MTP_LOG_CRITICAL("reset");
+    MTP_LOG_CRITICAL("reset done");
 }
 
 MTPTransporterUSB::~MTPTransporterUSB()
@@ -471,7 +475,7 @@ void MTPTransporterUSB::openDevices()
         MTP_LOG_CRITICAL("Couldn't open OUT endpoint file " << out_file);
     } else {
         m_bulkRead.setFd(m_outFd);
-        m_bulkRead.start();
+        startRead();
     }
 
     m_intrFd = open(interrupt_file, O_RDWR);
@@ -513,17 +517,40 @@ void MTPTransporterUSB::closeDevices()
     }
 }
 
+void MTPTransporterUSB::rethinkRead()
+{
+    if (m_readerEnabled) {
+        if (m_storageReady) {
+            MTP_LOG_TRACE("start bulk reader");
+            m_bulkRead.start();
+        } else {
+            MTP_LOG_TRACE("delay bulk reader");
+        }
+    }
+}
+
 void MTPTransporterUSB::startRead()
 {
-    m_bulkRead.start();
+    MTP_LOG_TRACE("reader enabled");
+    m_readerEnabled = true;
+    rethinkRead();
 }
 
 void MTPTransporterUSB::stopRead()
 {
+    MTP_LOG_TRACE("reader disabled");
+    m_readerEnabled = false;
     emit cleanup();
     m_containerReadLen = 0;
     m_bulkRead.resetData();
     m_resetCount++;
+}
+
+void MTPTransporterUSB::onStorageReady(void)
+{
+    MTP_LOG_TRACE("Storage ready");
+    m_storageReady = true;
+    rethinkRead();
 }
 
 void MTPTransporterUSB::handleHighPriorityData()

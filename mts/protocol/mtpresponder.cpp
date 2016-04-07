@@ -154,6 +154,12 @@ bool MTPResponder::initStorages()
     connect(m_storageServer, &StorageFactory::storageReady,
         this, &MTPResponder::onStorageReady);
 
+    /* Fixme: New style connect can't be used as responder
+     *        has pointer to transporter base class while
+     *        the slots are in derived usb/dummy classes. */
+    connect(m_storageServer, SIGNAL(storageReady()),
+            m_transporter, SLOT(onStorageReady()));
+
     QVector<quint32> failedStorageIds;
     bool result = m_storageServer->enumerateStorages(failedStorageIds);
     if (!result) {
