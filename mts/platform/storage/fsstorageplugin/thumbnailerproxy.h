@@ -91,7 +91,7 @@ public Q_SLOTS: // METHODS
         return reply;
     }
 
-    inline QDBusPendingReply<uint> Queue(const QStringList &uris, const QStringList &mime_types, const QString &flavor, const QString &scheduler, uint handle_to_dequeue)
+    inline QDBusPendingCall Queue(const QStringList &uris, const QStringList &mime_types, const QString &flavor, const QString &scheduler, uint handle_to_dequeue)
     {
         QList<QVariant> argumentList;
         argumentList << qVariantFromValue(uris) << qVariantFromValue(mime_types) << qVariantFromValue(flavor) << qVariantFromValue(scheduler) << qVariantFromValue(handle_to_dequeue);

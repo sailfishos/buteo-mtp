@@ -48,7 +48,7 @@ static const QString THUMB_DIR = "/.thumbnails";
 
 
 Thumbnailer::Thumbnailer() :
-    ThumbnailerProxy(THUMBNAILER_SERVICE, THUMBNAILER_GENERIC_PATH, QDBusConnection::sessionBus()), MAX_REQ_MAP_SIZE(2000),
+    ThumbnailerProxy(THUMBNAILER_SERVICE, THUMBNAILER_GENERIC_PATH, QDBusConnection::sessionBus()),
     m_scheduler("foreground"), m_flavor("normal")
 {
     QString thumbBaseDir = QDir::homePath() + THUMB_DIR;
@@ -108,6 +108,25 @@ void Thumbnailer::slotError(uint /*handle*/, const QStringList& uris, int /*erro
     }
 }
 
+void Thumbnailer::requestThumbnailFinished(QDBusPendingCallWatcher *pcw)
+{
+    QDBusPendingReply<uint> reply = *pcw;
+    const QString fileIri = pcw->property("thumbnailer_file_iri").toString();
+
+    if (reply.isError()) {
+        MTP_LOG_WARNING("Failed to queue request to thumbnailer::" << fileIri);
+        MTP_LOG_WARNING("Error::" << reply.error());
+
+        /* The method call failed, so we are not going to see any
+         * D-Bus signals related to this request -> dequeue uri. */
+        m_uriMap.remove(fileIri);
+    } else {
+        /* Insert handle to map */
+        m_requestMap.insert(reply.value(), fileIri);
+    }
+    pcw->deleteLater();
+}
+
 QString Thumbnailer::requestThumbnail(const QString &filePath, const QString &mimeType)
 {
     QString thumbPath;
@@ -121,30 +140,16 @@ QString Thumbnailer::requestThumbnail(const QString &filePath, const QString &mi
         QStringList mimes; // Currently empty -- do we need to fill these?
         uris << fileIri;
         mimes << mimeType;
-        QDBusPendingReply<uint> reply = this->Queue(uris, mimes, m_flavor, m_scheduler, 0);
-        reply.waitForFinished();
-        if(reply.isError())
-        {
-            MTP_LOG_WARNING("Failed to queue request to thumbnailer::" << filePath);
-            MTP_LOG_WARNING("Error::" << reply.error());
-        }
-        recordRequest(fileIri, reply.value());
-        // TODO: Do we need to store the handle? It is not needed as we only rely on the Ready callback
+        QDBusPendingCall pc = this->Queue(uris, mimes, m_flavor, m_scheduler, 0);
+        QDBusPendingCallWatcher *pcw = new QDBusPendingCallWatcher(pc, this);
+        pcw->setProperty("thumbnailer_file_iri", fileIri);
+        connect(pcw, &QDBusPendingCallWatcher::finished,
+                this, &Thumbnailer::requestThumbnailFinished);
+
+        /* Insert uri to map; value is dummy */
+        m_uriMap.insert(fileIri, 0);
     }
     return thumbPath;
-}
-
-void Thumbnailer::recordRequest(const QString& fileIri, uint reqHandle)
-{
-    if(m_requestMap.size() > MAX_REQ_MAP_SIZE || m_uriMap.size() > MAX_REQ_MAP_SIZE)
-    {
-        MTP_LOG_WARNING("Thumbnailer::Exceeded max req size!");
-    }
-    else
-    {
-        m_requestMap.insert(reqHandle, fileIri);
-        m_uriMap.insert(fileIri, reqHandle);
-    }
 }
 
 bool Thumbnailer::checkThumbnailPresent(const QString& filePath, QString& thumbPath)
