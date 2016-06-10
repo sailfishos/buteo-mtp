@@ -34,6 +34,7 @@
 #include <QXmlSimpleReader>
 #include <QDomDocument>
 #include <QTextStream>
+#include <QDataStream>
 #include <QDir>
 #include "xmlhandler.h"
 #include "deviceinfo.h"
