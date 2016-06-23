@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<node name="/org/nemomobile/Thumbnailer">
+  <interface name="org.nemomobile.Thumbnailer">
+    <method name="Fetch">
+      <annotation name="org.freedesktop.DBus.GLib.Async" value="true"/>
+      <arg type="as" name="uris" direction="in" />
+      <arg type="u" name="size" direction="in" />
+      <arg type="b" name="unbounded" direction="in" />
+      <arg type="b" name="crop" direction="in" />
+      <arg type="u" name="handle" direction="out" />
+    </method>
+
+    <signal name="Finished">
+      <arg type="u" name="handle" />
+    </signal>
+
+    <signal name="Ready">
+      <arg type="u" name="handle" />
+      <arg type="a(ss)" name="thumbnails" />
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="ThumbnailPathList"/>
+    </signal>
+
+    <signal name="Failed">
+      <arg type="u" name="handle" />
+      <arg type="as" name="uris" />
+    </signal>
+  </interface>
+</node>

@@ -117,6 +117,9 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
     // Populate puoids stored persistently and store them in the puoids map.
     populatePuoids();
 
+    // Register this type before creating the Thumbnailer
+    qDBusRegisterMetaType<ThumbnailPathList>();
+
     m_tracker = new StorageTracker();
     m_thumbnailer = new Thumbnailer();
     QObject::connect( m_thumbnailer, SIGNAL( thumbnailReady( const QString& ) ), this, SLOT( receiveThumbnail( const QString& ) ) );
