@@ -60,7 +60,14 @@ void MTPResponder_test::initTestCase()
     m_responseCode = (MTPResponseCode)MTP_RESP_Undefined;
     m_opcode = 0xFFFF;
     cleanDirs();
-    m_responder = new MTPResponder();
+
+    // Note: Various pieces of code do signal/slot setup assuming that
+    //       MTPResponder::instance() returns the currently used
+    //       mtp responder object -> semi-initialized responder object
+    //       gets created and used unless the instance() method is used
+    //       also in the unit test setup.
+    m_responder = MTPResponder::instance();
+
     bool ok;
     ok = m_responder->initTransport(DUMMY);
     QObject::connect( m_responder->m_transporter, SIGNAL(dataReceived(quint8*, quint32, bool, bool)),this, SLOT(processReceivedData(quint8*, quint32, bool, bool)) );
@@ -75,7 +82,9 @@ void MTPResponder_test::initTestCase()
 
 void MTPResponder_test::cleanupTestCase()
 {
-    delete m_responder;
+    // m_responder is instance object -> must not be deleted
+    m_responder = 0;
+
     system("rm -rf /tmp/mtptests");
     cleanDirs();
 }

@@ -31,6 +31,7 @@
 
 #include "deviceinfoprovider.h"
 #include <QDeviceInfo>
+#include <QTimer>
 #include <ssudeviceinfo.h>
 #include <contextproperty.h>
 #include "trace.h"
@@ -56,8 +57,12 @@ DeviceInfoProvider::DeviceInfoProvider():
     m_model = di.model().isEmpty() ? m_model : di.model();
 
     connect(battery, SIGNAL(valueChanged()), this, SLOT(onBatteryPercentageChanged()));
-    // Initialize the battery charge value.
-    onBatteryPercentageChanged();
+
+    // Initialize the battery charge value. Use idle callback because
+    // acting on the battery level information requires that the
+    // transport object setup has been finished and that is done
+    // (if at all) after setting up the device info provider.
+    QTimer::singleShot(0, this, SLOT(onBatteryPercentageChanged()));
 
     if(m_newConfigFileWasCreated)
     {
