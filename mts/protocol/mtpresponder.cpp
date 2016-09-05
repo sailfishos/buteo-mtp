@@ -270,6 +270,11 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
     MTP_LOG_INFO("Sending container of type:: " << QString("0x%1").arg(container.containerType(), 0, 16));
     MTP_LOG_INFO("Code:: " << QString("0x%1").arg(container.code(), 0, 16));
 
+    if( !m_transporter ) {
+        MTP_LOG_WARNING("Transporter not set; ignoring container");
+        return false;
+    }
+
     if(MTP_CONTAINER_TYPE_RESPONSE == container.containerType() || MTP_CONTAINER_TYPE_DATA == container.containerType() ||
        MTP_CONTAINER_TYPE_EVENT == container.containerType() )
     {
@@ -2968,6 +2973,11 @@ void MTPResponder::resume()
 
 void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &params)
 {
+    if( !m_transporter ) {
+        MTP_LOG_WARNING("Transporter not set; event ignored");
+        return;
+    }
+
     MTPTxContainer container(MTP_CONTAINER_TYPE_EVENT, event,
             MTP_NO_TRANSACTION_ID, params.size() * sizeof (quint32));
     foreach (quint32 param, params) {
