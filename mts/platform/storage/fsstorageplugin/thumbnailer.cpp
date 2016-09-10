@@ -88,6 +88,8 @@ Thumbnailer::Thumbnailer() :
 
 void Thumbnailer::slotThumbnailReady(uint handle, const QStringList& uris)
 {
+    Q_UNUSED(handle);
+
     foreach(const QString &uri, uris)
     {
         /* Thumbnailer may use signals directed to us only
@@ -103,13 +105,17 @@ void Thumbnailer::slotThumbnailReady(uint handle, const QStringList& uris)
     }
 }
 
-void Thumbnailer::slotRequestStarted(uint /*handle*/)
+void Thumbnailer::slotRequestStarted(uint handle)
 {
+    Q_UNUSED(handle);
+
     // Nothing to do here right now
 }
 
 void Thumbnailer::slotRequestFinished(uint handle)
 {
+    Q_UNUSED(handle);
+
     // Nothing to do here right now
 }
 
@@ -204,6 +210,8 @@ void Thumbnailer::thumbnailDelayTimeout()
 
 QString Thumbnailer::requestThumbnail(const QString &filePath, const QString &mimeType)
 {
+    Q_UNUSED(mimeType)
+
     QString thumbPath;
     QString fileIri = IRI_PREFIX + filePath;
     // First check if a thumbnail is already present
