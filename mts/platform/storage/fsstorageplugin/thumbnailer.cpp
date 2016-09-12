@@ -244,24 +244,49 @@ bool Thumbnailer::checkThumbnailPresent(const QString& filePath, QString& thumbP
     QByteArray fileHash = hasher.result();
     QString hexHash = QString(fileHash.toHex());
 
+    QFileInfo fileInfo(filePath);
+
     foreach(QString candidateDir, m_thumbnailDirs)
     {
-        QString file = candidateDir + "/" + hexHash;
-        QString ret;
-        if(QFile::exists(ret = (file + ".jpeg")) || QFile::exists(ret = (file + ".png")))
+        static const char * const extension[] =
         {
-            QFileInfo fileInfo(filePath);
-            QFileInfo thumbInfo(ret);
+            ".jpeg",
+            ".png",
+            0
+        };
+
+        QString base = candidateDir + "/" + hexHash;
+
+        for(size_t i = 0; extension[i]; ++i) {
+            QFile thumbFile(base + extension[i]);
+            if(!thumbFile.exists())
+                continue;
+
+            /* Assume thumbnail is ok, if it has the same or later
+             * modification time stamp as the original image. */
+            QFileInfo thumbInfo(thumbFile);
             if(thumbInfo.lastModified() >= fileInfo.lastModified())
             {
-                MTP_LOG_INFO("Thumbnail file:" << ret);
-                thumbPath = ret;
+                thumbPath = thumbFile.fileName();
+                MTP_LOG_INFO("Thumbnail file:" << thumbPath);
                 return true;
+            }
+
+            /* If the logic in here considers the thumbnail too old
+             * while thumbailer thinks it still is fresh enoug, we
+             * get ipc ringing -> the old thumbnail must be removed
+             * to avoid this. */
+            if(thumbFile.remove())
+            {
+                MTP_LOG_TRACE("Removed stale thumbnail file:" << thumbFile.fileName());
             }
             else
             {
-                MTP_LOG_WARNING("Stale thumbnail file:" << ret);
+                // FIXME: if thumbnailer thinks the file is ok, while we think 
+                //        it is not -> we end up here over and over again...
+                MTP_LOG_WARNING("Failed to removed stale thumbnail file:" << thumbFile.fileName());
             }
+
         }
     }
     return false;
