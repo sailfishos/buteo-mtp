@@ -175,6 +175,9 @@ void FSStoragePlugin::enumerateStorage_worker()
     MTP_LOG_WARNING("storage" << m_storageId << "is ready");
 
     emit storagePluginReady(m_storageId);
+
+    // enable thumbnailer after fs scan is finished
+    m_thumbnailer->enableThumbnailing();
 }
 
 /************************************************************

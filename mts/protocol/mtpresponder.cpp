@@ -3123,10 +3123,23 @@ MTPResponder::ResponderState MTPResponder::getResponderState(void)
 
 void MTPResponder::setResponderState(MTPResponder::ResponderState state)
 {
-    if (m_state_accessor_only != state) {
-        MTP_LOG_INFO("state:" << responderStateName(m_state_accessor_only)
-                     << "->" << responderStateName(state));
+    MTPResponder::ResponderState prev = m_state_accessor_only;
+
+    if( prev != state ) {
         m_state_accessor_only = state;
+
+        MTP_LOG_INFO("state:" << responderStateName(prev)
+                     << "->" << responderStateName(state));
+
+        bool wasBusy = (prev  != RESPONDER_IDLE);
+        bool isBusy  = (state != RESPONDER_IDLE);
+
+        if( wasBusy != isBusy ) {
+            if( isBusy )
+                emit commandPending();
+            else
+                emit commandFinished();
+        }
     }
 }
 

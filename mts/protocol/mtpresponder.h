@@ -112,6 +112,12 @@ class MTPResponder : public QObject
         /// This signal is emitted based on MTP_OP_OpenSession / MTP_OP_CloseSession handling
         void sessionOpenChanged(bool isOpen);
 
+        /// Emitted when mtp command is received
+        void commandPending();
+
+        /// Emitted when mtp command has been processed
+        void commandFinished();
+
     private Q_SLOTS:
         /// This slot acts as a callback to the transport layer, used to receive MTP containers
         /// \param data [in] The data received from the transport layer
