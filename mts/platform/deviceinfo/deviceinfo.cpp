@@ -133,6 +133,7 @@ quint16 DeviceInfo::m_supportedFormatsTable[] = {
     MTP_OBF_FORMAT_vCard3,
     MTP_OBF_FORMAT_vCal1,
 
+    MTP_OBF_FORMAT_Unknown_Image_Object,
     MTP_OBF_FORMAT_EXIF_JPEG,
     MTP_OBF_FORMAT_GIF,
     MTP_OBF_FORMAT_PNG,
@@ -165,6 +166,7 @@ quint16 DeviceInfo::m_commonFormatsTable[] = {
 };
 
 quint16 DeviceInfo::m_imageFormatsTable[] = {
+    MTP_OBF_FORMAT_Unknown_Image_Object,
     MTP_OBF_FORMAT_EXIF_JPEG,
     MTP_OBF_FORMAT_GIF,
     MTP_OBF_FORMAT_PNG,

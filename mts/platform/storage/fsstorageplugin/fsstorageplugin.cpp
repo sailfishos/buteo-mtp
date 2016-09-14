@@ -543,30 +543,40 @@ void FSStoragePlugin::storePuoids()
  ***********************************************************/
 void FSStoragePlugin::buildSupportedFormatsList()
 {
-    m_formatByExtTable["pla"] = MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist;
-    m_formatByExtTable["wav"] = MTP_OBF_FORMAT_WAV;
-    m_formatByExtTable["mp3"] = MTP_OBF_FORMAT_MP3;
-    m_formatByExtTable["ogg"] = MTP_OBF_FORMAT_OGG;
-    m_formatByExtTable["txt"] = MTP_OBF_FORMAT_Text;
-    m_formatByExtTable["htm"] = MTP_OBF_FORMAT_HTML;
+    m_formatByExtTable["pla"]  = MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist;
+    m_formatByExtTable["wav"]  = MTP_OBF_FORMAT_WAV;
+    m_formatByExtTable["mp3"]  = MTP_OBF_FORMAT_MP3;
+    m_formatByExtTable["ogg"]  = MTP_OBF_FORMAT_OGG;
+    m_formatByExtTable["txt"]  = MTP_OBF_FORMAT_Text;
+    m_formatByExtTable["htm"]  = MTP_OBF_FORMAT_HTML;
     m_formatByExtTable["html"] = MTP_OBF_FORMAT_HTML;
-    m_formatByExtTable["wmv"] = MTP_OBF_FORMAT_WMV;
-    m_formatByExtTable["avi"] = MTP_OBF_FORMAT_AVI;
-    m_formatByExtTable["mpg"] = MTP_OBF_FORMAT_MPEG;
+    m_formatByExtTable["wmv"]  = MTP_OBF_FORMAT_WMV;
+    m_formatByExtTable["avi"]  = MTP_OBF_FORMAT_AVI;
+    m_formatByExtTable["mpg"]  = MTP_OBF_FORMAT_MPEG;
     m_formatByExtTable["mpeg"] = MTP_OBF_FORMAT_MPEG;
-    m_formatByExtTable["bmp"] = MTP_OBF_FORMAT_BMP;
-    m_formatByExtTable["gif"] = MTP_OBF_FORMAT_GIF;
-    m_formatByExtTable["jpg"] = MTP_OBF_FORMAT_EXIF_JPEG;
+
+    m_formatByExtTable["bmp"]  = MTP_OBF_FORMAT_BMP;
+    m_formatByExtTable["gif"]  = MTP_OBF_FORMAT_GIF;
+    m_formatByExtTable["jpg"]  = MTP_OBF_FORMAT_EXIF_JPEG;
     m_formatByExtTable["jpeg"] = MTP_OBF_FORMAT_EXIF_JPEG;
-    m_formatByExtTable["png"] = MTP_OBF_FORMAT_PNG;
-    m_formatByExtTable["tif"] = MTP_OBF_FORMAT_TIFF;
+    m_formatByExtTable["png"]  = MTP_OBF_FORMAT_PNG;
+    m_formatByExtTable["tif"]  = MTP_OBF_FORMAT_TIFF;
     m_formatByExtTable["tiff"] = MTP_OBF_FORMAT_TIFF;
-    m_formatByExtTable["wma"] = MTP_OBF_FORMAT_WMA;
-    m_formatByExtTable["aac"] = MTP_OBF_FORMAT_AAC;
-    m_formatByExtTable["mp4"] = MTP_OBF_FORMAT_MP4_Container;
-    m_formatByExtTable["3gp"] = MTP_OBF_FORMAT_3GP_Container;
-    m_formatByExtTable["pls"] = MTP_OBF_FORMAT_PLS_Playlist;
-    m_formatByExtTable["alb"] = MTP_OBF_FORMAT_Abstract_Audio_Album;
+
+    m_formatByExtTable["wma"]  = MTP_OBF_FORMAT_WMA;
+    m_formatByExtTable["aac"]  = MTP_OBF_FORMAT_AAC;
+    m_formatByExtTable["mp4"]  = MTP_OBF_FORMAT_MP4_Container;
+    m_formatByExtTable["3gp"]  = MTP_OBF_FORMAT_3GP_Container;
+    m_formatByExtTable["pls"]  = MTP_OBF_FORMAT_PLS_Playlist;
+    m_formatByExtTable["alb"]  = MTP_OBF_FORMAT_Abstract_Audio_Album;
+
+    m_formatByExtTable["pbm"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
+    m_formatByExtTable["pcx"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
+    m_formatByExtTable["pgm"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
+    m_formatByExtTable["ppm"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
+    m_formatByExtTable["xpm"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
+    m_formatByExtTable["xwd"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
+
 
     // Populate format code->MIME type map
     m_imageMimeTable[MTP_OBF_FORMAT_BMP] = "image/bmp";
@@ -574,6 +584,8 @@ void FSStoragePlugin::buildSupportedFormatsList()
     m_imageMimeTable[MTP_OBF_FORMAT_EXIF_JPEG] = "image/jpeg";
     m_imageMimeTable[MTP_OBF_FORMAT_PNG] = "image/png";
     m_imageMimeTable[MTP_OBF_FORMAT_TIFF] = "image/tiff";
+
+    m_imageMimeTable[MTP_OBF_FORMAT_Unknown_Image_Object] = "application/octet-stream";
 }
 
 /************************************************************
@@ -1691,20 +1703,26 @@ quint64 FSStoragePlugin::getObjectSize( StorageItem *storageItem )
  ***********************************************************/
 bool FSStoragePlugin::isImage( StorageItem *storageItem )
 {
-    //UGLY
-    if( storageItem &&
-        ( storageItem->m_path.endsWith("gif")  ||
-          storageItem->m_path.endsWith("jpeg") ||
-          storageItem->m_path.endsWith("jpg")  ||
-          storageItem->m_path.endsWith("bmp")  ||
-          storageItem->m_path.endsWith("tif")  ||
-          storageItem->m_path.endsWith("tiff") ||
-          storageItem->m_path.endsWith("png")
-        )
-      )
+    static const char * const extension[] =
     {
-        return true;
+        /* Things that thumbnailer can process */
+        ".bmp", ".gif", ".jpeg", ".jpg", ".png",
+        /* Things that would be nice to get supported */
+#if 0
+        ".tif", ".tiff",
+        ".pbm", ".pcx", ".pgm", ".ppm", ".xpm", ".xwd",
+#endif
+        /* Sentinel */
+        0
+    };
+
+    if( storageItem ) {
+        for( size_t i = 0; extension[i]; ++i ) {
+            if( storageItem->m_path.endsWith(extension[i]) )
+                return true;
+        }
     }
+
     return false;
 }
 

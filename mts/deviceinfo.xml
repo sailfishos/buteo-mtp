@@ -128,6 +128,7 @@
                         <CommonFormat>0xBB83</CommonFormat><!--vCard3-->
                         <CommonFormat>0xBE02</CommonFormat><!--vCal1-->
 
+                        <ImageFormat>0x3800</ImageFormat><!--Unknown Image-->
                         <ImageFormat>0x3801</ImageFormat><!--JPEG-->
                         <ImageFormat>0x3807</ImageFormat><!--GIF-->
                         <ImageFormat>0x380B</ImageFormat><!--PNG-->
