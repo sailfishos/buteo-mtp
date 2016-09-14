@@ -3062,3 +3062,561 @@ void MTPResponder::setResponderState(MTPResponder::ResponderState state)
         m_state_accessor_only = state;
     }
 }
+
+/* Helper functions for making human readable diagnostic logging */
+extern "C"
+{
+    const char *mtp_format_category_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_UNSUPPORTED_FORMAT: res = "UNSUPPORTED_FORMAT"; break;
+        case MTP_AUDIO_FORMAT:       res = "AUDIO_FORMAT"; break;
+        case MTP_VIDEO_FORMAT:       res = "VIDEO_FORMAT"; break;
+        case MTP_IMAGE_FORMAT:       res = "IMAGE_FORMAT"; break;
+        case MTP_COMMON_FORMAT:      res = "COMMON_FORMAT"; break;
+        }
+        return res;
+    }
+    const char *mtp_file_system_type_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_FILE_SYSTEM_TYPE_Undefined: res = "Undefined"; break;
+        case MTP_FILE_SYSTEM_TYPE_GenFlat:   res = "GenFlat"; break;
+        case MTP_FILE_SYSTEM_TYPE_GenHier:   res = "GenHier"; break;
+        case MTP_FILE_SYSTEM_TYPE_DCF:       res = "DCF"; break;
+        }
+        return res;
+    }
+    const char *mtp_association_type_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_ASSOCIATION_TYPE_Undefined:           res = "Undefined"; break;
+        case MTP_ASSOCIATION_TYPE_GenFolder:           res = "GenFolder"; break;
+        case MTP_ASSOCIATION_TYPE_Album:               res = "Album"; break;
+        case MTP_ASSOCIATION_TYPE_TimeSeq:             res = "TimeSeq"; break;
+        case MTP_ASSOCIATION_TYPE_HorizontalPanoramic: res = "HorizontalPanoramic"; break;
+        case MTP_ASSOCIATION_TYPE_VerticalPanoramic:   res = "VerticalPanoramic"; break;
+        case MTP_ASSOCIATION_TYPE_2DPanoramic:         res = "2DPanoramic"; break;
+        case MTP_ASSOCIATION_TYPE_AncillaryData:       res = "AncillaryData"; break;
+        }
+        return res;
+    }
+    const char *mtp_storage_access_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_STORAGE_ACCESS_ReadWrite:      res = "ReadWrite"; break;
+        case MTP_STORAGE_ACCESS_ReadOnly_NoDel: res = "ReadOnly_NoDel"; break;
+        case MTP_STORAGE_ACCESS_ReadOnly_Del:   res = "ReadOnly_Del"; break;
+        }
+        return res;
+    }
+    const char *mtp_container_type_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_CONTAINER_TYPE_UNDEFINED: res = "UNDEFINED"; break;
+        case MTP_CONTAINER_TYPE_COMMAND:   res = "COMMAND"; break;
+        case MTP_CONTAINER_TYPE_DATA:      res = "DATA"; break;
+        case MTP_CONTAINER_TYPE_RESPONSE:  res = "RESPONSE"; break;
+        case MTP_CONTAINER_TYPE_EVENT:     res = "EVENT"; break;
+        }
+        return res;
+    }
+    const char *mtp_obj_prop_form_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_OBJ_PROP_FORM_None:               res = "None"; break;
+        case MTP_OBJ_PROP_FORM_Range:              res = "Range"; break;
+        case MTP_OBJ_PROP_FORM_Enumeration:        res = "Enumeration"; break;
+        case MTP_OBJ_PROP_FORM_DateTime:           res = "DateTime"; break;
+        case MTP_OBJ_PROP_FORM_Fixed_length_Array: res = "Fixed_length_Array"; break;
+        case MTP_OBJ_PROP_FORM_Regular_Expression: res = "Regular_Expression"; break;
+        case MTP_OBJ_PROP_FORM_ByteArray:          res = "ByteArray"; break;
+        case MTP_OBJ_PROP_FORM_LongString:         res = "LongString"; break;
+        }
+        return res;
+    }
+    const char *mtp_storage_type_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_STORAGE_TYPE_Undefined:    res = "Undefined"; break;
+        case MTP_STORAGE_TYPE_FixedROM:     res = "FixedROM"; break;
+        case MTP_STORAGE_TYPE_RemovableROM: res = "RemovableROM"; break;
+        case MTP_STORAGE_TYPE_FixedRAM:     res = "FixedRAM"; break;
+        case MTP_STORAGE_TYPE_RemovableRAM: res = "RemovableRAM"; break;
+        }
+        return res;
+    }
+    const char *mtp_bitrate_type_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_BITRATE_TYPE_UNUSED:   res = "UNUSED"; break;
+        case MTP_BITRATE_TYPE_DISCRETE: res = "DISCRETE"; break;
+        case MTP_BITRATE_TYPE_VARIABLE: res = "VARIABLE"; break;
+        case MTP_BITRATE_TYPE_FREE:     res = "FREE"; break;
+        }
+        return res;
+    }
+    const char *mtp_protection_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_PROTECTION_NoProtection:         res = "NoProtection"; break;
+        case MTP_PROTECTION_ReadOnly:             res = "ReadOnly"; break;
+        case MTP_PROTECTION_ReadOnlyData:         res = "ReadOnlyData"; break;
+        case MTP_PROTECTION_NonTransferrableData: res = "NonTransferrableData"; break;
+        }
+        return res;
+    }
+    const char *mtp_form_flag_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_FORM_FLAG_NONE:        res = "NONE"; break;
+        case MTP_FORM_FLAG_RANGE:       res = "RANGE"; break;
+        case MTP_FORM_FLAG_ENUM:        res = "ENUM"; break;
+        case MTP_FORM_FLAG_DATE_TIME:   res = "DATE_TIME"; break;
+        case MTP_FORM_FLAG_FIXED_ARRAY: res = "FIXED_ARRAY"; break;
+        case MTP_FORM_FLAG_REGEX:       res = "REGEX"; break;
+        case MTP_FORM_FLAG_BYTE_ARRAY:  res = "BYTE_ARRAY"; break;
+        case MTP_FORM_FLAG_LONG_STRING: res = "LONG_STRING"; break;
+        }
+        return res;
+    }
+    const char *mtp_data_type_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_DATA_TYPE_UNDEF:    res = "UNDEF"; break;
+        case MTP_DATA_TYPE_INT8:     res = "INT8"; break;
+        case MTP_DATA_TYPE_UINT8:    res = "UINT8"; break;
+        case MTP_DATA_TYPE_INT16:    res = "INT16"; break;
+        case MTP_DATA_TYPE_UINT16:   res = "UINT16"; break;
+        case MTP_DATA_TYPE_INT32:    res = "INT32"; break;
+        case MTP_DATA_TYPE_UINT32:   res = "UINT32"; break;
+        case MTP_DATA_TYPE_INT64:    res = "INT64"; break;
+        case MTP_DATA_TYPE_UINT64:   res = "UINT64"; break;
+        case MTP_DATA_TYPE_INT128:   res = "INT128"; break;
+        case MTP_DATA_TYPE_UINT128:  res = "UINT128"; break;
+        case MTP_DATA_TYPE_AINT8:    res = "AINT8"; break;
+        case MTP_DATA_TYPE_AUINT8:   res = "AUINT8"; break;
+        case MTP_DATA_TYPE_AINT16:   res = "AINT16"; break;
+        case MTP_DATA_TYPE_AUINT16:  res = "AUINT16"; break;
+        case MTP_DATA_TYPE_AINT32:   res = "AINT32"; break;
+        case MTP_DATA_TYPE_AUINT32:  res = "AUINT32"; break;
+        case MTP_DATA_TYPE_AINT64:   res = "AINT64"; break;
+        case MTP_DATA_TYPE_AUINT64:  res = "AUINT64"; break;
+        case MTP_DATA_TYPE_AINT128:  res = "AINT128"; break;
+        case MTP_DATA_TYPE_AUINT128: res = "AUINT128"; break;
+        case MTP_DATA_TYPE_STR:      res = "STR"; break;
+        }
+        return res;
+    }
+    const char *mtp_ch_conf_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_CH_CONF_UNUSED: res = "UNUSED"; break;
+        case MTP_CH_CONF_MONO:   res = "MONO"; break;
+        case MTP_CH_CONF_STEREO: res = "STEREO"; break;
+        case MTP_CH_CONF_2_1_CH: res = "2_1_CH"; break;
+        case MTP_CH_CONF_3_CH:   res = "3_CH"; break;
+        case MTP_CH_CONF_3_1_CH: res = "3_1_CH"; break;
+        case MTP_CH_CONF_4_CH:   res = "4_CH"; break;
+        case MTP_CH_CONF_4_1_CH: res = "4_1_CH"; break;
+        case MTP_CH_CONF_5_CH:   res = "5_CH"; break;
+        case MTP_CH_CONF_5_1_CH: res = "5_1_CH"; break;
+        case MTP_CH_CONF_6_CH:   res = "6_CH"; break;
+        case MTP_CH_CONF_6_1_CH: res = "6_1_CH"; break;
+        case MTP_CH_CONF_7_CH:   res = "7_CH"; break;
+        case MTP_CH_CONF_7_1_CH: res = "7_1_CH"; break;
+        case MTP_CH_CONF_8_CH:   res = "8_CH"; break;
+        case MTP_CH_CONF_8_1_CH: res = "8_1_CH"; break;
+        case MTP_CH_CONF_9_CH:   res = "9_CH"; break;
+        case MTP_CH_CONF_9_1_CH: res = "9_1_CH"; break;
+        case MTP_CH_CONF_5_2_CH: res = "5_2_CH"; break;
+        case MTP_CH_CONF_6_2_CH: res = "6_2_CH"; break;
+        case MTP_CH_CONF_7_2_CH: res = "7_2_CH"; break;
+        case MTP_CH_CONF_8_2_CH: res = "8_2_CH"; break;
+        }
+        return res;
+    }
+    const char *mtp_code_repr(int val)
+    {
+        const char *res = "<unknown>";
+        switch(val) {
+        case MTP_OP_GetDeviceInfo:                           res = "OP_GetDeviceInfo"; break;
+        case MTP_OP_OpenSession:                             res = "OP_OpenSession"; break;
+        case MTP_OP_CloseSession:                            res = "OP_CloseSession"; break;
+        case MTP_OP_GetStorageIDs:                           res = "OP_GetStorageIDs"; break;
+        case MTP_OP_GetStorageInfo:                          res = "OP_GetStorageInfo"; break;
+        case MTP_OP_GetNumObjects:                           res = "OP_GetNumObjects"; break;
+        case MTP_OP_GetObjectHandles:                        res = "OP_GetObjectHandles"; break;
+        case MTP_OP_GetObjectInfo:                           res = "OP_GetObjectInfo"; break;
+        case MTP_OP_GetObject:                               res = "OP_GetObject"; break;
+        case MTP_OP_GetThumb:                                res = "OP_GetThumb"; break;
+        case MTP_OP_DeleteObject:                            res = "OP_DeleteObject"; break;
+        case MTP_OP_SendObjectInfo:                          res = "OP_SendObjectInfo"; break;
+        case MTP_OP_SendObject:                              res = "OP_SendObject"; break;
+        case MTP_OP_InitiateCapture:                         res = "OP_InitiateCapture"; break;
+        case MTP_OP_FormatStore:                             res = "OP_FormatStore"; break;
+        case MTP_OP_ResetDevice:                             res = "OP_ResetDevice"; break;
+        case MTP_OP_SelfTest:                                res = "OP_SelfTest"; break;
+        case MTP_OP_SetObjectProtection:                     res = "OP_SetObjectProtection"; break;
+        case MTP_OP_PowerDown:                               res = "OP_PowerDown"; break;
+        case MTP_OP_GetDevicePropDesc:                       res = "OP_GetDevicePropDesc"; break;
+        case MTP_OP_GetDevicePropValue:                      res = "OP_GetDevicePropValue"; break;
+        case MTP_OP_SetDevicePropValue:                      res = "OP_SetDevicePropValue"; break;
+        case MTP_OP_ResetDevicePropValue:                    res = "OP_ResetDevicePropValue"; break;
+        case MTP_OP_TerminateOpenCapture:                    res = "OP_TerminateOpenCapture"; break;
+        case MTP_OP_MoveObject:                              res = "OP_MoveObject"; break;
+        case MTP_OP_CopyObject:                              res = "OP_CopyObject"; break;
+        case MTP_OP_GetPartialObject:                        res = "OP_GetPartialObject"; break;
+        case MTP_OP_InitiateOpenCapture:                     res = "OP_InitiateOpenCapture"; break;
+        case MTP_RESP_Undefined:                             res = "RESP_Undefined"; break;
+        case MTP_RESP_OK:                                    res = "RESP_OK"; break;
+        case MTP_RESP_GeneralError:                          res = "RESP_GeneralError"; break;
+        case MTP_RESP_SessionNotOpen:                        res = "RESP_SessionNotOpen"; break;
+        case MTP_RESP_InvalidTransID:                        res = "RESP_InvalidTransID"; break;
+        case MTP_RESP_OperationNotSupported:                 res = "RESP_OperationNotSupported"; break;
+        case MTP_RESP_ParameterNotSupported:                 res = "RESP_ParameterNotSupported"; break;
+        case MTP_RESP_IncompleteTransfer:                    res = "RESP_IncompleteTransfer"; break;
+        case MTP_RESP_InvalidStorageID:                      res = "RESP_InvalidStorageID"; break;
+        case MTP_RESP_InvalidObjectHandle:                   res = "RESP_InvalidObjectHandle"; break;
+        case MTP_RESP_DevicePropNotSupported:                res = "RESP_DevicePropNotSupported"; break;
+        case MTP_RESP_InvalidObjectFormatCode:               res = "RESP_InvalidObjectFormatCode"; break;
+        case MTP_RESP_StoreFull:                             res = "RESP_StoreFull"; break;
+        case MTP_RESP_ObjectWriteProtected:                  res = "RESP_ObjectWriteProtected"; break;
+        case MTP_RESP_StoreReadOnly:                         res = "RESP_StoreReadOnly"; break;
+        case MTP_RESP_AccessDenied:                          res = "RESP_AccessDenied"; break;
+        case MTP_RESP_NoThumbnailPresent:                    res = "RESP_NoThumbnailPresent"; break;
+        case MTP_RESP_SelfTestFailed:                        res = "RESP_SelfTestFailed"; break;
+        case MTP_RESP_PartialDeletion:                       res = "RESP_PartialDeletion"; break;
+        case MTP_RESP_StoreNotAvailable:                     res = "RESP_StoreNotAvailable"; break;
+        case MTP_RESP_SpecByFormatUnsupported:               res = "RESP_SpecByFormatUnsupported"; break;
+        case MTP_RESP_NoValidObjectInfo:                     res = "RESP_NoValidObjectInfo"; break;
+        case MTP_RESP_InvalidCodeFormat:                     res = "RESP_InvalidCodeFormat"; break;
+        case MTP_RESP_UnknowVendorCode:                      res = "RESP_UnknowVendorCode"; break;
+        case MTP_RESP_CaptureAlreadyTerminated:              res = "RESP_CaptureAlreadyTerminated"; break;
+        case MTP_RESP_DeviceBusy:                            res = "RESP_DeviceBusy"; break;
+        case MTP_RESP_InvalidParentObject:                   res = "RESP_InvalidParentObject"; break;
+        case MTP_RESP_InvalidDevicePropFormat:               res = "RESP_InvalidDevicePropFormat"; break;
+        case MTP_RESP_InvalidDevicePropValue:                res = "RESP_InvalidDevicePropValue"; break;
+        case MTP_RESP_InvalidParameter:                      res = "RESP_InvalidParameter"; break;
+        case MTP_RESP_SessionAlreadyOpen:                    res = "RESP_SessionAlreadyOpen"; break;
+        case MTP_RESP_TransactionCancelled:                  res = "RESP_TransactionCancelled"; break;
+        case MTP_RESP_SpecificationOfDestinationUnsupported: res = "RESP_SpecificationOfDestinationUnsupported"; break;
+        case MTP_OBF_FORMAT_Undefined:                       res = "OBF_FORMAT_Undefined"; break;
+        case MTP_OBF_FORMAT_Association:                     res = "OBF_FORMAT_Association"; break;
+        case MTP_OBF_FORMAT_Script:                          res = "OBF_FORMAT_Script"; break;
+        case MTP_OBF_FORMAT_Executable:                      res = "OBF_FORMAT_Executable"; break;
+        case MTP_OBF_FORMAT_Text:                            res = "OBF_FORMAT_Text"; break;
+        case MTP_OBF_FORMAT_HTML:                            res = "OBF_FORMAT_HTML"; break;
+        case MTP_OBF_FORMAT_DPOF:                            res = "OBF_FORMAT_DPOF"; break;
+        case MTP_OBF_FORMAT_AIFF:                            res = "OBF_FORMAT_AIFF"; break;
+        case MTP_OBF_FORMAT_WAV:                             res = "OBF_FORMAT_WAV"; break;
+        case MTP_OBF_FORMAT_MP3:                             res = "OBF_FORMAT_MP3"; break;
+        case MTP_OBF_FORMAT_AVI:                             res = "OBF_FORMAT_AVI"; break;
+        case MTP_OBF_FORMAT_MPEG:                            res = "OBF_FORMAT_MPEG"; break;
+        case MTP_OBF_FORMAT_ASF:                             res = "OBF_FORMAT_ASF"; break;
+        case MTP_OBF_FORMAT_Unknown_Image_Object:            res = "OBF_FORMAT_Unknown_Image_Object"; break;
+        case MTP_OBF_FORMAT_EXIF_JPEG:                       res = "OBF_FORMAT_EXIF_JPEG"; break;
+        case MTP_OBF_FORMAT_TIFF_EP:                         res = "OBF_FORMAT_TIFF_EP"; break;
+        case MTP_OBF_FORMAT_FlashPix:                        res = "OBF_FORMAT_FlashPix"; break;
+        case MTP_OBF_FORMAT_BMP:                             res = "OBF_FORMAT_BMP"; break;
+        case MTP_OBF_FORMAT_CIFF:                            res = "OBF_FORMAT_CIFF"; break;
+        case MTP_OBF_FORMAT_GIF:                             res = "OBF_FORMAT_GIF"; break;
+        case MTP_OBF_FORMAT_JFIF:                            res = "OBF_FORMAT_JFIF"; break;
+        case MTP_OBF_FORMAT_PCD:                             res = "OBF_FORMAT_PCD"; break;
+        case MTP_OBF_FORMAT_PICT:                            res = "OBF_FORMAT_PICT"; break;
+        case MTP_OBF_FORMAT_PNG:                             res = "OBF_FORMAT_PNG"; break;
+        case MTP_OBF_FORMAT_TIFF:                            res = "OBF_FORMAT_TIFF"; break;
+        case MTP_OBF_FORMAT_TIFF_IT:                         res = "OBF_FORMAT_TIFF_IT"; break;
+        case MTP_OBF_FORMAT_JP2:                             res = "OBF_FORMAT_JP2"; break;
+        case MTP_OBF_FORMAT_JPX:                             res = "OBF_FORMAT_JPX"; break;
+        case MTP_EV_Undefined:                               res = "EV_Undefined"; break;
+        case MTP_EV_CancelTransaction:                       res = "EV_CancelTransaction"; break;
+        case MTP_EV_ObjectAdded:                             res = "EV_ObjectAdded"; break;
+        case MTP_EV_ObjectRemoved:                           res = "EV_ObjectRemoved"; break;
+        case MTP_EV_StoreAdded:                              res = "EV_StoreAdded"; break;
+        case MTP_EV_StoreRemoved:                            res = "EV_StoreRemoved"; break;
+        case MTP_EV_DevicePropChanged:                       res = "EV_DevicePropChanged"; break;
+        case MTP_EV_ObjectInfoChanged:                       res = "EV_ObjectInfoChanged"; break;
+        case MTP_EV_DeviceInfoChanged:                       res = "EV_DeviceInfoChanged"; break;
+        case MTP_EV_RequestObjectTransfer:                   res = "EV_RequestObjectTransfer"; break;
+        case MTP_EV_StoreFull:                               res = "EV_StoreFull"; break;
+        case MTP_EV_DeviceReset:                             res = "EV_DeviceReset"; break;
+        case MTP_EV_StorageInfoChanged:                      res = "EV_StorageInfoChanged"; break;
+        case MTP_EV_CaptureComplete:                         res = "EV_CaptureComplete"; break;
+        case MTP_EV_UnreportedStatus:                        res = "EV_UnreportedStatus"; break;
+        case MTP_DEV_PROPERTY_Undefined:                     res = "DEV_PROPERTY_Undefined"; break;
+        case MTP_DEV_PROPERTY_BatteryLevel:                  res = "DEV_PROPERTY_BatteryLevel"; break;
+        case MTP_DEV_PROPERTY_FunctionalMode:                res = "DEV_PROPERTY_FunctionalMode"; break;
+        case MTP_DEV_PROPERTY_ImageSize:                     res = "DEV_PROPERTY_ImageSize"; break;
+        case MTP_DEV_PROPERTY_CompressionSetting:            res = "DEV_PROPERTY_CompressionSetting"; break;
+        case MTP_DEV_PROPERTY_WhiteBalance:                  res = "DEV_PROPERTY_WhiteBalance"; break;
+        case MTP_DEV_PROPERTY_RGB_Gain:                      res = "DEV_PROPERTY_RGB_Gain"; break;
+        case MTP_DEV_PROPERTY_F_Number:                      res = "DEV_PROPERTY_F_Number"; break;
+        case MTP_DEV_PROPERTY_FocalLength:                   res = "DEV_PROPERTY_FocalLength"; break;
+        case MTP_DEV_PROPERTY_FocusDistance:                 res = "DEV_PROPERTY_FocusDistance"; break;
+        case MTP_DEV_PROPERTY_FocusMod:                      res = "DEV_PROPERTY_FocusMod"; break;
+        case MTP_DEV_PROPERTY_ExposureMeteringMode:          res = "DEV_PROPERTY_ExposureMeteringMode"; break;
+        case MTP_DEV_PROPERTY_FlashMode:                     res = "DEV_PROPERTY_FlashMode"; break;
+        case MTP_DEV_PROPERTY_ExposureTime:                  res = "DEV_PROPERTY_ExposureTime"; break;
+        case MTP_DEV_PROPERTY_ExposureProgramMode:           res = "DEV_PROPERTY_ExposureProgramMode"; break;
+        case MTP_DEV_PROPERTY_ExposureInde:                  res = "DEV_PROPERTY_ExposureInde"; break;
+        case MTP_DEV_PROPERTY_ExposureBiasCompensation:      res = "DEV_PROPERTY_ExposureBiasCompensation"; break;
+        case MTP_DEV_PROPERTY_DateTime:                      res = "DEV_PROPERTY_DateTime"; break;
+        case MTP_DEV_PROPERTY_CaptureDelay:                  res = "DEV_PROPERTY_CaptureDelay"; break;
+        case MTP_DEV_PROPERTY_StillCaptureMode:              res = "DEV_PROPERTY_StillCaptureMode"; break;
+        case MTP_DEV_PROPERTY_Contrast:                      res = "DEV_PROPERTY_Contrast"; break;
+        case MTP_DEV_PROPERTY_Sharpness:                     res = "DEV_PROPERTY_Sharpness"; break;
+        case MTP_DEV_PROPERTY_DigitalZoom:                   res = "DEV_PROPERTY_DigitalZoom"; break;
+        case MTP_DEV_PROPERTY_EffectMode:                    res = "DEV_PROPERTY_EffectMode"; break;
+        case MTP_DEV_PROPERTY_BurstNumber:                   res = "DEV_PROPERTY_BurstNumber"; break;
+        case MTP_DEV_PROPERTY_BurstInterval:                 res = "DEV_PROPERTY_BurstInterval"; break;
+        case MTP_DEV_PROPERTY_TimelapseNumber:               res = "DEV_PROPERTY_TimelapseNumber"; break;
+        case MTP_DEV_PROPERTY_TimelapseInterval:             res = "DEV_PROPERTY_TimelapseInterval"; break;
+        case MTP_DEV_PROPERTY_FocusMeteringMode:             res = "DEV_PROPERTY_FocusMeteringMode"; break;
+        case MTP_DEV_PROPERTY_UploadURL:                     res = "DEV_PROPERTY_UploadURL"; break;
+        case MTP_DEV_PROPERTY_Artist:                        res = "DEV_PROPERTY_Artist"; break;
+        case MTP_DEV_PROPERTY_CopyrightInfo:                 res = "DEV_PROPERTY_CopyrightInfo"; break;
+        case MTP_OP_GetObjectPropsSupported:                 res = "OP_GetObjectPropsSupported"; break;
+        case MTP_OP_GetObjectPropDesc:                       res = "OP_GetObjectPropDesc"; break;
+        case MTP_OP_GetObjectPropValue:                      res = "OP_GetObjectPropValue"; break;
+        case MTP_OP_SetObjectPropValue:                      res = "OP_SetObjectPropValue"; break;
+        case MTP_OP_GetObjectPropList:                       res = "OP_GetObjectPropList"; break;
+        case MTP_OP_SetObjectPropList:                       res = "OP_SetObjectPropList"; break;
+        case MTP_OP_GetInterdependentPropDesc:               res = "OP_GetInterdependentPropDesc"; break;
+        case MTP_OP_SendObjectPropList:                      res = "OP_SendObjectPropList"; break;
+        case MTP_OP_GetObjectReferences:                     res = "OP_GetObjectReferences"; break;
+        case MTP_OP_SetObjectReferences:                     res = "OP_SetObjectReferences"; break;
+        case MTP_OP_Skip:                                    res = "OP_Skip"; break;
+        case MTP_RESP_Invalid_ObjectPropCode:                res = "RESP_Invalid_ObjectPropCode"; break;
+        case MTP_RESP_Invalid_ObjectProp_Format:             res = "RESP_Invalid_ObjectProp_Format"; break;
+        case MTP_RESP_Invalid_ObjectProp_Value:              res = "RESP_Invalid_ObjectProp_Value"; break;
+        case MTP_RESP_Invalid_ObjectReference:               res = "RESP_Invalid_ObjectReference"; break;
+        case MTP_RESP_Invalid_Dataset:                       res = "RESP_Invalid_Dataset"; break;
+        case MTP_RESP_Specification_By_Group_Unsupported:    res = "RESP_Specification_By_Group_Unsupported"; break;
+        case MTP_RESP_Specification_By_Depth_Unsupported:    res = "RESP_Specification_By_Depth_Unsupported"; break;
+        case MTP_RESP_Object_Too_Large:                      res = "RESP_Object_Too_Large"; break;
+        case MTP_RESP_ObjectProp_Not_Supported:              res = "RESP_ObjectProp_Not_Supported"; break;
+        case MTP_OBF_FORMAT_Undefined_Firmware:              res = "OBF_FORMAT_Undefined_Firmware"; break;
+        case MTP_OBF_FORMAT_Windows_Image_Format:            res = "OBF_FORMAT_Windows_Image_Format"; break;
+        case MTP_OBF_FORMAT_Undefined_Audio:                 res = "OBF_FORMAT_Undefined_Audio"; break;
+        case MTP_OBF_FORMAT_WMA:                             res = "OBF_FORMAT_WMA"; break;
+        case MTP_OBF_FORMAT_OGG:                             res = "OBF_FORMAT_OGG"; break;
+        case MTP_OBF_FORMAT_AAC:                             res = "OBF_FORMAT_AAC"; break;
+        case MTP_OBF_FORMAT_Audible:                         res = "OBF_FORMAT_Audible"; break;
+        case MTP_OBF_FORMAT_FLAC:                            res = "OBF_FORMAT_FLAC"; break;
+        case MTP_OBF_FORMAT_Undefined_Video:                 res = "OBF_FORMAT_Undefined_Video"; break;
+        case MTP_OBF_FORMAT_WMV:                             res = "OBF_FORMAT_WMV"; break;
+        case MTP_OBF_FORMAT_MP4_Container:                   res = "OBF_FORMAT_MP4_Container"; break;
+        case MTP_OBF_FORMAT_3GP_Container:                   res = "OBF_FORMAT_3GP_Container"; break;
+        case MTP_OBF_FORMAT_Undefined_Collection:            res = "OBF_FORMAT_Undefined_Collection"; break;
+        case MTP_OBF_FORMAT_Abstract_Multimedia_Album:       res = "OBF_FORMAT_Abstract_Multimedia_Album"; break;
+        case MTP_OBF_FORMAT_Abstract_Image_Album:            res = "OBF_FORMAT_Abstract_Image_Album"; break;
+        case MTP_OBF_FORMAT_Abstract_Audio_Album:            res = "OBF_FORMAT_Abstract_Audio_Album"; break;
+        case MTP_OBF_FORMAT_Abstract_Video_Album:            res = "OBF_FORMAT_Abstract_Video_Album"; break;
+        case MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist:   res = "OBF_FORMAT_Abstract_Audio_Video_Playlist"; break;
+        case MTP_OBF_FORMAT_Abstract_Contact_Group:          res = "OBF_FORMAT_Abstract_Contact_Group"; break;
+        case MTP_OBF_FORMAT_Abstract_Message_Folder:         res = "OBF_FORMAT_Abstract_Message_Folder"; break;
+        case MTP_OBF_FORMAT_Abstract_Chaptered_Production:   res = "OBF_FORMAT_Abstract_Chaptered_Production"; break;
+        case MTP_OBF_FORMAT_Abstract_Audio_Playlist:         res = "OBF_FORMAT_Abstract_Audio_Playlist"; break;
+        case MTP_OBF_FORMAT_Abstract_Video_Playlist:         res = "OBF_FORMAT_Abstract_Video_Playlist"; break;
+        case MTP_OBF_FORMAT_WPL_Playlist:                    res = "OBF_FORMAT_WPL_Playlist"; break;
+        case MTP_OBF_FORMAT_M3U_Playlist:                    res = "OBF_FORMAT_M3U_Playlist"; break;
+        case MTP_OBF_FORMAT_MPL_Playlist:                    res = "OBF_FORMAT_MPL_Playlist"; break;
+        case MTP_OBF_FORMAT_ASX_Playlist:                    res = "OBF_FORMAT_ASX_Playlist"; break;
+        case MTP_OBF_FORMAT_PLS_Playlist:                    res = "OBF_FORMAT_PLS_Playlist"; break;
+        case MTP_OBF_FORMAT_Undefined_Document:              res = "OBF_FORMAT_Undefined_Document"; break;
+        case MTP_OBF_FORMAT_Abstract_Document:               res = "OBF_FORMAT_Abstract_Document"; break;
+        case MTP_OBF_FORMAT_Undefined_Message:               res = "OBF_FORMAT_Undefined_Message"; break;
+        case MTP_OBF_FORMAT_Abstract_Message:                res = "OBF_FORMAT_Abstract_Message"; break;
+        case MTP_OBF_FORMAT_Undefined_Contact:               res = "OBF_FORMAT_Undefined_Contact"; break;
+        case MTP_OBF_FORMAT_Abstract_Contact:                res = "OBF_FORMAT_Abstract_Contact"; break;
+        case MTP_OBF_FORMAT_vCard2:                          res = "OBF_FORMAT_vCard2"; break;
+        case MTP_OBF_FORMAT_vCard3:                          res = "OBF_FORMAT_vCard3"; break;
+        case MTP_OBF_FORMAT_Undefined_Calendar_Item:         res = "OBF_FORMAT_Undefined_Calendar_Item"; break;
+        case MTP_OBF_FORMAT_Abstract_Calendar_Item:          res = "OBF_FORMAT_Abstract_Calendar_Item"; break;
+        case MTP_OBF_FORMAT_vCal1:                           res = "OBF_FORMAT_vCal1"; break;
+        case MTP_OBF_FORMAT_vCal2:                           res = "OBF_FORMAT_vCal2"; break;
+        case MTP_OBF_FORMAT_Undefined_Windows_Executable:    res = "OBF_FORMAT_Undefined_Windows_Executable"; break;
+        case MTP_EV_ObjectPropChanged:                       res = "EV_ObjectPropChanged"; break;
+        case MTP_EV_ObjectPropDescChanged:                   res = "EV_ObjectPropDescChanged"; break;
+        case MTP_DEV_PROPERTY_Synchronization_Partner:       res = "DEV_PROPERTY_Synchronization_Partner"; break;
+        case MTP_DEV_PROPERTY_Device_Friendly_Name:          res = "DEV_PROPERTY_Device_Friendly_Name"; break;
+        case MTP_DEV_PROPERTY_Volume:                        res = "DEV_PROPERTY_Volume"; break;
+        case MTP_DEV_PROPERTY_Supported_Formats_Ordered:     res = "DEV_PROPERTY_Supported_Formats_Ordered"; break;
+        case MTP_DEV_PROPERTY_DeviceIcon:                    res = "DEV_PROPERTY_DeviceIcon"; break;
+        case MTP_DEV_PROPERTY_Perceived_Device_Type:         res = "DEV_PROPERTY_Perceived_Device_Type"; break;
+        case MTP_OBJ_PROP_Purchase_Album:                    res = "OBJ_PROP_Purchase_Album"; break;
+        case MTP_OBJ_PROP_StorageID:                         res = "OBJ_PROP_StorageID"; break;
+        case MTP_OBJ_PROP_Obj_Format:                        res = "OBJ_PROP_Obj_Format"; break;
+        case MTP_OBJ_PROP_Protection_Status:                 res = "OBJ_PROP_Protection_Status"; break;
+        case MTP_OBJ_PROP_Obj_Size:                          res = "OBJ_PROP_Obj_Size"; break;
+        case MTP_OBJ_PROP_Association_Type:                  res = "OBJ_PROP_Association_Type"; break;
+        case MTP_OBJ_PROP_Association_Desc:                  res = "OBJ_PROP_Association_Desc"; break;
+        case MTP_OBJ_PROP_Obj_File_Name:                     res = "OBJ_PROP_Obj_File_Name"; break;
+        case MTP_OBJ_PROP_Date_Created:                      res = "OBJ_PROP_Date_Created"; break;
+        case MTP_OBJ_PROP_Date_Modified:                     res = "OBJ_PROP_Date_Modified"; break;
+        case MTP_OBJ_PROP_Keywords:                          res = "OBJ_PROP_Keywords"; break;
+        case MTP_OBJ_PROP_Parent_Obj:                        res = "OBJ_PROP_Parent_Obj"; break;
+        case MTP_OBJ_PROP_Allowed_Folder_Contents:           res = "OBJ_PROP_Allowed_Folder_Contents"; break;
+        case MTP_OBJ_PROP_Hidden:                            res = "OBJ_PROP_Hidden"; break;
+        case MTP_OBJ_PROP_Sys_Obj:                           res = "OBJ_PROP_Sys_Obj"; break;
+        case MTP_OBJ_PROP_Persistent_Unique_ObjId:           res = "OBJ_PROP_Persistent_Unique_ObjId"; break;
+        case MTP_OBJ_PROP_SyncID:                            res = "OBJ_PROP_SyncID"; break;
+        case MTP_OBJ_PROP_Property_Bag:                      res = "OBJ_PROP_Property_Bag"; break;
+        case MTP_OBJ_PROP_Name:                              res = "OBJ_PROP_Name"; break;
+        case MTP_OBJ_PROP_Created_By:                        res = "OBJ_PROP_Created_By"; break;
+        case MTP_OBJ_PROP_Artist:                            res = "OBJ_PROP_Artist"; break;
+        case MTP_OBJ_PROP_Date_Authored:                     res = "OBJ_PROP_Date_Authored"; break;
+        case MTP_OBJ_PROP_Description:                       res = "OBJ_PROP_Description"; break;
+        case MTP_OBJ_PROP_URL_Reference:                     res = "OBJ_PROP_URL_Reference"; break;
+        case MTP_OBJ_PROP_Language_Locale:                   res = "OBJ_PROP_Language_Locale"; break;
+        case MTP_OBJ_PROP_Copyright_Information:             res = "OBJ_PROP_Copyright_Information"; break;
+        case MTP_OBJ_PROP_Source:                            res = "OBJ_PROP_Source"; break;
+        case MTP_OBJ_PROP_Origin_Location:                   res = "OBJ_PROP_Origin_Location"; break;
+        case MTP_OBJ_PROP_Date_Added:                        res = "OBJ_PROP_Date_Added"; break;
+        case MTP_OBJ_PROP_Non_Consumable:                    res = "OBJ_PROP_Non_Consumable"; break;
+        case MTP_OBJ_PROP_Corrupt_Unplayable:                res = "OBJ_PROP_Corrupt_Unplayable"; break;
+        case MTP_OBJ_PROP_Rep_Sample_Format:                 res = "OBJ_PROP_Rep_Sample_Format"; break;
+        case MTP_OBJ_PROP_Rep_Sample_Size:                   res = "OBJ_PROP_Rep_Sample_Size"; break;
+        case MTP_OBJ_PROP_Rep_Sample_Height:                 res = "OBJ_PROP_Rep_Sample_Height"; break;
+        case MTP_OBJ_PROP_Rep_Sample_Width:                  res = "OBJ_PROP_Rep_Sample_Width"; break;
+        case MTP_OBJ_PROP_Rep_Sample_Duration:               res = "OBJ_PROP_Rep_Sample_Duration"; break;
+        case MTP_OBJ_PROP_Rep_Sample_Data:                   res = "OBJ_PROP_Rep_Sample_Data"; break;
+        case MTP_OBJ_PROP_Width:                             res = "OBJ_PROP_Width"; break;
+        case MTP_OBJ_PROP_Height:                            res = "OBJ_PROP_Height"; break;
+        case MTP_OBJ_PROP_Duration:                          res = "OBJ_PROP_Duration"; break;
+        case MTP_OBJ_PROP_Rating:                            res = "OBJ_PROP_Rating"; break;
+        case MTP_OBJ_PROP_Track:                             res = "OBJ_PROP_Track"; break;
+        case MTP_OBJ_PROP_Genre:                             res = "OBJ_PROP_Genre"; break;
+        case MTP_OBJ_PROP_Credits:                           res = "OBJ_PROP_Credits"; break;
+        case MTP_OBJ_PROP_Lyrics:                            res = "OBJ_PROP_Lyrics"; break;
+        case MTP_OBJ_PROP_Subscription_Content_ID:           res = "OBJ_PROP_Subscription_Content_ID"; break;
+        case MTP_OBJ_PROP_Produced_By:                       res = "OBJ_PROP_Produced_By"; break;
+        case MTP_OBJ_PROP_Use_Count:                         res = "OBJ_PROP_Use_Count"; break;
+        case MTP_OBJ_PROP_Skip_Count:                        res = "OBJ_PROP_Skip_Count"; break;
+        case MTP_OBJ_PROP_Last_Accessed:                     res = "OBJ_PROP_Last_Accessed"; break;
+        case MTP_OBJ_PROP_Parental_Rating:                   res = "OBJ_PROP_Parental_Rating"; break;
+        case MTP_OBJ_PROP_Meta_Genre:                        res = "OBJ_PROP_Meta_Genre"; break;
+        case MTP_OBJ_PROP_Composer:                          res = "OBJ_PROP_Composer"; break;
+        case MTP_OBJ_PROP_Effective_Rating:                  res = "OBJ_PROP_Effective_Rating"; break;
+        case MTP_OBJ_PROP_Subtitle:                          res = "OBJ_PROP_Subtitle"; break;
+        case MTP_OBJ_PROP_Original_Release_Date:             res = "OBJ_PROP_Original_Release_Date"; break;
+        case MTP_OBJ_PROP_Album_Name:                        res = "OBJ_PROP_Album_Name"; break;
+        case MTP_OBJ_PROP_Album_Artist:                      res = "OBJ_PROP_Album_Artist"; break;
+        case MTP_OBJ_PROP_Mood:                              res = "OBJ_PROP_Mood"; break;
+        case MTP_OBJ_PROP_DRM_Status:                        res = "OBJ_PROP_DRM_Status"; break;
+        case MTP_OBJ_PROP_Sub_Description:                   res = "OBJ_PROP_Sub_Description"; break;
+        case MTP_OBJ_PROP_Is_Cropped:                        res = "OBJ_PROP_Is_Cropped"; break;
+        case MTP_OBJ_PROP_Is_Colour_Corrected:               res = "OBJ_PROP_Is_Colour_Corrected"; break;
+        case MTP_OBJ_PROP_Exposure_Time:                     res = "OBJ_PROP_Exposure_Time"; break;
+        case MTP_OBJ_PROP_Exposure_Index:                    res = "OBJ_PROP_Exposure_Index"; break;
+        case MTP_OBJ_PROP_Display_Name:                      res = "OBJ_PROP_Display_Name"; break;
+        case MTP_OBJ_PROP_Body_Text:                         res = "OBJ_PROP_Body_Text"; break;
+        case MTP_OBJ_PROP_Subject:                           res = "OBJ_PROP_Subject"; break;
+        case MTP_OBJ_PROP_Priority:                          res = "OBJ_PROP_Priority"; break;
+        case MTP_OBJ_PROP_Given_Name:                        res = "OBJ_PROP_Given_Name"; break;
+        case MTP_OBJ_PROP_Middle_Names:                      res = "OBJ_PROP_Middle_Names"; break;
+        case MTP_OBJ_PROP_Family_Name:                       res = "OBJ_PROP_Family_Name"; break;
+        case MTP_OBJ_PROP_Prefix:                            res = "OBJ_PROP_Prefix"; break;
+        case MTP_OBJ_PROP_Suffix:                            res = "OBJ_PROP_Suffix"; break;
+        case MTP_OBJ_PROP_Phonetic_Given_Name:               res = "OBJ_PROP_Phonetic_Given_Name"; break;
+        case MTP_OBJ_PROP_Phonetic_Family_Name:              res = "OBJ_PROP_Phonetic_Family_Name"; break;
+        case MTP_OBJ_PROP_Email_Primary:                     res = "OBJ_PROP_Email_Primary"; break;
+        case MTP_OBJ_PROP_Email_Personal1:                   res = "OBJ_PROP_Email_Personal1"; break;
+        case MTP_OBJ_PROP_Email_Personal2:                   res = "OBJ_PROP_Email_Personal2"; break;
+        case MTP_OBJ_PROP_Email_Business1:                   res = "OBJ_PROP_Email_Business1"; break;
+        case MTP_OBJ_PROP_Email_Business2:                   res = "OBJ_PROP_Email_Business2"; break;
+        case MTP_OBJ_PROP_Email_Others:                      res = "OBJ_PROP_Email_Others"; break;
+        case MTP_OBJ_PROP_Phone_Nbr_Primary:                 res = "OBJ_PROP_Phone_Nbr_Primary"; break;
+        case MTP_OBJ_PROP_Phone_Nbr_Personal:                res = "OBJ_PROP_Phone_Nbr_Personal"; break;
+        case MTP_OBJ_PROP_Phone_Nbr_Personal2:               res = "OBJ_PROP_Phone_Nbr_Personal2"; break;
+        case MTP_OBJ_PROP_Phone_Nbr_Business:                res = "OBJ_PROP_Phone_Nbr_Business"; break;
+        case MTP_OBJ_PROP_Phone_Nbr_Business2:               res = "OBJ_PROP_Phone_Nbr_Business2"; break;
+        case MTP_OBJ_PROP_Phone_Nbr_Mobile:                  res = "OBJ_PROP_Phone_Nbr_Mobile"; break;
+        case MTP_OBJ_PROP_Phone_Nbr_Mobile2:                 res = "OBJ_PROP_Phone_Nbr_Mobile2"; break;
+        case MTP_OBJ_PROP_Fax_Nbr_Primary:                   res = "OBJ_PROP_Fax_Nbr_Primary"; break;
+        case MTP_OBJ_PROP_Fax_Nbr_Personal:                  res = "OBJ_PROP_Fax_Nbr_Personal"; break;
+        case MTP_OBJ_PROP_Fax_Nbr_Business:                  res = "OBJ_PROP_Fax_Nbr_Business"; break;
+        case MTP_OBJ_PROP_Pager_Nbr:                         res = "OBJ_PROP_Pager_Nbr"; break;
+        case MTP_OBJ_PROP_Phone_Nbr_Others:                  res = "OBJ_PROP_Phone_Nbr_Others"; break;
+        case MTP_OBJ_PROP_Primary_Web_Addr:                  res = "OBJ_PROP_Primary_Web_Addr"; break;
+        case MTP_OBJ_PROP_Personal_Web_Addr:                 res = "OBJ_PROP_Personal_Web_Addr"; break;
+        case MTP_OBJ_PROP_Business_Web_Addr:                 res = "OBJ_PROP_Business_Web_Addr"; break;
+        case MTP_OBJ_PROP_Instant_Messenger_Addr:            res = "OBJ_PROP_Instant_Messenger_Addr"; break;
+        case MTP_OBJ_PROP_Instant_Messenger_Addr2:           res = "OBJ_PROP_Instant_Messenger_Addr2"; break;
+        case MTP_OBJ_PROP_Instant_Messenger_Addr3:           res = "OBJ_PROP_Instant_Messenger_Addr3"; break;
+        case MTP_OBJ_PROP_Post_Addr_Personal_Full:           res = "OBJ_PROP_Post_Addr_Personal_Full"; break;
+        case MTP_OBJ_PROP_Post_Addr_Personal_Line1:          res = "OBJ_PROP_Post_Addr_Personal_Line1"; break;
+        case MTP_OBJ_PROP_Post_Addr_Personal_Line2:          res = "OBJ_PROP_Post_Addr_Personal_Line2"; break;
+        case MTP_OBJ_PROP_Post_Addr_Personal_City:           res = "OBJ_PROP_Post_Addr_Personal_City"; break;
+        case MTP_OBJ_PROP_Post_Addr_Personal_Region:         res = "OBJ_PROP_Post_Addr_Personal_Region"; break;
+        case MTP_OBJ_PROP_Post_Addr_Personal_Post_Code:      res = "OBJ_PROP_Post_Addr_Personal_Post_Code"; break;
+        case MTP_OBJ_PROP_Post_Addr_Personal_Country:        res = "OBJ_PROP_Post_Addr_Personal_Country"; break;
+        case MTP_OBJ_PROP_Post_Addr_Business_Full:           res = "OBJ_PROP_Post_Addr_Business_Full"; break;
+        case MTP_OBJ_PROP_Post_Addr_Business_Line1:          res = "OBJ_PROP_Post_Addr_Business_Line1"; break;
+        case MTP_OBJ_PROP_Post_Addr_Business_Line2:          res = "OBJ_PROP_Post_Addr_Business_Line2"; break;
+        case MTP_OBJ_PROP_Post_Addr_Business_City:           res = "OBJ_PROP_Post_Addr_Business_City"; break;
+        case MTP_OBJ_PROP_Post_Addr_Business_Region:         res = "OBJ_PROP_Post_Addr_Business_Region"; break;
+        case MTP_OBJ_PROP_Post_Addr_Business_Post_Code:      res = "OBJ_PROP_Post_Addr_Business_Post_Code"; break;
+        case MTP_OBJ_PROP_Post_Addr_Business_Country:        res = "OBJ_PROP_Post_Addr_Business_Country"; break;
+        case MTP_OBJ_PROP_Post_Addr_Other_Full:              res = "OBJ_PROP_Post_Addr_Other_Full"; break;
+        case MTP_OBJ_PROP_Post_Addr_Other_Line1:             res = "OBJ_PROP_Post_Addr_Other_Line1"; break;
+        case MTP_OBJ_PROP_Post_Addr_Other_Line2:             res = "OBJ_PROP_Post_Addr_Other_Line2"; break;
+        case MTP_OBJ_PROP_Post_Addr_Other_City:              res = "OBJ_PROP_Post_Addr_Other_City"; break;
+        case MTP_OBJ_PROP_Post_Addr_Other_Region:            res = "OBJ_PROP_Post_Addr_Other_Region"; break;
+        case MTP_OBJ_PROP_Post_Addr_Other_Post_Code:         res = "OBJ_PROP_Post_Addr_Other_Post_Code"; break;
+        case MTP_OBJ_PROP_Post_Addr_Other_Country:           res = "OBJ_PROP_Post_Addr_Other_Country"; break;
+        case MTP_OBJ_PROP_Organization_Name:                 res = "OBJ_PROP_Organization_Name"; break;
+        case MTP_OBJ_PROP_Phonetic_Organization_Name:        res = "OBJ_PROP_Phonetic_Organization_Name"; break;
+        case MTP_OBJ_PROP_Role:                              res = "OBJ_PROP_Role"; break;
+        case MTP_OBJ_PROP_Birthdate:                         res = "OBJ_PROP_Birthdate"; break;
+        case MTP_OBJ_PROP_Message_To:                        res = "OBJ_PROP_Message_To"; break;
+        case MTP_OBJ_PROP_Message_CC:                        res = "OBJ_PROP_Message_CC"; break;
+        case MTP_OBJ_PROP_Message_BCC:                       res = "OBJ_PROP_Message_BCC"; break;
+        case MTP_OBJ_PROP_Message_Read:                      res = "OBJ_PROP_Message_Read"; break;
+        case MTP_OBJ_PROP_Message_Received_Time:             res = "OBJ_PROP_Message_Received_Time"; break;
+        case MTP_OBJ_PROP_Message_Sender:                    res = "OBJ_PROP_Message_Sender"; break;
+        case MTP_OBJ_PROP_Activity_Begin_Time:               res = "OBJ_PROP_Activity_Begin_Time"; break;
+        case MTP_OBJ_PROP_Activity_End_Time:                 res = "OBJ_PROP_Activity_End_Time"; break;
+        case MTP_OBJ_PROP_Activity_Location:                 res = "OBJ_PROP_Activity_Location"; break;
+        case MTP_OBJ_PROP_Activity_Required_Attendees:       res = "OBJ_PROP_Activity_Required_Attendees"; break;
+        case MTP_OBJ_PROP_Activity_Optional_Attendees:       res = "OBJ_PROP_Activity_Optional_Attendees"; break;
+        case MTP_OBJ_PROP_Activity_Resources:                res = "OBJ_PROP_Activity_Resources"; break;
+        case MTP_OBJ_PROP_Activity_Accepted:                 res = "OBJ_PROP_Activity_Accepted"; break;
+        case MTP_OBJ_PROP_Activity_Tentative:                res = "OBJ_PROP_Activity_Tentative"; break;
+        case MTP_OBJ_PROP_Activity_Declined:                 res = "OBJ_PROP_Activity_Declined"; break;
+        case MTP_OBJ_PROP_Activity_Reminder_Time:            res = "OBJ_PROP_Activity_Reminder_Time"; break;
+        case MTP_OBJ_PROP_Activity_Owner:                    res = "OBJ_PROP_Activity_Owner"; break;
+        case MTP_OBJ_PROP_Activity_Status:                   res = "OBJ_PROP_Activity_Status"; break;
+        case MTP_OBJ_PROP_Media_GUID:                        res = "OBJ_PROP_Media_GUID"; break;
+        case MTP_OBJ_PROP_Total_BitRate:                     res = "OBJ_PROP_Total_BitRate"; break;
+        case MTP_OBJ_PROP_Bitrate_Type:                      res = "OBJ_PROP_Bitrate_Type"; break;
+        case MTP_OBJ_PROP_Sample_Rate:                       res = "OBJ_PROP_Sample_Rate"; break;
+        case MTP_OBJ_PROP_Nbr_Of_Channels:                   res = "OBJ_PROP_Nbr_Of_Channels"; break;
+        case MTP_OBJ_PROP_Audio_BitDepth:                    res = "OBJ_PROP_Audio_BitDepth"; break;
+        case MTP_OBJ_PROP_Scan_Type:                         res = "OBJ_PROP_Scan_Type"; break;
+        case MTP_OBJ_PROP_Audio_WAVE_Codec:                  res = "OBJ_PROP_Audio_WAVE_Codec"; break;
+        case MTP_OBJ_PROP_Audio_BitRate:                     res = "OBJ_PROP_Audio_BitRate"; break;
+        case MTP_OBJ_PROP_Video_FourCC_Codec:                res = "OBJ_PROP_Video_FourCC_Codec"; break;
+        case MTP_OBJ_PROP_Video_BitRate:                     res = "OBJ_PROP_Video_BitRate"; break;
+        case MTP_OBJ_PROP_Frames_Per_Thousand_Secs:          res = "OBJ_PROP_Frames_Per_Thousand_Secs"; break;
+        case MTP_OBJ_PROP_KeyFrame_Distance:                 res = "OBJ_PROP_KeyFrame_Distance"; break;
+        case MTP_OBJ_PROP_Buffer_Size:                       res = "OBJ_PROP_Buffer_Size"; break;
+        case MTP_OBJ_PROP_Encoding_Quality:                  res = "OBJ_PROP_Encoding_Quality"; break;
+        case MTP_OBJ_PROP_Encoding_Profile:                  res = "OBJ_PROP_Encoding_Profile"; break;
+        }
+        return res;
+    }
+};

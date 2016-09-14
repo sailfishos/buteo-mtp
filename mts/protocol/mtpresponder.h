@@ -454,5 +454,23 @@ class MTPResponder : public QObject
 #endif
 };
 }
+
+/* Helper functions for making human readable diagnostic logging */
+extern "C"
+{
+    const char *mtp_format_category_repr(int val);
+    const char *mtp_file_system_type_repr(int val);
+    const char *mtp_association_type_repr(int val);
+    const char *mtp_storage_access_repr(int val);
+    const char *mtp_container_type_repr(int val);
+    const char *mtp_obj_prop_form_repr(int val);
+    const char *mtp_storage_type_repr(int val);
+    const char *mtp_bitrate_type_repr(int val);
+    const char *mtp_protection_repr(int val);
+    const char *mtp_form_flag_repr(int val);
+    const char *mtp_data_type_repr(int val);
+    const char *mtp_ch_conf_repr(int val);
+    const char *mtp_code_repr(int val);
+};
 #endif
 
