@@ -226,6 +226,16 @@ void StorageFactory::onStoragePluginReady(quint32 storageId)
         emit storageReady();
 }
 
+void StorageFactory::sessionOpenChanged(bool isOpen)
+{
+    if( !isOpen ) {
+        /* Clear object changes need to be notified flags on session close */
+        foreach (StoragePlugin *storage, m_allStorages) {
+            storage->disableObjectEvents();
+        }
+    }
+}
+
 /*******************************************************
  * quint32 StorageFactory::assignStorageId
  ******************************************************/

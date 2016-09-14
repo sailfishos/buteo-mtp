@@ -154,6 +154,10 @@ bool MTPResponder::initStorages()
     connect(m_storageServer, &StorageFactory::storageReady,
         this, &MTPResponder::onStorageReady);
 
+    // Inform storage server that a new session has been opened/closed
+    connect(this, &MTPResponder::sessionOpenChanged,
+            m_storageServer, &StorageFactory::sessionOpenChanged);
+
     /* Fixme: New style connect can't be used as responder
      *        has pointer to transporter base class while
      *        the slots are in derived usb/dummy classes. */
@@ -920,7 +924,7 @@ void MTPResponder::openSessionReq()
     {
         // save new session id
         m_transactionSequence->mtpSessionId = params[0];
-        // TODO:: inform storage server that a new session has been opened
+
         sendResponse(MTP_RESP_OK);
 
         // Enable event sending etc

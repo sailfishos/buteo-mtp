@@ -64,6 +64,8 @@ public:
     /// Destructor.
     ~FSStoragePlugin();
 
+    void disableObjectEvents();
+
     bool enumerateStorage();
 
     MTPResponseCode addItem( ObjHandle &parentHandle, ObjHandle &handle, MTPObjectInfo *info );
