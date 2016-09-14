@@ -267,8 +267,15 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
 {
     MTP_FUNC_TRACE();
 
-    MTP_LOG_INFO("Sending container of type:: " << QString("0x%1").arg(container.containerType(), 0, 16));
-    MTP_LOG_INFO("Code:: " << QString("0x%1").arg(container.code(), 0, 16));
+    int type = container.containerType();
+    int code = container.code();
+
+    if( type == MTP_CONTAINER_TYPE_RESPONSE && code != MTP_RESP_OK ) {
+        MTP_LOG_WARNING(mtp_container_type_repr(type) << mtp_code_repr(code) << container.bufferSize());
+    }
+    else {
+        MTP_LOG_INFO(mtp_container_type_repr(type) << mtp_code_repr(code) << container.bufferSize());
+    }
 
     if( !m_transporter ) {
         MTP_LOG_WARNING("Transporter not set; ignoring container");
@@ -489,14 +496,50 @@ void MTPResponder::commandHandler()
 
     bool waitForDataPhase = false;
 
-    MTP_LOG_INFO("MTP OPERATION:::: " << QString("0x%1").arg(reqContainer->code(), 0, 16));
-
     reqContainer->params(params);
 
-    foreach(quint32 param, params)
-    {
-        MTP_LOG_INFO("Param = " << QString("0x%1").arg(param, 0, 16));
+    int type = reqContainer->containerType();
+    int code = reqContainer->code();
+
+    quint32 ObjectHandle = 0;
+    switch( code ) {
+    case MTP_OP_GetObjectInfo:
+    case MTP_OP_GetObject:
+    case MTP_OP_GetThumb:
+    case MTP_OP_DeleteObject:
+    case MTP_OP_GetPartialObject:
+    case MTP_OP_SetObjectProtection:
+    case MTP_OP_MoveObject:
+    case MTP_OP_CopyObject:
+    case MTP_OP_GetObjectPropValue:
+    case MTP_OP_SetObjectPropValue:
+    case MTP_OP_GetObjectPropList:
+    case MTP_OP_GetObjectReferences:
+    case MTP_OP_SetObjectReferences:
+        ObjectHandle = params[0];
+        break;
+
+    case MTP_OP_SendObjectInfo:     // parent object
+    case MTP_OP_SendObjectPropList: // parent object
+        ObjectHandle = params[1];
+        break;
+
+    case MTP_OP_GetNumObjects:      // top object
+    case MTP_OP_GetObjectHandles:   // top object
+        ObjectHandle = params[2];
+        break;
+
+    default:
+        break;
     }
+    QString ObjectPath("n/a");
+    if( ObjectHandle != 0x00000000 && ObjectHandle != 0xffffffff )
+        m_storageServer->getPath(ObjectHandle, ObjectPath);
+
+
+    MTP_LOG_INFO(mtp_container_type_repr(type)
+                 << mtp_code_repr(code)
+                 << ObjectPath);
 
     // preset the response code - to be changed if the handler of the operation
     // detects an error in the operation phase
@@ -1107,6 +1150,7 @@ void MTPResponder::getObjectHandlesReq()
         // the handles are sorted. It's probably related to having parent
         // folders listed before the objects they contain.
         qSort(handles);
+        MTP_LOG_INFO("handle count:" << handles.size());
         // DATA PHASE
         payloadLength = ( handles.size() + 1 ) * sizeof(quint32);
         MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
@@ -1618,6 +1662,11 @@ void MTPResponder::getObjPropDescReq()
         MTPObjPropertyCode propCode = static_cast<MTPObjPropertyCode>(params[0]);
         MTPObjFormatCode formatCode = static_cast<MTPObjFormatCode>(params[1]);
         MTPObjectFormatCategory category = (MTPObjectFormatCategory)m_devInfoProvider->getFormatCodeCategory(formatCode);
+
+        MTP_LOG_INFO(mtp_code_repr(propCode)
+                     << mtp_code_repr(formatCode)
+                     << mtp_format_category_repr(category));
+
         if( MTP_UNSUPPORTED_FORMAT == category)
         {
             code = MTP_RESP_Invalid_ObjectProp_Format;
@@ -1764,7 +1813,6 @@ void MTPResponder::getObjectPropListReq()
     QVector<quint32> params;
     reqContainer->params(params);
 
-
     objHandle = static_cast<ObjHandle>(params[0]);
     format = static_cast<MTPObjFormatCode>(params[1]);
     propCode = static_cast<MTPObjPropertyCode>(params[2]);
@@ -1895,6 +1943,7 @@ void MTPResponder::getObjectPropListReq()
                 }
                 if (MTP_RESP_OK == resp)
                 {
+                    MTP_LOG_INFO("element count:" << numElements);
                     // KLUDGE: We have to manually insert the number of elements at
                     // the start of the container payload. Is there a better way?
                     dataContainer.putl32(dataContainer.payload(), numElements);
@@ -2973,6 +3022,24 @@ void MTPResponder::resume()
 
 void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &params)
 {
+    quint32 ObjectHandle = 0;
+    switch( event ) {
+    case MTP_EV_ObjectAdded:
+    case MTP_EV_ObjectRemoved:
+    case MTP_EV_ObjectInfoChanged:
+    case MTP_EV_ObjectPropChanged:
+        ObjectHandle = params[0];
+        break;
+    default:
+        break;
+    }
+
+    QString ObjectPath("n/a");
+    if( ObjectHandle != 0x00000000 && ObjectHandle != 0xffffffff )
+        m_storageServer->getPath(ObjectHandle, ObjectPath);
+
+    MTP_LOG_INFO(mtp_code_repr(event) << ObjectPath);
+
     if( !m_transporter ) {
         MTP_LOG_WARNING("Transporter not set; event ignored");
         return;

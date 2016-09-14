@@ -88,8 +88,6 @@ Thumbnailer::Thumbnailer() :
 
 void Thumbnailer::slotThumbnailReady(uint handle, const QStringList& uris)
 {
-    MTP_LOG_TRACE("Thumbnail ready!!");
-
     foreach(const QString &uri, uris)
     {
         /* Thumbnailer may use signals directed to us only
@@ -100,7 +98,7 @@ void Thumbnailer::slotThumbnailReady(uint handle, const QStringList& uris)
 
         m_uriAlreadyRequested.remove(uri);
         QString filePath = QUrl(uri).path();
-        MTP_LOG_TRACE("Thumbnail ready for::" << filePath);
+        MTP_LOG_INFO("Thumbnail ready for:" << filePath);
         emit thumbnailReady(filePath);
     }
 }
@@ -175,7 +173,7 @@ void Thumbnailer::requestThumbnailFinished(QDBusPendingCallWatcher *pcw)
 void Thumbnailer::thumbnailDelayTimeout()
 {
     if(m_uriRequestQueue.isEmpty()) {
-        MTP_LOG_TRACE("Thumbnail queue is empty; stopping timer");
+        MTP_LOG_INFO("Thumbnail queue is empty; stopping timer");
         m_thumbnailTimer->stop();
 
         /* Setup initial delay for the next patch of requests */
@@ -195,7 +193,7 @@ void Thumbnailer::thumbnailDelayTimeout()
     }
 
     /* Make an asynchronous thumbnail request via D-Bus */
-    MTP_LOG_TRACE("Requesting" << uris.count() << "thumbnails");
+    MTP_LOG_INFO("Requesting" << uris.count() << "thumbnails");
     QDBusPendingCall pc = this->Queue(uris, mimes, m_flavor, m_scheduler, 0);
     QDBusPendingCallWatcher *pcw = new QDBusPendingCallWatcher(pc, this);
     connect(pcw, SIGNAL(finished(QDBusPendingCallWatcher*)), SLOT(requestThumbnailFinished(QDBusPendingCallWatcher*)));
@@ -248,9 +246,13 @@ bool Thumbnailer::checkThumbnailPresent(const QString& filePath, QString& thumbP
             QFileInfo thumbInfo(ret);
             if(thumbInfo.lastModified() >= fileInfo.lastModified())
             {
-                MTP_LOG_TRACE("Thumbnail file::::" << file);
+                MTP_LOG_INFO("Thumbnail file:" << ret);
                 thumbPath = ret;
                 return true;
+            }
+            else
+            {
+                MTP_LOG_WARNING("Stale thumbnail file:" << ret);
             }
         }
     }
