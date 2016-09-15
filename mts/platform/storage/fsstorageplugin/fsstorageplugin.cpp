@@ -175,6 +175,9 @@ void FSStoragePlugin::enumerateStorage_worker()
     MTP_LOG_WARNING("storage" << m_storageId << "is ready");
 
     emit storagePluginReady(m_storageId);
+
+    // enable thumbnailer after fs scan is finished
+    m_thumbnailer->enableThumbnailing();
 }
 
 /************************************************************
@@ -199,6 +202,17 @@ FSStoragePlugin::~FSStoragePlugin()
     m_thumbnailer = 0;
     delete m_inotify;
     m_inotify = 0;
+}
+
+void FSStoragePlugin::disableObjectEvents()
+{
+    for( QHash<ObjHandle, StorageItem*>::iterator i = m_objectHandlesMap.begin() ; i != m_objectHandlesMap.end(); ++i )
+    {
+        if( i.value() )
+        {
+            i.value()->setEventsEnabled(false);
+        }
+    }
 }
 
 #if 0
@@ -543,30 +557,40 @@ void FSStoragePlugin::storePuoids()
  ***********************************************************/
 void FSStoragePlugin::buildSupportedFormatsList()
 {
-    m_formatByExtTable["pla"] = MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist;
-    m_formatByExtTable["wav"] = MTP_OBF_FORMAT_WAV;
-    m_formatByExtTable["mp3"] = MTP_OBF_FORMAT_MP3;
-    m_formatByExtTable["ogg"] = MTP_OBF_FORMAT_OGG;
-    m_formatByExtTable["txt"] = MTP_OBF_FORMAT_Text;
-    m_formatByExtTable["htm"] = MTP_OBF_FORMAT_HTML;
+    m_formatByExtTable["pla"]  = MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist;
+    m_formatByExtTable["wav"]  = MTP_OBF_FORMAT_WAV;
+    m_formatByExtTable["mp3"]  = MTP_OBF_FORMAT_MP3;
+    m_formatByExtTable["ogg"]  = MTP_OBF_FORMAT_OGG;
+    m_formatByExtTable["txt"]  = MTP_OBF_FORMAT_Text;
+    m_formatByExtTable["htm"]  = MTP_OBF_FORMAT_HTML;
     m_formatByExtTable["html"] = MTP_OBF_FORMAT_HTML;
-    m_formatByExtTable["wmv"] = MTP_OBF_FORMAT_WMV;
-    m_formatByExtTable["avi"] = MTP_OBF_FORMAT_AVI;
-    m_formatByExtTable["mpg"] = MTP_OBF_FORMAT_MPEG;
+    m_formatByExtTable["wmv"]  = MTP_OBF_FORMAT_WMV;
+    m_formatByExtTable["avi"]  = MTP_OBF_FORMAT_AVI;
+    m_formatByExtTable["mpg"]  = MTP_OBF_FORMAT_MPEG;
     m_formatByExtTable["mpeg"] = MTP_OBF_FORMAT_MPEG;
-    m_formatByExtTable["bmp"] = MTP_OBF_FORMAT_BMP;
-    m_formatByExtTable["gif"] = MTP_OBF_FORMAT_GIF;
-    m_formatByExtTable["jpg"] = MTP_OBF_FORMAT_EXIF_JPEG;
+
+    m_formatByExtTable["bmp"]  = MTP_OBF_FORMAT_BMP;
+    m_formatByExtTable["gif"]  = MTP_OBF_FORMAT_GIF;
+    m_formatByExtTable["jpg"]  = MTP_OBF_FORMAT_EXIF_JPEG;
     m_formatByExtTable["jpeg"] = MTP_OBF_FORMAT_EXIF_JPEG;
-    m_formatByExtTable["png"] = MTP_OBF_FORMAT_PNG;
-    m_formatByExtTable["tif"] = MTP_OBF_FORMAT_TIFF;
+    m_formatByExtTable["png"]  = MTP_OBF_FORMAT_PNG;
+    m_formatByExtTable["tif"]  = MTP_OBF_FORMAT_TIFF;
     m_formatByExtTable["tiff"] = MTP_OBF_FORMAT_TIFF;
-    m_formatByExtTable["wma"] = MTP_OBF_FORMAT_WMA;
-    m_formatByExtTable["aac"] = MTP_OBF_FORMAT_AAC;
-    m_formatByExtTable["mp4"] = MTP_OBF_FORMAT_MP4_Container;
-    m_formatByExtTable["3gp"] = MTP_OBF_FORMAT_3GP_Container;
-    m_formatByExtTable["pls"] = MTP_OBF_FORMAT_PLS_Playlist;
-    m_formatByExtTable["alb"] = MTP_OBF_FORMAT_Abstract_Audio_Album;
+
+    m_formatByExtTable["wma"]  = MTP_OBF_FORMAT_WMA;
+    m_formatByExtTable["aac"]  = MTP_OBF_FORMAT_AAC;
+    m_formatByExtTable["mp4"]  = MTP_OBF_FORMAT_MP4_Container;
+    m_formatByExtTable["3gp"]  = MTP_OBF_FORMAT_3GP_Container;
+    m_formatByExtTable["pls"]  = MTP_OBF_FORMAT_PLS_Playlist;
+    m_formatByExtTable["alb"]  = MTP_OBF_FORMAT_Abstract_Audio_Album;
+
+    m_formatByExtTable["pbm"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
+    m_formatByExtTable["pcx"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
+    m_formatByExtTable["pgm"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
+    m_formatByExtTable["ppm"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
+    m_formatByExtTable["xpm"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
+    m_formatByExtTable["xwd"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
+
 
     // Populate format code->MIME type map
     m_imageMimeTable[MTP_OBF_FORMAT_BMP] = "image/bmp";
@@ -574,6 +598,8 @@ void FSStoragePlugin::buildSupportedFormatsList()
     m_imageMimeTable[MTP_OBF_FORMAT_EXIF_JPEG] = "image/jpeg";
     m_imageMimeTable[MTP_OBF_FORMAT_PNG] = "image/png";
     m_imageMimeTable[MTP_OBF_FORMAT_TIFF] = "image/tiff";
+
+    m_imageMimeTable[MTP_OBF_FORMAT_Unknown_Image_Object] = "application/octet-stream";
 }
 
 /************************************************************
@@ -1571,6 +1597,14 @@ MTPResponseCode FSStoragePlugin::getObjectInfo( const ObjHandle &handle, const M
     {
         return MTP_RESP_GeneralError;
     }
+
+    /* Assumption: All mtp queries that the host can use to
+     * "show interest in object" lead to getObjectInfo()
+     * method call -> Flag the object so that any future
+     * changes to object properties leads to the host getting
+     * appropriate notification event. */
+    storageItem->setEventsEnabled(true);
+
     populateObjectInfo( storageItem );
     objectInfo = storageItem->m_objectInfo;
     return MTP_RESP_OK;
@@ -1687,24 +1721,30 @@ quint64 FSStoragePlugin::getObjectSize( StorageItem *storageItem )
 }
 
 /************************************************************
- * bool FSStoragePlugin::isImage
+ * bool FSStoragePlugin::isThumbnailableImage
  ***********************************************************/
-bool FSStoragePlugin::isImage( StorageItem *storageItem )
+bool FSStoragePlugin::isThumbnailableImage( StorageItem *storageItem )
 {
-    //UGLY
-    if( storageItem &&
-        ( storageItem->m_path.endsWith("gif")  ||
-          storageItem->m_path.endsWith("jpeg") ||
-          storageItem->m_path.endsWith("jpg")  ||
-          storageItem->m_path.endsWith("bmp")  ||
-          storageItem->m_path.endsWith("tif")  ||
-          storageItem->m_path.endsWith("tiff") ||
-          storageItem->m_path.endsWith("png")
-        )
-      )
+    static const char * const extension[] =
     {
-        return true;
+        /* Things that thumbnailer can process */
+        ".bmp", ".gif", ".jpeg", ".jpg", ".png",
+        /* Things that would be nice to get supported */
+#if 0
+        ".tif", ".tiff",
+        ".pbm", ".pcx", ".pgm", ".ppm", ".xpm", ".xwd",
+#endif
+        /* Sentinel */
+        0
+    };
+
+    if( storageItem ) {
+        for( size_t i = 0; extension[i]; ++i ) {
+            if( storageItem->m_path.endsWith(extension[i]) )
+                return true;
+        }
     }
+
     return false;
 }
 
@@ -1714,7 +1754,7 @@ bool FSStoragePlugin::isImage( StorageItem *storageItem )
 quint16 FSStoragePlugin::getThumbFormat( StorageItem *storageItem )
 {
     quint16 format = MTP_OBF_FORMAT_Undefined;
-    if( isImage( storageItem ) )
+    if( isThumbnailableImage( storageItem ) )
     {
         format = MTP_OBF_FORMAT_JFIF;
     }
@@ -1727,7 +1767,7 @@ quint16 FSStoragePlugin::getThumbFormat( StorageItem *storageItem )
 quint32 FSStoragePlugin::getThumbPixelWidth( StorageItem *storageItem )
 {
     quint16 width = 0;
-    if( isImage( storageItem ) )
+    if( isThumbnailableImage( storageItem ) )
     {
         width = THUMB_WIDTH;
     }
@@ -1740,7 +1780,7 @@ quint32 FSStoragePlugin::getThumbPixelWidth( StorageItem *storageItem )
 quint32 FSStoragePlugin::getThumbPixelHeight( StorageItem *storageItem )
 {
     quint16 height = 0;
-    if( isImage( storageItem ) )
+    if( isThumbnailableImage( storageItem ) )
     {
         height = THUMB_HEIGHT;
     }
@@ -1753,7 +1793,7 @@ quint32 FSStoragePlugin::getThumbPixelHeight( StorageItem *storageItem )
 quint32 FSStoragePlugin::getThumbCompressedSize( StorageItem *storageItem )
 {
     quint32 size = 0;
-    if ( isImage( storageItem ) )
+    if ( isThumbnailableImage( storageItem ) )
     {
         QString thumbPath = m_thumbnailer->requestThumbnail( storageItem->m_path,
                 m_imageMimeTable.value( storageItem->m_objectInfo->mtpObjectFormat ) );
@@ -2607,21 +2647,47 @@ MTPResponseCode FSStoragePlugin:: getObjectPropertyValueFromStorage( const ObjHa
         break;
         case MTP_OBJ_PROP_Rep_Sample_Data:
         {
-            StorageItem *storageItem = m_objectHandlesMap.value( handle );
-            QString thumbPath = m_thumbnailer->requestThumbnail(storageItem->m_path, m_imageMimeTable.value(objectInfo->mtpObjectFormat));
+            /* Default to returning empty octet set */
             value = QVariant::fromValue(QVector<quint8>());
-            if(false == thumbPath.isEmpty())
-            {
-                QFile thumbFile(thumbPath);
-                if(thumbFile.open(QIODevice::ReadOnly))
-                {
-                    QVector<quint8> fileData(thumbFile.size());
-                    // Read file data into the vector
-                    // FIXME: Assumes that the entire file will be read at once
-                    thumbFile.read(reinterpret_cast<char*>(fileData.data()), thumbFile.size());
-                    value = QVariant::fromValue(fileData);
-                }
+
+            StorageItem *storageItem = m_objectHandlesMap.value( handle );
+            if( !storageItem ) {
+                MTP_LOG_WARNING("ObjectHandle" << handle << "does not exist");
+                break;
             }
+
+            /* Check if the file is an image that the thumbnailer can process */
+            if( !isThumbnailableImage(storageItem) ) {
+                MTP_LOG_WARNING(storageItem->path() << "is not thumbnailable image");
+                break;
+            }
+
+            /* Check if thumbnail already exists / request it to be generated */
+            QString thumbPath = m_thumbnailer->requestThumbnail(storageItem->m_path, m_imageMimeTable.value(objectInfo->mtpObjectFormat));
+            if(thumbPath.isEmpty()) {
+                MTP_LOG_WARNING(storageItem->path() << "has no thumbnail yet");
+                break;
+            }
+
+            QFile thumbFile(thumbPath);
+            qint64 size = thumbFile.size();
+            /* Refuse to load insanely large (>10MB) thumbnails */
+            if( size > (10 << 20) ) {
+                MTP_LOG_WARNING(storageItem->path() << "thumbail" << thumbPath << "is too large" << size);
+                break;
+            }
+
+            if( !thumbFile.open(QIODevice::ReadOnly) ) {
+                MTP_LOG_WARNING(storageItem->path() << "thumbail" << thumbPath << "can't be opened for reading");
+                break;
+            }
+
+            MTP_LOG_INFO(storageItem->path() << "loading thumbnail:" << thumbPath << " - size:" << size;);
+            QVector<quint8> fileData(size);
+            // Read file data into the vector
+            // FIXME: Assumes that the entire file will be read at once
+            thumbFile.read(reinterpret_cast<char*>(fileData.data()), size);
+            value = QVariant::fromValue(fileData);
         }
         break;
         default:
@@ -2839,12 +2905,14 @@ void FSStoragePlugin::receiveThumbnail(const QString &path)
         storageItem->m_objectInfo->mtpThumbCompressedSize =
                 getThumbCompressedSize( storageItem );
 
-        QVector<quint32> params;
-        params.append(handle);
-        emit eventGenerated(MTP_EV_ObjectInfoChanged, params);
+        if( storageItem->eventsAreEnabled() ) {
+            QVector<quint32> params;
+            params.append(handle);
+            emit eventGenerated(MTP_EV_ObjectInfoChanged, params);
 
-        params.append(MTP_OBJ_PROP_Rep_Sample_Data);
-        emit eventGenerated(MTP_EV_ObjectPropChanged, params);
+            params.append(MTP_OBJ_PROP_Rep_Sample_Data);
+            emit eventGenerated(MTP_EV_ObjectPropChanged, params);
+        }
     }
 }
 
@@ -2971,9 +3039,13 @@ void FSStoragePlugin::handleFSMove(const struct inotify_event *fromEvent, const 
                 populateObjectInfo( movedNode );
 
                 // Emit an object info changed signal
-                QVector<quint32> evtParams;
-                evtParams.append(movedHandle);
-                emit eventGenerated(MTP_EV_ObjectInfoChanged, evtParams);
+                if( fromNode->eventsAreEnabled() ) {
+                    toNode->setEventsEnabled(true);
+
+                    QVector<quint32> evtParams;
+                    evtParams.append(movedHandle);
+                    emit eventGenerated(MTP_EV_ObjectInfoChanged, evtParams);
+                }
             }
         }
     }
@@ -3002,8 +3074,10 @@ void FSStoragePlugin::handleFSModify(const struct inotify_event *event, const ch
 
                 // Emit an object info changed event
                 QVector<quint32> eventParams;
-                eventParams.append(changedHandle);
-                emit eventGenerated(MTP_EV_ObjectInfoChanged, eventParams);
+                if( item->eventsAreEnabled() ) {
+                    eventParams.append(changedHandle);
+                    emit eventGenerated(MTP_EV_ObjectInfoChanged, eventParams);
+                }
 
                 static quint64 freeSpace = m_storageInfo.freeSpace;
                 MTPStorageInfo info;

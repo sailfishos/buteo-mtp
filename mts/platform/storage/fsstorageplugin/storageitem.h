@@ -51,6 +51,17 @@ public:
     /// Constructor
     ~StorageItem();
 
+    /// Allow/deny sending object change notifications
+    void setEventsEnabled(bool enabled);
+
+    /// Is sending of object changed notifications allowed
+    bool eventsAreEnabled(void) const;
+
+     // Allow read access to item path
+    const QString &path(void) const {
+        return m_path;
+    }
+
 private:
     ObjHandle m_handle; ///< the item's handle
     QString m_path; ///< the pathname by which this item is identified in the storage.
@@ -60,6 +71,7 @@ private:
     StorageItem *m_firstChild; ///< this item's first child.
     StorageItem *m_nextSibling; ///< this item's first sibling.
     MtpInt128 m_puoid;
+    bool m_eventsEnabled;
 };
 }
 

@@ -90,7 +90,17 @@ class Thumbnailer : public ThumbnailerProxy
         ///< This slot handlers flushing of thumbnail request queue
         void thumbnailDelayTimeout();
 
+        ///< Set-once master toggle for allowing thumbnail requests
+        void enableThumbnailing(void);
+        ///< Temporarily deny sending new thumbnail requests
+        void suspendThumbnailing(void);
+        ///< Allow sending queued thumbnail requests again
+        void resumeThumbnailing(void);
+
+
     private:
+        void scheduleThumbnailing(void);
+
         ///< Checks if thumbnail for the requested path is already present in
         /// the system thumbnailer's cache.
         bool checkThumbnailPresent(const QString& filePath, QString& thumbPath);
@@ -108,6 +118,11 @@ class Thumbnailer : public ThumbnailerProxy
         const QString m_flavor;
         ///< Timer for combining multiple image sources to one thumbnail request
         QTimer *m_thumbnailTimer;
+
+        ///< Thumbnailing is enabled (once) during daemon startup
+        bool m_thumbnailerEnabled;
+        ///< Thumbnailing can be temporarily suspended during runtime
+        bool m_thumbnailerSuspended;
 };
 }
 #endif // THUMBNAILER_H

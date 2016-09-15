@@ -112,6 +112,12 @@ class MTPResponder : public QObject
         /// This signal is emitted based on MTP_OP_OpenSession / MTP_OP_CloseSession handling
         void sessionOpenChanged(bool isOpen);
 
+        /// Emitted when mtp command is received
+        void commandPending();
+
+        /// Emitted when mtp command has been processed
+        void commandFinished();
+
     private Q_SLOTS:
         /// This slot acts as a callback to the transport layer, used to receive MTP containers
         /// \param data [in] The data received from the transport layer
@@ -454,5 +460,23 @@ class MTPResponder : public QObject
 #endif
 };
 }
+
+/* Helper functions for making human readable diagnostic logging */
+extern "C"
+{
+    const char *mtp_format_category_repr(int val);
+    const char *mtp_file_system_type_repr(int val);
+    const char *mtp_association_type_repr(int val);
+    const char *mtp_storage_access_repr(int val);
+    const char *mtp_container_type_repr(int val);
+    const char *mtp_obj_prop_form_repr(int val);
+    const char *mtp_storage_type_repr(int val);
+    const char *mtp_bitrate_type_repr(int val);
+    const char *mtp_protection_repr(int val);
+    const char *mtp_form_flag_repr(int val);
+    const char *mtp_data_type_repr(int val);
+    const char *mtp_ch_conf_repr(int val);
+    const char *mtp_code_repr(int val);
+};
 #endif
 

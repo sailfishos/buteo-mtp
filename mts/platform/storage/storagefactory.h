@@ -210,6 +210,9 @@ public Q_SLOTS:
     /// done enumerating their object handles.
     void onStoragePluginReady(quint32 storageId);
 
+    //// Session was opened/closed
+    void sessionOpenChanged(bool isOpen);
+
 Q_SIGNALS:
     /// Storage factory will emit this signal when it needs to know the largest value of a puoid
     /// a storage plug-in used for an object. This is so that for this session it can assign handles greater than the

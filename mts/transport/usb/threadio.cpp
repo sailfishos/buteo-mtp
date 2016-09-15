@@ -163,7 +163,12 @@ void ControlReaderThread::setStatus(enum mtpfs_status status)
 
 void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
 {
-    MTP_LOG_INFO("Event: " << event_names[event->type]);
+    /* If there are problems with mtp startup, knowing
+     * whether usb control events are being sent or not
+     * is crucial -> use warning priority for loggin even
+     * though receiving these is fine and fully expected. */
+    MTP_LOG_WARNING("Event: " << event_names[event->type]);
+
     switch(event->type) {
         case FUNCTIONFS_ENABLE:
         case FUNCTIONFS_RESUME:

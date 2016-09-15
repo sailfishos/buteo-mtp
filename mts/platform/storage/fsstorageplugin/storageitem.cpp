@@ -30,12 +30,21 @@
 */
 
 #include "storageitem.h"
+#include "trace.h"
 
 using namespace meegomtp1dot0;
 
 // Constructor.
-StorageItem::StorageItem() : m_handle(0), m_path(""), m_wd(-1), m_objectInfo(0),
-                             m_parent(0), m_firstChild(0), m_nextSibling(0), m_puoid(MtpInt128(0))
+StorageItem::StorageItem() :
+    m_handle(0),
+    m_path(""),
+    m_wd(-1),
+    m_objectInfo(0),
+    m_parent(0),
+    m_firstChild(0),
+    m_nextSibling(0),
+    m_puoid(MtpInt128(0)),
+    m_eventsEnabled(false)
 {
 }
 
@@ -47,4 +56,19 @@ StorageItem::~StorageItem()
         delete m_objectInfo;
         m_objectInfo = 0;
     }
+}
+
+void StorageItem::setEventsEnabled(bool enabled)
+{
+    if( m_eventsEnabled != enabled ) {
+        m_eventsEnabled = enabled;
+        if( m_eventsEnabled ) {
+            MTP_LOG_INFO("events enabled for:" << m_path);
+        }
+    }
+}
+
+bool StorageItem::eventsAreEnabled(void) const
+{
+    return m_eventsEnabled;
 }

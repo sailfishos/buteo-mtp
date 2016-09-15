@@ -35,6 +35,7 @@
 #include <QFile>
 #include "thumbnailer.h"
 #include "trace.h"
+#include "mtpresponder.h"
 
 using namespace meegomtp1dot0;
 
@@ -59,7 +60,10 @@ static const QString THUMB_DIR = "/.thumbnails";
 
 Thumbnailer::Thumbnailer() :
     ThumbnailerProxy(THUMBNAILER_SERVICE, THUMBNAILER_GENERIC_PATH, QDBusConnection::sessionBus()),
-    m_scheduler("foreground"), m_flavor("normal")
+    m_scheduler("foreground"),
+    m_flavor("normal"),
+    m_thumbnailerEnabled(false),
+    m_thumbnailerSuspended(false)
 {
     /* Setup interval timer for combining multiple thumbnail
      * requests into one D-Bus method call. The first batch
@@ -84,11 +88,18 @@ Thumbnailer::Thumbnailer() :
                      this, SLOT(slotThumbnailReady(uint, const QStringList &)));
     QObject::connect(this, SIGNAL(Error(uint, const QStringList &, int, const QString &)),
                      this, SLOT(slotError(uint, const QStringList &, int, const QString &)));
+
+    /* Do not issue new thumbnail requests while handling mtp commands */
+    MTPResponder* responder = MTPResponder::instance();
+    QObject::connect(responder, &MTPResponder::commandPending,
+                     this, &Thumbnailer::suspendThumbnailing);
+    QObject::connect(responder, &MTPResponder::commandFinished,
+                     this, &Thumbnailer::resumeThumbnailing);
 }
 
 void Thumbnailer::slotThumbnailReady(uint handle, const QStringList& uris)
 {
-    MTP_LOG_TRACE("Thumbnail ready!!");
+    Q_UNUSED(handle);
 
     foreach(const QString &uri, uris)
     {
@@ -100,18 +111,22 @@ void Thumbnailer::slotThumbnailReady(uint handle, const QStringList& uris)
 
         m_uriAlreadyRequested.remove(uri);
         QString filePath = QUrl(uri).path();
-        MTP_LOG_TRACE("Thumbnail ready for::" << filePath);
+        MTP_LOG_INFO("Thumbnail ready for:" << filePath);
         emit thumbnailReady(filePath);
     }
 }
 
-void Thumbnailer::slotRequestStarted(uint /*handle*/)
+void Thumbnailer::slotRequestStarted(uint handle)
 {
+    Q_UNUSED(handle);
+
     // Nothing to do here right now
 }
 
 void Thumbnailer::slotRequestFinished(uint handle)
 {
+    Q_UNUSED(handle);
+
     // Nothing to do here right now
 }
 
@@ -175,7 +190,7 @@ void Thumbnailer::requestThumbnailFinished(QDBusPendingCallWatcher *pcw)
 void Thumbnailer::thumbnailDelayTimeout()
 {
     if(m_uriRequestQueue.isEmpty()) {
-        MTP_LOG_TRACE("Thumbnail queue is empty; stopping timer");
+        MTP_LOG_INFO("Thumbnail queue is empty; stopping dequeue timer");
         m_thumbnailTimer->stop();
 
         /* Setup initial delay for the next patch of requests */
@@ -195,7 +210,7 @@ void Thumbnailer::thumbnailDelayTimeout()
     }
 
     /* Make an asynchronous thumbnail request via D-Bus */
-    MTP_LOG_TRACE("Requesting" << uris.count() << "thumbnails");
+    MTP_LOG_INFO("Requesting" << uris.count() << "thumbnails");
     QDBusPendingCall pc = this->Queue(uris, mimes, m_flavor, m_scheduler, 0);
     QDBusPendingCallWatcher *pcw = new QDBusPendingCallWatcher(pc, this);
     connect(pcw, SIGNAL(finished(QDBusPendingCallWatcher*)), SLOT(requestThumbnailFinished(QDBusPendingCallWatcher*)));
@@ -204,8 +219,57 @@ void Thumbnailer::thumbnailDelayTimeout()
     m_thumbnailTimer->setInterval(0);
 }
 
+void Thumbnailer::enableThumbnailing(void)
+{
+    if(!m_thumbnailerEnabled) {
+        MTP_LOG_INFO("thumbnailer enabled");
+        m_thumbnailerEnabled = true;
+        scheduleThumbnailing();
+    }
+}
+
+void Thumbnailer::suspendThumbnailing(void)
+{
+    if(!m_thumbnailerSuspended) {
+        m_thumbnailerSuspended = true;
+        scheduleThumbnailing();
+    }
+}
+
+void Thumbnailer::resumeThumbnailing(void)
+{
+    if(m_thumbnailerSuspended) {
+        m_thumbnailerSuspended = false;
+        scheduleThumbnailing();
+    }
+}
+
+void Thumbnailer::scheduleThumbnailing(void)
+{
+    bool activate = (m_thumbnailerEnabled &&
+                     !m_thumbnailerSuspended &&
+                     !m_uriRequestQueue.isEmpty());
+
+
+    if(activate) {
+        if(!m_thumbnailTimer->isActive()) {
+            MTP_LOG_TRACE("thumbnailer dequeue timer started");
+            m_thumbnailTimer->start();
+        }
+    }
+    else {
+        if(m_thumbnailTimer->isActive()) {
+            MTP_LOG_TRACE("thumbnailer dequeue timer stopped");
+            m_thumbnailTimer->stop();
+            m_thumbnailTimer->setInterval(THUMBNAIL_DELAY_IN_RUNTIME);
+        }
+    }
+}
+
 QString Thumbnailer::requestThumbnail(const QString &filePath, const QString &mimeType)
 {
+    Q_UNUSED(mimeType)
+
     QString thumbPath;
     QString fileIri = IRI_PREFIX + filePath;
     // First check if a thumbnail is already present
@@ -220,8 +284,7 @@ QString Thumbnailer::requestThumbnail(const QString &filePath, const QString &mi
 
             /* Queue is flushed via timer to combine multiple
              * images into one thumbnail request. */
-            if(!m_thumbnailTimer->isActive())
-                m_thumbnailTimer->start();
+            scheduleThumbnailing();
         }
     }
     return thumbPath;
@@ -238,20 +301,49 @@ bool Thumbnailer::checkThumbnailPresent(const QString& filePath, QString& thumbP
     QByteArray fileHash = hasher.result();
     QString hexHash = QString(fileHash.toHex());
 
+    QFileInfo fileInfo(filePath);
+
     foreach(QString candidateDir, m_thumbnailDirs)
     {
-        QString file = candidateDir + "/" + hexHash;
-        QString ret;
-        if(QFile::exists(ret = (file + ".jpeg")) || QFile::exists(ret = (file + ".png")))
+        static const char * const extension[] =
         {
-            QFileInfo fileInfo(filePath);
-            QFileInfo thumbInfo(ret);
+            ".jpeg",
+            ".png",
+            0
+        };
+
+        QString base = candidateDir + "/" + hexHash;
+
+        for(size_t i = 0; extension[i]; ++i) {
+            QFile thumbFile(base + extension[i]);
+            if(!thumbFile.exists())
+                continue;
+
+            /* Assume thumbnail is ok, if it has the same or later
+             * modification time stamp as the original image. */
+            QFileInfo thumbInfo(thumbFile);
             if(thumbInfo.lastModified() >= fileInfo.lastModified())
             {
-                MTP_LOG_TRACE("Thumbnail file::::" << file);
-                thumbPath = ret;
+                thumbPath = thumbFile.fileName();
+                MTP_LOG_INFO("Thumbnail file:" << thumbPath);
                 return true;
             }
+
+            /* If the logic in here considers the thumbnail too old
+             * while thumbailer thinks it still is fresh enoug, we
+             * get ipc ringing -> the old thumbnail must be removed
+             * to avoid this. */
+            if(thumbFile.remove())
+            {
+                MTP_LOG_TRACE("Removed stale thumbnail file:" << thumbFile.fileName());
+            }
+            else
+            {
+                // FIXME: if thumbnailer thinks the file is ok, while we think 
+                //        it is not -> we end up here over and over again...
+                MTP_LOG_WARNING("Failed to removed stale thumbnail file:" << thumbFile.fileName());
+            }
+
         }
     }
     return false;

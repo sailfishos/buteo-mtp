@@ -61,6 +61,10 @@ public:
         return m_storageId;
     }
 
+    /// Stop sending change events for all objects
+    virtual void disableObjectEvents() = 0;
+
+
     /// Enumerate the storage.
     /// \return true or false depending on whether storage succeeded or failed.
     virtual bool enumerateStorage() = 0;
