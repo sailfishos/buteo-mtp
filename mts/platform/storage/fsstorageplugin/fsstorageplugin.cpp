@@ -1699,9 +1699,9 @@ quint64 FSStoragePlugin::getObjectSize( StorageItem *storageItem )
 }
 
 /************************************************************
- * bool FSStoragePlugin::isImage
+ * bool FSStoragePlugin::isThumbnailableImage
  ***********************************************************/
-bool FSStoragePlugin::isImage( StorageItem *storageItem )
+bool FSStoragePlugin::isThumbnailableImage( StorageItem *storageItem )
 {
     static const char * const extension[] =
     {
@@ -1732,7 +1732,7 @@ bool FSStoragePlugin::isImage( StorageItem *storageItem )
 quint16 FSStoragePlugin::getThumbFormat( StorageItem *storageItem )
 {
     quint16 format = MTP_OBF_FORMAT_Undefined;
-    if( isImage( storageItem ) )
+    if( isThumbnailableImage( storageItem ) )
     {
         format = MTP_OBF_FORMAT_JFIF;
     }
@@ -1745,7 +1745,7 @@ quint16 FSStoragePlugin::getThumbFormat( StorageItem *storageItem )
 quint32 FSStoragePlugin::getThumbPixelWidth( StorageItem *storageItem )
 {
     quint16 width = 0;
-    if( isImage( storageItem ) )
+    if( isThumbnailableImage( storageItem ) )
     {
         width = THUMB_WIDTH;
     }
@@ -1758,7 +1758,7 @@ quint32 FSStoragePlugin::getThumbPixelWidth( StorageItem *storageItem )
 quint32 FSStoragePlugin::getThumbPixelHeight( StorageItem *storageItem )
 {
     quint16 height = 0;
-    if( isImage( storageItem ) )
+    if( isThumbnailableImage( storageItem ) )
     {
         height = THUMB_HEIGHT;
     }
@@ -1771,7 +1771,7 @@ quint32 FSStoragePlugin::getThumbPixelHeight( StorageItem *storageItem )
 quint32 FSStoragePlugin::getThumbCompressedSize( StorageItem *storageItem )
 {
     quint32 size = 0;
-    if ( isImage( storageItem ) )
+    if ( isThumbnailableImage( storageItem ) )
     {
         QString thumbPath = m_thumbnailer->requestThumbnail( storageItem->m_path,
                 m_imageMimeTable.value( storageItem->m_objectInfo->mtpObjectFormat ) );
@@ -2625,21 +2625,47 @@ MTPResponseCode FSStoragePlugin:: getObjectPropertyValueFromStorage( const ObjHa
         break;
         case MTP_OBJ_PROP_Rep_Sample_Data:
         {
-            StorageItem *storageItem = m_objectHandlesMap.value( handle );
-            QString thumbPath = m_thumbnailer->requestThumbnail(storageItem->m_path, m_imageMimeTable.value(objectInfo->mtpObjectFormat));
+            /* Default to returning empty octet set */
             value = QVariant::fromValue(QVector<quint8>());
-            if(false == thumbPath.isEmpty())
-            {
-                QFile thumbFile(thumbPath);
-                if(thumbFile.open(QIODevice::ReadOnly))
-                {
-                    QVector<quint8> fileData(thumbFile.size());
-                    // Read file data into the vector
-                    // FIXME: Assumes that the entire file will be read at once
-                    thumbFile.read(reinterpret_cast<char*>(fileData.data()), thumbFile.size());
-                    value = QVariant::fromValue(fileData);
-                }
+
+            StorageItem *storageItem = m_objectHandlesMap.value( handle );
+            if( !storageItem ) {
+                MTP_LOG_WARNING("ObjectHandle" << handle << "does not exist");
+                break;
             }
+
+            /* Check if the file is an image that the thumbnailer can process */
+            if( !isThumbnailableImage(storageItem) ) {
+                MTP_LOG_WARNING(storageItem->path() << "is not thumbnailable image");
+                break;
+            }
+
+            /* Check if thumbnail already exists / request it to be generated */
+            QString thumbPath = m_thumbnailer->requestThumbnail(storageItem->m_path, m_imageMimeTable.value(objectInfo->mtpObjectFormat));
+            if(thumbPath.isEmpty()) {
+                MTP_LOG_WARNING(storageItem->path() << "has no thumbnail yet");
+                break;
+            }
+
+            QFile thumbFile(thumbPath);
+            qint64 size = thumbFile.size();
+            /* Refuse to load insanely large (>10MB) thumbnails */
+            if( size > (10 << 20) ) {
+                MTP_LOG_WARNING(storageItem->path() << "thumbail" << thumbPath << "is too large" << size);
+                break;
+            }
+
+            if( !thumbFile.open(QIODevice::ReadOnly) ) {
+                MTP_LOG_WARNING(storageItem->path() << "thumbail" << thumbPath << "can't be opened for reading");
+                break;
+            }
+
+            MTP_LOG_INFO(storageItem->path() << "loading thumbnail:" << thumbPath << " - size:" << size;);
+            QVector<quint8> fileData(size);
+            // Read file data into the vector
+            // FIXME: Assumes that the entire file will be read at once
+            thumbFile.read(reinterpret_cast<char*>(fileData.data()), size);
+            value = QVariant::fromValue(fileData);
         }
         break;
         default:

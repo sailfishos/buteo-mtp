@@ -51,6 +51,11 @@ public:
     /// Constructor
     ~StorageItem();
 
+     // Allow read access to item path
+    const QString &path(void) const {
+        return m_path;
+    }
+
 private:
     ObjHandle m_handle; ///< the item's handle
     QString m_path; ///< the pathname by which this item is identified in the storage.
