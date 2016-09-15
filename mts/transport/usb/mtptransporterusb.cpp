@@ -110,7 +110,7 @@ bool MTPTransporterUSB::writeMtpDescriptors()
     }
 
     MTP_LOG_CRITICAL("Couldn't write descriptors to control endpoint file"
-        << control_file);
+        << MTP_EP_PATH_CONTROL);
     return false;
 }
 
@@ -120,7 +120,7 @@ bool MTPTransporterUSB::writeMtpStrings()
         return true;
 
     MTP_LOG_CRITICAL("Couldn't write strings to control endpoint file"
-        << control_file);
+        << MTP_EP_PATH_CONTROL);
     return false;
 }
 
@@ -129,10 +129,10 @@ bool MTPTransporterUSB::activate()
     MTP_LOG_CRITICAL("MTPTransporterUSB::activate");
     int success = false;
 
-    m_ctrlFd = open(control_file, O_RDWR);
+    m_ctrlFd = open(MTP_EP_PATH_CONTROL, O_RDWR);
     if(-1 == m_ctrlFd)
     {
-        MTP_LOG_CRITICAL("Couldn't open control endpoint file " << control_file);
+        MTP_LOG_CRITICAL("Couldn't open control endpoint file " << MTP_EP_PATH_CONTROL);
     }
     else
     {
@@ -468,27 +468,27 @@ void MTPTransporterUSB::openDevices()
     m_ioState = ACTIVE;
     MTP_LOG_INFO("MTP opening endpoint devices");
 
-    m_inFd = open(in_file, O_RDWR);
+    m_inFd = open(MTP_EP_PATH_IN, O_RDWR);
     if(-1 == m_inFd)
     {
-        MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << in_file);
+        MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << MTP_EP_PATH_IN);
     } else {
         m_bulkWrite.setFd(m_inFd);
     }
 
-    m_outFd = open(out_file, O_RDWR);
+    m_outFd = open(MTP_EP_PATH_OUT, O_RDWR);
     if(-1 == m_outFd)
     {
-        MTP_LOG_CRITICAL("Couldn't open OUT endpoint file " << out_file);
+        MTP_LOG_CRITICAL("Couldn't open OUT endpoint file " << MTP_EP_PATH_OUT);
     } else {
         m_bulkRead.setFd(m_outFd);
         startRead();
     }
 
-    m_intrFd = open(interrupt_file, O_RDWR);
+    m_intrFd = open(MTP_EP_PATH_INTERRUPT, O_RDWR);
     if(-1 == m_intrFd)
     {
-        MTP_LOG_CRITICAL("Couldn't open INTR endpoint file " << interrupt_file);
+        MTP_LOG_CRITICAL("Couldn't open INTR endpoint file " << MTP_EP_PATH_INTERRUPT);
     } else {
         m_intrWrite.setFd(m_intrFd);
         m_intrWrite.start();

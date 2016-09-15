@@ -12,10 +12,10 @@
 #define MTP_STRING_DESCRIPTOR "MTP"
 #define ENGLISH_US 0x0409
 
-static const char* control_file = "/dev/mtp/ep0";
-static const char* in_file = "/dev/mtp/ep1";
-static const char* out_file = "/dev/mtp/ep2";
-static const char* interrupt_file = "/dev/mtp/ep3";
+#define MTP_EP_PATH_CONTROL    "/dev/mtp/ep0"
+#define MTP_EP_PATH_IN         "/dev/mtp/ep1"
+#define MTP_EP_PATH_OUT        "/dev/mtp/ep2"
+#define MTP_EP_PATH_INTERRUPT  "/dev/mtp/ep3"
 
 struct mtp1_descs_s {
    struct usb_interface_descriptor intf;
