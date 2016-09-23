@@ -429,7 +429,14 @@ void MTPTransporterUSB::eventTimeout()
             m_intrWrite.flushData();
         }
     }
-    m_intrWrite.interrupt();
+    /* What we want to do is: interrupt write() with SIGUSR1
+     * without giving the interrupt writer thread to continue
+     * with the next events in the queue.
+     *
+     * To do this, call to base class IOThread::interrupt()
+     * must be used instead of InterruptWriterThread::interrupt().
+     */
+    m_intrWrite.IOThread::interrupt();
 }
 void MTPTransporterUSB::eventCompleted(int result)
 {
