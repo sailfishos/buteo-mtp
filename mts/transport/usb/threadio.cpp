@@ -72,6 +72,31 @@ static const char *const event_names[] = {
 "RESUME"
 };
 
+static void handleUSR1(int signum)
+{
+    Q_UNUSED(signum);
+
+    static const char m[] = "***USR1***\n";
+    if( write(2, m, sizeof m - 1) == -1 ) {
+        // dontcare
+    }
+
+    return; // This handler just exists to make blocking I/O return with EINTR
+}
+
+static void catchUSR1()
+{
+    struct sigaction action;
+
+    memset(&action, 0, sizeof(action));
+    action.sa_handler = handleUSR1;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+
+    if (sigaction(SIGUSR1, &action, NULL) < 0)
+        MTP_LOG_WARNING("Could not establish SIGUSR1 signal handler");
+}
+
 IOThread::IOThread(QObject *parent)
     : QThread(parent), m_fd(0), m_shouldExit(false), m_handle(0)
 {}
@@ -129,6 +154,10 @@ bool IOThread::stall(bool dirIn)
 
 void IOThread::run()
 {
+    /* set up signal handler before assigning the m_handle
+     * member variable used from interrupt() method. */
+    catchUSR1();
+
     m_handle = pthread_self();
 
     execute();

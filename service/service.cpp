@@ -58,6 +58,7 @@ int main(int argc, char** argv)
 
     if (sigaction(SIGINT, &action, NULL) < 0) return(-1);
     if (sigaction(SIGALRM, &action, NULL) < 0) return(-1);
+    if (sigaction(SIGUSR1, &action, NULL) < 0) return(-1);
 
     QObject::connect(&app,SIGNAL(aboutToQuit()),Mts::getInstance(),SLOT(destroyInstance()));
 
