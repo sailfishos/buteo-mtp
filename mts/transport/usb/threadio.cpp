@@ -47,7 +47,16 @@
 
 const int MAX_DATA_IN_SIZE = 16 * 1024;  // Matches USB transfer size
 const int MAX_CONTROL_IN_SIZE = 64;
-const int MAX_EVENTS_STORED = 16;
+
+/* Maximum number of events to queue for sending via the interrupt
+ * endpoint. Balance between: Too small value can cause the host
+ * side to get out of sync with the reality on the device side vs.
+ * too large value can hamper bulk io throughput if the host side
+ * does not purge the queued events fast enough -> assume being able
+ * to hold and transfer events resulting from things like deleting
+ * few hundred files is enough. */
+const int MAX_EVENTS_STORED = 512;
+
 // Give BulkReaderThread some space to acquire chunks while the main
 // thread is working, but still small enough for the main thread to
 // process as one event.
