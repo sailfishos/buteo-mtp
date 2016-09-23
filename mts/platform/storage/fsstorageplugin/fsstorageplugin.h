@@ -91,6 +91,8 @@ public:
 
     MTPResponseCode getPath( const quint32 &handle, QString &path ) const;
 
+    MTPResponseCode getEventsEnabled( const quint32 &handle, bool &eventsEnabled ) const;
+
     MTPResponseCode getObjectInfo( const ObjHandle &handle, const MTPObjectInfo *&objectInfo );
 
     MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment, bool isLastSegment );

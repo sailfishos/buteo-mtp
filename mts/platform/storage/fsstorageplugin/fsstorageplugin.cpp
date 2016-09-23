@@ -2075,6 +2075,21 @@ MTPResponseCode FSStoragePlugin::getPath( const quint32 &handle, QString &path )
 }
 
 /************************************************************
+ * MTPResponseCode FSStoragePlugin::getEventsEnabled
+ ***********************************************************/
+MTPResponseCode FSStoragePlugin::getEventsEnabled( const quint32 &handle, bool &eventsEnabled ) const
+{
+    MTPResponseCode result = MTP_RESP_OK;
+    StorageItem *storageItem = m_objectHandlesMap.value(handle, 0);
+    if( storageItem )
+        eventsEnabled = storageItem->eventsAreEnabled();
+    else
+        result = MTP_RESP_GeneralError;
+    return result;
+}
+
+
+/************************************************************
  * MTPResponseCode FSStoragePlugin::dumpStorageItem
  ***********************************************************/
 void FSStoragePlugin::dumpStorageItem( StorageItem *storageItem, bool recurse )
@@ -2905,14 +2920,12 @@ void FSStoragePlugin::receiveThumbnail(const QString &path)
         storageItem->m_objectInfo->mtpThumbCompressedSize =
                 getThumbCompressedSize( storageItem );
 
-        if( storageItem->eventsAreEnabled() ) {
-            QVector<quint32> params;
-            params.append(handle);
-            emit eventGenerated(MTP_EV_ObjectInfoChanged, params);
+      QVector<quint32> params;
+      params.append(handle);
+      emit eventGenerated(MTP_EV_ObjectInfoChanged, params);
 
-            params.append(MTP_OBJ_PROP_Rep_Sample_Data);
-            emit eventGenerated(MTP_EV_ObjectPropChanged, params);
-        }
+      params.append(MTP_OBJ_PROP_Rep_Sample_Data);
+      emit eventGenerated(MTP_EV_ObjectPropChanged, params);
     }
 }
 
@@ -3038,14 +3051,13 @@ void FSStoragePlugin::handleFSMove(const struct inotify_event *fromEvent, const 
                 movedNode->m_objectInfo = 0;
                 populateObjectInfo( movedNode );
 
-                // Emit an object info changed signal
-                if( fromNode->eventsAreEnabled() ) {
+                if( fromNode->eventsAreEnabled() )
                     toNode->setEventsEnabled(true);
 
-                    QVector<quint32> evtParams;
-                    evtParams.append(movedHandle);
-                    emit eventGenerated(MTP_EV_ObjectInfoChanged, evtParams);
-                }
+                // Emit an object info changed signal
+                QVector<quint32> evtParams;
+                evtParams.append(movedHandle);
+                emit eventGenerated(MTP_EV_ObjectInfoChanged, evtParams);
             }
         }
     }
@@ -3074,10 +3086,8 @@ void FSStoragePlugin::handleFSModify(const struct inotify_event *event, const ch
 
                 // Emit an object info changed event
                 QVector<quint32> eventParams;
-                if( item->eventsAreEnabled() ) {
-                    eventParams.append(changedHandle);
-                    emit eventGenerated(MTP_EV_ObjectInfoChanged, eventParams);
-                }
+                eventParams.append(changedHandle);
+                emit eventGenerated(MTP_EV_ObjectInfoChanged, eventParams);
 
                 static quint64 freeSpace = m_storageInfo.freeSpace;
                 MTPStorageInfo info;

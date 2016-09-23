@@ -473,6 +473,18 @@ MTPResponseCode StorageFactory::getPath( const quint32 &handle, QString &path ) 
 }
 
 /*******************************************************
+ * MTPResponseCode StorageFactory::getEventsEnabled
+ ******************************************************/
+MTPResponseCode StorageFactory::getEventsEnabled( const quint32 &handle, bool &eventsEnabled ) const
+{
+    MTPResponseCode result = MTP_RESP_InvalidObjectHandle;
+    StoragePlugin *storage = storageOfHandle(handle);
+    if (storage)
+        result = storage->getEventsEnabled(handle, eventsEnabled);
+    return result;
+}
+
+/*******************************************************
  * MTPResponseCode StorageFactory::getObjectInfo
  ******************************************************/
 MTPResponseCode StorageFactory::getObjectInfo( const ObjHandle &handle, const MTPObjectInfo *&objectInfo ) const

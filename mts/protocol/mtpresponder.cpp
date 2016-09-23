@@ -3047,11 +3047,28 @@ void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &par
         break;
     }
 
+    bool EventsEnabled(true);
     QString ObjectPath("n/a");
-    if( ObjectHandle != 0x00000000 && ObjectHandle != 0xffffffff )
+    if( ObjectHandle != 0x00000000 && ObjectHandle != 0xffffffff ) {
         m_storageServer->getPath(ObjectHandle, ObjectPath);
+        m_storageServer->getEventsEnabled(ObjectHandle, EventsEnabled);
+    }
 
-    MTP_LOG_INFO(mtp_code_repr(event) << ObjectPath);
+    if( !EventsEnabled ) {
+        MTP_LOG_TRACE(mtp_code_repr(event) << ObjectPath << "[skipped]");
+        return;
+    }
+
+    QString args;
+    foreach (quint32 param, params) {
+        char hex[16];
+        snprintf(hex, sizeof hex, "0x%x", param);
+        if( !args.isEmpty() )
+            args.append(" ");
+        args.append(hex);
+    }
+
+    MTP_LOG_INFO(mtp_code_repr(event) << ObjectPath << args);
 
     if( !m_transporter ) {
         MTP_LOG_WARNING("Transporter not set; event ignored");
