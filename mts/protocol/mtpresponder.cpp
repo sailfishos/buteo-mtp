@@ -96,11 +96,20 @@ MTPResponder::MTPResponder(): m_storageServer(0),
     m_storageWaitDataComplete(false),
     m_state_accessor_only(RESPONDER_IDLE),
     m_prevState(RESPONDER_IDLE),
+    m_handler_idle_timer(0),
     m_objPropListInfo(0),
     m_sendObjectSequencePtr(0),
     m_transactionSequence(new MTPTransactionSequence)
 {
     MTP_FUNC_TRACE();
+
+    // command handler idle timer
+    m_handler_idle_timer = new QTimer(this);
+    m_handler_idle_timer->setInterval(100);
+    m_handler_idle_timer->setSingleShot(true);
+
+    connect(m_handler_idle_timer, &QTimer::timeout,
+            this, &MTPResponder::onIdleTimeout);
 
     createCommandHandler();
 
@@ -3125,6 +3134,12 @@ MTPResponder::ResponderState MTPResponder::getResponderState(void)
     return m_state_accessor_only;
 }
 
+void MTPResponder::onIdleTimeout()
+{
+    MTP_LOG_INFO("command sequence ended");
+    emit commandIdle();
+}
+
 void MTPResponder::setResponderState(MTPResponder::ResponderState state)
 {
     MTPResponder::ResponderState prev = m_state_accessor_only;
@@ -3139,10 +3154,14 @@ void MTPResponder::setResponderState(MTPResponder::ResponderState state)
         bool isBusy  = (state != RESPONDER_IDLE);
 
         if( wasBusy != isBusy ) {
-            if( isBusy )
+            if( isBusy ) {
+                m_handler_idle_timer->stop();
                 emit commandPending();
-            else
+            }
+            else {
                 emit commandFinished();
+                m_handler_idle_timer->start();
+            }
         }
     }
 }

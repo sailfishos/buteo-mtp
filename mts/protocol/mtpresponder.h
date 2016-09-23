@@ -35,6 +35,7 @@
 #include <QObject>
 #include <QHash>
 #include <QList>
+#include <QTimer>
 
 #include "mtptypes.h"
 
@@ -118,6 +119,9 @@ class MTPResponder : public QObject
         /// Emitted when mtp command has been processed
         void commandFinished();
 
+        /// Emitted after sequence of mtp commands does not continue
+        void commandIdle();
+
     private Q_SLOTS:
         /// This slot acts as a callback to the transport layer, used to receive MTP containers
         /// \param data [in] The data received from the transport layer
@@ -150,6 +154,7 @@ class MTPResponder : public QObject
         void handleResume();
 
         void onDevicePropertyChanged(MTPDevPropertyCode property);
+        void onIdleTimeout();
 
     private:
         Q_DISABLE_COPY(MTPResponder)
@@ -184,6 +189,7 @@ class MTPResponder : public QObject
 
 
         ResponderState                                  m_prevState;
+        QTimer                                         *m_handler_idle_timer;
 
         struct ObjPropListInfo
         {

@@ -79,6 +79,7 @@ MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLe
     // event write cancelation
     m_event_cancel = new QTimer(this);
     m_event_cancel->setInterval(1000);
+    m_event_cancel->setSingleShot(true);
     QObject::connect(m_event_cancel, SIGNAL(timeout()),
                      this, SLOT(eventTimeout()));
 
