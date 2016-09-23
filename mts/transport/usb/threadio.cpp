@@ -10,6 +10,41 @@
 
 #include "trace.h"
 
+#define MTP_READ(fd,buf,len,log_success) ({\
+    if( (log_success) ) {\
+        MTP_LOG_WARNING("read(" << fd << (void*)(buf) << len << ") -> ...");\
+    }\
+    ssize_t rc = read((fd),(buf),(len));\
+    int saved = errno;\
+    if( rc == -1 ) {\
+        MTP_LOG_CRITICAL("read(" << fd << (void*)(buf) << len << ") -> err:"\
+                         << strerror(errno));\
+    }\
+    else if( rc == 0 ) {\
+        MTP_LOG_CRITICAL("read(" << fd << (void*)(buf) << len << ") -> eof");\
+    }\
+    else if( (log_success) ) {\
+        MTP_LOG_WARNING("read(" << fd << (void*)(buf) << len << ") -> rc:" << rc);\
+    }\
+    errno = saved, rc;\
+})
+
+#define MTP_WRITE(fd,buf,len,log_success) ({\
+    if( (log_success) ) {\
+        MTP_LOG_WARNING("write(" << fd << (void*)(buf) << len << ") -> ...");\
+    }\
+    ssize_t rc = write((fd),(buf),(len));\
+    int saved = errno;\
+    if( rc == -1 ) {\
+        MTP_LOG_CRITICAL("write(" << fd << (void*)(buf) << len << ") -> err:"\
+                         << strerror(errno));\
+    }\
+    else if( (log_success) ) {\
+        MTP_LOG_WARNING("write(" << fd << (void*)(buf) << len << ") -> rc:" << rc);\
+    }\
+    errno = saved, rc;\
+})
+
 const int MAX_DATA_IN_SIZE = 16 * 1024;  // Matches USB transfer size
 const int MAX_CONTROL_IN_SIZE = 64;
 const int MAX_EVENTS_STORED = 16;
@@ -81,9 +116,9 @@ bool IOThread::stall(bool dirIn)
      */
     int err;
     if(dirIn) // &err is just a dummy value here, since length is 0 bytes
-        err = read(m_fd, &err, 0);
+        err = MTP_READ(m_fd, &err, 0, false);
     else
-        err = write(m_fd, &err, 0);
+        err = MTP_WRITE(m_fd, &err, 0, false);
     if(err == -1 && errno == EL2HLT) {
         return true;
     } else {
@@ -120,7 +155,7 @@ void ControlReaderThread::execute()
     int readSize, count;
 
     while(!m_shouldExit) {
-        readSize = read(m_fd, readBuffer, MAX_CONTROL_IN_SIZE);
+        readSize = MTP_READ(m_fd, readBuffer, MAX_CONTROL_IN_SIZE, false);
         if (readSize <= 0) {
             if (errno != EINTR)
                 perror("ControlReaderThread");
@@ -144,7 +179,7 @@ void ControlReaderThread::sendStatus()
     char *dataptr = (char*)&status_data[m_status];
 
     do {
-        bytesWritten = write(m_fd, dataptr, dataLen);
+        bytesWritten = MTP_WRITE(m_fd, dataptr, dataLen, false);
         if(bytesWritten == -1)
         {
             return;
@@ -291,7 +326,7 @@ void BulkReaderThread::execute()
         if (m_shouldExit)
             break;
 
-        readSize = read(m_fd, m_buffer + offset, MAX_DATA_IN_SIZE);
+        readSize = MTP_READ(m_fd, m_buffer + offset, MAX_DATA_IN_SIZE, false);
         if (m_shouldExit)
             break;
         if (readSize == -1) {
@@ -408,7 +443,7 @@ void BulkWriterThread::execute()
 
     while ((m_dataLen || zeropacket) && !m_shouldExit) {
         quint32 writeNow = (m_dataLen < writeMax) ? m_dataLen : writeMax;
-        bytesWritten = write(m_fd, dataptr, writeNow);
+        bytesWritten = MTP_WRITE(m_fd, dataptr, writeNow, false);
         if(bytesWritten == -1)
         {
             if(errno == EIO && writeMax > PTP_HS_DATA_PKT_SIZE )
@@ -553,7 +588,7 @@ void InterruptWriterThread::execute()
         int dataLen = pair.second;
 
         while(dataLen && !m_shouldExit) {
-            int bytesWritten = write(m_fd, dataptr, dataLen);
+            int bytesWritten = MTP_WRITE(m_fd, dataptr, dataLen, false);
             if(bytesWritten == -1)
             {
                 if (errno == EINTR) {
