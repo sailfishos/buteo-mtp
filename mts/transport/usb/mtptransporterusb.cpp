@@ -96,7 +96,7 @@ MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLe
     MTPResponder* responder = MTPResponder::instance();
     QObject::connect(responder, &MTPResponder::commandPending,
                      this, &MTPTransporterUSB::onCommandPending);
-    QObject::connect(responder, &MTPResponder::commandFinished,
+    QObject::connect(responder, &MTPResponder::commandIdle,
                      this, &MTPTransporterUSB::onCommandFinished);
 }
 
