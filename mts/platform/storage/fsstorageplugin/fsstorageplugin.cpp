@@ -3063,8 +3063,40 @@ void FSStoragePlugin::handleFSMove(const struct inotify_event *fromEvent, const 
     }
 }
 
+static QString inotifyEventMaskRepr(int mask)
+{
+    QString res;
+
+#define X(f)\
+     do {\
+         if( mask & IN_##f ) {\
+             if( !res.isEmpty() )\
+                 res.append("|");\
+             res.append(#f);\
+         }\
+     } while(0)
+
+    X(ACCESS);
+    X(ATTRIB);
+    X(CLOSE_WRITE);
+    X(CLOSE_NOWRITE);
+    X(CREATE);
+    X(DELETE);
+    X(DELETE_SELF);
+    X(MODIFY);
+    X(MOVE_SELF);
+    X(MOVED_FROM);
+    X(MOVED_TO);
+    X(OPEN);
+
+#undef X
+    return res;
+}
+
 void FSStoragePlugin::handleFSModify(const struct inotify_event *event, const char* name)
 {
+    MTP_LOG_INFO((name ?: "null") << inotifyEventMaskRepr(event->mask));
+
     if(event->mask & IN_CLOSE_WRITE)
     {
         ObjHandle parent = m_watchDescriptorMap.value(event->wd);
