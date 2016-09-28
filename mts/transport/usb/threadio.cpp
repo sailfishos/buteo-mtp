@@ -316,36 +316,58 @@ void BulkReaderThread::execute()
 
     while (!m_shouldExit) {
         int offset;
+
+        /* Wait for read offset in locked state */
         m_bufferLock.lock();
         offset = _getOffset_locked();
         while (!m_shouldExit && offset < 0) {
+            /* Expectation: Waiting should not be required except when
+             * transferring large files and file system writes can't
+             * keep up with usb transfer speed -> log in verbose mode. */
+            MTP_LOG_INFO("waiting ...");
             m_wait.wait(&m_bufferLock);
+            MTP_LOG_INFO("woke up");
             offset = _getOffset_locked();
         }
         m_bufferLock.unlock();
+
+        /* Check if thread exit has been requested */
         if (m_shouldExit)
             break;
 
+        /* Do a blocking read */
         readSize = MTP_READ(m_fd, m_buffer + offset, MAX_DATA_IN_SIZE, false);
+
+        /* Check if thread exit has been requested */
         if (m_shouldExit)
             break;
+
+        /* Handle I/O errors */
         if (readSize == -1) {
-            if (errno == EINTR)
+            /* Note: The error has already been logged by MTP_READ() */
+
+            if (errno == EINTR) {
                 continue;
+            }
+
             if (errno == EAGAIN || errno == ESHUTDOWN) {
-                MTP_LOG_WARNING("BulkReaderThread delaying: errno" << errno);
                 msleep(1);
                 continue;
             }
-            MTP_LOG_CRITICAL("BulkReaderThread exiting: errno" << errno);
+
+            /* Abandon thread - this should not happen */
+            MTP_LOG_CRITICAL("exit thread due to unhandled error");
             break;
         }
 
+        /* Update data availability in locked state */
         if (!_markNewData(offset, readSize)) {
-            MTP_LOG_CRITICAL("BulkReaderThread bad offset" << offset << m_dataStart << m_dataSize1 << m_dataSize2);
+            MTP_LOG_CRITICAL("exit thread due to bad offset:" << offset
+                             << m_dataStart << m_dataSize1 << m_dataSize2);
             break;
         }
 
+        /* Notify responder about available data */
         emit dataReady();
     }
 }
