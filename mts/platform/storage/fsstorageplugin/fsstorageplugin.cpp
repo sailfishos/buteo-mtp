@@ -2205,12 +2205,13 @@ quint32 FSStoragePlugin::getSequenceNumber( StorageItem * /*storageItem*/ )
  ***********************************************************/
 QString FSStoragePlugin::getCreatedDate( StorageItem *storageItem )
 {
-    // Get creation date from the file system
-    QFileInfo fileInfo(storageItem->m_path);
-    QDateTime dt = fileInfo.created();
-    dt = dt.toUTC();
-    QString dateCreated = QLocale::c().toString(dt, "yyyyMMdd'T'hhmmss'Z'");
-    return dateCreated;
+    /* Unix file systems generally do not have time stamp
+     * for create time and QDateTime::created() seems to
+     * use hard-to-control and semi-useless changed time.
+     *
+     * Using that makes it difficult to avoid sending change
+     * signals -> use the modify time instead. */
+    return getModifiedDate(storageItem);
 }
 
 /************************************************************
