@@ -457,7 +457,7 @@ bool BulkWriterThread::getResult()
 }
 
 InterruptWriterThread::InterruptWriterThread(QObject *parent)
-    : IOThread(parent)
+    : IOThread(parent), m_eventBufferFull(false)
 {
 }
 
@@ -503,9 +503,22 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 
     // This is here in case the interrupt writing thread cannot keep up
     // with the events. It removes the oldest events.
-    while(m_buffers.count() >= MAX_EVENTS_STORED) {
-        QPair<quint8*,int> pair = m_buffers.takeFirst();
-        free(pair.first);
+    if(m_buffers.count() >= MAX_EVENTS_STORED) {
+        if( !m_eventBufferFull ) {
+            m_eventBufferFull = true;
+            MTP_LOG_CRITICAL("event buffer full - events will be lost");
+        }
+
+        do {
+            QPair<quint8*,int> pair = m_buffers.takeFirst();
+            free(pair.first);
+        } while(m_buffers.count() >= MAX_EVENTS_STORED);
+    }
+    else {
+        if( m_eventBufferFull ) {
+            m_eventBufferFull = false;
+            MTP_LOG_CRITICAL("event buffer no longer full");
+        }
     }
 
     /* Note that we just buffer the event data here, the

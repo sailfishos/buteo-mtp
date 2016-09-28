@@ -182,6 +182,7 @@ private:
     QWaitCondition m_wait;
 
     QList<QPair<quint8 *,int> > m_buffers;
+    bool m_eventBufferFull;
 };
 
 #endif
