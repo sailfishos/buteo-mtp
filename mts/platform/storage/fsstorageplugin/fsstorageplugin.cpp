@@ -37,6 +37,10 @@
 #include "trace.h"
 
 #include <sys/statvfs.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <errno.h>
+
 #include <QDebug>
 #include <QFile>
 #include <QDir>
@@ -60,6 +64,313 @@ const quint32 THUMB_HEIGHT    =    100;
 
 static quint32 fourcc_wmv3 = 0x574D5633;
 static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x0000-\\x001F]");
+
+/* ========================================================================= *
+ * Timestamp helpers
+ * ========================================================================= */
+
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+#include <time.h>
+
+static int to_digit(int ch)
+{
+    int digit = -1;
+    switch( ch ) {
+    case '0' ... '9':
+        digit = ch - '0';
+        break;
+    default:
+        break;
+    }
+    return digit;
+}
+
+static bool get_number(const char **ppos, int wdt, int *pvalue)
+{
+    bool taken = false;
+    int  value = 0;
+    const char *pos = *ppos;
+
+    for( ; wdt > 0; --wdt ) {
+        int digit = to_digit(*pos);
+        if( digit < 0 || digit > 9 )
+            break;
+        value *= 10;
+        value += digit;
+        pos += 1;
+    }
+
+    if( wdt == 0 ) {
+        *ppos = pos;
+        *pvalue = value;
+        taken = true;
+    }
+
+    return taken;
+}
+
+static bool get_constant(const char **ppos, int chr)
+{
+    bool taken = false;
+    const char *pos = *ppos;
+
+    if( *pos == chr ) {
+        pos += 1;
+        *ppos = pos;
+        taken = true;
+    }
+
+    return taken;
+}
+
+static time_t datetime_to_time_t(const char *dt)
+{
+    /* Support all allowed formats
+     * "yyyymmddThhmmss[.s]"
+     * "yyyymmddThhmmss[.s]Z"
+     * "yyyymmddThhmmss[.s]+/-hhmm"
+     */
+
+    time_t t = -1;
+
+    struct tm tm;
+
+    memset(&tm, 0, sizeof tm);
+    tm.tm_wday  = -1;
+    tm.tm_yday  = -1;
+    tm.tm_isdst = -1;
+
+    bool east  = true;
+    int  off_h = 0;
+    int  off_m = 0;
+    int  off_s = 0;
+
+    const char *pos = dt;
+
+    /* Parse year-mon-day & reject obviously bogus values */
+    if( !get_number(&pos, 4, &tm.tm_year) )
+        goto EXIT;
+
+    if( tm.tm_year < 1900 )
+        goto EXIT;
+
+    if( !get_number(&pos, 2, &tm.tm_mon) )
+        goto EXIT;
+
+    if( tm.tm_mon < 1 || tm.tm_mon > 12 )
+        goto EXIT;
+
+    if( !get_number(&pos, 2, &tm.tm_mday) )
+        goto EXIT;
+
+    if( tm.tm_mday < 1 || tm.tm_mday > 31 )
+        goto EXIT;
+
+    /* Parse hour-minute-second[.decisecond] */
+    if( !get_constant(&pos, 'T') )
+        goto EXIT;
+
+    if( !get_number(&pos, 2, &tm.tm_hour) )
+        goto EXIT;
+
+    if( tm.tm_hour < 0 || tm.tm_hour > 23 )
+        goto EXIT;
+
+    if( !get_number(&pos, 2, &tm.tm_min) )
+        goto EXIT;
+
+    if( tm.tm_min < 0 || tm.tm_min > 59 )
+        goto EXIT;
+
+    if( !get_number(&pos, 2, &tm.tm_sec) )
+        goto EXIT;
+
+    if( tm.tm_sec < 0 || tm.tm_sec > 59 )
+        goto EXIT;
+
+    if( get_constant(&pos, '.') ) {
+        /* Formatting of the fraction is checked, but
+         * otherwise it is ignored. */
+        int dsec  = 0;
+
+        if( !get_number(&pos, 1, &dsec) )
+            goto EXIT;
+
+        if( dsec < 0 || dsec > 9 )
+            goto EXIT;
+    }
+
+    /* Adjust to expected base */
+    tm.tm_mon  -= 1;
+    tm.tm_year -= 1900;
+
+    /* The rest depends on time zone */
+
+    switch( *pos ) {
+    case 0x0:
+        /* Local time with unspecified tz */
+        t = mktime(&tm);
+        break;
+
+    case 'Z':
+        /* UTC time */
+        t = timegm(&tm);
+        break;
+
+    case '-':
+        east = false;
+    case '+':
+        /* Localtime + utc offset */
+        ++pos;
+        if( !get_number(&pos, 2, &off_h) )
+            goto EXIT;
+
+        if( off_h < 0 || off_h > 23 )
+            goto EXIT;
+
+        if( !get_number(&pos, 2, &off_m) )
+            goto EXIT;
+
+        if( off_m < 0 || off_m > 59 )
+            goto EXIT;
+
+        off_s = (off_h * 60 + off_m) * 60;
+
+        if( !east )
+            off_s = -off_s;
+
+        t = mktime(&tm);
+
+        /* Adjust according to tz difference */
+        t += (off_s - tm.tm_gmtoff);
+        break;
+
+    default:
+        goto EXIT;
+    }
+
+    /* Something unhandled remaining? */
+    if( *pos != 0 )
+        t = -1;
+
+EXIT:
+    return t;
+}
+
+static bool datetime_from_time_t(char *dt, size_t size, time_t t)
+{
+    /* Generate in format
+     * "yyyymmddThhmmss+hhmm"
+     */
+    bool success = false;
+
+    struct tm tm;
+
+    bool east  = true;
+    long off_s = 0;
+    long off_m = 0;
+    long off_h = 0;
+    int  rc    = 0;
+
+    if( t == -1 )
+        goto EXIT;
+
+    memset(&tm, 0, sizeof tm);
+    localtime_r(&t, &tm);
+
+    off_s = tm.tm_gmtoff;
+    if( off_s < 0 )
+        off_s = -off_s, east = false;
+    off_m = off_s / 60;
+    off_h = off_m / 60;
+    off_m %= 60;
+
+    rc = snprintf(dt, size, "%04d%02d%02dT%02d%02d%02d%c%02ld%02ld",
+                  tm.tm_year + 1900,
+                  tm.tm_mon  + 1,
+                  tm.tm_mday,
+                  tm.tm_hour,
+                  tm.tm_min,
+                  tm.tm_sec,
+                  east ? '+' : '-',
+                  off_h,
+                  off_m);
+
+    if( rc >= 0 && rc < (int)size )
+        success = true;
+
+EXIT:
+    if( !success )
+        *dt = 0;
+
+    return success;
+}
+
+static time_t datetime_to_time_t(const QString &dt)
+{
+    QByteArray utf8 = dt.toUtf8();
+    return datetime_to_time_t(utf8.constData());
+}
+
+static QString datetime_from_time_t(time_t t)
+{
+    QString dt;
+    char buf[64];
+    if( datetime_from_time_t(buf, sizeof buf, t) )
+        dt.append(buf);
+    return dt;
+}
+
+#if MTP_LOG_LEVEL >= MTP_LOG_LEVEL_TRACE
+static QString timeRepr(time_t t)
+{
+    QString res;
+    struct tm tm;
+
+    memset(&tm, 0, sizeof tm);
+    if( localtime_r(&t, &tm) != 0 ) {
+        char buf[64];
+        size_t n = strftime(buf, sizeof buf - 1, "%a %b %d %H:%M:%S %Y", &tm);
+        if( n > 0 && n < sizeof buf ) {
+            buf[n] = 0;
+            res.append(buf);
+        }
+    }
+    return res;
+}
+#endif
+
+static time_t file_get_mtime(const QString &path)
+{
+    time_t t = -1;
+    QByteArray utf8 = path.toUtf8();
+    struct stat st;
+
+    if( stat(utf8.constData(), &st) == -1 )
+        MTP_LOG_WARNING(path << "could not get mtime");
+    else {
+        t = st.st_mtime;
+        MTP_LOG_TRACE(path << "mtime is" << timeRepr(t));
+    }
+
+    return t;
+}
+
+static void file_set_mtime(const QString &path, time_t t)
+{
+    if( t != -1 ) {
+        QByteArray utf8 = path.toUtf8();
+        struct timeval tv[2] = { {t, 0}, {t, 0} };
+        if( utimes(utf8.constData(), tv) == -1 ) {
+            MTP_LOG_WARNING(path << "could not set mtime");
+        }
+        else {
+            MTP_LOG_TRACE(path << "mtime set to" << timeRepr(t));
+        }
+    }
+}
 
 /************************************************************
  * FSStoragePlugin::FSStoragePlugin
