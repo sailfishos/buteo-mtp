@@ -3077,17 +3077,24 @@ void FSStoragePlugin::handleFSModify(const struct inotify_event *event, const ch
             // Don't fire the change signal in the case when there is a transfer to the device ongoing
             if ((0 != changedHandle) && (changedHandle != m_writeObjectHandle))
             {
-                MTP_LOG_INFO("Handle FS Modify, file::" << name);
                 StorageItem *item = m_objectHandlesMap.value(changedHandle);
                 // object info would need to be computed again
-                delete item->m_objectInfo;
+                MTPObjectInfo *prev = item->m_objectInfo;
                 item->m_objectInfo = 0;
                 populateObjectInfo( item );
-
+                bool changed = !prev || prev->differsFrom(item->m_objectInfo);
+                delete prev;
+                MTP_LOG_INFO("Handle FS Modify, file::" << name
+                             << "handle:" << changedHandle
+                             << "writing:" << m_writeObjectHandle
+                             << "changed:" << changed);
                 // Emit an object info changed event
                 QVector<quint32> eventParams;
-                eventParams.append(changedHandle);
-                emit eventGenerated(MTP_EV_ObjectInfoChanged, eventParams);
+                if( changed )
+                {
+                    eventParams.append(changedHandle);
+                    emit eventGenerated(MTP_EV_ObjectInfoChanged, eventParams);
+                }
 
                 static quint64 freeSpace = m_storageInfo.freeSpace;
                 MTPStorageInfo info;
