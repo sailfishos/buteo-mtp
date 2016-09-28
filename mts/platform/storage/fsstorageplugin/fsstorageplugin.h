@@ -154,7 +154,7 @@ private:
     ///
     /// \param path [in] filesystem path of the file to create.
     /// \return MTP response.
-    MTPResponseCode createFile( const QString &path );
+    MTPResponseCode createFile( const QString &path, MTPObjectInfo *info);
 
     /// Gets a new object handle that can be assigned to an item.
     /// \return the object handle

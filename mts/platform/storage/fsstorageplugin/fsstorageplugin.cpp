@@ -942,12 +942,13 @@ void FSStoragePlugin::getLargestPuoid( MtpInt128& puoid )
     puoid = m_largestPuoid;
 }
 
-MTPResponseCode FSStoragePlugin::createFile( const QString &path )
+MTPResponseCode FSStoragePlugin::createFile( const QString &path, MTPObjectInfo *info )
 {
     // Create the file in the file system.
     QFile file( path );
     if ( !file.open( QIODevice::ReadWrite ) )
     {
+        MTP_LOG_WARNING("failed to create file:" << path);
         switch( file.error() )
         {
             case QFileDevice::OpenError:
@@ -957,12 +958,27 @@ MTPResponseCode FSStoragePlugin::createFile( const QString &path )
         }
     }
 
+    /* Resize to expected content length */
+    quint64 size = info ? info->mtpObjectCompressedSize : 0;
+
+    if( !file.resize(size) ) {
+        MTP_LOG_WARNING("failed to set file:" << path << " to size:" << size);
+    }
+
 #if 0
     // Ask tracker to ignore the next update (close) on this file
     m_tracker->ignoreNextUpdate( QStringList( m_tracker->generateIri( path ) ) );
 #endif
 
     file.close();
+
+    MTP_LOG_TRACE("created file:" << path << " with size:" << size);
+
+    /* Touch to requested modify time */
+    if( info ) {
+        time_t t = datetime_to_time_t(info->mtpModificationDate);
+        file_set_mtime(path, t);
+    }
 
     return MTP_RESP_OK;
 }
@@ -975,9 +991,12 @@ MTPResponseCode FSStoragePlugin::createDirectory( const QString &path )
     {
         if ( !dir.mkpath( path ) )
         {
+            MTP_LOG_WARNING("failed to create directory:" << path);
             return MTP_RESP_GeneralError;
         }
     }
+
+    MTP_LOG_TRACE("created directory:" << path);
 
     return MTP_RESP_OK;
 }
@@ -1141,7 +1160,7 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
         default:
             if (createIfNotExist)
             {
-                result = createFile( item->m_path );
+                result = createFile( item->m_path, info );
                 if ( result != MTP_RESP_OK )
                 {
                     unlinkChildStorageItem( item.data() );
@@ -1977,8 +1996,11 @@ void FSStoragePlugin::populateObjectInfo( StorageItem *storageItem )
     storageItem->m_objectInfo->mtpCaptureDate = getCreatedDate( storageItem );
     // date modified
     storageItem->m_objectInfo->mtpModificationDate = getModifiedDate( storageItem );
+
     // keywords.
     storageItem->m_objectInfo->mtpKeywords = getKeywords( storageItem );
+
+
 }
 
 /************************************************************
@@ -2316,9 +2338,26 @@ MTPResponseCode FSStoragePlugin::writeData( const ObjHandle &handle, char *write
         m_writeObjectHandle = 0;
         if( m_dataFile )
         {
+            /* Truncate at current write offset */
+            m_dataFile->flush();
+            m_dataFile->resize(m_dataFile->pos());
+
+            /* Close the file */
             m_dataFile->close();
             delete m_dataFile;
             m_dataFile = 0;
+
+            /* Preceeding writes and/or close might have changed
+             * the modify time -> put it back to cached/expected
+             * value. */
+            MTPObjectInfo *info = storageItem->m_objectInfo;
+            time_t t = datetime_to_time_t(info->mtpModificationDate);
+            file_set_mtime(storageItem->m_path, t);
+
+            /* In any case update the cached values according to
+             * what is actually used by thefilesystem. */
+            info->mtpModificationDate = getModifiedDate(storageItem);
+            info->mtpCaptureDate      = info->mtpModificationDate;
         }
     }
     else
@@ -2330,14 +2369,26 @@ MTPResponseCode FSStoragePlugin::writeData( const ObjHandle &handle, char *write
         {
             // Open the file and write to it.
             m_dataFile = new QFile( storageItem->m_path );
-            if( !m_dataFile->open( QIODevice::Append ) )
+            if( !m_dataFile->open( QIODevice::ReadWrite ) )
             {
                 delete m_dataFile;
                 m_dataFile = 0;
                 return MTP_RESP_GeneralError;
             }
-            m_dataFile->resize(0);
+
+            /* In all likelihood we've already created the file
+             * via createFile() method and it should  have correct
+             * target size -> start overwriting from offset zero. */
+            m_dataFile->seek(0);
+
+
+            /* Opening the file changes modify time, put it back
+             * to expected/cached value */
+            MTPObjectInfo *info = storageItem->m_objectInfo;
+            time_t t = datetime_to_time_t(info->mtpModificationDate);
+            file_set_mtime(storageItem->m_path, t);
         }
+
         while( bytesRemaining && m_dataFile )
         {
             qint32 bytesWritten = m_dataFile->write( writeBuffer, bytesRemaining );
