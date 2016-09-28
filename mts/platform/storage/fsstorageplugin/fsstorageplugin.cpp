@@ -2219,12 +2219,8 @@ QString FSStoragePlugin::getCreatedDate( StorageItem *storageItem )
  ***********************************************************/
 QString FSStoragePlugin::getModifiedDate( StorageItem *storageItem )
 {
-    // Get modification date from the file system
-    QFileInfo fileInfo(storageItem->m_path);
-    QDateTime dt = fileInfo.lastModified();
-    dt = dt.toUTC();
-    QString dateModified = QLocale::c().toString(dt, "yyyyMMdd'T'hhmmss'Z'");
-    return dateModified;
+    time_t t = file_get_mtime(storageItem->m_path);
+    return datetime_from_time_t(t);
 }
 
 /************************************************************
