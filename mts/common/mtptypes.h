@@ -33,6 +33,8 @@
 #ifndef MTP_TYPES_H
 #define MTP_TYPES_H
 
+#include "trace.h"
+
 #include <QString>
 #include <QVector>
 #include <QByteArray>
@@ -848,5 +850,36 @@ struct MTPObjectInfo
                       mtpAssociationDescription(0), mtpSequenceNumber(0)
                       {}
 
+    bool differsFrom(MTPObjectInfo *that) {
+        bool differs = false;
+#define CMP(memb) do {\
+    if( this->memb != that->memb ) { \
+        MTP_LOG_TRACE(#memb":" << this->memb << "->" << that->memb);\
+        differs = true;\
+    }\
+} while(0)
+
+        CMP(mtpStorageId);
+        CMP(mtpObjectFormat);
+        CMP(mtpProtectionStatus);
+        CMP(mtpObjectCompressedSize);
+        CMP(mtpThumbFormat);
+        CMP(mtpThumbCompressedSize);
+        CMP(mtpThumbPixelWidth);
+        CMP(mtpThumbPixelHeight);
+        CMP(mtpImagePixelWidth);
+        CMP(mtpImagePixelHeight);
+        CMP(mtpImageBitDepth);
+        CMP(mtpParentObject);
+        CMP(mtpAssociationType);
+        CMP(mtpAssociationDescription);
+        CMP(mtpSequenceNumber);
+        CMP(mtpFileName);
+        CMP(mtpCaptureDate);
+        CMP(mtpModificationDate);
+        CMP(mtpKeywords);
+        return differs;
+#undef X
+    }
 };
 #endif
