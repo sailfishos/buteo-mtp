@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include "mtptransporterusb.h"
+#include "mtpresponder.h"
 #include "mtpcontainer.h"
 #include <linux/usb/functionfs.h>
 #include "trace.h"
@@ -69,10 +70,11 @@ static void catchUserSignal()
 
 MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
     m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1),
-    m_reader_busy(READER_FREE), m_writer_busy(false), m_events_busy(false),
+    m_reader_busy(READER_FREE), m_writer_busy(false), m_events_busy(INTERRUPT_WRITER_IDLE),
     m_events_failed(0), m_inSession(false),
     m_storageReady(false),
-    m_readerEnabled(false)
+    m_readerEnabled(false),
+    m_responderBusy(true)
 {
     // event write cancelation
     m_event_cancel = new QTimer(this);
@@ -81,13 +83,37 @@ MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLe
                      this, SLOT(eventTimeout()));
 
     // event write completion
-    QObject::connect(&m_intrWrite, SIGNAL(senderIdle(bool)),
-                     this, SLOT(eventCompleted(bool)),
+    QObject::connect(&m_intrWrite, &InterruptWriterThread::senderIdle,
+                     this, &MTPTransporterUSB::eventCompleted,
                      Qt::QueuedConnection);
 
     // bulk read data
     QObject::connect(&m_bulkRead, SIGNAL(dataReady()),
         this, SLOT(handleDataReady()), Qt::QueuedConnection);
+
+    // event write control
+    MTPResponder* responder = MTPResponder::instance();
+    QObject::connect(responder, &MTPResponder::commandPending,
+                     this, &MTPTransporterUSB::onCommandPending);
+    QObject::connect(responder, &MTPResponder::commandFinished,
+                     this, &MTPTransporterUSB::onCommandFinished);
+}
+
+void MTPTransporterUSB::onCommandFinished()
+{
+    if( m_responderBusy ) {
+        m_responderBusy = false;
+        MTP_LOG_TRACE("m_responderBusy:" << m_responderBusy);
+        sendQueuedEvent();
+    }
+}
+
+void MTPTransporterUSB::onCommandPending()
+{
+    if( !m_responderBusy ) {
+        m_responderBusy = true;
+        MTP_LOG_TRACE("m_responderBusy:" << m_responderBusy);
+    }
 }
 
 bool MTPTransporterUSB::writeMtpDescriptors()
@@ -216,24 +242,56 @@ MTPTransporterUSB::~MTPTransporterUSB()
     deactivate();
 }
 
+#if MTP_LOG_LEVEL >= MTP_LOG_LEVEL_TRACE
+static const char *InterruptWriterStateRepr(int state)
+{
+    const char *repr = "INTERRUPT_WRITER_<UNKNOWN>";
+    switch( state ) {
+    case MTPTransporterUSB::INTERRUPT_WRITER_IDLE:     repr = "INTERRUPT_WRITER_IDLE";     break;
+    case MTPTransporterUSB::INTERRUPT_WRITER_BUSY:     repr = "INTERRUPT_WRITER_BUSY";     break;
+    case MTPTransporterUSB::INTERRUPT_WRITER_RETRY:    repr = "INTERRUPT_WRITER_RETRY";    break;
+    case MTPTransporterUSB::INTERRUPT_WRITER_DISABLED: repr = "INTERRUPT_WRITER_DISABLED"; break;
+    default: break;
+    }
+    return repr;
+}
+#endif
+
+void MTPTransporterUSB::setEventsBusy(int state)
+{
+    if( m_events_busy != state )
+    {
+        MTP_LOG_TRACE("m_events_busy:"
+                      << InterruptWriterStateRepr(m_events_busy)
+                      << "->"
+                      << InterruptWriterStateRepr(state));
+        m_events_busy = InterruptWriterState(state);
+    }
+}
+
+
 bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLastPacket)
 {
     // TODO: can't handle re-entrant calls with the current design.
+
     if(m_writer_busy)
     {
-        MTP_LOG_WARNING("Refusing bulk write request during bulk write");
+        // If we get here, packets are be lost and protocol broken
+        MTP_LOG_CRITICAL("Refusing recursive bulk write request");
         return false;
     }
     m_writer_busy = true;
+    MTP_LOG_TRACE("m_writer_busy:" << m_writer_busy);
 
     // wait until interrupt writer is done with event
-    if (m_events_busy) {
+    if (m_events_busy == INTERRUPT_WRITER_BUSY) {
         /* Serializing bulk and intr writes causes unwanted delays,
          * especially if the host is not processing intr transfers.
          * Make delays visible in verbose mode to help future tuning. */
         MTP_LOG_INFO("intr writer is busy - wait");
-        while (m_events_busy)
+        while (m_events_busy == INTERRUPT_WRITER_BUSY) {
             QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
+        }
         MTP_LOG_INFO("intr writer is idle - continue");
     }
 
@@ -255,7 +313,9 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
     bool r = m_bulkWrite.getResult();
 
     m_bulkWrite.wait();
+
     m_writer_busy = false;
+    MTP_LOG_TRACE("m_writer_busy:" << m_writer_busy);
 
     // check if there are events to send
     sendQueuedEvent();
@@ -267,8 +327,13 @@ void MTPTransporterUSB::sessionOpenChanged(bool isOpen)
 {
     if (m_inSession != isOpen) {
         m_inSession = isOpen;
+        // reset failure counter
         if (m_inSession)
             m_events_failed = 0;
+
+        // re-enable event sending
+        if( m_events_busy == INTERRUPT_WRITER_DISABLED )
+            setEventsBusy(INTERRUPT_WRITER_IDLE);
 
         /* If host does not close session due to errors or by design, it
          * can create problems. Log changes to make it easier to spot. */
@@ -281,22 +346,36 @@ void MTPTransporterUSB::sessionOpenChanged(bool isOpen)
 
 void MTPTransporterUSB::sendQueuedEvent()
 {
+    if( m_writer_busy )
+        return;
+
+    if( m_responderBusy )
+        return;
+
     if (!m_inSession)
         return;
 
     if (m_writer_busy)
         return;
 
-    if (m_events_busy)
+    if( m_events_busy == INTERRUPT_WRITER_DISABLED )
         return;
 
-    if (!m_intrWrite.hasData())
+    if (m_events_busy == INTERRUPT_WRITER_BUSY )
         return;
 
-    if (m_events_failed >= MAX_EVENT_SEND_FAILURES)
-        return;
+    if( m_events_busy == INTERRUPT_WRITER_IDLE ) {
+        if (!m_intrWrite.hasData())
+            return;
+    }
 
-    m_events_busy = true;
+    if (m_events_failed >= MAX_EVENT_SEND_FAILURES) {
+        setEventsBusy(INTERRUPT_WRITER_DISABLED);
+        return;
+    }
+
+    MTP_LOG_INFO("activate intr writer");
+    setEventsBusy(INTERRUPT_WRITER_BUSY);
     m_event_cancel->start();
     m_intrWrite.sendOne();
 }
@@ -331,34 +410,63 @@ bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLa
 }
 void MTPTransporterUSB::eventTimeout()
 {
-    ++m_events_failed;
-
-    /* The intr write did not complete in expected time.
-     * Log the incident and interrupt the writer thread. */
-    MTP_LOG_WARNING("event write timeout" << m_events_failed
-                    << "/" << MAX_EVENT_SEND_FAILURES);
-
-    if( m_events_failed == MAX_EVENT_SEND_FAILURES ) {
-        MTP_LOG_WARNING("event sending disabled - too many send failures");
-
-        /* Clear the queue so that it won't spoil the next session */
-        m_intrWrite.flushData();
+    if( m_writer_busy ) {
+        MTP_LOG_WARNING("event write timeout during send data - retry later");
     }
+    else {
+        ++m_events_failed;
 
+        /* The intr write did not complete in expected time.
+         * Log the incident and interrupt the writer thread. */
+        MTP_LOG_WARNING("event write timeout" << m_events_failed
+                        << "/" << MAX_EVENT_SEND_FAILURES);
+
+        if( m_events_failed == MAX_EVENT_SEND_FAILURES ) {
+            MTP_LOG_WARNING("event sending disabled - too many send failures");
+
+            /* Clear the queue so that it won't spoil the next session */
+            m_intrWrite.flushData();
+        }
+    }
     m_intrWrite.interrupt();
 }
-void MTPTransporterUSB::eventCompleted(bool success)
+void MTPTransporterUSB::eventCompleted(int result)
 {
+    MTP_LOG_TRACE("result:" << InterruptWriterResultRepr(result));
+
     // cancel timeout
     m_event_cancel->stop();
 
-    // no longer busy
-    m_events_busy = false;
-    if (success)
-        m_events_failed = 0;
+    if( m_events_busy != INTERRUPT_WRITER_BUSY ) {
+        // We have thread synchronization issue
+        MTP_LOG_CRITICAL("unhandled intr writer result");
+        return;
+    }
 
-    // check if more events can be sent
-    sendQueuedEvent();
+    switch( result ) {
+    case INTERRUPT_WRITE_SUCCESS:
+        // reset failure counter
+        m_events_failed = 0;
+        // check if more events can be sent
+        setEventsBusy(INTERRUPT_WRITER_IDLE);
+        sendQueuedEvent();
+        break;
+
+    case INTERRUPT_WRITE_FAILURE:
+        // event lost - try the next event later
+        setEventsBusy(INTERRUPT_WRITER_IDLE);
+        break;
+
+    case INTERRUPT_WRITE_RETRY:
+        // try again if/when possible
+        setEventsBusy(INTERRUPT_WRITER_RETRY);
+        sendQueuedEvent();
+        break;
+
+    default:
+        MTP_LOG_CRITICAL("unhandled intr writer result");
+        abort();
+    }
 }
 
 void MTPTransporterUSB::handleDataReady()

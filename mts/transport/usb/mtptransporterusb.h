@@ -96,6 +96,13 @@ class MTPTransporterUSB : public MTPTransporter
         /// Check if bulk reader should be started
         void rethinkRead();
 
+        enum InterruptWriterState {
+            INTERRUPT_WRITER_IDLE,
+            INTERRUPT_WRITER_BUSY,
+            INTERRUPT_WRITER_RETRY,
+            INTERRUPT_WRITER_DISABLED,
+        };
+
     private:
         void processReceivedData();  // Helper function for handleDataReady()
         bool writeMtpDescriptors();  // configure the USB endpoints for functionfs
@@ -133,13 +140,17 @@ class MTPTransporterUSB : public MTPTransporter
         bool                    m_writer_busy;
 
         InterruptWriterThread   m_intrWrite;    ///< Threaded Writer for Interrupt EP
-        bool                    m_events_busy;
+        InterruptWriterState    m_events_busy;
         int                     m_events_failed;
         QTimer                 *m_event_cancel;
 
         bool                    m_inSession;    ///< Is there active session
         bool                    m_storageReady; ///< Is the storage plugin ready
         bool                    m_readerEnabled;///< Has state machine enabled bulk reader
+
+        bool                    m_responderBusy;
+
+        void setEventsBusy(int state);
 
     public Q_SLOTS:
         /// The usb transporter catches the device ok status signal from the responder and informs the driver about the same.
@@ -156,6 +167,9 @@ class MTPTransporterUSB : public MTPTransporter
         void onStorageReady(void);
 
     private Q_SLOTS:
+        void onCommandFinished();
+        void onCommandPending();
+
         /// Close the Bulk and Interrupt devices
         void closeDevices();
         /// Open the Bulk and Interrupt devices
@@ -176,7 +190,7 @@ class MTPTransporterUSB : public MTPTransporter
         void eventTimeout();
 
         /// Handle m_intrWrite completion
-        void eventCompleted(bool success);
+        void eventCompleted(int result);
 
         /// Handle session open/close
         void sessionOpenChanged(bool isOpen);

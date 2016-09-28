@@ -585,57 +585,92 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 
 void InterruptWriterThread::execute()
 {
+    quint8 *dataptr = 0;
+    int     dataLen = 0;
+
+    /* Lock on entry */
+    m_lock.lock();
+
     while(!m_shouldExit) {
-        m_lock.lock();
+
+        /* Waiting happens in locked state, but the lock is
+         * released for the duration of the wait itself. */
+        MTP_LOG_TRACE("intr writer - waiting");
         m_wait.wait(&m_lock); // will release the lock while waiting
+        MTP_LOG_TRACE("intr writer - executing");
 
         if (m_shouldExit) { // may have been woken up by exitThread()
-            m_lock.unlock();
-            break;
+            goto EXIT;
         }
 
-        if (m_buffers.isEmpty()) {
-            /* We should really not get here. Log it and emit
-             * failure in order not to block the upper layers. */
-            MTP_LOG_WARNING("stray wakeup; this should not happen");
-            m_lock.unlock();
-            emit senderIdle(false);
+        /* Make sure we have data to write */
+        if( !dataptr ) {
+            if (m_buffers.isEmpty()) {
+                /* We should really not get here. Log it and emit
+                 * failure in order not to block the upper layers. */
+                MTP_LOG_WARNING("stray wakeup; this should not happen");
+                emit senderIdle(INTERRUPT_WRITE_SUCCESS);
+                continue;
+            }
+
+            QPair<quint8*,int> pair = m_buffers.takeFirst();
+            dataptr = pair.first;
+            dataLen = pair.second;
+        }
+
+        if( !dataptr || !dataLen ) {
+            MTP_LOG_WARNING("empty event data packet; ignored");
             continue;
         }
 
-        QPair<quint8*,int> pair = m_buffers.takeFirst();
+        /* Do IO in unlocked state */
         m_lock.unlock();
+        int rc = MTP_WRITE(m_fd, dataptr, dataLen, false);
+        m_lock.lock();
 
-        quint8 *dataptr = pair.first;
-        int dataLen = pair.second;
+        /* Assume failure & retry later on */
+        InterruptWriterResult result = INTERRUPT_WRITE_RETRY;
 
-        while(dataLen && !m_shouldExit) {
-            int bytesWritten = MTP_WRITE(m_fd, dataptr, dataLen, false);
-            if(bytesWritten == -1)
-            {
-                if (errno == EINTR) {
-                    /* Assume this is caused by timeout at upper layers
-                     * and abandon the event send. */
-                    MTP_LOG_WARNING("InterruptWriterThread - interrupted");
-                    break;
-                }
-                if (errno == EAGAIN || errno == ESHUTDOWN) {
-                    MTP_LOG_WARNING("InterruptWriterThread delaying:" << errno);
-                    msleep(1);
-                    continue;
-                }
-                MTP_LOG_CRITICAL("InterruptWriterThread exiting:" << errno);
-                break;
+        /* Handle IO results in locked state */
+        if(rc == -1)
+        {
+            /* Note: The error has already been logged by MTP_WRITE(). */
+
+            if (errno == EINTR) {
+                /* Assume this is caused by timeout at upper layers */
             }
-            dataptr += bytesWritten;
-            dataLen -= bytesWritten;
+            else if (errno == EAGAIN || errno == ESHUTDOWN) {
+                msleep(1);
+            }
+            else {
+                MTP_LOG_CRITICAL("thread exit due to unhandled error");
+                goto EXIT;
+            }
+        }
+        else {
+            if( rc != dataLen ) {
+                /* Assumption is that for interrupt endpoints the kernel
+                 * should accept the whole packet or nothing at all. */
+                MTP_LOG_CRITICAL("partial write" << rc << "/" << dataLen << "bytes");
+            }
+            else {
+                MTP_LOG_TRACE("intr writer - event sent");
+            }
+
+            free(dataptr);
+            dataptr = 0;
+            dataLen = 0;
+            result = INTERRUPT_WRITE_SUCCESS;
         }
 
-        free(pair.first);
-
-        bool success = (dataLen == 0);
-        emit senderIdle(success);
+        emit senderIdle(result);
     }
+EXIT:
+
+    /* Unlock before leaving */
+    m_lock.unlock();
+
+    free(dataptr);
 }
 
 void InterruptWriterThread::reset()
