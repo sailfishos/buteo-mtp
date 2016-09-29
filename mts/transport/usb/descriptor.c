@@ -41,7 +41,7 @@ const struct mtp1_descriptors_s mtp1descriptors = {
          .bEndpointAddress = 3 | USB_DIR_IN,
          .bmAttributes = USB_ENDPOINT_XFER_INT,
          .wMaxPacketSize = cpu_to_le16(PTP_FS_EVENT_PKT_SIZE),
-         .bInterval = 255,
+         .bInterval = 16, // bInterval frames * 1 ms/frame
       },
    },
    .hs_descs = {
@@ -77,7 +77,7 @@ const struct mtp1_descriptors_s mtp1descriptors = {
          .bEndpointAddress = 3 | USB_DIR_IN,
          .bmAttributes = USB_ENDPOINT_XFER_INT,
          .wMaxPacketSize = cpu_to_le16(PTP_HS_EVENT_PKT_SIZE),
-         .bInterval = 12,
+         .bInterval = 5, // 2**(bInterval-1) franes * 0.125 ms/frame
       },
    },
 };
