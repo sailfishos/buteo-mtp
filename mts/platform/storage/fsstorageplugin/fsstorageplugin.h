@@ -338,6 +338,9 @@ private:
 
     /// This handles IN_MODIFY iNotify events
     void handleFSModify(const struct inotify_event *event, const char* name);
+
+    // Throttle sending of MTP_EV_StorageInfoChanged events
+    void sendStorageInfoChanged(void);
     
     /// Caches IN_MOVED_FROM events for future pairing
     void cacheInotifyEvent(const struct inotify_event *event, const char* name);
@@ -421,6 +424,7 @@ private:
     }m_newPlaylists;
 
     QHash<ObjHandle, StorageItem*> m_objectHandlesMap; ///< each storage has a map of all it's object's handles to corresponding storage item.
+    quint64 m_reportedFreeSpace;
     QFile *m_dataFile;
 
     QStringList m_excludePaths; ///< Paths that should not be indexed

@@ -382,6 +382,7 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
   m_root(0),
   m_writeObjectHandle(0),
   m_largestPuoid(0),
+  m_reportedFreeSpace(0),
   m_dataFile(0)
 {
     m_storageInfo.storageType = storageType;
@@ -3309,9 +3310,7 @@ void FSStoragePlugin::handleFSDelete(const struct inotify_event *event, const ch
                     deleteItemHelper( toBeDeleted, false, true );
                 }
                 // Emit storageinfo changed events, free space may be different from before now
-                QVector<quint32> params;
-                params.append(m_storageId);
-                emit eventGenerated(MTP_EV_StorageInfoChanged, params);
+                sendStorageInfoChanged();
             }
         }
     }
@@ -3335,9 +3334,7 @@ void FSStoragePlugin::handleFSCreate(const struct inotify_event *event, const ch
                 addToStorage(addedPath, 0, 0, true);
 
                 // Emit storageinfo changed events, free space may be different from before now
-                QVector<quint32> params;
-                params.append(m_storageId);
-                emit eventGenerated(MTP_EV_StorageInfoChanged, params);
+                sendStorageInfoChanged();
             }
         }
     }
@@ -3452,6 +3449,27 @@ static QString inotifyEventMaskRepr(int mask)
     return res;
 }
 
+void FSStoragePlugin::sendStorageInfoChanged(void)
+{
+    MTPStorageInfo info;
+    storageInfo( info );
+
+    if( !info.maxCapacity )
+        return;
+
+    int oldPercent = 100 * m_reportedFreeSpace / info.maxCapacity;
+    int newPercent = 100 * info.freeSpace      / info.maxCapacity;
+
+    if( oldPercent != newPercent ) {
+        MTP_LOG_INFO("freeSpace changed:" << oldPercent << "->" << newPercent);
+        m_reportedFreeSpace = info.freeSpace;
+
+        QVector<quint32> eventParams;
+        eventParams.append(m_storageId);
+        emit eventGenerated(MTP_EV_StorageInfoChanged, eventParams);
+    }
+}
+
 void FSStoragePlugin::handleFSModify(const struct inotify_event *event, const char* name)
 {
     MTP_LOG_INFO((name ?: "null") << inotifyEventMaskRepr(event->mask));
@@ -3487,19 +3505,7 @@ void FSStoragePlugin::handleFSModify(const struct inotify_event *event, const ch
                     emit eventGenerated(MTP_EV_ObjectInfoChanged, eventParams);
                 }
 
-                static quint64 freeSpace = m_storageInfo.freeSpace;
-                MTPStorageInfo info;
-                storageInfo( info );
-                qint64 diff = freeSpace - info.freeSpace;
-                if( diff < 0 ) diff *= -1;
-                // Emit storageinfo changed event, if free space changes by 1% or more
-                if( freeSpace && (((quint64)diff*100)/freeSpace) >= 1 )
-                {
-                    freeSpace = m_storageInfo.freeSpace;
-                    eventParams.clear();
-                    eventParams.append(m_storageId);
-                    emit eventGenerated(MTP_EV_StorageInfoChanged, eventParams);
-                }
+                sendStorageInfoChanged();
             }
         }
     }
