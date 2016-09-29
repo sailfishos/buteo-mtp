@@ -3012,6 +3012,7 @@ void MTPResponder::sendObjectSegmented()
 void MTPResponder::processTransportEvents( bool &txCancelled )
 {
     m_transporter->disableRW();
+    QCoreApplication::sendPostedEvents();
     QCoreApplication::processEvents();
     m_transporter->enableRW();
 

@@ -270,6 +270,11 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
          * Make delays visible in verbose mode to help future tuning. */
         MTP_LOG_INFO("intr writer is busy - wait");
         while (m_events_busy == INTERRUPT_WRITER_BUSY) {
+            QCoreApplication::sendPostedEvents();
+
+            if( m_events_busy != INTERRUPT_WRITER_BUSY )
+                break;
+
             QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
         }
         MTP_LOG_INFO("intr writer is idle - continue");
@@ -287,6 +292,12 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
     // The bulk writer will make sure that processEvents is woken up
     // when the result is ready.
     while(!m_bulkWrite.resultReady()) {
+
+        QCoreApplication::sendPostedEvents();
+
+        if( m_bulkWrite.resultReady() )
+            break;
+
         QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
     }
 

@@ -1151,8 +1151,10 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
             int work = 0;
             foreach ( const QFileInfo &info, dirContents )
             {
-                if (work++ % 16 == 0)
+                if (work++ % 16 == 0) {
+                    QCoreApplication::sendPostedEvents();
                     QCoreApplication::processEvents();
+                }
                 addToStorage(info.absoluteFilePath(), 0, 0, createIfNotExist, sendEvent);
             }
             break;
