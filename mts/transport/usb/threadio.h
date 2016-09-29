@@ -158,6 +158,25 @@ private:
     bool m_terminateTransfer;
 };
 
+
+enum InterruptWriterResult {
+    INTERRUPT_WRITE_SUCCESS,
+    INTERRUPT_WRITE_FAILURE,
+    INTERRUPT_WRITE_RETRY,
+};
+
+static inline const char *InterruptWriterResultRepr(int result)
+{
+    const char *repr = "INTERRUPT_WRITE_<UNKNOWN>";
+    switch( result ) {
+    case INTERRUPT_WRITE_SUCCESS: repr = "INTERRUPT_WRITE_SUCCESS"; break;
+    case INTERRUPT_WRITE_FAILURE: repr = "INTERRUPT_WRITE_FAILURE"; break;
+    case INTERRUPT_WRITE_RETRY:   repr = "INTERRUPT_WRITE_RETRY";   break;
+    default: break;
+    }
+    return repr;
+}
+
 class InterruptWriterThread : public IOThread {
     Q_OBJECT
 public:
@@ -172,7 +191,7 @@ public:
     virtual void interrupt();
 
 signals:
-    void senderIdle(bool success);
+    void senderIdle(int result);
 
 protected:
     virtual void execute();
@@ -182,6 +201,7 @@ private:
     QWaitCondition m_wait;
 
     QList<QPair<quint8 *,int> > m_buffers;
+    bool m_eventBufferFull;
 };
 
 #endif

@@ -96,11 +96,20 @@ MTPResponder::MTPResponder(): m_storageServer(0),
     m_storageWaitDataComplete(false),
     m_state_accessor_only(RESPONDER_IDLE),
     m_prevState(RESPONDER_IDLE),
+    m_handler_idle_timer(0),
     m_objPropListInfo(0),
     m_sendObjectSequencePtr(0),
     m_transactionSequence(new MTPTransactionSequence)
 {
     MTP_FUNC_TRACE();
+
+    // command handler idle timer
+    m_handler_idle_timer = new QTimer(this);
+    m_handler_idle_timer->setInterval(100);
+    m_handler_idle_timer->setSingleShot(true);
+
+    connect(m_handler_idle_timer, &QTimer::timeout,
+            this, &MTPResponder::onIdleTimeout);
 
     createCommandHandler();
 
@@ -3003,6 +3012,7 @@ void MTPResponder::sendObjectSegmented()
 void MTPResponder::processTransportEvents( bool &txCancelled )
 {
     m_transporter->disableRW();
+    QCoreApplication::sendPostedEvents();
     QCoreApplication::processEvents();
     m_transporter->enableRW();
 
@@ -3026,9 +3036,12 @@ void MTPResponder::resume()
 
 void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &params)
 {
+    bool    filteringAllowed = true;
     quint32 ObjectHandle = 0;
     switch( event ) {
     case MTP_EV_ObjectAdded:
+        filteringAllowed = false;
+        // fall throught
     case MTP_EV_ObjectRemoved:
     case MTP_EV_ObjectInfoChanged:
     case MTP_EV_ObjectPropChanged:
@@ -3038,11 +3051,28 @@ void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &par
         break;
     }
 
+    bool EventsEnabled(true);
     QString ObjectPath("n/a");
-    if( ObjectHandle != 0x00000000 && ObjectHandle != 0xffffffff )
+    if( ObjectHandle != 0x00000000 && ObjectHandle != 0xffffffff ) {
         m_storageServer->getPath(ObjectHandle, ObjectPath);
+        m_storageServer->getEventsEnabled(ObjectHandle, EventsEnabled);
+    }
 
-    MTP_LOG_INFO(mtp_code_repr(event) << ObjectPath);
+    if( filteringAllowed && !EventsEnabled ) {
+        MTP_LOG_TRACE(mtp_code_repr(event) << ObjectPath << "[skipped]");
+        return;
+    }
+
+    QString args;
+    foreach (quint32 param, params) {
+        char hex[16];
+        snprintf(hex, sizeof hex, "0x%x", param);
+        if( !args.isEmpty() )
+            args.append(" ");
+        args.append(hex);
+    }
+
+    MTP_LOG_INFO(mtp_code_repr(event) << ObjectPath << args);
 
     if( !m_transporter ) {
         MTP_LOG_WARNING("Transporter not set; event ignored");
@@ -3125,6 +3155,12 @@ MTPResponder::ResponderState MTPResponder::getResponderState(void)
     return m_state_accessor_only;
 }
 
+void MTPResponder::onIdleTimeout()
+{
+    MTP_LOG_INFO("command sequence ended");
+    emit commandIdle();
+}
+
 void MTPResponder::setResponderState(MTPResponder::ResponderState state)
 {
     MTPResponder::ResponderState prev = m_state_accessor_only;
@@ -3139,10 +3175,14 @@ void MTPResponder::setResponderState(MTPResponder::ResponderState state)
         bool isBusy  = (state != RESPONDER_IDLE);
 
         if( wasBusy != isBusy ) {
-            if( isBusy )
+            if( isBusy ) {
+                m_handler_idle_timer->stop();
                 emit commandPending();
-            else
+            }
+            else {
                 emit commandFinished();
+                m_handler_idle_timer->start();
+            }
         }
     }
 }

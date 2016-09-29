@@ -10,9 +10,53 @@
 
 #include "trace.h"
 
+#define MTP_READ(fd,buf,len,log_success) ({\
+    if( (log_success) ) {\
+        MTP_LOG_WARNING("read(" << fd << (void*)(buf) << len << ") -> ...");\
+    }\
+    ssize_t rc = read((fd),(buf),(len));\
+    int saved = errno;\
+    if( rc == -1 ) {\
+        MTP_LOG_CRITICAL("read(" << fd << (void*)(buf) << len << ") -> err:"\
+                         << strerror(errno));\
+    }\
+    else if( rc == 0 ) {\
+        MTP_LOG_CRITICAL("read(" << fd << (void*)(buf) << len << ") -> eof");\
+    }\
+    else if( (log_success) ) {\
+        MTP_LOG_WARNING("read(" << fd << (void*)(buf) << len << ") -> rc:" << rc);\
+    }\
+    errno = saved, rc;\
+})
+
+#define MTP_WRITE(fd,buf,len,log_success) ({\
+    if( (log_success) ) {\
+        MTP_LOG_WARNING("write(" << fd << (void*)(buf) << len << ") -> ...");\
+    }\
+    ssize_t rc = write((fd),(buf),(len));\
+    int saved = errno;\
+    if( rc == -1 ) {\
+        MTP_LOG_CRITICAL("write(" << fd << (void*)(buf) << len << ") -> err:"\
+                         << strerror(errno));\
+    }\
+    else if( (log_success) ) {\
+        MTP_LOG_WARNING("write(" << fd << (void*)(buf) << len << ") -> rc:" << rc);\
+    }\
+    errno = saved, rc;\
+})
+
 const int MAX_DATA_IN_SIZE = 16 * 1024;  // Matches USB transfer size
 const int MAX_CONTROL_IN_SIZE = 64;
-const int MAX_EVENTS_STORED = 16;
+
+/* Maximum number of events to queue for sending via the interrupt
+ * endpoint. Balance between: Too small value can cause the host
+ * side to get out of sync with the reality on the device side vs.
+ * too large value can hamper bulk io throughput if the host side
+ * does not purge the queued events fast enough -> assume being able
+ * to hold and transfer events resulting from things like deleting
+ * few hundred files is enough. */
+const int MAX_EVENTS_STORED = 512;
+
 // Give BulkReaderThread some space to acquire chunks while the main
 // thread is working, but still small enough for the main thread to
 // process as one event.
@@ -36,6 +80,31 @@ static const char *const event_names[] = {
 "SUSPEND",
 "RESUME"
 };
+
+static void handleUSR1(int signum)
+{
+    Q_UNUSED(signum);
+
+    static const char m[] = "***USR1***\n";
+    if( write(2, m, sizeof m - 1) == -1 ) {
+        // dontcare
+    }
+
+    return; // This handler just exists to make blocking I/O return with EINTR
+}
+
+static void catchUSR1()
+{
+    struct sigaction action;
+
+    memset(&action, 0, sizeof(action));
+    action.sa_handler = handleUSR1;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+
+    if (sigaction(SIGUSR1, &action, NULL) < 0)
+        MTP_LOG_WARNING("Could not establish SIGUSR1 signal handler");
+}
 
 IOThread::IOThread(QObject *parent)
     : QThread(parent), m_fd(0), m_shouldExit(false), m_handle(0)
@@ -81,9 +150,9 @@ bool IOThread::stall(bool dirIn)
      */
     int err;
     if(dirIn) // &err is just a dummy value here, since length is 0 bytes
-        err = read(m_fd, &err, 0);
+        err = MTP_READ(m_fd, &err, 0, false);
     else
-        err = write(m_fd, &err, 0);
+        err = MTP_WRITE(m_fd, &err, 0, false);
     if(err == -1 && errno == EL2HLT) {
         return true;
     } else {
@@ -94,6 +163,10 @@ bool IOThread::stall(bool dirIn)
 
 void IOThread::run()
 {
+    /* set up signal handler before assigning the m_handle
+     * member variable used from interrupt() method. */
+    catchUSR1();
+
     m_handle = pthread_self();
 
     execute();
@@ -120,7 +193,7 @@ void ControlReaderThread::execute()
     int readSize, count;
 
     while(!m_shouldExit) {
-        readSize = read(m_fd, readBuffer, MAX_CONTROL_IN_SIZE);
+        readSize = MTP_READ(m_fd, readBuffer, MAX_CONTROL_IN_SIZE, false);
         if (readSize <= 0) {
             if (errno != EINTR)
                 perror("ControlReaderThread");
@@ -144,7 +217,7 @@ void ControlReaderThread::sendStatus()
     char *dataptr = (char*)&status_data[m_status];
 
     do {
-        bytesWritten = write(m_fd, dataptr, dataLen);
+        bytesWritten = MTP_WRITE(m_fd, dataptr, dataLen, false);
         if(bytesWritten == -1)
         {
             return;
@@ -281,36 +354,58 @@ void BulkReaderThread::execute()
 
     while (!m_shouldExit) {
         int offset;
+
+        /* Wait for read offset in locked state */
         m_bufferLock.lock();
         offset = _getOffset_locked();
         while (!m_shouldExit && offset < 0) {
+            /* Expectation: Waiting should not be required except when
+             * transferring large files and file system writes can't
+             * keep up with usb transfer speed -> log in verbose mode. */
+            MTP_LOG_INFO("waiting ...");
             m_wait.wait(&m_bufferLock);
+            MTP_LOG_INFO("woke up");
             offset = _getOffset_locked();
         }
         m_bufferLock.unlock();
+
+        /* Check if thread exit has been requested */
         if (m_shouldExit)
             break;
 
-        readSize = read(m_fd, m_buffer + offset, MAX_DATA_IN_SIZE);
+        /* Do a blocking read */
+        readSize = MTP_READ(m_fd, m_buffer + offset, MAX_DATA_IN_SIZE, false);
+
+        /* Check if thread exit has been requested */
         if (m_shouldExit)
             break;
+
+        /* Handle I/O errors */
         if (readSize == -1) {
-            if (errno == EINTR)
+            /* Note: The error has already been logged by MTP_READ() */
+
+            if (errno == EINTR) {
                 continue;
+            }
+
             if (errno == EAGAIN || errno == ESHUTDOWN) {
-                MTP_LOG_WARNING("BulkReaderThread delaying: errno" << errno);
                 msleep(1);
                 continue;
             }
-            MTP_LOG_CRITICAL("BulkReaderThread exiting: errno" << errno);
+
+            /* Abandon thread - this should not happen */
+            MTP_LOG_CRITICAL("exit thread due to unhandled error");
             break;
         }
 
+        /* Update data availability in locked state */
         if (!_markNewData(offset, readSize)) {
-            MTP_LOG_CRITICAL("BulkReaderThread bad offset" << offset << m_dataStart << m_dataSize1 << m_dataSize2);
+            MTP_LOG_CRITICAL("exit thread due to bad offset:" << offset
+                             << m_dataStart << m_dataSize1 << m_dataSize2);
             break;
         }
 
+        /* Notify responder about available data */
         emit dataReady();
     }
 }
@@ -408,7 +503,7 @@ void BulkWriterThread::execute()
 
     while ((m_dataLen || zeropacket) && !m_shouldExit) {
         quint32 writeNow = (m_dataLen < writeMax) ? m_dataLen : writeMax;
-        bytesWritten = write(m_fd, dataptr, writeNow);
+        bytesWritten = MTP_WRITE(m_fd, dataptr, writeNow, false);
         if(bytesWritten == -1)
         {
             if(errno == EIO && writeMax > PTP_HS_DATA_PKT_SIZE )
@@ -457,7 +552,7 @@ bool BulkWriterThread::getResult()
 }
 
 InterruptWriterThread::InterruptWriterThread(QObject *parent)
-    : IOThread(parent)
+    : IOThread(parent), m_eventBufferFull(false)
 {
 }
 
@@ -503,9 +598,22 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 
     // This is here in case the interrupt writing thread cannot keep up
     // with the events. It removes the oldest events.
-    while(m_buffers.count() >= MAX_EVENTS_STORED) {
-        QPair<quint8*,int> pair = m_buffers.takeFirst();
-        free(pair.first);
+    if(m_buffers.count() >= MAX_EVENTS_STORED) {
+        if( !m_eventBufferFull ) {
+            m_eventBufferFull = true;
+            MTP_LOG_CRITICAL("event buffer full - events will be lost");
+        }
+
+        do {
+            QPair<quint8*,int> pair = m_buffers.takeFirst();
+            free(pair.first);
+        } while(m_buffers.count() >= MAX_EVENTS_STORED);
+    }
+    else {
+        if( m_eventBufferFull ) {
+            m_eventBufferFull = false;
+            MTP_LOG_CRITICAL("event buffer no longer full");
+        }
     }
 
     /* Note that we just buffer the event data here, the
@@ -515,57 +623,92 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 
 void InterruptWriterThread::execute()
 {
+    quint8 *dataptr = 0;
+    int     dataLen = 0;
+
+    /* Lock on entry */
+    m_lock.lock();
+
     while(!m_shouldExit) {
-        m_lock.lock();
+
+        /* Waiting happens in locked state, but the lock is
+         * released for the duration of the wait itself. */
+        MTP_LOG_TRACE("intr writer - waiting");
         m_wait.wait(&m_lock); // will release the lock while waiting
+        MTP_LOG_TRACE("intr writer - executing");
 
         if (m_shouldExit) { // may have been woken up by exitThread()
-            m_lock.unlock();
-            break;
+            goto EXIT;
         }
 
-        if (m_buffers.isEmpty()) {
-            /* We should really not get here. Log it and emit
-             * failure in order not to block the upper layers. */
-            MTP_LOG_WARNING("stray wakeup; this should not happen");
-            m_lock.unlock();
-            emit senderIdle(false);
+        /* Make sure we have data to write */
+        if( !dataptr ) {
+            if (m_buffers.isEmpty()) {
+                /* We should really not get here. Log it and emit
+                 * failure in order not to block the upper layers. */
+                MTP_LOG_WARNING("stray wakeup; this should not happen");
+                emit senderIdle(INTERRUPT_WRITE_SUCCESS);
+                continue;
+            }
+
+            QPair<quint8*,int> pair = m_buffers.takeFirst();
+            dataptr = pair.first;
+            dataLen = pair.second;
+        }
+
+        if( !dataptr || !dataLen ) {
+            MTP_LOG_WARNING("empty event data packet; ignored");
             continue;
         }
 
-        QPair<quint8*,int> pair = m_buffers.takeFirst();
+        /* Do IO in unlocked state */
         m_lock.unlock();
+        int rc = MTP_WRITE(m_fd, dataptr, dataLen, false);
+        m_lock.lock();
 
-        quint8 *dataptr = pair.first;
-        int dataLen = pair.second;
+        /* Assume failure & retry later on */
+        InterruptWriterResult result = INTERRUPT_WRITE_RETRY;
 
-        while(dataLen && !m_shouldExit) {
-            int bytesWritten = write(m_fd, dataptr, dataLen);
-            if(bytesWritten == -1)
-            {
-                if (errno == EINTR) {
-                    /* Assume this is caused by timeout at upper layers
-                     * and abandon the event send. */
-                    MTP_LOG_WARNING("InterruptWriterThread - interrupted");
-                    break;
-                }
-                if (errno == EAGAIN || errno == ESHUTDOWN) {
-                    MTP_LOG_WARNING("InterruptWriterThread delaying:" << errno);
-                    msleep(1);
-                    continue;
-                }
-                MTP_LOG_CRITICAL("InterruptWriterThread exiting:" << errno);
-                break;
+        /* Handle IO results in locked state */
+        if(rc == -1)
+        {
+            /* Note: The error has already been logged by MTP_WRITE(). */
+
+            if (errno == EINTR) {
+                /* Assume this is caused by timeout at upper layers */
             }
-            dataptr += bytesWritten;
-            dataLen -= bytesWritten;
+            else if (errno == EAGAIN || errno == ESHUTDOWN) {
+                msleep(1);
+            }
+            else {
+                MTP_LOG_CRITICAL("thread exit due to unhandled error");
+                goto EXIT;
+            }
+        }
+        else {
+            if( rc != dataLen ) {
+                /* Assumption is that for interrupt endpoints the kernel
+                 * should accept the whole packet or nothing at all. */
+                MTP_LOG_CRITICAL("partial write" << rc << "/" << dataLen << "bytes");
+            }
+            else {
+                MTP_LOG_TRACE("intr writer - event sent");
+            }
+
+            free(dataptr);
+            dataptr = 0;
+            dataLen = 0;
+            result = INTERRUPT_WRITE_SUCCESS;
         }
 
-        free(pair.first);
-
-        bool success = (dataLen == 0);
-        emit senderIdle(success);
+        emit senderIdle(result);
     }
+EXIT:
+
+    /* Unlock before leaving */
+    m_lock.unlock();
+
+    free(dataptr);
 }
 
 void InterruptWriterThread::reset()

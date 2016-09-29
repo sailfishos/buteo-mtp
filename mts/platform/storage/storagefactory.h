@@ -159,6 +159,8 @@ public:
     /// \return MTP response.
     MTPResponseCode getPath( const quint32 &handle, QString &path ) const;
 
+    MTPResponseCode getEventsEnabled( const quint32 &handle, bool &eventsEnabled ) const;
+
     /// Given an object handle, provides the object's objectinfo dataset.
     /// \param handle [in] the object handle.
     /// \param objectInfr [out] pointer to a structure holding the objectinfo dataset.

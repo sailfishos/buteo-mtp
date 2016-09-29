@@ -91,6 +91,8 @@ public:
 
     MTPResponseCode getPath( const quint32 &handle, QString &path ) const;
 
+    MTPResponseCode getEventsEnabled( const quint32 &handle, bool &eventsEnabled ) const;
+
     MTPResponseCode getObjectInfo( const ObjHandle &handle, const MTPObjectInfo *&objectInfo );
 
     MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment, bool isLastSegment );
@@ -152,7 +154,7 @@ private:
     ///
     /// \param path [in] filesystem path of the file to create.
     /// \return MTP response.
-    MTPResponseCode createFile( const QString &path );
+    MTPResponseCode createFile( const QString &path, MTPObjectInfo *info);
 
     /// Gets a new object handle that can be assigned to an item.
     /// \return the object handle
@@ -336,6 +338,9 @@ private:
 
     /// This handles IN_MODIFY iNotify events
     void handleFSModify(const struct inotify_event *event, const char* name);
+
+    // Throttle sending of MTP_EV_StorageInfoChanged events
+    void sendStorageInfoChanged(void);
     
     /// Caches IN_MOVED_FROM events for future pairing
     void cacheInotifyEvent(const struct inotify_event *event, const char* name);
@@ -419,6 +424,7 @@ private:
     }m_newPlaylists;
 
     QHash<ObjHandle, StorageItem*> m_objectHandlesMap; ///< each storage has a map of all it's object's handles to corresponding storage item.
+    quint64 m_reportedFreeSpace;
     QFile *m_dataFile;
 
     QStringList m_excludePaths; ///< Paths that should not be indexed

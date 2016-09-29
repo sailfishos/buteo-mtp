@@ -29,69 +29,61 @@
 *
 */
 
-#ifndef PRN_TRACE_H
-#define PRN_TRACE_H
+#ifndef  PRN_TRACE_H
+# define PRN_TRACE_H
+# include <QtGlobal>
 // Use logging macros available in sync-fw
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-#include <buteosyncfw5/LogMacros.h>
-#else
-#include <buteosyncfw/LogMacros.h>
-#endif
-#include "mts.h"
+# if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
+#  include <buteosyncfw5/LogMacros.h>
+# else
+#  include <buteosyncfw/LogMacros.h>
+# endif
+# include "mts.h"
 
-#define MTP_LOG_LEVEL_CRITICAL      1
-#define MTP_LOG_LEVEL_WARNING       2
-#define MTP_LOG_LEVEL_INFO          3
-#define MTP_LOG_LEVEL_TRACE         4
-#define MTP_LOG_LEVEL_TRACE_EXTRA   5
+# define MTP_LOG_LEVEL_CRITICAL      1
+# define MTP_LOG_LEVEL_WARNING       2
+# define MTP_LOG_LEVEL_INFO          3
+# define MTP_LOG_LEVEL_TRACE         4
+# define MTP_LOG_LEVEL_TRACE_EXTRA   5
 
-#ifndef MTP_LOG_LEVEL
-#define MTP_LOG_LEVEL MTP_LOG_LEVEL_INFO
-#endif
+# ifndef MTP_LOG_LEVEL
+#  define MTP_LOG_LEVEL MTP_LOG_LEVEL_INFO
+# endif
 
 /*Critical logs always enabled, use selectively*/
-#define MTP_LOG_CRITICAL(msg) LOG_CRITICAL(msg)
+# define MTP_LOG_CRITICAL(msg)     do { LOG_CRITICAL(msg); } while(0)
 
-#if MTP_LOG_LEVEL >= MTP_LOG_LEVEL_WARNING
-#define MTP_LOG_WARNING(msg) LOG_WARNING(msg)
-#else
-#define MTP_LOG_WARNING(msg)
-#endif
+# if MTP_LOG_LEVEL < MTP_LOG_LEVEL_WARNING
+#  define MTP_LOG_WARNING(msg)     do {} while(0)
+# else
+#  define MTP_LOG_WARNING(msg)     do { LOG_WARNING(msg); } while(0)
+# endif
 
-#if MTP_LOG_LEVEL >= MTP_LOG_LEVEL_INFO
-#define MTP_LOG_INFO(msg) \
-    do \
-    { \
-        LOG_INFO(msg); \
-    }while(0)
-#else
-#define MTP_LOG_INFO(msg)
-#endif
-
+# if MTP_LOG_LEVEL < MTP_LOG_LEVEL_INFO
+#  define MTP_LOG_INFO(msg)        do {} while(0)
+# else
+#  define MTP_LOG_INFO(msg)        do { LOG_INFO(msg); } while(0)
+# endif
 
 /* Tracing macros should produce output only at the highest log level */
 
-#if MTP_LOG_LEVEL < MTP_LOG_LEVEL_TRACE
-#define MTP_LOG_TRACE(msg)
-#else
-#define MTP_LOG_TRACE(msg) \
-    do \
-    { \
-            LOG_DEBUG(msg); \
-    }while(0)
-#endif
+# if MTP_LOG_LEVEL < MTP_LOG_LEVEL_TRACE
+#  define MTP_LOG_TRACE(msg)       do {} while(0)
+# else
+#  define MTP_LOG_TRACE(msg)       do { LOG_DEBUG(msg); } while(0)
+# endif
 
-#if MTP_LOG_LEVEL < MTP_LOG_LEVEL_TRACE_EXTRA
-#define MTP_HEX_TRACE(p,l)
-#define MTP_LOG_TRACE_EXTRA(msg)
-#define MTP_FUNC_TRACE()
-#else
-#define MTP_HEX_TRACE(p,l)
-#include <QByteArray>
-#define MTP_HEX_TRACE1(p,l)\
-do {\
-    QByteArray arr = QByteArray::fromRawData((const char*)(p), (l)); \
-    MTP_LOG_TRACE(arr); \
+# if MTP_LOG_LEVEL < MTP_LOG_LEVEL_TRACE_EXTRA
+#  define MTP_HEX_TRACE(p,l)       do {} while(0)
+#  define MTP_LOG_TRACE_EXTRA(msg) do {} while(0)
+#  define MTP_FUNC_TRACE()         do {} while(0)
+# else
+#  define MTP_HEX_TRACE(p,l)       do {} while(0)
+#  include <QByteArray>
+#  define MTP_HEX_TRACE1(p,l)\
+   do {\
+     QByteArray arr = QByteArray::fromRawData((const char*)(p), (l)); \
+     MTP_LOG_TRACE(arr); \
 } while (0)
 #define MTP_LOG_TRACE_EXTRA(msg) MTP_LOG_TRACE(msg)
 #define MTP_FUNC_TRACE() \
