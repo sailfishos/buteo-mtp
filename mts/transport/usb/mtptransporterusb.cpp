@@ -72,6 +72,11 @@ MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLe
     QObject::connect(&m_bulkRead, SIGNAL(dataReady()),
         this, SLOT(handleDataReady()), Qt::QueuedConnection);
 
+    // bulk write data
+    QObject::connect(&m_bulkWrite, &QThread::finished,
+                     this, &MTPTransporterUSB::handleWriterExit,
+                     Qt::QueuedConnection);
+
     // event write control
     MTPResponder* responder = MTPResponder::instance();
     QObject::connect(responder, &MTPResponder::commandPending,
@@ -465,6 +470,13 @@ void MTPTransporterUSB::eventCompleted(int result)
         MTP_LOG_CRITICAL("unhandled intr writer result");
         abort();
     }
+}
+
+void MTPTransporterUSB::handleWriterExit()
+{
+    /* Nothing to do here. This is just a handler for
+     * dummy signal to get sendData() out of wait loop. */
+    MTP_LOG_TRACE("writer exit");
 }
 
 void MTPTransporterUSB::handleDataReady()

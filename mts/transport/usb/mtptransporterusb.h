@@ -183,6 +183,9 @@ class MTPTransporterUSB : public MTPTransporter
         // Handle incoming data from m_bulkRead
         void handleDataReady();
 
+        // Handle outgoing data from m_bulkWrite
+        void handleWriterExit();
+
         /// Handle high priority requests from the underlying transport driver.
         void handleHighPriorityData();
 
