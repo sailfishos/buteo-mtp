@@ -3035,9 +3035,12 @@ void MTPResponder::resume()
 
 void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &params)
 {
+    bool    filteringAllowed = true;
     quint32 ObjectHandle = 0;
     switch( event ) {
     case MTP_EV_ObjectAdded:
+        filteringAllowed = false;
+        // fall throught
     case MTP_EV_ObjectRemoved:
     case MTP_EV_ObjectInfoChanged:
     case MTP_EV_ObjectPropChanged:
@@ -3054,7 +3057,7 @@ void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &par
         m_storageServer->getEventsEnabled(ObjectHandle, EventsEnabled);
     }
 
-    if( !EventsEnabled ) {
+    if( filteringAllowed && !EventsEnabled ) {
         MTP_LOG_TRACE(mtp_code_repr(event) << ObjectPath << "[skipped]");
         return;
     }
