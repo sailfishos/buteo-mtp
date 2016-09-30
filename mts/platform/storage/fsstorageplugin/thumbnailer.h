@@ -35,6 +35,7 @@
 #include <QString>
 #include <QHash>
 #include "thumbnailerproxy.h"
+#include "thumbnailpathlist.h"
 
 /// \brief The Thumbnailer class provides methods to generate representative
 /// samples
@@ -77,14 +78,12 @@ class Thumbnailer : public ThumbnailerProxy
         /// \see requestThumbnail
         void thumbnailReady(const QString &path);
     public Q_SLOTS:
+        ///< This slot handles the Failed signal from the DBUS interface
+        void slotFailed(uint, const QStringList&);
         ///< This slot handles the Ready signal from the DBUS interface
-        void slotThumbnailReady(uint, const QStringList&);
-        ///< This slot handles the Started signal from the DBUS interface
-        void slotRequestStarted(uint);
+        void slotReady(uint, ThumbnailPathList thumbnails);
         ///< This slot handles the Finished signal from the DBUS interface
-        void slotRequestFinished(uint);
-        ///< This slot handles the Error signal from the DBUS interface
-        void slotError(uint, const QStringList&, int, const QString&);
+        void slotFinished(uint);
         ///< This slot handles async replies from thumbnailer
         void requestThumbnailFinished(QDBusPendingCallWatcher *pcw);
         ///< This slot handlers flushing of thumbnail request queue
@@ -101,21 +100,12 @@ class Thumbnailer : public ThumbnailerProxy
     private:
         void scheduleThumbnailing(void);
 
-        ///< Checks if thumbnail for the requested path is already present in
-        /// the system thumbnailer's cache.
-        bool checkThumbnailPresent(const QString& filePath, QString& thumbPath);
-        ///< A list of available thumbnail directories
-        QStringList m_thumbnailDirs;
         ///< Queue of images that are missing thumbnails
         QStringList m_uriRequestQueue;
         ///< Internal map to keep track of pending thumbnail requests
         QHash<QString, uint> m_uriAlreadyRequested;
-        ///< The scheduler to use for the system thumbnailer. The class
-        /// currently fixes this to "foreground".
-        const QString m_scheduler;
-        ///< The "flavor" of the thumbnail needed. The class currently fixes
-        /// this to "normal".
-        const QString m_flavor;
+        ///< Resolved thumbnail paths
+        QHash<QString, QString> m_thumbnailPaths;
         ///< Timer for combining multiple image sources to one thumbnail request
         QTimer *m_thumbnailTimer;
 
