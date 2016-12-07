@@ -321,22 +321,6 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
         {
             m_mtpDevicePropertiesSupported.append( m_devPropsSupportedTable[i] );
         }
-        for( quint32 i = 0 ; i < sizeof(m_commonFormatsTable)/sizeof(m_commonFormatsTable[0]); i++ )
-        {
-            m_commonFormats.append( m_commonFormatsTable[i] );
-        }
-        for( quint32 i = 0 ; i < sizeof(m_audioFormatsTable)/sizeof(m_audioFormatsTable[0]); i++ )
-        {
-            m_audioFormats.append( m_audioFormatsTable[i] );
-        }
-        for( quint32 i = 0 ; i < sizeof(m_imageFormatsTable)/sizeof(m_imageFormatsTable[0]); i++ )
-        {
-            m_imageFormats.append( m_imageFormatsTable[i] );
-        }
-        for( quint32 i = 0 ; i < sizeof(m_videoFormatsTable)/sizeof(m_videoFormatsTable[0]); i++ )
-        {
-            m_videoFormats.append( m_videoFormatsTable[i] );
-        }
         for( quint32 i = 0 ; i < sizeof(m_audChannelTable)/sizeof(m_audChannelTable[0]); i++ )
         {
             m_audioChannels.append( m_audChannelTable[i] );
@@ -354,6 +338,30 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
     {
         m_xmlOk = true;
     }
+
+    /* The supported object formats specified in the configuration file
+     * are used to augment the built-in configuration, not to override it. */
+    for( quint32 i = 0 ; i < sizeof(m_commonFormatsTable)/sizeof(m_commonFormatsTable[0]); i++ )
+    {
+        if( !m_commonFormats.contains(m_commonFormatsTable[i]) )
+            m_commonFormats.append( m_commonFormatsTable[i] );
+    }
+    for( quint32 i = 0 ; i < sizeof(m_audioFormatsTable)/sizeof(m_audioFormatsTable[0]); i++ )
+    {
+        if( !m_audioFormats.contains( m_audioFormatsTable[i]) )
+            m_audioFormats.append( m_audioFormatsTable[i] );
+    }
+    for( quint32 i = 0 ; i < sizeof(m_imageFormatsTable)/sizeof(m_imageFormatsTable[0]); i++ )
+    {
+        if( !m_imageFormats.contains( m_imageFormatsTable[i]) )
+            m_imageFormats.append( m_imageFormatsTable[i] );
+    }
+    for( quint32 i = 0 ; i < sizeof(m_videoFormatsTable)/sizeof(m_videoFormatsTable[0]); i++ )
+    {
+        if( !m_videoFormats.contains( m_videoFormatsTable[i]) )
+            m_videoFormats.append( m_videoFormatsTable[i] );
+    }
+
     m_supportedFormats = m_imageFormats + m_audioFormats + m_videoFormats + m_commonFormats;
 }
 
