@@ -122,37 +122,6 @@ quint32 DeviceInfo::m_supportedCodecsTable[] = {
     MTP_WAVE_FORMAT_DSPGROUP_TRUESPEECH
 };
 
-quint16 DeviceInfo::m_supportedFormatsTable[] = {
-    MTP_OBF_FORMAT_Undefined,
-    MTP_OBF_FORMAT_Association,
-    MTP_OBF_FORMAT_Text,
-    MTP_OBF_FORMAT_HTML,
-    MTP_OBF_FORMAT_Abstract_Audio_Album,
-    MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist,
-    MTP_OBF_FORMAT_vCard2,
-    MTP_OBF_FORMAT_vCard3,
-    MTP_OBF_FORMAT_vCal1,
-
-    MTP_OBF_FORMAT_Unknown_Image_Object,
-    MTP_OBF_FORMAT_EXIF_JPEG,
-    MTP_OBF_FORMAT_GIF,
-    MTP_OBF_FORMAT_PNG,
-    MTP_OBF_FORMAT_TIFF,
-    MTP_OBF_FORMAT_BMP,
-
-    MTP_OBF_FORMAT_WAV,
-    MTP_OBF_FORMAT_MP3,
-    MTP_OBF_FORMAT_WMA,
-    MTP_OBF_FORMAT_OGG,
-    MTP_OBF_FORMAT_AAC,
-
-    MTP_OBF_FORMAT_AVI,
-    MTP_OBF_FORMAT_MPEG,
-    MTP_OBF_FORMAT_3GP_Container,
-    MTP_OBF_FORMAT_MP4_Container,
-    MTP_OBF_FORMAT_WMV
-};
-
 quint16 DeviceInfo::m_commonFormatsTable[] = {
     MTP_OBF_FORMAT_Undefined,
     MTP_OBF_FORMAT_Association,

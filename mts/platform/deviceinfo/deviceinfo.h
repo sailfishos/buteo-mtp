@@ -376,8 +376,6 @@ private:
     static quint16 m_vidChannelTable[];
     ///< default values for supported audio codecs.
     static quint32 m_supportedCodecsTable[];
-    ///< default values for supported object formats.
-    static quint16 m_supportedFormatsTable[];
     ///< default values for supported common formats.
     static quint16 m_commonFormatsTable[];
     ///< default values for supported image formats.
