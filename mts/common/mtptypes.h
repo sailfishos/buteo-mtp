@@ -373,6 +373,31 @@ typedef quint16 MTPDevPropertyCode;
 #define MTP_OBF_FORMAT_vCal1                              0xBE02 // ???          vcs            ??? (not in mtp spec)
 #define MTP_OBF_FORMAT_vCal2                              0xBE03 // ???          ics            ??? (not in mtp spec)
 #define MTP_OBF_FORMAT_Undefined_Windows_Executable       0xBE80 // UNDEFINED    ...            ??? (not in mtp spec)
+#define MTP_OBF_FORMAT_WBMP                               0xB803 // Image        wbmp           Wireless Application Protocol Bitmap Format
+#define MTP_OBF_FORMAT_JPEG_XR                            0xB804 // Image        jxr|hdp|wdp    JPEG extended range, also known as HD Photo
+#define MTP_OBF_FORMAT_QCELP                              0xB907 // Audio        qcp            Qualcomm Code Excited Linear Prediction (.qcp). audio/qcelp
+#define MTP_OBF_FORMAT_AMR                                0xB908 // Audio        amr            Adaptive Multi-Rate audio codec
+#define MTP_OBF_FORMAT_MP2                                0xB983 // Audio/Video  mp2            MPEG-1 Layer II audio (ISO/IEC 13818-3)
+#define MTP_OBF_FORMAT_3G2                                0xB985 // Audio/Video  3g2            3GPP2 file format
+#define MTP_OBF_FORMAT_AVCHD                              0xB986 // Video        mts|m2ts       MPEG-4 AVC video and Dolby Digital audio within an MPEG-2
+#define MTP_OBF_FORMAT_ATSC_TS                            0xB987 // Video        ts             MPEG-2 video and AC-3 audio within an ATSC-compliant MPEG-2 Transport Stream
+#define MTP_OBF_FORMAT_DVB_TS                             0xB988 // Video        ts             MPEG-2 video and MPEG-1 Layer II or AC-3 audio within a DVB-compliant MPEG-2 Transport Stream
+#define MTP_OBF_FORMAT_Abstract_Mediacast                 0xBA0B // ABSTRACT     ---            For use with mediacasts; references multimedia enclosures of RSS feeds or episodic content
+#define MTP_OBF_FORMAT_XML_Document                       0xBA82 // XML          xml            Extensible Markup Language
+#define MTP_OBF_FORMAT_Microsoft_Word_Document            0xBA83 // Binary       doc            Microsoft Word document
+#define MTP_OBF_FORMAT_MHT_Compiled_HTML_Document         0xBA84 // Binary       mht|mhtml      MIME HTML
+#define MTP_OBF_FORMAT_Microsoft_Excel_spreadsheet        0xBA85 // Binary       xls            Microsoft Excel spreadsheet
+#define MTP_OBF_FORMAT_Microsoft_Powerpoint_presentation  0xBA86 // Binary       ppt            Microsoft Powerpoint presentation
+#define MTP_OBF_FORMAT_Undefined_Bookmark                 0xBB10 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Abstract_Bookmark                  0xBB11 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Undefined_Appointment              0xBB20 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Abstract_Appointment               0xBB21 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_vCalendar_1_0                      0xBB22 // ???          vcs            vCalendar file format (vCalendar Version 1).
+#define MTP_OBF_FORMAT_Undefined_Task                     0xBB40 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Abstract_Task                      0xBB41 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_iCalendar                          0xBB42 // ???          ics            ICALENDAR file format (vCalendar Version 2).
+#define MTP_OBF_FORMAT_Undefined_Note                     0xBB60 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Abstract_Note                      0xBB61 // ABSTRACT     ---            ???
 
 typedef quint16 MTPObjFormatCode;
 
