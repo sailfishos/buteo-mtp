@@ -872,6 +872,21 @@ void FSStoragePlugin::storePuoids()
  ***********************************************************/
 void FSStoragePlugin::buildSupportedFormatsList()
 {
+    /* The m_formatByExtTable lookup table is used for determining
+     * mtp object format of files present in the device file system
+     * and is accessed only from:
+     *   FSStoragePlugin::getObjectFormatByExtension()
+     *
+     * Files with extensions not defined here will be handled as
+     * MTP_OBF_FORMAT_Undefined - which should allow pc side software
+     * to download any files from the device.
+     *
+     * Providing "more correct" mapping might however be desirable
+     * in cases where there is reason to assume pc side sw will use
+     * the mtp object format for something that is relevant for the
+     * users (icons, thumbnails, binding to applications, etc).
+     */
+
     m_formatByExtTable["pla"]  = MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist;
     m_formatByExtTable["wav"]  = MTP_OBF_FORMAT_WAV;
     m_formatByExtTable["mp3"]  = MTP_OBF_FORMAT_MP3;
@@ -906,6 +921,46 @@ void FSStoragePlugin::buildSupportedFormatsList()
     m_formatByExtTable["xpm"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
     m_formatByExtTable["xwd"]  = MTP_OBF_FORMAT_Unknown_Image_Object;
 
+    m_formatByExtTable["3g2"]  = MTP_OBF_FORMAT_3G2;
+    m_formatByExtTable["aiff"] = MTP_OBF_FORMAT_AIFF;
+    m_formatByExtTable["aif"]  = MTP_OBF_FORMAT_AIFF;
+    m_formatByExtTable["mp2"]  = MTP_OBF_FORMAT_MP2;
+    m_formatByExtTable["flac"] = MTP_OBF_FORMAT_FLAC;
+    m_formatByExtTable["mrk"]  = MTP_OBF_FORMAT_DPOF;
+    m_formatByExtTable["wpl"]  = MTP_OBF_FORMAT_WPL_Playlist;
+    m_formatByExtTable["m3u"]  = MTP_OBF_FORMAT_M3U_Playlist;
+    m_formatByExtTable["m3u8"] = MTP_OBF_FORMAT_M3U_Playlist;
+    m_formatByExtTable["mpl"]  = MTP_OBF_FORMAT_MPL_Playlist;
+    m_formatByExtTable["mpls"] = MTP_OBF_FORMAT_MPL_Playlist;
+    m_formatByExtTable["asx"]  = MTP_OBF_FORMAT_ASX_Playlist;
+    m_formatByExtTable["xml"]  = MTP_OBF_FORMAT_XML_Document;
+    m_formatByExtTable["mht"]  = MTP_OBF_FORMAT_MHT_Compiled_HTML_Document;
+    m_formatByExtTable["mhtml"]= MTP_OBF_FORMAT_MHT_Compiled_HTML_Document;
+    m_formatByExtTable["asf"]  = MTP_OBF_FORMAT_ASF;
+    m_formatByExtTable["mts"]  = MTP_OBF_FORMAT_AVCHD;
+    m_formatByExtTable["m2ts"] = MTP_OBF_FORMAT_AVCHD;
+    m_formatByExtTable["ts"]   = MTP_OBF_FORMAT_DVB_TS;
+    m_formatByExtTable["jp2"]  = MTP_OBF_FORMAT_JP2;
+    m_formatByExtTable["jpg2"] = MTP_OBF_FORMAT_JP2;
+    m_formatByExtTable["jpx"]  = MTP_OBF_FORMAT_JPX;
+    m_formatByExtTable["wbmp"] = MTP_OBF_FORMAT_WBMP;
+    m_formatByExtTable["fpx"]  = MTP_OBF_FORMAT_FlashPix;
+    m_formatByExtTable["dib"]  = MTP_OBF_FORMAT_BMP;
+    m_formatByExtTable["crw"]  = MTP_OBF_FORMAT_CIFF;
+    m_formatByExtTable["jfif"] = MTP_OBF_FORMAT_JFIF;
+    m_formatByExtTable["jfi"]  = MTP_OBF_FORMAT_JFIF;
+    m_formatByExtTable["pcd"]  = MTP_OBF_FORMAT_PCD;
+    m_formatByExtTable["pict"] = MTP_OBF_FORMAT_PICT;
+    m_formatByExtTable["pct"]  = MTP_OBF_FORMAT_PICT;
+    m_formatByExtTable["pic"]  = MTP_OBF_FORMAT_PICT;
+    m_formatByExtTable["jxr"]  = MTP_OBF_FORMAT_JPEG_XR;
+    m_formatByExtTable["hdp"]  = MTP_OBF_FORMAT_JPEG_XR;
+    m_formatByExtTable["wdp"]  = MTP_OBF_FORMAT_JPEG_XR;
+    m_formatByExtTable["m4a"]  = MTP_OBF_FORMAT_AAC;
+    m_formatByExtTable["aa"]   = MTP_OBF_FORMAT_Audible;
+    m_formatByExtTable["aax"]  = MTP_OBF_FORMAT_Audible;
+    m_formatByExtTable["qcp"]  = MTP_OBF_FORMAT_QCELP;
+    m_formatByExtTable["amr"]  = MTP_OBF_FORMAT_AMR;
 
     // Populate format code->MIME type map
     m_imageMimeTable[MTP_OBF_FORMAT_BMP] = "image/bmp";

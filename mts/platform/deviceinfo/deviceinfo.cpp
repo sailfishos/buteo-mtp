@@ -122,37 +122,6 @@ quint32 DeviceInfo::m_supportedCodecsTable[] = {
     MTP_WAVE_FORMAT_DSPGROUP_TRUESPEECH
 };
 
-quint16 DeviceInfo::m_supportedFormatsTable[] = {
-    MTP_OBF_FORMAT_Undefined,
-    MTP_OBF_FORMAT_Association,
-    MTP_OBF_FORMAT_Text,
-    MTP_OBF_FORMAT_HTML,
-    MTP_OBF_FORMAT_Abstract_Audio_Album,
-    MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist,
-    MTP_OBF_FORMAT_vCard2,
-    MTP_OBF_FORMAT_vCard3,
-    MTP_OBF_FORMAT_vCal1,
-
-    MTP_OBF_FORMAT_Unknown_Image_Object,
-    MTP_OBF_FORMAT_EXIF_JPEG,
-    MTP_OBF_FORMAT_GIF,
-    MTP_OBF_FORMAT_PNG,
-    MTP_OBF_FORMAT_TIFF,
-    MTP_OBF_FORMAT_BMP,
-
-    MTP_OBF_FORMAT_WAV,
-    MTP_OBF_FORMAT_MP3,
-    MTP_OBF_FORMAT_WMA,
-    MTP_OBF_FORMAT_OGG,
-    MTP_OBF_FORMAT_AAC,
-
-    MTP_OBF_FORMAT_AVI,
-    MTP_OBF_FORMAT_MPEG,
-    MTP_OBF_FORMAT_3GP_Container,
-    MTP_OBF_FORMAT_MP4_Container,
-    MTP_OBF_FORMAT_WMV
-};
-
 quint16 DeviceInfo::m_commonFormatsTable[] = {
     MTP_OBF_FORMAT_Undefined,
     MTP_OBF_FORMAT_Association,
@@ -162,7 +131,51 @@ quint16 DeviceInfo::m_commonFormatsTable[] = {
     MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist,
     MTP_OBF_FORMAT_vCard2,
     MTP_OBF_FORMAT_vCard3,
-    MTP_OBF_FORMAT_vCal1
+    MTP_OBF_FORMAT_vCal1,
+    MTP_OBF_FORMAT_ASX_Playlist,
+    MTP_OBF_FORMAT_Abstract_Appointment,
+    MTP_OBF_FORMAT_Abstract_Audio_Playlist,
+    MTP_OBF_FORMAT_Abstract_Bookmark,
+    MTP_OBF_FORMAT_Abstract_Calendar_Item,
+    MTP_OBF_FORMAT_Abstract_Chaptered_Production,
+    MTP_OBF_FORMAT_Abstract_Contact,
+    MTP_OBF_FORMAT_Abstract_Contact_Group,
+    MTP_OBF_FORMAT_Abstract_Document,
+    MTP_OBF_FORMAT_Abstract_Image_Album,
+    MTP_OBF_FORMAT_Abstract_Mediacast,
+    MTP_OBF_FORMAT_Abstract_Message,
+    MTP_OBF_FORMAT_Abstract_Message_Folder,
+    MTP_OBF_FORMAT_Abstract_Multimedia_Album,
+    MTP_OBF_FORMAT_Abstract_Note,
+    MTP_OBF_FORMAT_Abstract_Task,
+    MTP_OBF_FORMAT_Abstract_Video_Album,
+    MTP_OBF_FORMAT_Abstract_Video_Playlist,
+    MTP_OBF_FORMAT_DPOF,
+    MTP_OBF_FORMAT_Executable,
+    MTP_OBF_FORMAT_M3U_Playlist,
+    MTP_OBF_FORMAT_MHT_Compiled_HTML_Document,
+    MTP_OBF_FORMAT_MPL_Playlist,
+    MTP_OBF_FORMAT_Microsoft_Excel_spreadsheet,
+    MTP_OBF_FORMAT_Microsoft_Powerpoint_presentation,
+    MTP_OBF_FORMAT_Microsoft_Word_Document,
+    MTP_OBF_FORMAT_PLS_Playlist,
+    MTP_OBF_FORMAT_Script,
+    MTP_OBF_FORMAT_Undefined_Appointment,
+    MTP_OBF_FORMAT_Undefined_Bookmark,
+    MTP_OBF_FORMAT_Undefined_Calendar_Item,
+    MTP_OBF_FORMAT_Undefined_Collection,
+    MTP_OBF_FORMAT_Undefined_Contact,
+    MTP_OBF_FORMAT_Undefined_Document,
+    MTP_OBF_FORMAT_Undefined_Firmware,
+    MTP_OBF_FORMAT_Undefined_Message,
+    MTP_OBF_FORMAT_Undefined_Note,
+    MTP_OBF_FORMAT_Undefined_Task,
+    MTP_OBF_FORMAT_Undefined_Windows_Executable,
+    MTP_OBF_FORMAT_WPL_Playlist,
+    MTP_OBF_FORMAT_XML_Document,
+    MTP_OBF_FORMAT_iCalendar,
+    MTP_OBF_FORMAT_vCal2,
+    MTP_OBF_FORMAT_vCalendar_1_0,
 };
 
 quint16 DeviceInfo::m_imageFormatsTable[] = {
@@ -171,14 +184,34 @@ quint16 DeviceInfo::m_imageFormatsTable[] = {
     MTP_OBF_FORMAT_GIF,
     MTP_OBF_FORMAT_PNG,
     MTP_OBF_FORMAT_TIFF,
-    MTP_OBF_FORMAT_BMP
+    MTP_OBF_FORMAT_BMP,
+    MTP_OBF_FORMAT_AMR,
+    MTP_OBF_FORMAT_CIFF,
+    MTP_OBF_FORMAT_FlashPix,
+    MTP_OBF_FORMAT_JFIF,
+    MTP_OBF_FORMAT_JP2,
+    MTP_OBF_FORMAT_JPEG_XR,
+    MTP_OBF_FORMAT_JPX,
+    MTP_OBF_FORMAT_PCD,
+    MTP_OBF_FORMAT_PICT,
+    MTP_OBF_FORMAT_TIFF_EP,
+    MTP_OBF_FORMAT_TIFF_IT,
+    MTP_OBF_FORMAT_WBMP,
+    MTP_OBF_FORMAT_Windows_Image_Format,
 };
 
 quint16 DeviceInfo::m_audioFormatsTable[] = {
     MTP_OBF_FORMAT_MP3,
     MTP_OBF_FORMAT_WMA,
     MTP_OBF_FORMAT_WAV,
-    MTP_OBF_FORMAT_AAC
+    MTP_OBF_FORMAT_AAC,
+    MTP_OBF_FORMAT_3G2,
+    MTP_OBF_FORMAT_AIFF,
+    MTP_OBF_FORMAT_Audible,
+    MTP_OBF_FORMAT_FLAC,
+    MTP_OBF_FORMAT_MP2,
+    MTP_OBF_FORMAT_QCELP,
+    MTP_OBF_FORMAT_Undefined_Audio,
 };
 
 quint16 DeviceInfo::m_videoFormatsTable[] = {
@@ -186,7 +219,12 @@ quint16 DeviceInfo::m_videoFormatsTable[] = {
     MTP_OBF_FORMAT_MPEG,
     MTP_OBF_FORMAT_3GP_Container,
     MTP_OBF_FORMAT_MP4_Container,
-    MTP_OBF_FORMAT_WMV
+    MTP_OBF_FORMAT_WMV,
+    MTP_OBF_FORMAT_ASF,
+    MTP_OBF_FORMAT_ATSC_TS,
+    MTP_OBF_FORMAT_AVCHD,
+    MTP_OBF_FORMAT_DVB_TS,
+    MTP_OBF_FORMAT_Undefined_Video,
 };
 
 quint16 DeviceInfo::m_eventsSupportedTable[] = {
@@ -283,22 +321,6 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
         {
             m_mtpDevicePropertiesSupported.append( m_devPropsSupportedTable[i] );
         }
-        for( quint32 i = 0 ; i < sizeof(m_commonFormatsTable)/sizeof(m_commonFormatsTable[0]); i++ )
-        {
-            m_commonFormats.append( m_commonFormatsTable[i] );
-        }
-        for( quint32 i = 0 ; i < sizeof(m_audioFormatsTable)/sizeof(m_audioFormatsTable[0]); i++ )
-        {
-            m_audioFormats.append( m_audioFormatsTable[i] );
-        }
-        for( quint32 i = 0 ; i < sizeof(m_imageFormatsTable)/sizeof(m_imageFormatsTable[0]); i++ )
-        {
-            m_imageFormats.append( m_imageFormatsTable[i] );
-        }
-        for( quint32 i = 0 ; i < sizeof(m_videoFormatsTable)/sizeof(m_videoFormatsTable[0]); i++ )
-        {
-            m_videoFormats.append( m_videoFormatsTable[i] );
-        }
         for( quint32 i = 0 ; i < sizeof(m_audChannelTable)/sizeof(m_audChannelTable[0]); i++ )
         {
             m_audioChannels.append( m_audChannelTable[i] );
@@ -316,6 +338,30 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
     {
         m_xmlOk = true;
     }
+
+    /* The supported object formats specified in the configuration file
+     * are used to augment the built-in configuration, not to override it. */
+    for( quint32 i = 0 ; i < sizeof(m_commonFormatsTable)/sizeof(m_commonFormatsTable[0]); i++ )
+    {
+        if( !m_commonFormats.contains(m_commonFormatsTable[i]) )
+            m_commonFormats.append( m_commonFormatsTable[i] );
+    }
+    for( quint32 i = 0 ; i < sizeof(m_audioFormatsTable)/sizeof(m_audioFormatsTable[0]); i++ )
+    {
+        if( !m_audioFormats.contains( m_audioFormatsTable[i]) )
+            m_audioFormats.append( m_audioFormatsTable[i] );
+    }
+    for( quint32 i = 0 ; i < sizeof(m_imageFormatsTable)/sizeof(m_imageFormatsTable[0]); i++ )
+    {
+        if( !m_imageFormats.contains( m_imageFormatsTable[i]) )
+            m_imageFormats.append( m_imageFormatsTable[i] );
+    }
+    for( quint32 i = 0 ; i < sizeof(m_videoFormatsTable)/sizeof(m_videoFormatsTable[0]); i++ )
+    {
+        if( !m_videoFormats.contains( m_videoFormatsTable[i]) )
+            m_videoFormats.append( m_videoFormatsTable[i] );
+    }
+
     m_supportedFormats = m_imageFormats + m_audioFormats + m_videoFormats + m_commonFormats;
 }
 

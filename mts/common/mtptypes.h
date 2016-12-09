@@ -302,77 +302,102 @@ typedef quint16 MTPDevPropertyCode;
 
 /* object format codes */
 
-#define MTP_OBF_FORMAT_Undefined                       0x3000
-#define MTP_OBF_FORMAT_Association                     0x3001
-#define MTP_OBF_FORMAT_Script                          0x3002
-#define MTP_OBF_FORMAT_Executable                      0x3003
-#define MTP_OBF_FORMAT_Text                            0x3004
-#define MTP_OBF_FORMAT_HTML                            0x3005
-#define MTP_OBF_FORMAT_DPOF                            0x3006
-#define MTP_OBF_FORMAT_AIFF                            0x3007
-#define MTP_OBF_FORMAT_WAV                             0x3008
-#define MTP_OBF_FORMAT_MP3                             0x3009
-#define MTP_OBF_FORMAT_AVI                             0x300A
-#define MTP_OBF_FORMAT_MPEG                            0x300B
-#define MTP_OBF_FORMAT_ASF                             0x300C
-#define MTP_OBF_FORMAT_Unknown_Image_Object            0x3800
-#define MTP_OBF_FORMAT_EXIF_JPEG                       0x3801
-#define MTP_OBF_FORMAT_TIFF_EP                         0x3802
-#define MTP_OBF_FORMAT_FlashPix                        0x3803
-#define MTP_OBF_FORMAT_BMP                             0x3804
-#define MTP_OBF_FORMAT_CIFF                            0x3805
-/* 0x3806 Undefined Reserved */
-#define MTP_OBF_FORMAT_GIF                             0x3807
-#define MTP_OBF_FORMAT_JFIF                            0x3808
-#define MTP_OBF_FORMAT_PCD                             0x3809
-#define MTP_OBF_FORMAT_PICT                            0x380A
-#define MTP_OBF_FORMAT_PNG                             0x380B
-/* 0x380C Undefined  Reserved */
-#define MTP_OBF_FORMAT_TIFF                            0x380D
-#define MTP_OBF_FORMAT_TIFF_IT                         0x380E
-#define MTP_OBF_FORMAT_JP2                             0x380F
-#define MTP_OBF_FORMAT_JPX                             0x3810
-#define MTP_OBF_FORMAT_Undefined_Firmware           0xB802
-#define MTP_OBF_FORMAT_Windows_Image_Format           0xB881
-#define MTP_OBF_FORMAT_Undefined_Audio               0xB900
-#define MTP_OBF_FORMAT_WMA                             0xB901
-#define MTP_OBF_FORMAT_OGG                             0xB902
-#define MTP_OBF_FORMAT_AAC                             0xB903
-#define MTP_OBF_FORMAT_Audible                         0xB904
-#define MTP_OBF_FORMAT_FLAC                            0xB906
-#define MTP_OBF_FORMAT_Undefined_Video               0xB980
-#define MTP_OBF_FORMAT_WMV                             0xB981
-#define MTP_OBF_FORMAT_MP4_Container               0xB982
-#define MTP_OBF_FORMAT_3GP_Container               0xB984
-#define MTP_OBF_FORMAT_Undefined_Collection           0xBA00
-#define MTP_OBF_FORMAT_Abstract_Multimedia_Album       0xBA01
-#define MTP_OBF_FORMAT_Abstract_Image_Album           0xBA02
-#define MTP_OBF_FORMAT_Abstract_Audio_Album           0xBA03
-#define MTP_OBF_FORMAT_Abstract_Video_Album           0xBA04
-#define MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist   0xBA05
-#define MTP_OBF_FORMAT_Abstract_Contact_Group          0xBA06
-#define MTP_OBF_FORMAT_Abstract_Message_Folder         0xBA07
-#define MTP_OBF_FORMAT_Abstract_Chaptered_Production   0xBA08
-#define MTP_OBF_FORMAT_Abstract_Audio_Playlist       0xBA09
-#define MTP_OBF_FORMAT_Abstract_Video_Playlist       0xBA0A
-#define MTP_OBF_FORMAT_WPL_Playlist                    0xBA10
-#define MTP_OBF_FORMAT_M3U_Playlist                    0xBA11
-#define MTP_OBF_FORMAT_MPL_Playlist                    0xBA12
-#define MTP_OBF_FORMAT_ASX_Playlist                    0xBA13
-#define MTP_OBF_FORMAT_PLS_Playlist                   0xBA14
-#define MTP_OBF_FORMAT_Undefined_Document           0xBA80
-#define MTP_OBF_FORMAT_Abstract_Document           0xBA81
-#define MTP_OBF_FORMAT_Undefined_Message               0xBB00
-#define MTP_OBF_FORMAT_Abstract_Message                0xBB01
-#define MTP_OBF_FORMAT_Undefined_Contact               0xBB80
-#define MTP_OBF_FORMAT_Abstract_Contact                0xBB81
-#define MTP_OBF_FORMAT_vCard2                          0xBB82
-#define MTP_OBF_FORMAT_vCard3                          0xBB83
-#define MTP_OBF_FORMAT_Undefined_Calendar_Item         0xBE00
-#define MTP_OBF_FORMAT_Abstract_Calendar_Item          0xBE01
-#define MTP_OBF_FORMAT_vCal1                           0xBE02
-#define MTP_OBF_FORMAT_vCal2                           0xBE03
-#define MTP_OBF_FORMAT_Undefined_Windows_Executable   0xBE80
+#define MTP_OBF_FORMAT_Undefined                          0x3000 // UNDEFINED    ...            File of unspecified type
+#define MTP_OBF_FORMAT_Association                        0x3001 // Directory    ...            Subdirectory within storage
+#define MTP_OBF_FORMAT_Script                             0x3002 // Text         sh|py|...      Device model-specific script
+#define MTP_OBF_FORMAT_Executable                         0x3003 // Binary       exe|com|...    Device model-specific binary executable
+#define MTP_OBF_FORMAT_Text                               0x3004 // Text         txt|...        Text file
+#define MTP_OBF_FORMAT_HTML                               0x3005 // HTML         html|htm       Hypertext Markup Language file (text)
+#define MTP_OBF_FORMAT_DPOF                               0x3006 // Text         mrk            Digital Print Order File.
+#define MTP_OBF_FORMAT_AIFF                               0x3007 // Audio        aiff|aif       Audio Interchange File Format
+#define MTP_OBF_FORMAT_WAV                                0x3008 // Audio        wav            Waveform Audio File Format
+#define MTP_OBF_FORMAT_MP3                                0x3009 // Audio        mp3            MPEG-1 and/or MPEG-2 Audio Layer III
+#define MTP_OBF_FORMAT_AVI                                0x300A // Video        avi            Audio Video Interleave
+#define MTP_OBF_FORMAT_MPEG                               0x300B // Video        mpeg|mpg       Motion Picture Experts Group file interchange format
+#define MTP_OBF_FORMAT_ASF                                0x300C // Video        wmv            Microsoft Advanced Streaming Format
+#define MTP_OBF_FORMAT_Unknown_Image_Object               0x3800 // Image        ...            ???
+#define MTP_OBF_FORMAT_EXIF_JPEG                          0x3801 // Image        jpeg|jpg       Exchangeable File Format, JEIDA standard
+#define MTP_OBF_FORMAT_TIFF_EP                            0x3802 // Image        tiff|tif       Tag Image File Format for Electronic Photography
+#define MTP_OBF_FORMAT_FlashPix                           0x3803 // Image        fpx            Structured Storage Image Format
+#define MTP_OBF_FORMAT_BMP                                0x3804 // Image        bmp|dib        Device Independent Bitmap
+#define MTP_OBF_FORMAT_CIFF                               0x3805 // Image        crw            Canon Camera Image File Format
+#define MTP_OBF_FORMAT_Reserved1                          0x3806 // RESERVED     ---            (Undefined, reserved)
+#define MTP_OBF_FORMAT_GIF                                0x3807 // Image        gif            Graphics Interchange Format
+#define MTP_OBF_FORMAT_JFIF                               0x3808 // Image        jfif|jfi       JPEG Interchange Format
+#define MTP_OBF_FORMAT_PCD                                0x3809 // Image        pcd            Kodak Photo CD Image file
+#define MTP_OBF_FORMAT_PICT                               0x380A // Image        pict|pct|pic   Apple QuickDraw Image Format
+#define MTP_OBF_FORMAT_PNG                                0x380B // Image        png            Portable Network Graphics
+#define MTP_OBF_FORMAT_Reserved2                          0x380C // RESERVED     ---            (Undefined, reserved)
+#define MTP_OBF_FORMAT_TIFF                               0x380D // Image        tiff|tif       Tag Image File Format
+#define MTP_OBF_FORMAT_TIFF_IT                            0x380E // Image        tiff|tif       Tag Image File Format for Image Technology
+#define MTP_OBF_FORMAT_JP2                                0x380F // Image        jp2            JPEG2000 Baseline File Format
+#define MTP_OBF_FORMAT_JPX                                0x3810 // Image        jpx            JPEG2000 Extended File Format
+#define MTP_OBF_FORMAT_Undefined_Firmware                 0xB802 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Windows_Image_Format               0xB881 // Image        ???            ???
+#define MTP_OBF_FORMAT_Undefined_Audio                    0xB900 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_WMA                                0xB901 // Audio        wma            Windows Media Audio
+#define MTP_OBF_FORMAT_OGG                                0xB902 // Audio/Video  ogg            OGG container format
+#define MTP_OBF_FORMAT_AAC                                0xB903 // Audio        aac|m4a|...    Advanced Audio Coding
+#define MTP_OBF_FORMAT_Audible                            0xB904 // Audio        aa|aax         Audible Audiobook
+#define MTP_OBF_FORMAT_FLAC                               0xB906 // Audio        flac           Free Lossless Audio Codec
+#define MTP_OBF_FORMAT_Undefined_Video                    0xB980 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_WMV                                0xB981 // Video        wmv            Windows Media Video
+#define MTP_OBF_FORMAT_MP4_Container                      0xB982 // Audio/Video  mp4            ???
+#define MTP_OBF_FORMAT_3GP_Container                      0xB984 // Audio/Video  3gp            3GPP file format
+#define MTP_OBF_FORMAT_Undefined_Collection               0xBA00 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Abstract_Multimedia_Album          0xBA01 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Abstract_Image_Album               0xBA02 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Abstract_Audio_Album               0xBA03 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Abstract_Video_Album               0xBA04 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist      0xBA05 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Abstract_Contact_Group             0xBA06 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Abstract_Message_Folder            0xBA07 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Abstract_Chaptered_Production      0xBA08 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Abstract_Audio_Playlist            0xBA09 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Abstract_Video_Playlist            0xBA0A // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_WPL_Playlist                       0xBA10 // XML          wpl            Windows Media Player Playlist
+#define MTP_OBF_FORMAT_M3U_Playlist                       0xBA11 // Text         m3u|m3u8       Multimedia playlist
+#define MTP_OBF_FORMAT_MPL_Playlist                       0xBA12 // Binary       mpl|mpls       AVCHD Playlist file
+#define MTP_OBF_FORMAT_ASX_Playlist                       0xBA13 // XML          asx            Advanced Stream Redirector playlist
+#define MTP_OBF_FORMAT_PLS_Playlist                       0xBA14 // INI          pls            museArc multimedia playlist
+#define MTP_OBF_FORMAT_Undefined_Document                 0xBA80 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Abstract_Document                  0xBA81 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Undefined_Message                  0xBB00 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Abstract_Message                   0xBB01 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Undefined_Contact                  0xBB80 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Abstract_Contact                   0xBB81 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_vCard2                             0xBB82 // ???          vcf            ???
+#define MTP_OBF_FORMAT_vCard3                             0xBB83 // ???          vcf            ???
+#define MTP_OBF_FORMAT_Undefined_Calendar_Item            0xBE00 // UNDEFINED    ...            ??? (not in mtp spec)
+#define MTP_OBF_FORMAT_Abstract_Calendar_Item             0xBE01 // ABSTRACT     ---            ??? (not in mtp spec)
+#define MTP_OBF_FORMAT_vCal1                              0xBE02 // ???          vcs            ??? (not in mtp spec)
+#define MTP_OBF_FORMAT_vCal2                              0xBE03 // ???          ics            ??? (not in mtp spec)
+#define MTP_OBF_FORMAT_Undefined_Windows_Executable       0xBE80 // UNDEFINED    ...            ??? (not in mtp spec)
+#define MTP_OBF_FORMAT_WBMP                               0xB803 // Image        wbmp           Wireless Application Protocol Bitmap Format
+#define MTP_OBF_FORMAT_JPEG_XR                            0xB804 // Image        jxr|hdp|wdp    JPEG extended range, also known as HD Photo
+#define MTP_OBF_FORMAT_QCELP                              0xB907 // Audio        qcp            Qualcomm Code Excited Linear Prediction (.qcp). audio/qcelp
+#define MTP_OBF_FORMAT_AMR                                0xB908 // Audio        amr            Adaptive Multi-Rate audio codec
+#define MTP_OBF_FORMAT_MP2                                0xB983 // Audio/Video  mp2            MPEG-1 Layer II audio (ISO/IEC 13818-3)
+#define MTP_OBF_FORMAT_3G2                                0xB985 // Audio/Video  3g2            3GPP2 file format
+#define MTP_OBF_FORMAT_AVCHD                              0xB986 // Video        mts|m2ts       MPEG-4 AVC video and Dolby Digital audio within an MPEG-2
+#define MTP_OBF_FORMAT_ATSC_TS                            0xB987 // Video        ts             MPEG-2 video and AC-3 audio within an ATSC-compliant MPEG-2 Transport Stream
+#define MTP_OBF_FORMAT_DVB_TS                             0xB988 // Video        ts             MPEG-2 video and MPEG-1 Layer II or AC-3 audio within a DVB-compliant MPEG-2 Transport Stream
+#define MTP_OBF_FORMAT_Abstract_Mediacast                 0xBA0B // ABSTRACT     ---            For use with mediacasts; references multimedia enclosures of RSS feeds or episodic content
+#define MTP_OBF_FORMAT_XML_Document                       0xBA82 // XML          xml            Extensible Markup Language
+#define MTP_OBF_FORMAT_Microsoft_Word_Document            0xBA83 // Binary       doc            Microsoft Word document
+#define MTP_OBF_FORMAT_MHT_Compiled_HTML_Document         0xBA84 // Binary       mht|mhtml      MIME HTML
+#define MTP_OBF_FORMAT_Microsoft_Excel_spreadsheet        0xBA85 // Binary       xls            Microsoft Excel spreadsheet
+#define MTP_OBF_FORMAT_Microsoft_Powerpoint_presentation  0xBA86 // Binary       ppt            Microsoft Powerpoint presentation
+#define MTP_OBF_FORMAT_Undefined_Bookmark                 0xBB10 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Abstract_Bookmark                  0xBB11 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_Undefined_Appointment              0xBB20 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Abstract_Appointment               0xBB21 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_vCalendar_1_0                      0xBB22 // ???          vcs            vCalendar file format (vCalendar Version 1).
+#define MTP_OBF_FORMAT_Undefined_Task                     0xBB40 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Abstract_Task                      0xBB41 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_iCalendar                          0xBB42 // ???          ics            ICALENDAR file format (vCalendar Version 2).
+#define MTP_OBF_FORMAT_Undefined_Note                     0xBB60 // UNDEFINED    ...            ???
+#define MTP_OBF_FORMAT_Abstract_Note                      0xBB61 // ABSTRACT     ---            ???
 
 typedef quint16 MTPObjFormatCode;
 
