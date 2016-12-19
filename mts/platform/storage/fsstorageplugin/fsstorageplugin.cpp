@@ -39,6 +39,7 @@
 #include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <unistd.h>
 #include <errno.h>
 
 #include <QDebug>
@@ -1005,6 +1006,9 @@ MTPResponseCode FSStoragePlugin::createFile( const QString &path, MTPObjectInfo 
 {
     // Create the file in the file system.
     QFile file( path );
+
+    bool already_exists = file.exists();
+
     if ( !file.open( QIODevice::ReadWrite ) )
     {
         MTP_LOG_WARNING("failed to create file:" << path);
@@ -1014,6 +1018,14 @@ MTPResponseCode FSStoragePlugin::createFile( const QString &path, MTPObjectInfo 
                 return MTP_RESP_AccessDenied;
             default:
                 return MTP_RESP_GeneralError;
+        }
+    }
+
+    if( !already_exists ) {
+        /* When creating new files, prefer using the real gid
+         * (= "nemo") over the effective gid (= "privileged"). */
+        if( fchown(file.handle(), getuid(), getgid()) == -1 ) {
+            MTP_LOG_WARNING("failed to set file:" << path << " ownership");
         }
     }
 
@@ -2427,11 +2439,23 @@ MTPResponseCode FSStoragePlugin::writeData( const ObjHandle &handle, char *write
         {
             // Open the file and write to it.
             m_dataFile = new QFile( storageItem->m_path );
+
+            bool already_exists = m_dataFile->exists();
+
             if( !m_dataFile->open( QIODevice::ReadWrite ) )
             {
                 delete m_dataFile;
                 m_dataFile = 0;
                 return MTP_RESP_GeneralError;
+            }
+
+            if( !already_exists ) {
+                /* When creating new files, prefer using the real gid
+                 * (= "nemo") over the effective gid (= "privileged"). */
+                if( fchown(m_dataFile->handle(), getuid(), getgid()) == -1 ) {
+                    MTP_LOG_WARNING("failed to set file:"
+				    << storageItem->m_path << " ownership");
+                }
             }
 
             /* In all likelihood we've already created the file
