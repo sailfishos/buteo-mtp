@@ -50,6 +50,21 @@
 
 using namespace meegomtp1dot0;
 
+/* Once we write configuration to control endpoint, we *must* be ready
+ * to serve ptp/mtp commands - otherwise mtp initiator at the other end
+ * sees responce delay proportional to amount of files that need to be
+ * scanned before storages are ready.
+ *
+ * The correct fix would probably be to start with empty set of storages
+ * and send notification events when file enumeration for each storage
+ * finishes, but not all responders are able to cope with that and it
+ * would also require major changes to buteo mtp side.
+ *
+ * As a workaround: Defer endpoint configuration until scanning of all
+ * storages has been completed.
+ */
+#define DEFER_TRANSPORTER_ACTIVATION 1
+
 // BUFFER_MAX_LEN is based on the max request size in ci13xxx_udc.c,
 // which is four pages of 4k each
 static const quint32 BUFFER_MAX_LEN = 4 * 4096;
@@ -123,7 +138,12 @@ bool MTPResponder::initTransport( TransportType transport )
     if(USB == transport)
     {
         m_transporter = new MTPTransporterUSB();
+#if DEFER_TRANSPORTER_ACTIVATION
+        MTP_LOG_INFO("Deferring transporter activate");
+        transportOk = true;
+#else
         transportOk = m_transporter->activate();
+#endif
         if( transportOk )
         {
             // Connect signals to the transporter
@@ -478,6 +498,13 @@ void MTPResponder::onStorageReady(void)
     MTP_FUNC_TRACE();
 
     MTP_LOG_INFO("Storage ready");
+
+#if DEFER_TRANSPORTER_ACTIVATION
+    if (!m_transporter->activate())
+        MTP_LOG_CRITICAL("Transporter activate failed");
+    else
+        MTP_LOG_INFO("Transporter activated");
+#endif
 
     // Retry the last command, if one was waiting
     if (getResponderState() == RESPONDER_WAIT_STORAGE) {
