@@ -36,7 +36,7 @@ mts_storage_tests.depends= sub-mts
 # "/opt/tests/buteo-mtp/storage-test" - unit test app
 mts_fsstorage_tests.subdir = mts/platform/storage/fsstorageplugin/unittests
 mts_fsstorage_tests.target = sub-mts-fsstorage-tests
-mts_fsstorage_tests.depends = sub-mts
+mts_fsstorage_tests.depends = sub-mts-fsstorage-plugin
 
 # "/opt/tests/buteo-mtp/deviceinfo-test" - unit test app
 mts_deviceinfo_tests.subdir = mts/platform/deviceinfo/unittests
