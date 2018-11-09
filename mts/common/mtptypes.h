@@ -337,7 +337,7 @@ typedef quint16 MTPDevPropertyCode;
 #define MTP_OBF_FORMAT_Undefined_Audio                    0xB900 // UNDEFINED    ...            ???
 #define MTP_OBF_FORMAT_WMA                                0xB901 // Audio        wma            Windows Media Audio
 #define MTP_OBF_FORMAT_OGG                                0xB902 // Audio/Video  ogg            OGG container format
-#define MTP_OBF_FORMAT_AAC                                0xB903 // Audio        aac|m4a|...    Advanced Audio Coding
+#define MTP_OBF_FORMAT_AAC                                0xB903 // Audio        aac|...        Advanced Audio Coding
 #define MTP_OBF_FORMAT_Audible                            0xB904 // Audio        aa|aax         Audible Audiobook
 #define MTP_OBF_FORMAT_FLAC                               0xB906 // Audio        flac           Free Lossless Audio Codec
 #define MTP_OBF_FORMAT_Undefined_Video                    0xB980 // UNDEFINED    ...            ???
@@ -398,6 +398,7 @@ typedef quint16 MTPDevPropertyCode;
 #define MTP_OBF_FORMAT_iCalendar                          0xBB42 // ???          ics            ICALENDAR file format (vCalendar Version 2).
 #define MTP_OBF_FORMAT_Undefined_Note                     0xBB60 // UNDEFINED    ...            ???
 #define MTP_OBF_FORMAT_Abstract_Note                      0xBB61 // ABSTRACT     ---            ???
+#define MTP_OBF_FORMAT_M4A                                0xB215 // Audio        m4a            MPEG-4 Audio file
 
 typedef quint16 MTPObjFormatCode;
 

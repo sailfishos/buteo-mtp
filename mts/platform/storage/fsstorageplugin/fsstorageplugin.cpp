@@ -957,7 +957,7 @@ void FSStoragePlugin::buildSupportedFormatsList()
     m_formatByExtTable["jxr"]  = MTP_OBF_FORMAT_JPEG_XR;
     m_formatByExtTable["hdp"]  = MTP_OBF_FORMAT_JPEG_XR;
     m_formatByExtTable["wdp"]  = MTP_OBF_FORMAT_JPEG_XR;
-    m_formatByExtTable["m4a"]  = MTP_OBF_FORMAT_AAC;
+    m_formatByExtTable["m4a"]  = MTP_OBF_FORMAT_M4A;
     m_formatByExtTable["aa"]   = MTP_OBF_FORMAT_Audible;
     m_formatByExtTable["aax"]  = MTP_OBF_FORMAT_Audible;
     m_formatByExtTable["qcp"]  = MTP_OBF_FORMAT_QCELP;

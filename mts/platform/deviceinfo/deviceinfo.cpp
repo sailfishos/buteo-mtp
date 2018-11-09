@@ -211,6 +211,7 @@ quint16 DeviceInfo::m_audioFormatsTable[] = {
     MTP_OBF_FORMAT_FLAC,
     MTP_OBF_FORMAT_MP2,
     MTP_OBF_FORMAT_QCELP,
+    MTP_OBF_FORMAT_M4A,
     MTP_OBF_FORMAT_Undefined_Audio,
 };
 

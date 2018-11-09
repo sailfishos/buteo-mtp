@@ -3492,6 +3492,7 @@ extern "C"
         case MTP_OBF_FORMAT_TIFF_IT:                         res = "OBF_FORMAT_TIFF_IT"; break;
         case MTP_OBF_FORMAT_JP2:                             res = "OBF_FORMAT_JP2"; break;
         case MTP_OBF_FORMAT_JPX:                             res = "OBF_FORMAT_JPX"; break;
+        case MTP_OBF_FORMAT_M4A:                             res = "OBF_FORMAT_M4A"; break;
         case MTP_EV_Undefined:                               res = "EV_Undefined"; break;
         case MTP_EV_CancelTransaction:                       res = "EV_CancelTransaction"; break;
         case MTP_EV_ObjectAdded:                             res = "EV_ObjectAdded"; break;
