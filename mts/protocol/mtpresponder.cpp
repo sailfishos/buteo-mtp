@@ -2429,7 +2429,6 @@ void MTPResponder::sendObjectPropListData()
     quint32 respParam[4] = {0,0,0,0};
     quint32 respSize = 0;
     quint16 respCode =  MTP_RESP_OK;
-    MTPObjectInfo objInfo;
     MTPObjectFormatCategory category = MTP_UNSUPPORTED_FORMAT;
     MTPObjPropertyCode propCode;
     const MtpObjPropDesc* propDesc = 0;
@@ -2450,6 +2449,9 @@ void MTPResponder::sendObjectPropListData()
     // Allocate memory for the the number of elements obj property list item
     m_objPropListInfo->objPropList = new ObjPropListInfo::ObjectPropList[m_objPropListInfo->noOfElements];
 
+    // Scan propertylist
+    QString fileNameValue;
+    int fileNameIndex = -1;
     for(quint32 i = 0; i < m_objPropListInfo->noOfElements; i++ )
     {
         m_objPropListInfo->objPropList[i].value = 0;
@@ -2487,25 +2489,53 @@ void MTPResponder::sendObjectPropListData()
         // If this property is the filename, trigger object creation in the file system now
         if( MTP_OBJ_PROP_Obj_File_Name == m_objPropListInfo->objPropList[i].objectPropCode)
         {
+            fileNameValue = m_objPropListInfo->objPropList[i].value->value<QString>();
+            fileNameIndex = i;
+        }
+    }
+
+    if( respCode != MTP_RESP_OK )
+    {
+        // Property list scanning failed
+    }
+    else if( fileNameIndex == -1 ) {
+        // Property list did not contain filename
+        respCode = MTP_RESP_Invalid_Dataset;
+    }
+    else
+    {
+        if( fileNameValue.isEmpty() )
+        {
+            // Invalid filename was specified
+            respCode = MTP_RESP_Invalid_Dataset;
+        }
+        else
+        {
+            // Fill in object info
+            MTPObjectInfo objInfo;
             objInfo.mtpStorageId = m_objPropListInfo->storageId;
             objInfo.mtpObjectCompressedSize = m_objPropListInfo->objectSize;
             objInfo.mtpParentObject = m_objPropListInfo->parentHandle;
             objInfo.mtpObjectFormat = m_objPropListInfo->objectFormatCode;
-            objInfo.mtpFileName = m_objPropListInfo->objPropList[i].value->value<QString>();
-            respCode = m_storageServer->addItem(m_objPropListInfo->storageId, m_objPropListInfo->parentHandle, respParam[2], &objInfo);
-            if(MTP_RESP_OK == respCode)
-            {
-                m_objPropListInfo->objectHandle = respParam[2];
-                respParam[0] = m_objPropListInfo->storageId;
-                respParam[1] = m_objPropListInfo->parentHandle;
-                respSize = 3 * sizeof(quint32);
-            }
-            else
-            {
-                respParam[3] = i;
-                respSize = 4 * sizeof(quint32);
-                break;
-            }
+            objInfo.mtpFileName = fileNameValue;
+            // Get object handle
+            respCode = m_storageServer->addItem(m_objPropListInfo->storageId,
+                                                m_objPropListInfo->parentHandle,
+                                                m_objPropListInfo->objectHandle,
+                                                &objInfo);
+        }
+
+        if( respCode != MTP_RESP_OK )
+        {
+            respParam[3] = fileNameIndex;
+            respSize = 4 * sizeof(quint32);
+        }
+        else
+        {
+            respParam[0] = m_objPropListInfo->storageId;
+            respParam[1] = m_objPropListInfo->parentHandle;
+            respParam[2] = m_objPropListInfo->objectHandle;
+            respSize = 3 * sizeof(quint32);
         }
     }
     // create and send container for response
