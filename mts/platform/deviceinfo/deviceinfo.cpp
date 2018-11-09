@@ -656,6 +656,10 @@ quint16 DeviceInfo::getFormatCodeCategory(quint16 formatCode)
     {
         formatCategory = MTP_IMAGE_FORMAT;
     }
+    else {
+        qWarning("Unhandled formatCode: 0x%04x", formatCode);
+        formatCategory = MTP_COMMON_FORMAT;
+    }
     return formatCategory;
 }
 
