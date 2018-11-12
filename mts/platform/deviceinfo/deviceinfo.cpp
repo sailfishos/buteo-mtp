@@ -211,6 +211,7 @@ quint16 DeviceInfo::m_audioFormatsTable[] = {
     MTP_OBF_FORMAT_FLAC,
     MTP_OBF_FORMAT_MP2,
     MTP_OBF_FORMAT_QCELP,
+    MTP_OBF_FORMAT_M4A,
     MTP_OBF_FORMAT_Undefined_Audio,
 };
 
@@ -654,6 +655,10 @@ quint16 DeviceInfo::getFormatCodeCategory(quint16 formatCode)
     else  if(m_imageFormats.contains(formatCode))
     {
         formatCategory = MTP_IMAGE_FORMAT;
+    }
+    else {
+        qWarning("Unhandled formatCode: 0x%04x", formatCode);
+        formatCategory = MTP_COMMON_FORMAT;
     }
     return formatCategory;
 }

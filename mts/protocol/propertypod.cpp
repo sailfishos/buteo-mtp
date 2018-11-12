@@ -592,6 +592,8 @@ MTPResponseCode PropertyPod::getObjectPropsSupportedByType(MTPObjectFormatCatego
             propsSupported = propsVideo;
             break;
         case MTP_UNSUPPORTED_FORMAT:
+            propsSupported = propsCommon;
+            break;
         default:
             ret = MTP_RESP_Invalid_ObjectProp_Format;
             break;

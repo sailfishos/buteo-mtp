@@ -224,25 +224,33 @@ MTPTxContainer& MTPTxContainer::operator<<(const QVector<MtpInt128> &d)
 
 MTPTxContainer& MTPTxContainer::operator<<(const QString& d)
 {
-    QString str = d;
+    QString str;
+
+    const quint16 *dta = 0;
+    const quint16 *end = 0;
+    int len = 0;
 
     // Maximum possible string length is 255 (one character for the NULL terminator)
-    str.truncate(254);
-    quint8 stringChars = str.length();
-    if(stringChars > 0)
+    // Due to UTF16 encoding, content size can be greater than string length
+    // -> Shorten the string until encoded length does not exceed the limit.
+    for( int cutoff = 254; ; --cutoff )
     {
-        stringChars++;
+        str = d;
+        str.truncate(cutoff);
+        end = dta = str.utf16();
+        while( *end ) ++end;
+        len = (int)(end - dta);
+        if( len <= 254 )
+            break;
     }
-    // Amount of bytes needed for serialization = one byte for number of string
-    // characters + string (utf-16) length + 2 bytes for the NULL terminator
+
+    MTP_LOG_TRACE("string:" << str);
+
+    quint8 stringChars = (len > 0) ? (len + 1) : 0;
     serialize(&stringChars, sizeof(quint8), 1);
-    if(stringChars > 0)
-    {
-        serialize(str.utf16(), sizeof(quint16), stringChars - 1);
-        // The null terminator
-        quint16 null = 0;
-        serialize(&null, sizeof(null), 1);
-    }
+    if( stringChars )
+        serialize(dta, sizeof *dta, stringChars);
+
     return *this;
 }
 

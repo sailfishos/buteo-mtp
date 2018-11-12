@@ -215,14 +215,19 @@ MTPRxContainer& MTPRxContainer::operator>>(QVector<MtpInt128> &d)
 MTPRxContainer& MTPRxContainer::operator>>(QString &d)
 {
     // Determine the number of characters in the string
-    quint8 numChars;
-    deserialize(&numChars, sizeof(numChars), 1);
-    if(0 != numChars)
+    quint8 numChars = 0;
+    deserialize(&numChars, sizeof numChars, 1);
+    if(numChars > 0)
     {
-        d = QString::fromUtf16(reinterpret_cast<quint16*>(m_buffer + m_offset), numChars - 1);
-        m_offset += (numChars * sizeof(quint16));
+        quint16 utf16[numChars];
+        deserialize(utf16, sizeof *utf16, numChars);
+        d = QString::fromUtf16(utf16, numChars - 1);
     }
-    // No else, this is an empty string
+    else
+    {
+        d.truncate(0);
+    }
+    MTP_LOG_TRACE("string:" << d);
     return *this;
 }
 
