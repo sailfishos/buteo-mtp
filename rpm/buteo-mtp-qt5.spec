@@ -6,6 +6,7 @@ Group: System/Libraries
 License: LGPLv2.1
 URL: https://github.com/nemomobile/buteo-mtp
 Source0: %{name}-%{version}.tar.gz
+Source1: %{name}.privileges
 BuildRequires: pkgconfig(Qt5Core)
 BuildRequires: pkgconfig(Qt5Sparql)
 BuildRequires: pkgconfig(Qt5DBus)
@@ -36,14 +37,16 @@ Obsoletes: buteo-mtp < %{version}
 #       move user session startup into sub-package
 %files
 %defattr(-,root,root,-)
-/usr/lib/systemd/user/buteo-mtp.service
 %{_unitdir}/*.mount
 %{_unitdir}/local-fs.target.wants/*.mount
 %{_bindir}/buteo-mtp
 %{_libdir}/*.so.*
-%{_libdir}/mtp/*.so
-%{_libdir}/mtp/mtp_service
-%{_libdir}/mtp/start-mtp.sh
+%{_libdir}/mtp
+%{_libdir}/systemd/user/buteo-mtp.service
+%{_datadir}/mapplauncherd/privileges.d/*
+# Own the fstorage.d and mtp data directories.
+%dir %{_sysconfdir}/fsstorage.d
+%dir %{_datadir}/mtp
 
 %package sample-vendor-configuration
 Summary: Vendor configuration example for MTP
@@ -119,6 +122,8 @@ chmod +x %{buildroot}/%{_bindir}/buteo-mtp
 mkdir -p %{buildroot}/%{_unitdir}/local-fs.target.wants
 ln -s ../dev-mtp.mount %{buildroot}/%{_unitdir}/local-fs.target.wants/
 
+mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
+install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
 
 # create group if it does not exist yet, though don't remove it
 # as it should come from other packages
