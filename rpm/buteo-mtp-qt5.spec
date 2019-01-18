@@ -37,15 +37,16 @@ Obsoletes: buteo-mtp < %{version}
 #       move user session startup into sub-package
 %files
 %defattr(-,root,root,-)
-/usr/lib/systemd/user/buteo-mtp.service
 %{_unitdir}/*.mount
 %{_unitdir}/local-fs.target.wants/*.mount
 %{_bindir}/buteo-mtp
 %{_libdir}/*.so.*
-%{_libdir}/mtp/*.so
-%{_libdir}/mtp/mtp_service
-%{_libdir}/mtp/start-mtp.sh
+%{_libdir}/mtp
+%{_libdir}/systemd/user/buteo-mtp.service
 %{_datadir}/mapplauncherd/privileges.d/*
+# Own the fstorage.d and mtp data directories.
+%dir %{_sysconfdir}/fsstorage.d
+%dir %{_datadir}/mtp
 
 %package sample-vendor-configuration
 Summary: Vendor configuration example for MTP
