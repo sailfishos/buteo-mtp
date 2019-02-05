@@ -36,8 +36,11 @@
 
 #include <QDirIterator>
 #include <QDomDocument>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <mntent.h>
+#include <unistd.h>
+#include <glob.h>
 
 using namespace meegomtp1dot0;
 
@@ -45,6 +48,7 @@ const char *FSStoragePluginFactory::CONFIG_DIR = "/etc/fsstorage.d";
 
 QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
 {
+    QSet<QString> alreadyExported;
     QList<StoragePlugin *> result;
     QDirIterator it(CONFIG_DIR, QDir::Files);
     while (it.hasNext()) {
@@ -123,7 +127,31 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
         // "descs" maps from user-visible storage names to exported paths
         QMap<QString, QString> descs;
         if (storage.hasAttribute("path")) {
-            descs[storage.attribute("description")] = storage.attribute("path");
+            /* Treat 'path' attribute as a glob pattern. If it actually
+             * contains wildcard characters, use basenames of matching
+             * directories as substitute for 'description' attribute. */
+            QString pattern = storage.attribute("path");
+            QString description;
+            if (!pattern.contains('*') && !pattern.contains('?')) {
+                description = storage.attribute("description");
+            }
+            glob_t gl;
+            memset(&gl, 0, sizeof gl);
+            glob(qUtf8Printable(pattern), GLOB_ONLYDIR, 0, &gl);
+            for (size_t i = 0; i < gl.gl_pathc; ++i) {
+                struct stat st;
+                if (lstat(gl.gl_pathv[i], &st) == -1)
+                    continue;
+                if (!S_ISDIR(st.st_mode))
+                    continue;
+                QString path = QString::fromUtf8(gl.gl_pathv[i]);
+                QString desc(description);
+                description.clear();
+                if (desc.isEmpty())
+                    desc = QFileInfo(path).baseName();
+                descs[desc] = path;
+            }
+            globfree(&gl);
         } else {
             // TODO: use QStorageInfo here once it provides enough information
             // to be useful.
@@ -150,13 +178,20 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
         }
 
         foreach (QString desc, descs.keys()) {
+            /* Make sure a directory gets exported only once even if
+             * it would match multiple configuration files. */
+            const QString path = descs[desc];
+            if( alreadyExported.contains(path) )
+                continue;
+            alreadyExported.insert(path);
+
             // The description is the important part; name is mostly internal.
             // descs[desc] is the directory to export.
             FSStoragePlugin *plugin =
                 new FSStoragePlugin(storageId,
                     removable ? MTP_STORAGE_TYPE_RemovableRAM
                               : MTP_STORAGE_TYPE_FixedRAM,
-                    descs[desc],
+                    path,
                     storage.attribute("name"),
                     desc);
 
