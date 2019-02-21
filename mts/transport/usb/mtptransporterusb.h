@@ -201,4 +201,3 @@ class MTPTransporterUSB : public MTPTransporter
 
 }
 #endif
-

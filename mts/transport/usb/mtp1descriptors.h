@@ -30,8 +30,6 @@ struct mtp1_descriptors_s {
    struct mtp1_descs_s hs_descs;
 } __attribute__((packed));
 
-extern const struct mtp1_descriptors_s mtp1descriptors;
-
 struct mtp1strings_s {
    struct usb_functionfs_strings_head header;
    struct {
@@ -39,9 +37,6 @@ struct mtp1strings_s {
       const char str1[sizeof MTP_STRING_DESCRIPTOR];
    } __attribute__((packed)) lang0;
 } __attribute__((packed));
-
-extern const struct mtp1strings_s mtp1strings;
-
 
 struct usb_functionfs_descs_head_incompatible {
         __le32 magic;
@@ -59,6 +54,9 @@ struct mtp1_descriptors_s_incompatible {
    struct mtp1_descs_s hs_descs;
 } __attribute__((packed));
 
-extern const struct usb_functionfs_descs_head_incompatible mtp1descriptors_header_incompatible;
+// Descriptor getters
+const struct mtp1_descriptors_s* mtp1descriptors();
+const struct mtp1strings_s* mtp1strings();
+const struct usb_functionfs_descs_head_incompatible* mtp1descriptors_header_incompatible();
 
 #endif

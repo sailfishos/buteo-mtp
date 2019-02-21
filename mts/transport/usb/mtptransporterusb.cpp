@@ -42,9 +42,12 @@
 #include <linux/usb/functionfs.h>
 #include "trace.h"
 #include "threadio.h"
-#include "mtp1descriptors.h"
 #include <QMutex>
 #include <QCoreApplication>
+
+extern "C" {
+    #include "mtp1descriptors.h"
+}
 
 using namespace meegomtp1dot0;
 
@@ -104,7 +107,7 @@ void MTPTransporterUSB::onCommandPending()
 
 bool MTPTransporterUSB::writeMtpDescriptors()
 {
-    if (write(m_ctrlFd, &mtp1descriptors, sizeof mtp1descriptors) >= 0)
+    if (write(m_ctrlFd, mtp1descriptors(), sizeof(struct mtp1_descriptors_s)) >= 0)
         return true;
 
     if (errno == EINVAL) {
@@ -113,9 +116,9 @@ bool MTPTransporterUSB::writeMtpDescriptors()
         // Some android kernels changed the usb_functionfs_descs_head size
         // by adding an ss_count member. Try it that way.
         mtp1_descriptors_s_incompatible descs;
-        descs.header = mtp1descriptors_header_incompatible;
-        descs.fs_descs = mtp1descriptors.fs_descs;
-        descs.hs_descs = mtp1descriptors.hs_descs;
+        descs.header = *mtp1descriptors_header_incompatible();
+        descs.fs_descs = mtp1descriptors()->fs_descs;
+        descs.hs_descs = mtp1descriptors()->hs_descs;
         if (write(m_ctrlFd, &descs, sizeof descs) >= 0)
             return true;
     }
@@ -127,7 +130,7 @@ bool MTPTransporterUSB::writeMtpDescriptors()
 
 bool MTPTransporterUSB::writeMtpStrings()
 {
-    if (write(m_ctrlFd, &mtp1strings, sizeof(mtp1strings)) >= 0)
+    if (write(m_ctrlFd, mtp1strings(), sizeof(struct mtp1strings_s)) >= 0)
         return true;
 
     MTP_LOG_CRITICAL("Couldn't write strings to control endpoint file"
