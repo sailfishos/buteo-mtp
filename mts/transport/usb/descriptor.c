@@ -1,5 +1,20 @@
 #include <endian.h>
+#include <byteswap.h>
 #include "mtp1descriptors.h"
+
+/* Note: These macros are suitable for producing compilation time
+ *       constant values for static structure initialization. For
+ *       runtime swapping standard functionality should be used.
+ */
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+# define cpu_to_le16(x) (x)
+# define cpu_to_le32(x) (x)
+#elif __BYTE_ORDER == __BIG_ENDIAN
+# define cpu_to_le16(x) __bswap_constant_16(x)
+# define cpu_to_le32(x) __bswap_constant_32(x)
+#else
+# error Unhandled endianess
+#endif
 
 const struct mtp1_descriptors_s mtp1descriptors = {
    .header = {
