@@ -4,11 +4,6 @@
 #include <linux/usb/functionfs.h>
 #include "ptp.h"
 
-#define cpu_to_le16(x)  htole16(x)
-#define cpu_to_le32(x)  htole32(x)
-#define le32_to_cpu(x)  le32toh(x)
-#define le16_to_cpu(x)  le16toh(x)
-
 #define MTP_STRING_DESCRIPTOR "MTP"
 #define ENGLISH_US 0x0409
 
