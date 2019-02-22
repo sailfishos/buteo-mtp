@@ -1225,7 +1225,7 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
                     QCoreApplication::sendPostedEvents();
                     QCoreApplication::processEvents();
                 }
-                addToStorage(info.absoluteFilePath(), 0, 0, createIfNotExist, sendEvent);
+                addToStorage(info.absoluteFilePath(), 0, 0, sendEvent, createIfNotExist);
             }
             break;
         }
