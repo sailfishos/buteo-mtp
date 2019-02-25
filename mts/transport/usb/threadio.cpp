@@ -484,7 +484,7 @@ void BulkWriterThread::setData(const quint8 *buffer, quint32 dataLen, bool termi
 void BulkWriterThread::execute()
 {
     // Maximum length of individual writes
-    static quint32 writeMax = 64 << 10;
+    static quint32 writeMax = 16 << 10;
 
     // Call setData before starting the thread.
 
