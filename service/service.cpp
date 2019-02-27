@@ -25,6 +25,7 @@
 #include <signal.h>
 #include <iostream>
 #include <QCoreApplication>
+#include <QCommandLineParser>
 #include <QDir>
 #include <QObject>
 #include <QEventLoop>
@@ -49,6 +50,14 @@ void signalHandler(int signum, siginfo_t *info, void *context)
 int main(int argc, char** argv)
 {
     QCoreApplication app(argc, argv);
+    QCommandLineParser parser;
+    parser.setApplicationDescription("standalone buteo-mtp daemon");
+    parser.addHelpOption();
+    QCommandLineOption logToHomeOption(QStringList() << "d" << "log-to-home",
+                                       "Log to \"$HOME/mtp.log\".");
+    parser.addOption(logToHomeOption);
+    parser.process(app);
+    bool logToHome(parser.isSet(logToHomeOption));
 
     struct sigaction action;
 
@@ -68,7 +77,7 @@ int main(int argc, char** argv)
     bool ok = Mts::getInstance()->activate();
     if( ok )
     {
-        if (app.arguments().count() > 1 && app.arguments().at(1) == "-d")
+        if (logToHome)
         {
             Buteo::Logger::createInstance(QDir::homePath() + "/mtp.log", false, 0);
             if (!Mts::getInstance()->debugLogsEnabled())
