@@ -2,7 +2,9 @@
 Description=MTP service
 
 [Service]
-ExecStart=/usr/lib/mtp/start-mtp.sh
+EnvironmentFile=-/etc/sysconfig/buteo-mtp
+EnvironmentFile=-/var/lib/environment/buteo-mtp/*.conf
+ExecStart=/usr/lib/mtp/mtp_service $SERVICE_PARAMETERS
 Restart=always
 RestartSec=1
 Nice=-10
