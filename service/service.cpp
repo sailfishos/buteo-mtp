@@ -56,9 +56,12 @@ int main(int argc, char** argv)
     action.sa_flags     = SA_SIGINFO | SA_RESTART;
     sigemptyset(&action.sa_mask);
 
-    if (sigaction(SIGINT, &action, NULL) < 0) return(-1);
-    if (sigaction(SIGALRM, &action, NULL) < 0) return(-1);
-    if (sigaction(SIGUSR1, &action, NULL) < 0) return(-1);
+    if (sigaction(SIGINT, &action, NULL) < 0)
+        return EXIT_FAILURE;
+    if (sigaction(SIGALRM, &action, NULL) < 0)
+        return EXIT_FAILURE;
+    if (sigaction(SIGUSR1, &action, NULL) < 0)
+        return EXIT_FAILURE;
 
     QObject::connect(&app,SIGNAL(aboutToQuit()),Mts::getInstance(),SLOT(destroyInstance()));
 
@@ -81,5 +84,5 @@ int main(int argc, char** argv)
     {
         Mts::destroyInstance();
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
