@@ -379,7 +379,7 @@ static void file_set_mtime(const QString &path, time_t t)
 FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType, QString storagePath,
                                   QString volumeLabel, QString storageDescription ) :
   StoragePlugin(storageId),
-  m_storagePath(QDir(storagePath).absolutePath()),
+  m_storagePath(QDir(storagePath).canonicalPath()),
   m_root(0),
   m_writeObjectHandle(0),
   m_largestPuoid(0),
@@ -1144,6 +1144,45 @@ StorageItem* FSStoragePlugin::findStorageItemByPath( const QString &path )
     return storageItem;
 }
 
+FSStoragePlugin::SymLinkPolicy FSStoragePlugin::s_symLinkPolicy = SymLinkPolicy::Undefined;
+
+FSStoragePlugin::SymLinkPolicy FSStoragePlugin::symLinkPolicy()
+{
+    if (s_symLinkPolicy == SymLinkPolicy::Undefined) {
+        FSStoragePlugin::SymLinkPolicy usePolicy = SymLinkPolicy::Default;
+        QByteArray envData = qgetenv("BUTEO_MTP_SYMLINK_POLICY");
+        QString envValue = QString::fromUtf8(envData.data()).toLower();
+        if (envValue == "allowall" || envValue == "allow")
+            usePolicy = SymLinkPolicy::AllowAll;
+        else if (envValue == "allowwithinstorage" || envValue == "storage")
+            usePolicy = SymLinkPolicy::AllowWithinStorage;
+        else if (envValue == "denyall"  || envValue == "deny")
+            usePolicy = SymLinkPolicy::DenyAll;
+        else if (!envValue.isEmpty())
+            MTP_LOG_WARNING("unknown SymLinkPolicy:" << envValue);
+        setSymLinkPolicy(usePolicy);
+    }
+    return s_symLinkPolicy;
+}
+
+void FSStoragePlugin::setSymLinkPolicy(FSStoragePlugin::SymLinkPolicy policy)
+{
+    static const char * const lut[] = {
+        "Undefined",
+        "AllowAll",
+        "AllowWithinStorage",
+        "DenyAll",
+    };
+
+    if (s_symLinkPolicy != policy) {
+        MTP_LOG_INFO("SymLinkPolicy changed:"
+                     << lut[s_symLinkPolicy]
+                     << "->"
+                     << lut[policy]);
+        s_symLinkPolicy = policy;
+    }
+}
+
 /************************************************************
  * MTPrespCode FSStoragePlugin::addToStorage
  ***********************************************************/
@@ -1154,6 +1193,36 @@ MTPResponseCode FSStoragePlugin::addToStorage( const QString &path,
     if ( m_excludePaths.contains(path) )
     {
         return MTP_RESP_AccessDenied;
+    }
+
+    // Handle symbolic link policy
+    QFileInfo pathInfo(path);
+    if (pathInfo.isSymLink()) {
+        QString targetPath(pathInfo.canonicalFilePath());
+        if (targetPath.isEmpty()) {
+            MTP_LOG_WARNING("excluded broken symlink:" << path);
+            return MTP_RESP_AccessDenied;
+        }
+        switch (symLinkPolicy()) {
+        case SymLinkPolicy::AllowAll:
+            break;
+        case SymLinkPolicy::AllowWithinStorage:
+            {
+                // NB: m_storagePath is in canonical form
+                int prefixLen = m_storagePath.length();
+                if (targetPath.length() <= prefixLen ||
+                    targetPath[prefixLen] != '/' ||
+                    !targetPath.startsWith(m_storagePath)) {
+                    MTP_LOG_INFO("excluded out-of-storage symlink:" << path);
+                    return MTP_RESP_AccessDenied;
+                }
+            }
+            break;
+        default:
+        case SymLinkPolicy::DenyAll:
+            MTP_LOG_INFO("excluded symlink:" << path);
+            return MTP_RESP_AccessDenied;
+        }
     }
 
     // If we already have StorageItem for given path...

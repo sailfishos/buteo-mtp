@@ -57,6 +57,16 @@ class FSStoragePlugin : public StoragePlugin
 {
     Q_OBJECT
 public:
+    enum SymLinkPolicy {
+        Undefined,
+        AllowAll,
+        AllowWithinStorage,
+        DenyAll,
+        Default = AllowAll,
+    };
+    static SymLinkPolicy symLinkPolicy();
+    static void setSymLinkPolicy(SymLinkPolicy policy);
+
     /// Constructor.
     FSStoragePlugin( quint32 storageId = 0, MTPStorageType storageType = MTP_STORAGE_TYPE_FixedRAM,
                      QString storagePath = "", QString volumeLabel = "", QString storageDescription = "" );
@@ -433,6 +443,8 @@ private:
     ObjHandle m_testHandleProvider;
     friend class FSStoragePlugin_test;
 #endif
+
+    static SymLinkPolicy s_symLinkPolicy;
 };
 }
 
