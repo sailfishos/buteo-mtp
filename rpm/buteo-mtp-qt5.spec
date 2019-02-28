@@ -17,6 +17,7 @@ BuildRequires: pkgconfig(buteosyncfw5)
 BuildRequires: pkgconfig(Qt5SystemInfo)
 BuildRequires: pkgconfig(blkid)
 BuildRequires: pkgconfig(mount)
+BuildRequires: pkgconfig(mlite5)
 # for the thumbnailer unit test
 BuildRequires: pkgconfig(Qt5Gui)
 BuildRequires: ssu-devel >= 0.37.9

@@ -32,6 +32,7 @@
 #include <QStringList>
 #include <QTimer>
 #include <Logger.h>
+#include <MGConfItem>
 #include "mts.h"
 
 using namespace meegomtp1dot0;
@@ -47,6 +48,19 @@ void signalHandler(int signum, siginfo_t *info, void *context)
     _exit(0);
 }
 
+static void setupSymLinkPolicy()
+{
+    MGConfItem confItem("/desktop/sailfish/buteo-mtp/symlink_policy");
+    QString symLinkPolicy(confItem.value().toString());
+
+    /* Note that we override value that might be existing in env,
+     * i.e. environment is used only as a vehicle for conveying the
+     * dconf setting data from main binary over to plugin that gets
+     * loaded at later stage.
+     */
+    qputenv("BUTEO_MTP_SYMLINK_POLICY", symLinkPolicy.toUtf8());
+}
+
 int main(int argc, char** argv)
 {
     QCoreApplication app(argc, argv);
@@ -58,6 +72,9 @@ int main(int argc, char** argv)
     parser.addOption(logToHomeOption);
     parser.process(app);
     bool logToHome(parser.isSet(logToHomeOption));
+
+    /* Get symlink policy from dconf */
+    setupSymLinkPolicy();
 
     struct sigaction action;
 
