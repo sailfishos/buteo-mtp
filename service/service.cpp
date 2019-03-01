@@ -25,12 +25,14 @@
 #include <signal.h>
 #include <iostream>
 #include <QCoreApplication>
+#include <QCommandLineParser>
 #include <QDir>
 #include <QObject>
 #include <QEventLoop>
 #include <QStringList>
 #include <QTimer>
 #include <Logger.h>
+#include <MGConfItem>
 #include "mts.h"
 
 using namespace meegomtp1dot0;
@@ -46,9 +48,33 @@ void signalHandler(int signum, siginfo_t *info, void *context)
     _exit(0);
 }
 
+static void setupSymLinkPolicy()
+{
+    MGConfItem confItem("/desktop/sailfish/buteo-mtp/symlink_policy");
+    QString symLinkPolicy(confItem.value().toString());
+
+    /* Note that we override value that might be existing in env,
+     * i.e. environment is used only as a vehicle for conveying the
+     * dconf setting data from main binary over to plugin that gets
+     * loaded at later stage.
+     */
+    qputenv("BUTEO_MTP_SYMLINK_POLICY", symLinkPolicy.toUtf8());
+}
+
 int main(int argc, char** argv)
 {
     QCoreApplication app(argc, argv);
+    QCommandLineParser parser;
+    parser.setApplicationDescription("standalone buteo-mtp daemon");
+    parser.addHelpOption();
+    QCommandLineOption logToHomeOption(QStringList() << "d" << "log-to-home",
+                                       "Log to \"$HOME/mtp.log\".");
+    parser.addOption(logToHomeOption);
+    parser.process(app);
+    bool logToHome(parser.isSet(logToHomeOption));
+
+    /* Get symlink policy from dconf */
+    setupSymLinkPolicy();
 
     struct sigaction action;
 
@@ -56,16 +82,19 @@ int main(int argc, char** argv)
     action.sa_flags     = SA_SIGINFO | SA_RESTART;
     sigemptyset(&action.sa_mask);
 
-    if (sigaction(SIGINT, &action, NULL) < 0) return(-1);
-    if (sigaction(SIGALRM, &action, NULL) < 0) return(-1);
-    if (sigaction(SIGUSR1, &action, NULL) < 0) return(-1);
+    if (sigaction(SIGINT, &action, NULL) < 0)
+        return EXIT_FAILURE;
+    if (sigaction(SIGALRM, &action, NULL) < 0)
+        return EXIT_FAILURE;
+    if (sigaction(SIGUSR1, &action, NULL) < 0)
+        return EXIT_FAILURE;
 
     QObject::connect(&app,SIGNAL(aboutToQuit()),Mts::getInstance(),SLOT(destroyInstance()));
 
     bool ok = Mts::getInstance()->activate();
     if( ok )
     {
-        if (app.arguments().count() > 1 && app.arguments().at(1) == "-d")
+        if (logToHome)
         {
             Buteo::Logger::createInstance(QDir::homePath() + "/mtp.log", false, 0);
             if (!Mts::getInstance()->debugLogsEnabled())
@@ -81,5 +110,5 @@ int main(int argc, char** argv)
     {
         Mts::destroyInstance();
     }
-    return 0;
+    return EXIT_SUCCESS;
 }

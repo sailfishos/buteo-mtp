@@ -12,12 +12,13 @@ QT -= gui
 CONFIG += link_pkgconfig
 equals(QT_MAJOR_VERSION, 4): PKGCONFIG += buteosyncfw
 equals(QT_MAJOR_VERSION, 5): PKGCONFIG += buteosyncfw5
+PKGCONFIG += mlite5
 
 SOURCES += service.cpp
 
 #install
 target.path += /usr/lib/mtp/
-target.files = start-mtp.sh mtp_service
+target.files = mtp_service
 desktop.path = /etc/xdg/autostart
 desktop.files = buteo-mtp.desktop
 INSTALLS += target desktop
