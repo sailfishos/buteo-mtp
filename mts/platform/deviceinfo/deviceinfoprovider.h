@@ -34,7 +34,7 @@
 
 #include "deviceinfo.h"
 
-class ContextProperty;
+class BatteryStatus;
 
 /// This class implements DeviceInfo for getting and setting device info and properties for an MTP session.
 
@@ -59,10 +59,10 @@ public:
     ~DeviceInfoProvider();
 
 private:
-    ContextProperty *battery;
+    BatteryStatus *m_batteryStatus;
 
 private slots:
-    void onBatteryPercentageChanged();
+    void onBatteryPercentageChanged(int percentage);
 };
 }
 

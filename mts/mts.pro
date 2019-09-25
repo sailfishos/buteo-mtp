@@ -1,3 +1,5 @@
+include(common.pri)
+
 QT += xml dbus
 QT -= gui
 
