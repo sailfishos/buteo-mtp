@@ -33,7 +33,7 @@
 #include <QDeviceInfo>
 #include <QTimer>
 #include <ssudeviceinfo.h>
-#include <contextproperty.h>
+#include <batterystatus.h>
 #include "trace.h"
 
 using namespace meegomtp1dot0;
@@ -41,8 +41,8 @@ using namespace meegomtp1dot0;
 /**********************************************
  * DeviceInfoProvider::DeviceInfoProvider
  *********************************************/
-DeviceInfoProvider::DeviceInfoProvider():
-  battery(new ContextProperty("Battery.ChargePercentage", this))
+DeviceInfoProvider::DeviceInfoProvider()
+    : m_batteryStatus(new BatteryStatus(this))
 {
     QDeviceInfo di;
 
@@ -56,13 +56,8 @@ DeviceInfoProvider::DeviceInfoProvider():
     m_manufacturer = di.manufacturer().isEmpty() ? m_manufacturer : di.manufacturer();
     m_model = di.model().isEmpty() ? m_model : di.model();
 
-    connect(battery, SIGNAL(valueChanged()), this, SLOT(onBatteryPercentageChanged()));
-
-    // Initialize the battery charge value. Use idle callback because
-    // acting on the battery level information requires that the
-    // transport object setup has been finished and that is done
-    // (if at all) after setting up the device info provider.
-    QTimer::singleShot(0, this, SLOT(onBatteryPercentageChanged()));
+    connect(m_batteryStatus, &BatteryStatus::chargePercentageChanged,
+            this, &DeviceInfoProvider::onBatteryPercentageChanged);
 
     if(m_newConfigFileWasCreated)
     {
@@ -81,7 +76,9 @@ DeviceInfoProvider::~DeviceInfoProvider()
 {
 }
 
-void DeviceInfoProvider::onBatteryPercentageChanged()
+void DeviceInfoProvider::onBatteryPercentageChanged(int percentage)
 {
-    setBatteryLevel(battery->value().toUInt());
+    if (percentage >= 0) {
+        setBatteryLevel(quint8(qMin(percentage, 255)));
+    }
 }

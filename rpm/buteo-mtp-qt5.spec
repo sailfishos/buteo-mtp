@@ -21,7 +21,7 @@ BuildRequires: pkgconfig(mlite5)
 # for the thumbnailer unit test
 BuildRequires: pkgconfig(Qt5Gui)
 BuildRequires: ssu-devel >= 0.37.9
-BuildRequires: pkgconfig(contextkit-statefs) >= 0.2.7
+BuildRequires: pkgconfig(systemsettings) >= 0.2.25
 Requires: mtp-vendor-configuration
 Requires: thumbnaild
 Requires: libqt5sparql-tracker-direct
