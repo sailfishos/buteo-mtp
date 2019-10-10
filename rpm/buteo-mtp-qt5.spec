@@ -1,10 +1,10 @@
-Name: buteo-mtp-qt5
-Version: 0.7.1
-Release: 1
-Summary: MTP library
-Group: System/Libraries
-License: LGPLv2.1
-URL: https://github.com/nemomobile/buteo-mtp
+Name:     buteo-mtp-qt5
+Version:  0.7.1
+Release:  1
+Summary:  MTP library
+Group:    System/Libraries
+License:  BSD and LGPLv2
+URL:      https://git.sailfishos.org/mer-core/buteo-mtp
 Source0: %{name}-%{version}.tar.gz
 Source1: %{name}.privileges
 BuildRequires: pkgconfig(Qt5Core)
@@ -48,10 +48,10 @@ Obsoletes: buteo-mtp < %{version}
 # Own the fstorage.d and mtp data directories.
 %dir %{_sysconfdir}/fsstorage.d
 %dir %{_datadir}/mtp
+%license COPYING
 
 %package sample-vendor-configuration
 Summary: Vendor configuration example for MTP
-Group: System/Libraries
 Provides: mtp-vendor-configuration
 
 %description sample-vendor-configuration
@@ -83,7 +83,6 @@ Requires: %{name} = %{version}-%{release}
 
 %package sync-plugin
 Summary: MTP plugin for buteo-sync
-Group: System/Libraries
 
 %description sync-plugin
 %{summary}.
