@@ -40,7 +40,6 @@ Obsoletes: buteo-mtp < %{version}
 %defattr(-,root,root,-)
 %{_unitdir}/*.mount
 %{_unitdir}/local-fs.target.wants/*.mount
-%{_bindir}/buteo-mtp
 %{_libdir}/*.so.*
 %{_libdir}/mtp
 %{_libdir}/systemd/user/buteo-mtp.service
@@ -119,7 +118,6 @@ make %{_smp_mflags}
 
 %install
 make INSTALL_ROOT=%{buildroot} install
-chmod +x %{buildroot}/%{_bindir}/buteo-mtp
 mkdir -p %{buildroot}/%{_unitdir}/local-fs.target.wants
 ln -s ../dev-mtp.mount %{buildroot}/%{_unitdir}/local-fs.target.wants/
 
