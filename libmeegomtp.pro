@@ -64,3 +64,6 @@ SUBDIRS += \
 citests.path = /opt/tests/buteo-mtp/test-definition/
 citests.files = tests.xml
 INSTALLS += citests
+
+OTHER_FILES += rpm/buteo-mtp-qt5.privileges \
+               rpm/buteo-mtp-qt5.spec
