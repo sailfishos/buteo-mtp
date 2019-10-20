@@ -415,11 +415,6 @@ private:
     QHash<MTPObjFormatCode, QString> m_imageMimeTable; ///< Maps the MTP object format code (for image types only) to MIME type string
     QString m_mtpPersistentDBPath;
     MtpInt128 m_largestPuoid;
-    struct INotifyCache
-    {
-        struct inotify_event    fromEvent;
-        QString                 fromName;
-    }m_iNotifyCache; ///< A cache for iNotify events
 
     struct ExistingPlaylists
     {
@@ -445,6 +440,12 @@ private:
 #endif
 
     static SymLinkPolicy s_symLinkPolicy;
+
+    struct INotifyCache
+    {
+        QString                 fromName;
+        struct inotify_event    fromEvent;
+    }m_iNotifyCache; ///< A cache for iNotify events
 };
 }
 
