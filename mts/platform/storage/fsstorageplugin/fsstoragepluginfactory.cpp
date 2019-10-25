@@ -36,6 +36,7 @@
 
 #include <QDirIterator>
 #include <QDomDocument>
+#include <QProcessEnvironment>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <mntent.h>
@@ -131,6 +132,10 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
              * contains wildcard characters, use basenames of matching
              * directories as substitute for 'description' attribute. */
             QString pattern = storage.attribute("path");
+            // If path contains "%u" replace it with the current user name
+            if (pattern.contains("%u")) {
+                pattern.replace("%u", QProcessEnvironment::systemEnvironment().value("USER"));
+            }
             QString description;
             if (!pattern.contains('*') && !pattern.contains('?')) {
                 description = storage.attribute("description");
