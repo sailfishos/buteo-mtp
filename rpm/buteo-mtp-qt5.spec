@@ -2,7 +2,6 @@ Name:     buteo-mtp-qt5
 Version:  0.7.1
 Release:  1
 Summary:  MTP library
-Group:    System/Libraries
 License:  BSD and LGPLv2
 URL:      https://git.sailfishos.org/mer-core/buteo-mtp
 Source0: %{name}-%{version}.tar.gz
@@ -42,7 +41,7 @@ Obsoletes: buteo-mtp < %{version}
 %{_unitdir}/local-fs.target.wants/*.mount
 %{_libdir}/*.so.*
 %{_libdir}/mtp
-%{_libdir}/systemd/user/buteo-mtp.service
+%{_userunitdir}/buteo-mtp.service
 %{_datadir}/mapplauncherd/privileges.d/*
 # Own the fstorage.d and mtp data directories.
 %dir %{_sysconfdir}/fsstorage.d
@@ -68,7 +67,6 @@ Provides: mtp-vendor-configuration
 
 %package devel
 Summary: Development files for %{name}
-Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
 
 %description devel
@@ -94,7 +92,6 @@ Summary: MTP plugin for buteo-sync
 
 %package tests
 Summary: Tests for %{name}
-Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
 Conflicts: buteo-mtp-tests
 

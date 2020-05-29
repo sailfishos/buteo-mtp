@@ -47,7 +47,7 @@ namespace meegomtp1dot0
 class StoragePlugin;
 class ObjectPropertyCache;
 
-const QString pluginLocation = "/usr/lib/mtp";
+const QString pluginLocation = MTP_PLUGINDIR;
 const QString CREATE_STORAGE_PLUGINS = "createStoragePlugins";
 const QString DESTROY_STORAGE_PLUGIN = "destroyStoragePlugin";
 

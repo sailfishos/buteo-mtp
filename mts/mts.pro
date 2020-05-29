@@ -7,6 +7,8 @@ LIBS += -lssu
 
 CONFIG += link_pkgconfig debug
 
+DEFINES += MTP_PLUGINDIR=\\\"$$[QT_INSTALL_LIBS]/mtp\\\"
+
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility
     MOBILITY = systeminfo
@@ -84,7 +86,7 @@ SOURCES += mts.cpp \
            transport/usb/descriptor.c \
            transport/usb/threadio.cpp
 
-target.path = /usr/lib/
+target.path = $$[QT_INSTALL_LIBS]/
 INSTALLS += target
 
 headers.path = /usr/include/libmeegomtp

@@ -47,7 +47,7 @@ LIBPATH += ../../..
 LIBS    += -lmeegomtp -lssu
 
 #install
-target.path = /usr/lib/mtp
+target.path = $$[QT_INSTALL_LIBS]/mtp
 
 configuration.path = /etc/fsstorage.d
 configuration.files = phone-memory.xml homedir-blacklist.conf sd-card.xml

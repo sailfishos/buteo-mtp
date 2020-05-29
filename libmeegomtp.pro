@@ -1,15 +1,15 @@
 TEMPLATE = subdirs
 
-# "/usr/lib/libmeegomtp.so" - shared library, mtp responder logic
+# "/usr/lib*/libmeegomtp.so" - shared library, mtp responder logic
 mts.subdir = mts
 mts.target = sub-mts
 
-# "/usr/lib/buteo-plugins-qt5/libmptserver.so" - plugin used by msyncd
+# "/usr/lib*/buteo-plugins-qt5/libmptserver.so" - plugin used by msyncd
 mtpserver.subdir = mtpserver
 mtpserver.target = sub-mtpserver
 mtpserver.depends = sub-mts
 
-# "/usr/lib/mtp/libfsstorage.so" - plugin used by "libmeegomtp.so"
+# "/usr/lib*/mtp/libfsstorage.so" - plugin used by "libmeegomtp.so"
 mts_fsstorage_plugin.subdir = mts/platform/storage/fsstorageplugin
 mts_fsstorage_plugin.target = sub-mts-fsstorage-plugin
 mts_fsstorage_plugin.depends = sub-mts
