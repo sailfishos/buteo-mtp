@@ -14,7 +14,7 @@ mts_fsstorage_plugin.subdir = mts/platform/storage/fsstorageplugin
 mts_fsstorage_plugin.target = sub-mts-fsstorage-plugin
 mts_fsstorage_plugin.depends = sub-mts
 
-# "/usr/lib/mtp/mtp_service" - standalone mtp daemon (and env scripts)
+# "/usr/libexec/mtp_service" - standalone mtp daemon (and env scripts)
 service.subdir = service
 service.target = sub-service
 service.depends = sub-mts

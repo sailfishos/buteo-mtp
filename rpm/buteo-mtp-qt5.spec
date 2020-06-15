@@ -39,8 +39,8 @@ Obsoletes: buteo-mtp < %{version}
 %defattr(-,root,root,-)
 %{_unitdir}/*.mount
 %{_unitdir}/local-fs.target.wants/*.mount
+%{_libexecdir}/mtp_service
 %{_libdir}/*.so.*
-%{_libdir}/mtp
 %{_userunitdir}/buteo-mtp.service
 %{_datadir}/mapplauncherd/privileges.d/*
 # Own the fstorage.d and mtp data directories.
