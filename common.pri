@@ -1,0 +1,1 @@
+DEFINES += MTP_PLUGINDIR=\\\"$$[QT_INSTALL_LIBS]/mtp\\\"

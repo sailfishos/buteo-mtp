@@ -1,3 +1,4 @@
+include(../common.pri)
 TEMPLATE = app
 TARGET = mtp_test
 DEPENDPATH += .

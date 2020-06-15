@@ -1,3 +1,4 @@
+include(../common.pri)
 TEMPLATE = lib
 TARGET = mtp-server
 DEPENDPATH += .

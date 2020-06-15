@@ -109,7 +109,7 @@ Conflicts: buteo-mtp-tests
 
 %build
 %qmake5
-make %{_smp_mflags}
+make 
 
 
 %install

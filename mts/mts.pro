@@ -1,4 +1,5 @@
 include(common.pri)
+include(../common.pri)
 
 QT += xml dbus
 QT -= gui
@@ -6,8 +7,6 @@ QT -= gui
 LIBS += -lssu
 
 CONFIG += link_pkgconfig debug
-
-DEFINES += MTP_PLUGINDIR=\\\"$$[QT_INSTALL_LIBS]/mtp\\\"
 
 equals(QT_MAJOR_VERSION, 4): {
     CONFIG += mobility

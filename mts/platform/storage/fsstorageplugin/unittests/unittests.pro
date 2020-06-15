@@ -1,3 +1,4 @@
+include(../../../../../common.pri)
 include(../../../../common.pri)
 
 CONFIG += warn_off debug_and_release
