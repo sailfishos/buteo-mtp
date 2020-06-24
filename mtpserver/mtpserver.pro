@@ -19,7 +19,7 @@ SOURCES += mtpserver.cpp
 QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)
 
 #install
-target.path = /usr/lib/buteo-plugins-qt5
+target.path = $$[QT_INSTALL_LIBS]/buteo-plugins-qt5
 server.path = /etc/buteo/profiles/server
 server.files = mtp.xml
 

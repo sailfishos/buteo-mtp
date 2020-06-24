@@ -17,7 +17,7 @@ PKGCONFIG += mlite5
 SOURCES += service.cpp
 
 #install
-target.path += /usr/lib/mtp/
+target.path += $$[QT_INSTALL_PREFIX]/libexec/
 target.files = mtp_service
 desktop.path = /etc/xdg/autostart
 desktop.files = buteo-mtp.desktop
