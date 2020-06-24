@@ -84,7 +84,7 @@ SOURCES += mts.cpp \
            transport/usb/descriptor.c \
            transport/usb/threadio.cpp
 
-target.path = /usr/lib/
+target.path = $$[QT_INSTALL_LIBS]/
 INSTALLS += target
 
 headers.path = /usr/include/libmeegomtp
