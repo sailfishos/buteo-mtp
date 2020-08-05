@@ -1,7 +1,9 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2013 - 2020 Jolla Ltd.
+* Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Santosh Puranik <santosh.puranik@nokia.com>
 *
@@ -3098,7 +3100,7 @@ void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &par
     switch( event ) {
     case MTP_EV_ObjectAdded:
         filteringAllowed = false;
-        // fall throught
+        // FALLTHRU
     case MTP_EV_ObjectRemoved:
     case MTP_EV_ObjectInfoChanged:
     case MTP_EV_ObjectPropChanged:

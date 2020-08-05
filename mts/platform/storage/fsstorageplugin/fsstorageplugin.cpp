@@ -1,7 +1,8 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2013 - 2020 Jolla Ltd.
 * Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
@@ -224,6 +225,7 @@ static time_t datetime_to_time_t(const char *dt)
 
     case '-':
         east = false;
+        /* FALLTHRU */
     case '+':
         /* Localtime + utc offset */
         ++pos;
