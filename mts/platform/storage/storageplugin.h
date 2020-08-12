@@ -1,7 +1,9 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2014 - 2020 Jolla Ltd.
+* Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
 *
@@ -162,6 +164,7 @@ public:
     virtual MTPResponseCode getPath( const quint32 &handle, QString &path ) const = 0;
 
     virtual MTPResponseCode getEventsEnabled( const quint32 &handle, bool &eventsEnabled ) const = 0;
+    virtual MTPResponseCode setEventsEnabled( const quint32 &handle, bool eventsEnabled ) const = 0;
 
     /// Given an object handle, provides the object's objectinfo dataset.
     /// \param handle [in] the object handle.
@@ -178,22 +181,20 @@ public:
     /// \param isLastSegment [in] If true, this is the final segment in
     ///                      a multi-segment write operation
     virtual MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment, bool isLastSegment ) = 0;
+    virtual MTPResponseCode writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent, quint32 dataLength, bool isFirstSegment, bool isLastSegment) = 0;
 
     /// Reads data from a storage item.
     /// \param handle [in] the object handle.
     /// \param readBuffer [in] the buffer where data will written; must be
     ///                   allocated by the caller.
-    /// \param readBufferLen [in, out] the length of the input buffer. At most
-    ///                      this number of bytes will be read from the object.
-    ///                      The method stores the actual number of read bytes
-    ///                      into this argument.
+    /// \param readBufferLen [in] number of bytes to read
     /// \param readOffset [in] The offset, in bytes, into the object to start reading from
-    virtual MTPResponseCode readData( const ObjHandle &handle, char *readBuffer, qint32 &readBufferLen, quint32 readOffset ) = 0;
+    virtual MTPResponseCode readData( const ObjHandle &handle, char *readBuffer, quint32 readBufferLen, quint64 readOffset ) = 0;
 
     /// Truncates an item to a certain size.
     /// \param handle [in] the object handle.
     /// \size [in] the size in bytes.
-    virtual MTPResponseCode truncateItem( const ObjHandle &handle, const quint32 &size ) = 0;
+    virtual MTPResponseCode truncateItem( const ObjHandle &handle, const quint64 &size ) = 0;
 
     /// Retrieves the values of given object properties.
     ///

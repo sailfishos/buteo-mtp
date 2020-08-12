@@ -37,6 +37,7 @@
 #include "storageitem.h"
 #include "thumbnailer.h"
 #include "trace.h"
+#include "../../../protocol/mtpresponder.h"
 
 #include <sys/statvfs.h>
 #include <sys/stat.h>
@@ -2145,8 +2146,6 @@ void FSStoragePlugin::populateObjectInfo( StorageItem *storageItem )
 
     // keywords.
     storageItem->m_objectInfo->mtpKeywords = getKeywords( storageItem );
-
-
 }
 
 /************************************************************
@@ -2381,62 +2380,62 @@ char* FSStoragePlugin::getKeywords( StorageItem * /*storageItem*/ )
 /************************************************************
  * MTPResponseCode FSStoragePlugin::readData
  ***********************************************************/
-MTPResponseCode FSStoragePlugin::readData( const ObjHandle &handle, char *readBuffer, qint32 &readBufferLen, quint32 readOffset )
+MTPResponseCode FSStoragePlugin::readData( const ObjHandle &handle, char *readBuffer, quint32 readBufferLen, quint64 readOffset )
 {
-    if( !checkHandle( handle ) )
-    {
-        return MTP_RESP_InvalidObjectHandle;
-    }
+    MTP_LOG_INFO("handle:" << handle << "readBufferLen:" << readBufferLen << "readOffset:" << readOffset);
 
-    if(0 == readBuffer)
-    {
-        return MTP_RESP_GeneralError;
-    }
+    MTPResponseCode resp = MTP_RESP_OK;
+    StorageItem *storageItem = nullptr;
 
-    // Get the corresponding storage item.
-    StorageItem *storageItem = m_objectHandlesMap[handle];
-    if( !storageItem )
-    {
-        return MTP_RESP_GeneralError;
+    if( !readBuffer ) {
+        resp = MTP_RESP_GeneralError;
     }
-
-    // Open the file and read from it.
-    qint32 bytesToRead = readBufferLen;
-    QFile file( storageItem->m_path );
-    if( !file.open( QIODevice::ReadOnly ) )
-    {
-        return MTP_RESP_GeneralError;
+    else if( !(storageItem = m_objectHandlesMap.value(handle)) ) {
+        resp = MTP_RESP_InvalidObjectHandle;
     }
-    qint64 fileSize = file.size();
-    if(fileSize < (readOffset + bytesToRead))
-    {
-        return MTP_RESP_GeneralError;
-    }
-    if( !file.seek(readOffset) )
-    {
-        MTP_LOG_WARNING("ERROR seeking file");
-        return MTP_RESP_GeneralError;
-    }
-    // TODO: Read this in a loop?
-    readBufferLen = 0;
-    do{
-        readBufferLen = file.read( readBuffer, bytesToRead );
-        if( -1 == readBufferLen )
-        {
-            return MTP_RESP_GeneralError;
+    else {
+        QFile file(storageItem->m_path);
+        if( !file.open( QIODevice::ReadOnly ) ) {
+            MTP_LOG_WARNING("failed to open:" << file.fileName());
+            resp = MTP_RESP_AccessDenied;
         }
-        bytesToRead -= readBufferLen;
-    }while(bytesToRead);
+        else if( quint64(file.size()) < (readOffset + readBufferLen) ) {
+            MTP_LOG_WARNING("file is too small:" << file.fileName());
+            resp = MTP_RESP_GeneralError;
+        }
+        else if( !file.seek(readOffset) ) {
+            MTP_LOG_WARNING("failed to seek:" << file.fileName());
+            resp = MTP_RESP_GeneralError;
+        }
+        else while( resp == MTP_RESP_OK && readBufferLen > 0 ) {
+            qint64 rc = file.read(readBuffer, readBufferLen);
+            if( rc == -1 ) {
+                MTP_LOG_WARNING("failed to read:" << file.fileName());
+                resp = MTP_RESP_GeneralError;
+            }
+            else if( rc == 0 ) {
+                MTP_LOG_WARNING("unexpected eof:" << file.fileName());
+                resp = MTP_RESP_GeneralError;
+            }
+            else {
+                readBuffer += rc;
+                readBufferLen -= quint32(rc);
+            }
+        }
+    }
+
     // FIXME: Repeated opening and closing of the file will happen when we do segmented reads.
     // This must be avoided
-    file.close();
-    return MTP_RESP_OK;
+
+    if( resp != MTP_RESP_OK )
+        MTP_LOG_WARNING("read from handle:" << handle << "failed:" << mtp_code_repr(resp));
+    return resp;
 }
 
 /************************************************************
  * MTPResponseCode FSStoragePlugin::truncateItem
  ***********************************************************/
-MTPResponseCode FSStoragePlugin::truncateItem( const ObjHandle &handle, const quint32 &size )
+MTPResponseCode FSStoragePlugin::truncateItem( const ObjHandle &handle, const quint64 &size )
 {
     if( !checkHandle( handle ) )
     {
@@ -2455,7 +2454,7 @@ MTPResponseCode FSStoragePlugin::truncateItem( const ObjHandle &handle, const qu
     {
         return MTP_RESP_GeneralError;
     }
-    storageItem->m_objectInfo->mtpObjectCompressedSize = static_cast<quint64>(size);
+    storageItem->m_objectInfo->mtpObjectCompressedSize = size;
     return MTP_RESP_OK;
 }
 
@@ -2527,7 +2526,7 @@ MTPResponseCode FSStoragePlugin::writeData( const ObjHandle &handle, char *write
                  * (= "nemo") over the effective gid (= "privileged"). */
                 if( fchown(m_dataFile->handle(), getuid(), getgid()) == -1 ) {
                     MTP_LOG_WARNING("failed to set file:"
-				    << storageItem->m_path << " ownership");
+                                    << storageItem->m_path << " ownership");
                 }
             }
 
@@ -2572,6 +2571,109 @@ MTPResponseCode FSStoragePlugin::writeData( const ObjHandle &handle, char *write
 }
 
 /************************************************************
+ * MTPResponseCode FSStoragePlugin::writePartialData
+ ***********************************************************/
+MTPResponseCode FSStoragePlugin::writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent, quint32 dataLength, bool isFirstSegment, bool isLastSegment )
+{
+    MTPResponseCode code = MTP_RESP_OK;
+    StorageItem *storageItem = nullptr;
+
+    /* Lookup storage iterm for the handle */
+    if( code == MTP_RESP_OK && !checkHandle(handle) )
+        code = MTP_RESP_InvalidObjectHandle;
+
+    if( code == MTP_RESP_OK && !(storageItem = m_objectHandlesMap[handle]) )
+        code = MTP_RESP_GeneralError;
+
+    /* Open file when dealing with the first segment */
+    if( code == MTP_RESP_OK && isFirstSegment ) {
+        MTP_LOG_INFO("open for writing:" << storageItem->m_path);
+
+        /* Start ignoring inotify events about this handle */
+        m_writeObjectHandle = handle;
+
+        if( m_dataFile )
+            delete m_dataFile;
+        m_dataFile = new QFile(storageItem->m_path);
+
+        bool already_exists = m_dataFile->exists();
+
+        if( !m_dataFile->open(QIODevice::ReadWrite) ) {
+            MTP_LOG_WARNING("failed to open file" << storageItem->m_path << " for writing");
+            delete m_dataFile;
+            m_dataFile = nullptr;
+            code = MTP_RESP_GeneralError;
+        }
+        else if( !already_exists ) {
+            /* When creating new files, prefer using the real gid
+             * (= "nemo") over the effective gid (= "privileged"). */
+            if( fchown(m_dataFile->handle(), getuid(), getgid()) == -1 )
+                MTP_LOG_WARNING("failed to set file" << storageItem->m_path << " ownership");
+        }
+    }
+
+    /* Write data when applicable */
+    if( code == MTP_RESP_OK && m_dataFile && dataContent ) {
+        MTP_LOG_INFO("set read position:" << storageItem->m_path << "at offset:" << offset);
+
+        if( m_writeObjectHandle != handle )
+            code = MTP_RESP_GeneralError;
+
+        if( code == MTP_RESP_OK && !m_dataFile->seek(offset) ) {
+            MTP_LOG_WARNING("ERROR setting write position in" << storageItem->m_path);
+            code = MTP_RESP_GeneralError;
+        }
+        while( code == MTP_RESP_OK && dataLength > 0 ) {
+            qint32 bytesWritten = m_dataFile->write(reinterpret_cast<const char *>(dataContent), dataLength);
+            if( bytesWritten == -1 ) {
+                MTP_LOG_WARNING("ERROR writing data to" << storageItem->m_path);
+                code = MTP_RESP_GeneralError;
+            }
+            else {
+                dataLength -= bytesWritten;
+                dataContent += bytesWritten;
+            }
+        }
+    }
+
+    /* Close file when dealing with failures / the last segment */
+    if( code != MTP_RESP_OK || isLastSegment  ) {
+        if( m_dataFile )
+        {
+            MTP_LOG_INFO("close file:" << storageItem->m_path);
+            m_dataFile->flush();
+            m_dataFile->close();
+            delete m_dataFile;
+            m_dataFile = nullptr;
+
+            /* Preceeding writes and/or close might have changed
+             * the modify time -> put it back to cached/expected
+             * value. */
+            MTPObjectInfo *info = storageItem->m_objectInfo;
+            time_t t = datetime_to_time_t(info->mtpModificationDate);
+            file_set_mtime(storageItem->m_path, t);
+
+            /* In any case update the cached values according to
+             * what is actually used by thefilesystem. */
+            info->mtpObjectCompressedSize = getObjectSize(storageItem);
+            info->mtpModificationDate     = getModifiedDate(storageItem);
+            info->mtpCaptureDate          = info->mtpModificationDate;
+        }
+
+        /* Stop ignoring inotify events
+         *
+         * It is higly likely that we are about to get notifications
+         * due to having just closed the file. This should not lead
+         * to external notifications because cached object info was
+         * also updated match situation on filesystem.
+         */
+        m_writeObjectHandle = 0;
+    }
+
+    return code;
+}
+
+/************************************************************
  * MTPResponseCode FSStoragePlugin::getPath
  ***********************************************************/
 MTPResponseCode FSStoragePlugin::getPath( const quint32 &handle, QString &path ) const
@@ -2605,6 +2707,19 @@ MTPResponseCode FSStoragePlugin::getEventsEnabled( const quint32 &handle, bool &
     return result;
 }
 
+/************************************************************
+ * MTPResponseCode FSStoragePlugin::setEventsEnabled
+ ***********************************************************/
+MTPResponseCode FSStoragePlugin::setEventsEnabled( const quint32 &handle, bool eventsEnabled ) const
+{
+    MTPResponseCode result = MTP_RESP_OK;
+    StorageItem *storageItem = m_objectHandlesMap.value(handle, 0);
+    if( storageItem )
+        storageItem->setEventsEnabled(eventsEnabled);
+    else
+        result = MTP_RESP_GeneralError;
+    return result;
+}
 
 /************************************************************
  * MTPResponseCode FSStoragePlugin::dumpStorageItem
@@ -3047,7 +3162,7 @@ void FSStoragePlugin::populateObjectReferences()
 
 MTPResponseCode FSStoragePlugin:: getObjectPropertyValueFromStorage( const ObjHandle &handle,
                                                    MTPObjPropertyCode propCode,
-                                                   QVariant &value, MTPDataType /*type*/ )
+                                                   QVariant &value, MTPDataType dataType )
 {
     MTPResponseCode code = MTP_RESP_OK;
     const MTPObjectInfo *objectInfo;
@@ -3226,6 +3341,7 @@ MTPResponseCode FSStoragePlugin:: getObjectPropertyValueFromStorage( const ObjHa
             code = MTP_RESP_ObjectProp_Not_Supported;
             break;
     }
+    MTP_LOG_INFO("object:" << handle << "prop:" << mtp_code_repr(propCode) << "type:" << mtp_data_type_repr(dataType) << "data:" << value << "result:" << mtp_code_repr(code));
     return code;
 }
 

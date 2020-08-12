@@ -1,7 +1,9 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2013 - 2020 Jolla Ltd.
+* Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Santosh Puranik <santosh.puranik@nokia.com>
 *
@@ -119,6 +121,11 @@ typedef quint16 MTPDataType;
 #define MTP_OP_CopyObject                       0x101A
 #define MTP_OP_GetPartialObject                 0x101B
 #define MTP_OP_InitiateOpenCapture              0x101C
+#define MTP_OP_ANDROID_GetPartialObject64       0x95C1
+#define MTP_OP_ANDROID_SendPartialObject64      0x95C2
+#define MTP_OP_ANDROID_TruncateObject64         0x95C3
+#define MTP_OP_ANDROID_BeginEditObject          0x95C4
+#define MTP_OP_ANDROID_EndEditObject            0x95C5
 #define MTP_OP_GetObjectPropsSupported          0x9801
 #define MTP_OP_GetObjectPropDesc                0x9802
 #define MTP_OP_GetObjectPropValue               0x9803
@@ -217,6 +224,9 @@ typedef quint16 MTPContainerType;
                                (1 * sizeof(quint32)) +\
                                (2 * sizeof(quint8)) +\
                                (3 * sizeof(quint16)))
+#define MTP_MAX_PACKET_SIZE 0xffffffff
+#define MTP_MAX_CONTENT_SIZE (MTP_MAX_PACKET_SIZE - MTP_HEADER_SIZE)
+
 
 #define    MTP_PROTECTION_NoProtection          0x0000
 #define    MTP_PROTECTION_ReadOnly              0x0001

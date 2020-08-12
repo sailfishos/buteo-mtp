@@ -1,7 +1,9 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2014 - 2020 Jolla Ltd.
+* Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
 *
@@ -485,6 +487,18 @@ MTPResponseCode StorageFactory::getEventsEnabled( const quint32 &handle, bool &e
 }
 
 /*******************************************************
+ * MTPResponseCode StorageFactory::setEventsEnabled
+ ******************************************************/
+MTPResponseCode StorageFactory::setEventsEnabled( const quint32 &handle, bool eventsEnabled ) const
+{
+    MTPResponseCode result = MTP_RESP_InvalidObjectHandle;
+    StoragePlugin *storage = storageOfHandle(handle);
+    if (storage)
+        result = storage->setEventsEnabled(handle, eventsEnabled);
+    return result;
+}
+
+/*******************************************************
  * MTPResponseCode StorageFactory::getObjectInfo
  ******************************************************/
 MTPResponseCode StorageFactory::getObjectInfo( const ObjHandle &handle, const MTPObjectInfo *&objectInfo ) const
@@ -511,9 +525,22 @@ MTPResponseCode StorageFactory::writeData( const ObjHandle &handle, char *writeB
 }
 
 /*******************************************************
+ * MTPResponseCode StorageFactory::writePartialData
+ ******************************************************/
+MTPResponseCode StorageFactory::writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent, quint32 dataLength, bool isFirstSegment, bool isLastSegment) const
+{
+    MTPResponseCode result = MTP_RESP_InvalidObjectHandle;
+    StoragePlugin *storage = storageOfHandle(handle);
+    if (storage)
+        result =storage->writePartialData(handle, offset, dataContent, dataLength, isFirstSegment, isLastSegment);
+    return result;
+}
+
+
+/*******************************************************
  * MTPResponseCode StorageFactory::truncateItem
  ******************************************************/
-MTPResponseCode StorageFactory::truncateItem( const ObjHandle &handle, const quint32& size ) const
+MTPResponseCode StorageFactory::truncateItem( const ObjHandle &handle, const quint64& size ) const
 {
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
@@ -526,7 +553,7 @@ MTPResponseCode StorageFactory::truncateItem( const ObjHandle &handle, const qui
 /*******************************************************
  * MTPResponseCode StorageFactory::readData
  ******************************************************/
-MTPResponseCode StorageFactory::readData( const ObjHandle &handle, char *readBuffer, qint32 &readBufferLen, quint32 readOffset ) const
+MTPResponseCode StorageFactory::readData( const ObjHandle &handle, char *readBuffer, quint32 readBufferLen, quint64 readOffset ) const
 {
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
@@ -632,6 +659,11 @@ MTPResponseCode StorageFactory::setObjectPropertyValue( const ObjHandle &handle,
     return MTP_RESP_InvalidObjectHandle;
 }
 
+void StorageFactory::flushCachedObjectPropertyValues(const ObjHandle &handle)
+{
+    m_objectPropertyCache->remove(handle);
+}
+
 void StorageFactory::onStorageEvent(MTPEventCode event, const QVector<quint32> &params)
 {
     switch (event) {
@@ -641,7 +673,7 @@ void StorageFactory::onStorageEvent(MTPEventCode event, const QVector<quint32> &
             break;
         case MTP_EV_ObjectInfoChanged:
             // Invalidate all cached properties for the object.
-            m_objectPropertyCache->remove(params[0]);
+            flushCachedObjectPropertyValues(params[0]);
             break;
         case MTP_EV_ObjectRemoved:
             m_massQueriedAssociations.remove(params[0]);

@@ -34,7 +34,7 @@
                 <StdVersion>100</StdVersion><!--Standard Version-->
                 <MTPVendorExtn>0x00000006</MTPVendorExtn><!--MTP Vendor Extension ID-->
                 <MTPVersion>100</MTPVersion><!--MTP Version-->
-                <MTPExtn>microsoft.com:1.0; microsoft.com/WMPPD:11.0; </MTPExtn><!--MTP Extensions-->
+                <MTPExtn>microsoft.com:1.0; microsoft.com/WMPPD:11.0; android.com: 1.0;</MTPExtn> <!--MTP Extensions-->
                 <FnMode>0x8000</FnMode><!--Functional Mode-->
                 <Manufacturer>Nemo</Manufacturer><!--Manufacturer-->
                 <Model>Unconfigured Device</Model><!--Model-->
@@ -73,6 +73,11 @@
                         <OpCode>0x9810</OpCode><!--GetObjectReferences-->
                         <OpCode>0x9811</OpCode><!--SetObjectReferences-->
 
+                        <OpCode>0x95c1</OpCode>  <!--Get Partial Object (64bit Offset)-->
+                        <OpCode>0x95c2</OpCode>  <!--Send Partial Object (64bit Offset)-->
+                        <OpCode>0x95c3</OpCode>  <!--Truncate Object (64bit Offset)-->
+                        <OpCode>0x95c4</OpCode>  <!--Begin Edit Object-->
+                        <OpCode>0x95c5</OpCode>  <!--End Edit Object-->
                 </OperationsSupported>
 
                 <EventsSupported>

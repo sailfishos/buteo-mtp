@@ -116,6 +116,7 @@ MTPResponder::MTPResponder(): m_storageServer(0),
     m_handler_idle_timer(0),
     m_objPropListInfo(0),
     m_sendObjectSequencePtr(0),
+    m_editObjectSequencePtr(nullptr),
     m_transactionSequence(new MTPTransactionSequence)
 {
     MTP_FUNC_TRACE();
@@ -254,6 +255,9 @@ MTPResponder::~MTPResponder()
         m_sendObjectSequencePtr = 0;
     }
 
+    delete m_editObjectSequencePtr;
+    m_editObjectSequencePtr = nullptr;
+
     freeObjproplistInfo();
 
     m_instance = 0;
@@ -283,6 +287,11 @@ void MTPResponder::createCommandHandler()
     m_opCodeTable[MTP_OP_ResetDevicePropValue] = &MTPResponder::resetDevicePropValueReq;
     m_opCodeTable[MTP_OP_MoveObject] = &MTPResponder::moveObjectReq;
     m_opCodeTable[MTP_OP_CopyObject] = &MTPResponder::copyObjectReq;
+    m_opCodeTable[MTP_OP_ANDROID_GetPartialObject64] = &MTPResponder::getPartialObject64Req;
+    m_opCodeTable[MTP_OP_ANDROID_SendPartialObject64] = &MTPResponder::sendPartialObject64Req;
+    m_opCodeTable[MTP_OP_ANDROID_TruncateObject64] = &MTPResponder::truncateObject64Req;
+    m_opCodeTable[MTP_OP_ANDROID_BeginEditObject] = &MTPResponder::beginEditObjectReq;
+    m_opCodeTable[MTP_OP_ANDROID_EndEditObject] = &MTPResponder::endEditObjectReq;
     m_opCodeTable[MTP_OP_GetObjectPropsSupported] = &MTPResponder::getObjPropsSupportedReq;
     m_opCodeTable[MTP_OP_GetObjectPropDesc] = &MTPResponder::getObjPropDescReq;
     m_opCodeTable[MTP_OP_GetObjectPropValue] = &MTPResponder::getObjPropValueReq;
@@ -304,12 +313,13 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
 
     int type = container.containerType();
     int code = container.code();
+    quint32 size = container.containerLength();
 
     if( type == MTP_CONTAINER_TYPE_RESPONSE && code != MTP_RESP_OK ) {
-        MTP_LOG_WARNING(mtp_container_type_repr(type) << mtp_code_repr(code) << container.bufferSize());
+        MTP_LOG_WARNING(mtp_container_type_repr(type) << mtp_code_repr(code) << size << isLastPacket);
     }
     else {
-        MTP_LOG_INFO(mtp_container_type_repr(type) << mtp_code_repr(code) << container.bufferSize());
+        MTP_LOG_INFO(mtp_container_type_repr(type) << mtp_code_repr(code) << size << isLastPacket);
     }
 
     if( !m_transporter ) {
@@ -558,6 +568,11 @@ void MTPResponder::commandHandler()
     case MTP_OP_GetObjectPropList:
     case MTP_OP_GetObjectReferences:
     case MTP_OP_SetObjectReferences:
+    case MTP_OP_ANDROID_GetPartialObject64:
+    case MTP_OP_ANDROID_SendPartialObject64:
+    case MTP_OP_ANDROID_TruncateObject64:
+    case MTP_OP_ANDROID_BeginEditObject:
+    case MTP_OP_ANDROID_EndEditObject:
         ObjectHandle = params[0];
         break;
 
@@ -577,7 +592,6 @@ void MTPResponder::commandHandler()
     QString ObjectPath("n/a");
     if( ObjectHandle != 0x00000000 && ObjectHandle != 0xffffffff )
         m_storageServer->getPath(ObjectHandle, ObjectPath);
-
 
     MTP_LOG_INFO(mtp_container_type_repr(type)
                  << mtp_code_repr(code)
@@ -633,6 +647,7 @@ bool MTPResponder::hasDataPhase(MTPOperationCode code)
         case MTP_OP_SetDevicePropValue:
         case MTP_OP_SetObjectPropValue:
         case MTP_OP_SetObjectReferences:
+        case MTP_OP_ANDROID_SendPartialObject64:
             ret = true;
             break;
         case MTP_OP_GetDeviceInfo:
@@ -667,6 +682,10 @@ bool MTPResponder::hasDataPhase(MTPOperationCode code)
         case MTP_OP_GetInterdependentPropDesc:
         case MTP_OP_GetObjectReferences:
         case MTP_OP_Skip:
+        case MTP_OP_ANDROID_GetPartialObject64:
+        case MTP_OP_ANDROID_TruncateObject64:
+        case MTP_OP_ANDROID_BeginEditObject:
+        case MTP_OP_ANDROID_EndEditObject:
             ret = false;
             break;
         default:
@@ -679,20 +698,28 @@ bool MTPResponder::hasDataPhase(MTPOperationCode code)
 void MTPResponder::dataHandler(quint8* data, quint32 dataLen, bool isFirstPacket, bool isLastPacket)
 {
     MTP_FUNC_TRACE();
-    MTPResponseCode respCode =  MTP_RESP_OK;
+    // Cached responce status inherited from command phase
+    MTPResponseCode respCode = m_transactionSequence->mtpResp;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
-    if(MTP_OP_SendObject != m_transactionSequence->reqContainer->code())
-    {
+    MTP_LOG_INFO("dataLen:" << dataLen << "isFirstPacket:" << isFirstPacket << "isLastPacket:" << isLastPacket << "on entry:" << mtp_code_repr(m_transactionSequence->mtpResp));
+
+    /* Except for potentially huge file content transfers, data packets
+     * are concatenated into a full container block before processing.
+     */
+    switch( reqContainer->code() ) {
+    case MTP_OP_SendObject:
+    case MTP_OP_ANDROID_SendPartialObject64:
+        // Each packet is passed through to file system as they come
+        delete m_transactionSequence->dataContainer;
+        m_transactionSequence->dataContainer = nullptr;
+        break;
+    default:
+        // Packets are concatenated to form full data before handling
         if(isFirstPacket)
         {
-            // Delete any old data container
-            if(0 != m_transactionSequence->dataContainer)
-            {
-                delete m_transactionSequence->dataContainer;
-                m_transactionSequence->dataContainer = 0;
-            }
-            // Create a new data container
+            // Reset data container
+            delete m_transactionSequence->dataContainer;
             m_transactionSequence->dataContainer = new MTPRxContainer(data, dataLen);
         }
         else if(m_transactionSequence->dataContainer)
@@ -700,30 +727,29 @@ void MTPResponder::dataHandler(quint8* data, quint32 dataLen, bool isFirstPacket
             // Call append on the previously stored data container
             m_transactionSequence->dataContainer->append(data, dataLen);
         }
-        if(false == isLastPacket)
-        {
+        if( !isLastPacket ) {
             // Return here and wait for the next segment in the data phase
             return;
         }
-    }
-    // check if an error was already detected in the operation request phase
-    if(MTP_RESP_OK != m_transactionSequence->mtpResp)
-    {
-        respCode = m_transactionSequence->mtpResp;
-    }
-    // Match the transaction IDs from the request phase
-    else if(m_transactionSequence->dataContainer && (m_transactionSequence->dataContainer->transactionId() != reqContainer->transactionId()))
-    {
-        respCode = MTP_RESP_InvalidTransID;
-    }
-        // check whether the opcode of the data container corresponds to the one of the operation phase
-    else if(m_transactionSequence->dataContainer && (m_transactionSequence->dataContainer->code() != reqContainer->code()))
-    {
-        respCode = MTP_RESP_GeneralError;
+        break;
     }
 
-    if(MTP_RESP_OK == respCode)
-    {
+    /* When applicable, sanity check container block */
+    if( respCode == MTP_RESP_OK && m_transactionSequence->dataContainer ) {
+        // Match the transaction IDs from the request phase
+        if( m_transactionSequence->dataContainer->transactionId() != reqContainer->transactionId() )
+        {
+            respCode = MTP_RESP_InvalidTransID;
+        }
+        // check whether the opcode of the data container corresponds to the one of the operation phase
+        else if(m_transactionSequence->dataContainer->code() != reqContainer->code() )
+        {
+            respCode = MTP_RESP_GeneralError;
+        }
+    }
+
+    /* Command specific actions */
+    if( respCode == MTP_RESP_OK ) {
         switch(reqContainer->code())
         {
             // For operations with no I->R data phases, we should never get
@@ -737,6 +763,11 @@ void MTPResponder::dataHandler(quint8* data, quint32 dataLen, bool isFirstPacket
                 {
                     sendObjectData(data, dataLen, isFirstPacket, isLastPacket);
                     return;
+                }
+            case MTP_OP_ANDROID_SendPartialObject64:
+                {
+                    respCode = sendPartialObject64Data(data, dataLen, isFirstPacket, isLastPacket);
+                    break;
                 }
             case MTP_OP_SetObjectPropList:
                 {
@@ -776,8 +807,15 @@ void MTPResponder::dataHandler(quint8* data, quint32 dataLen, bool isFirstPacket
                 }
         }
     }
+
+    // Update cached status
+    m_transactionSequence->mtpResp = respCode;
+
+    MTP_LOG_INFO("dataLen:" << dataLen << "isFirstPacket:" << isFirstPacket << "isLastPacket:" << isLastPacket << "on leave:" << mtp_code_repr(m_transactionSequence->mtpResp));
+
     // RESPONSE PHASE
-    sendResponse(respCode);
+    if( isLastPacket )
+        sendResponse(respCode);
 }
 
 bool MTPResponder::handleExtendedOperation()
@@ -1249,97 +1287,73 @@ void MTPResponder::getObjectInfoReq()
     }
 }
 
-// This handler does double duty for GetObject and GetPartialObject
+// Logic common for getObjectReq(), getPartialObjectReq() and getPartialObject64Req()
+void MTPResponder::getObjectCommon(quint32 handle, quint64 offs, quint64 size)
+{
+    MTP_FUNC_TRACE();
+    MTPResponseCode code = MTP_RESP_OK;
+    bool sendReply = true;
+    MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
+
+    MTP_LOG_INFO("request - handle:" << handle << "offs:" << offs << "size:" << size);
+
+    // check if everthing is ok, so that cmd can be processed
+    if( code == MTP_RESP_OK )
+        code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
+
+    const MTPObjectInfo *objectInfo = nullptr;
+
+    if( code == MTP_RESP_OK )
+        code = m_storageServer->getObjectInfo(handle, objectInfo);
+
+    if( code == MTP_RESP_OK ) {
+        quint64 tail = offs + size;
+
+        if( objectInfo->mtpObjectFormat == MTP_OBF_FORMAT_Association ) {
+            MTP_LOG_WARNING("handle:" << handle << "is not a regular file");
+            code = MTP_RESP_InvalidObjectHandle;
+        }
+        else if( offs > objectInfo->mtpObjectCompressedSize ) {
+            MTP_LOG_WARNING("handle:" << handle << "read past file end");
+            code = MTP_RESP_InvalidParameter;
+        }
+        else if( tail < offs ) {
+            MTP_LOG_WARNING("handle:" << handle << "read span overflow");
+            code = MTP_RESP_InvalidParameter;
+        }
+        else {
+            // Clip read extent to what is expected to be available
+            offs = qMin(offs, objectInfo->mtpObjectCompressedSize);
+            tail = qMin(tail, objectInfo->mtpObjectCompressedSize);
+            size = tail - offs;
+
+            MTP_LOG_INFO("transmit - handle:" << handle << "offs:" << offs << "size:" << size);
+
+            // Start data phase - response will be sent from sendObjectSegmented()
+            sendReply = false;
+            MTP_LOG_INFO("handle:" << handle << "start segmented data phase");
+            m_segmentedSender.objHandle    = handle;
+            m_segmentedSender.offsetNow    = offs;
+            m_segmentedSender.offsetEnd    = tail;
+            sendObjectSegmented();
+        }
+    }
+
+    if( sendReply )
+        sendResponse(code);
+}
+
+
 void MTPResponder::getObjectReq()
 {
     MTP_FUNC_TRACE();
-
-    quint64 payloadLength = 0;
-    quint32 startingOffset = 0;
-    quint64 maxBufferSize = BUFFER_MAX_LEN;
-    qint32 readLength = 0;
-    MTPResponseCode code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     QVector<quint32> params;
-
-    // check if everthing is ok, so that cmd can be processed
-    code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
-    if( MTP_RESP_OK == code )
-    {
-        reqContainer->params(params);
-        const MTPObjectInfo *objectInfo;
-        code = m_storageServer->getObjectInfo(params[0], objectInfo);
-        // If the requested object is an association, then return an error code.
-        if(MTP_OBF_FORMAT_Association == objectInfo->mtpObjectFormat)
-        {
-            code = MTP_RESP_InvalidObjectHandle;
-        }
-        payloadLength = objectInfo->mtpObjectCompressedSize;
-        if( MTP_OP_GetPartialObject == reqContainer->code() )
-        {
-            startingOffset = params[1];
-            // clamp payloadLength to remaining length of file
-            payloadLength = startingOffset > payloadLength ? 0 : payloadLength - startingOffset;
-            // clamp payloadLength to maximum length in request
-            payloadLength = payloadLength > params[2] ? params[2] : payloadLength;
-        }
-    }
-
-    bool sent = true;
-    // enter data phase if precondition has been OK
-    if( MTP_RESP_OK == code )
-    {
-        if( payloadLength > maxBufferSize )
-        {
-            // segmentation needed
-            // set the segmentation info
-            m_segmentedSender.totalDataLen = startingOffset + payloadLength;
-            m_segmentedSender.payloadLen = BUFFER_MAX_LEN - MTP_HEADER_SIZE;
-            m_segmentedSender.objHandle = params[0];
-            m_segmentedSender.offset = startingOffset;
-            m_segmentedSender.segmentationStarted = true;
-            m_segmentedSender.sendResp = false;
-            m_segmentedSender.headerSent = false;
-            // start segmented sending of the object
-            sendObjectSegmented();
-            // response will be send from sendObjectSegmented
-            return;
-        }
-        else
-        {
-            // no segmentation needed
-            MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
-
-            // get the Object from the storage Server
-            readLength = payloadLength;
-            code = m_storageServer->readData(static_cast<ObjHandle&>(params[0]), reinterpret_cast<char*>(dataContainer.payload()),
-                                             readLength, static_cast<quint32>(startingOffset));
-
-            if( MTP_RESP_OK == code )
-            {
-                // Advance the container's offset
-                dataContainer.seek(payloadLength);
-                sent = sendContainer(dataContainer);
-                if( false == sent )
-                {
-                    MTP_LOG_CRITICAL("Could not send data");
-                }
-            }
-        }
-
-    }
-
-    if( true == sent )
-    {
-        if( MTP_OP_GetPartialObject == reqContainer->code() )
-        {
-            sendResponse(code, readLength);
-        }
-        else
-        {
-            sendResponse(code);
-        }
-    }
+    reqContainer->params(params);
+    quint32 handle = params[0];
+    quint64 offs   = 0;
+    quint64 size   = MTP_MAX_CONTENT_SIZE;
+    getObjectCommon(handle, offs, size);
 }
 
 void MTPResponder::getThumbReq()
@@ -1418,6 +1432,8 @@ void MTPResponder::sendObjectInfoReq()
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     m_transactionSequence->mtpResp = code;
     // DATA PHASE will follow
+    // -> MTPResponder::dataHandler()
+    //    -> sendObjectInfoData()
 }
 
 void MTPResponder::sendObjectReq()
@@ -1441,12 +1457,21 @@ void MTPResponder::sendObjectReq()
         }
     }
     m_transactionSequence->mtpResp = code;
+    // DATA PHASE will follow
+    // -> MTPResponder::dataHandler()
+    //    -> sendObjectData()
 }
 
 void MTPResponder::getPartialObjectReq()
 {
     MTP_FUNC_TRACE();
-    getObjectReq();
+    MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
+    QVector<quint32> params;
+    reqContainer->params(params);
+    quint32 handle = params[0];
+    quint64 offs   = params[1];
+    quint64 size   = params[2];
+    getObjectCommon(handle, offs, size);
 }
 
 void MTPResponder::setObjectProtectionReq()
@@ -1642,6 +1667,216 @@ void MTPResponder::copyObjectReq()
     // RESPONSE PHASE
     m_copiedObjHandle = retHandle;
     sendResponse(code, retHandle);
+}
+
+void MTPResponder::getPartialObject64Req()
+{
+    /* Extension: android.com 1.0
+     * Operation: getPartialObject64Req(handle, offsLo, offsHi, size)
+     */
+    MTP_FUNC_TRACE();
+    MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
+    QVector<quint32> params;
+    reqContainer->params(params);
+    quint32 handle = params[0];
+    quint32 offsLo = params[1];
+    quint32 offsHi = params[2];
+    quint32 size   = params[3];
+    quint64 offs   = offsHi; offs <<= 32; offs |= offsLo;
+    getObjectCommon(handle, offs, size);
+}
+
+void MTPResponder::sendPartialObject64Req()
+{
+    /* Extension: android.com 1.0
+     * Operation: sendPartialObject64Req(handle, offsLo, offsHi, size)
+     */
+    MTP_FUNC_TRACE();
+    MTPResponseCode code = MTP_RESP_OK;
+
+    MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
+    QVector<quint32> params;
+    reqContainer->params(params);
+    quint32 handle = params[0];
+    quint32 offsLo = params[1];
+    quint32 offsHi = params[2];
+    quint32 size   = params[3];
+    quint64 offs   = offsHi; offs <<= 32; offs |= offsLo;
+
+    MTP_LOG_INFO("handle:" << handle << "offs:" << offs << "size:" << size);
+
+    // check if everthing is ok, so that cmd can be processed
+    if( code == MTP_RESP_OK )
+        code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
+
+    /* Must be in edit object mode */
+    if( code == MTP_RESP_OK ) {
+        /* Check that appropriate beginEditObjectReq() has been made */
+        if( !m_editObjectSequencePtr )
+            code = MTP_RESP_GeneralError;
+        else if( m_editObjectSequencePtr->objHandle != handle )
+            code = MTP_RESP_InvalidObjectHandle;
+    }
+
+    /* Adjust write position used by data phase */
+    if( code == MTP_RESP_OK )
+        m_editObjectSequencePtr->writeOffset = offs;
+
+    /* Data phase must be processed even if it is not going
+     * to be accepted, store result from request phase for
+     * later use.
+     */
+    m_transactionSequence->mtpResp = code;
+
+    // DATA PHASE will follow
+    // -> MTPResponder::dataHandler()
+    //    -> sendPartialObject64Data()
+}
+
+MTPResponseCode MTPResponder::sendPartialObject64Data(const quint8 *data, quint32 dataLen, bool isFirstPacket, bool isLastPacket)
+{
+    MTP_FUNC_TRACE();
+    MTPResponseCode code = MTP_RESP_OK;
+
+    MTP_LOG_INFO("dataLen:" << dataLen << "isFirstPacket:" << isFirstPacket << "isLastPacket:" << isLastPacket);
+
+    /* Must be in edit object mode */
+    if( code == MTP_RESP_OK ) {
+        if( !m_editObjectSequencePtr )
+            code = MTP_RESP_GeneralError;
+    }
+
+    /* Omit header bits included in the 1st packet */
+    if( code == MTP_RESP_OK && isFirstPacket ) {
+        if( dataLen < MTP_HEADER_SIZE )
+            code = MTP_RESP_GeneralError;
+        else
+            dataLen -= MTP_HEADER_SIZE, data += MTP_HEADER_SIZE;
+    }
+
+    /* Write content to file */
+    if( code == MTP_RESP_OK ) {
+         code = m_storageServer->writePartialData(m_editObjectSequencePtr->objHandle,
+                                                  m_editObjectSequencePtr->writeOffset,
+                                                  data, dataLen,
+                                                  isFirstPacket, isLastPacket);
+        m_editObjectSequencePtr->writeOffset += dataLen;
+    }
+
+    return code;
+}
+
+void MTPResponder::truncateObject64Req()
+{
+    /* Extension: android.com 1.0
+     * Operation: truncateObject64Req(handle, offsLo, offsHi)
+     */
+    MTP_FUNC_TRACE();
+    MTPResponseCode code = MTP_RESP_OK;
+
+    MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
+    QVector<quint32> params;
+    reqContainer->params(params);
+    quint32 handle = params[0];
+    quint32 offsLo = params[1];
+    quint32 offsHi = params[2];
+    quint64 offs   = offsHi; offs <<= 32; offs |= offsLo;
+
+    MTP_LOG_INFO("handle:" << handle << "offs:" << offs);
+
+    // check if everthing is ok, so that cmd can be processed
+    if( code == MTP_RESP_OK )
+        code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
+
+    /* Must be in edit object mode */
+    if( code == MTP_RESP_OK ) {
+        if( !m_editObjectSequencePtr )
+            code =  MTP_RESP_GeneralError;
+        else if( m_editObjectSequencePtr->objHandle != handle )
+            code = MTP_RESP_InvalidObjectHandle;
+    }
+
+    /* Truncate file */
+    if( code == MTP_RESP_OK )
+        code = m_storageServer->truncateItem(handle, offs);
+
+    sendResponse(code);
+}
+
+void MTPResponder::beginEditObjectReq()
+{
+    /* Extension: android.com 1.0
+     * Operation: beginEditObjectReq(handle)
+     */
+    MTP_FUNC_TRACE();
+    MTPResponseCode code = MTP_RESP_OK;
+
+    MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
+    QVector<quint32> params;
+    reqContainer->params(params);
+    quint32 handle = params[0];
+
+    MTP_LOG_INFO("handle:" << handle);
+
+    // check if everthing is ok, so that cmd can be processed
+    if( code == MTP_RESP_OK )
+        code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
+
+    if( code == MTP_RESP_OK )
+        code = m_storageServer->checkHandle(handle);
+
+    /* Enter edit mode */
+    if( code == MTP_RESP_OK ) {
+        // Note: Any ongoing non-terminated edit object session is abandoned
+        delete m_editObjectSequencePtr;
+        m_editObjectSequencePtr = new MTPEditObjectSequence;
+        m_editObjectSequencePtr->objHandle = handle;
+
+        // temporarily disable object changed notifications
+        m_storageServer->setEventsEnabled(handle, false);
+    }
+
+    sendResponse(code);
+}
+
+void MTPResponder::endEditObjectReq()
+{
+    /* Extension: android.com 1.0
+     * Operation: endEditObjectReq(handle)
+     */
+    MTP_FUNC_TRACE();
+    MTPResponseCode code = MTP_RESP_OK;
+    MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
+    QVector<quint32> params;
+    reqContainer->params(params);
+    quint32 handle = params[0];
+
+    MTP_LOG_INFO("handle:" << handle);
+
+    // check if everthing is ok, so that cmd can be processed
+    if( code == MTP_RESP_OK )
+        code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
+
+    if( code == MTP_RESP_OK ) {
+        if( !m_editObjectSequencePtr )
+            code =  MTP_RESP_GeneralError;
+        else if( m_editObjectSequencePtr->objHandle != handle )
+            code = MTP_RESP_InvalidObjectHandle;
+    }
+
+    /* Leave edit mode */
+    if( code == MTP_RESP_OK ) {
+        // flush cached property values for the object
+        m_storageServer->flushCachedObjectPropertyValues(handle);
+
+        // enable object changed notifications again
+        m_storageServer->setEventsEnabled(handle, true);
+
+        delete m_editObjectSequencePtr;
+        m_editObjectSequencePtr = nullptr;
+    }
+
+    sendResponse(code);
 }
 
 void MTPResponder::getObjPropsSupportedReq()
@@ -2955,6 +3190,9 @@ quint32 MTPResponder::serializePropList(ObjHandle currentObj,
         }
 
         const MtpObjPropDesc *propDesc = i->propDesc;
+
+        MTP_LOG_INFO("object:" << currentObj << "prop:" << mtp_code_repr(propDesc->uPropCode) << "type:" << mtp_data_type_repr(propDesc->uDataType) << "data:" << i->propVal);
+
         dataContainer << currentObj << propDesc->uPropCode << propDesc->uDataType;
         dataContainer.serializeVariantByType(propDesc->uDataType, i->propVal);
 
@@ -2968,104 +3206,106 @@ void MTPResponder::sendObjectSegmented()
 {
     MTP_FUNC_TRACE();
 
-    quint32 segPayloadLength = 0;
-    quint32 segDataOffset = 0;
-    quint8 *segPtr = 0;
     MTPResponseCode respCode = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     MTPOperationCode opCode = reqContainer->code();
-    bool sent = true;
+    bool headerSent = false;
+    bool contentSent = false;
+    quint64 bytesSent = 0;
+    quint8 *buffer = nullptr;
 
-    segDataOffset = m_segmentedSender.offset;
-    segPayloadLength = m_segmentedSender.payloadLen;
+    quint64 remainingLength = m_segmentedSender.offsetEnd - m_segmentedSender.offsetNow;
 
-    // start segmentation
-    while(segDataOffset < m_segmentedSender.totalDataLen)
-    {
-        if(reqContainer != m_transactionSequence->reqContainer)
-        {
-            // Transaction was canceled or session was closed
-            return;
+    // Send ptp header + initial part of file content
+    if( respCode == MTP_RESP_OK && !headerSent ) {
+        // Calculate amount of data to send in initial frame
+        quint32 contentLength = BUFFER_MAX_LEN - MTP_HEADER_SIZE;
+        if( remainingLength < contentLength )
+            contentLength = quint32(remainingLength);
+
+        // Setup PTP header
+        MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, opCode, reqContainer->transactionId(), contentLength);
+        dataContainer.setContainerLength(remainingLength > MTP_MAX_CONTENT_SIZE
+                                         ? 0xFFFFFFFF
+                                         : quint32(MTP_HEADER_SIZE + remainingLength));
+
+        // Read file content
+        respCode = m_storageServer->readData(m_segmentedSender.objHandle,
+                                             reinterpret_cast<char*>(dataContainer.payload()),
+                                             contentLength,
+                                             m_segmentedSender.offsetNow);
+        if( respCode == MTP_RESP_OK ) {
+            // Update container content length and send it
+            dataContainer.seek(contentLength);
+            if( !sendContainer(dataContainer, (contentLength == remainingLength)) ) {
+                MTP_LOG_CRITICAL("Could not send header");
+            }
+            else {
+                bytesSent += contentLength;
+                remainingLength -= contentLength;
+                m_segmentedSender.offsetNow += contentLength;
+                headerSent = true;
+                contentSent = (remainingLength == 0);
+            }
         }
-        if(m_segmentedSender.headerSent == false)
-        {
-            // This the first segment, thus it needs to have the MTP container header
-            bool extraLargeContainer = ((m_segmentedSender.totalDataLen + MTP_HEADER_SIZE) > 0xFFFFFFFF);
-            MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, opCode, reqContainer->transactionId(), segPayloadLength);
-            dataContainer.setContainerLength(extraLargeContainer ? 0xFFFFFFFF : m_segmentedSender.totalDataLen + MTP_HEADER_SIZE);
-            qint32 bytesRead = segPayloadLength;
+    }
 
-            respCode = m_storageServer->readData(m_segmentedSender.objHandle,
-                    reinterpret_cast<char*>(dataContainer.payload()), bytesRead,
-                    segDataOffset);
+    while( respCode == MTP_RESP_OK && headerSent && !contentSent ) {
+        // Allocate buffer
+        if( !buffer )
+            buffer = new quint8[BUFFER_MAX_LEN];
 
-            if(MTP_RESP_OK != respCode)
-            {
-                m_segmentedSender.sendResp = true;
+        // Calculate amount of data to send in continuation frame
+        quint32 contentLength = BUFFER_MAX_LEN;
+        if( remainingLength < contentLength )
+            contentLength = quint32(remainingLength);
+
+        // Read file content
+        respCode = m_storageServer->readData(m_segmentedSender.objHandle,
+                                             (char *)buffer,
+                                             contentLength,
+                                             m_segmentedSender.offsetNow);
+        if( respCode == MTP_RESP_OK ) {
+            // Send raw data
+            if( !m_transporter->sendData(buffer, contentLength, (contentLength == remainingLength)) ) {
+                MTP_LOG_CRITICAL("Could not send content");
                 break;
             }
-
-            m_segmentedSender.bytesSent += segPayloadLength;
-            // Advance the container's offset
-            dataContainer.seek(bytesRead);
-            sent = sendContainer(dataContainer,false);
-            if( false == sent )
-            {
-                MTP_LOG_CRITICAL("Could not send data");
-                return;
-            }
-            m_segmentedSender.headerSent = true;
+            bytesSent += contentLength;
+            remainingLength -= contentLength;
+            m_segmentedSender.offsetNow += contentLength;
+            contentSent = (remainingLength == 0);
         }
-        else
-        {
-            qint32 bytesRead = segPayloadLength;
-            // The subsequent segments have no header
-            segPtr = new quint8[segPayloadLength];
-            respCode = m_storageServer->readData(m_segmentedSender.objHandle, (char*)segPtr, bytesRead, segDataOffset);
-            if(MTP_RESP_OK != respCode)
-            {
-                m_segmentedSender.sendResp = true;
-                delete[] (segPtr);
-                break;
-            }
-            m_segmentedSender.bytesSent += segPayloadLength;
-            // Directly call the transport method here
-            m_transporter->sendData(segPtr, segPayloadLength, (m_segmentedSender.totalDataLen - segDataOffset) <= BUFFER_MAX_LEN);
-            delete[] (segPtr);
-        }
-        // Prepare for the next segment to be sent
-        segDataOffset += segPayloadLength;
-        if ((m_segmentedSender.totalDataLen - segDataOffset) > BUFFER_MAX_LEN )
-        {
-            segPayloadLength = BUFFER_MAX_LEN;
-        }
-        else
-        {
-            segPayloadLength = m_segmentedSender.totalDataLen - segDataOffset;
-            m_segmentedSender.sendResp = true;
-        }
-
-        m_segmentedSender.payloadLen = segPayloadLength;
-        m_segmentedSender.offset = segDataOffset;
 
     }
 
-    if(true == m_segmentedSender.sendResp)
-    {
-        if( true == sent )
-        {
-            if(MTP_OP_GetPartialObject == opCode)
-            {
-                sendResponse(respCode, m_segmentedSender.bytesSent);
-            }
-            else
-            {
-                sendResponse(respCode);
-            }
-        }
-        // Segmented sending is done
-        m_segmentedSender.segmentationStarted = false;
+    /* Initiator expects to receive a valid container.
+     *
+     * On happy path all of data container was transmitted
+     * and we can continue by sending a reply container.
+     *
+     * In case we failed to send any parts of data container,
+     * an error reply container can be sent instead.
+     *
+     * But if parts of data container were sent, initiator
+     * and responder are out of sync -> abandon command
+     * and hope that initiator handles the situation somehow
+     * e.g. via timeout.
+     */
+    if( headerSent && !contentSent ) {
+        MTP_LOG_CRITICAL("Could not finish data phase");
     }
+    else {
+        switch( opCode ) {
+        case MTP_OP_GetPartialObject:
+            sendResponse(respCode, bytesSent > MTP_MAX_CONTENT_SIZE ? 0xFFFFFFFF : quint32(bytesSent));
+            break;
+        default:
+            sendResponse(respCode);
+            break;
+        }
+    }
+    delete[] buffer;
 }
 
 void MTPResponder::processTransportEvents( bool &txCancelled )
@@ -3192,7 +3432,6 @@ void MTPResponder::unregisterMetaTypes()
     QMetaType::unregisterType("QVector<MtpInt128>");
 }
 #endif
-
 
 const char *MTPResponder::responderStateName(MTPResponder::ResponderState state)
 {
@@ -3433,7 +3672,7 @@ extern "C"
     }
     const char *mtp_code_repr(int val)
     {
-        const char *res = "<unknown>";
+        const char *res = 0;
         switch(val) {
         case MTP_OP_GetDeviceInfo:                           res = "OP_GetDeviceInfo"; break;
         case MTP_OP_OpenSession:                             res = "OP_OpenSession"; break;
@@ -3572,6 +3811,11 @@ extern "C"
         case MTP_DEV_PROPERTY_UploadURL:                     res = "DEV_PROPERTY_UploadURL"; break;
         case MTP_DEV_PROPERTY_Artist:                        res = "DEV_PROPERTY_Artist"; break;
         case MTP_DEV_PROPERTY_CopyrightInfo:                 res = "DEV_PROPERTY_CopyrightInfo"; break;
+        case MTP_OP_ANDROID_GetPartialObject64:              res = "OP_ANDROID_GetPartialObject64"; break;
+        case MTP_OP_ANDROID_SendPartialObject64:             res = "OP_ANDROID_SendPartialObject64"; break;
+        case MTP_OP_ANDROID_TruncateObject64:                res = "OP_ANDROID_TruncateObject64"; break;
+        case MTP_OP_ANDROID_BeginEditObject:                 res = "OP_ANDROID_BeginEditObject"; break;
+        case MTP_OP_ANDROID_EndEditObject:                   res = "OP_ANDROID_EndEditObject"; break;
         case MTP_OP_GetObjectPropsSupported:                 res = "OP_GetObjectPropsSupported"; break;
         case MTP_OP_GetObjectPropDesc:                       res = "OP_GetObjectPropDesc"; break;
         case MTP_OP_GetObjectPropValue:                      res = "OP_GetObjectPropValue"; break;
@@ -3826,6 +4070,13 @@ extern "C"
         case MTP_OBJ_PROP_Encoding_Quality:                  res = "OBJ_PROP_Encoding_Quality"; break;
         case MTP_OBJ_PROP_Encoding_Profile:                  res = "OBJ_PROP_Encoding_Profile"; break;
         }
+
+        if( !res ) {
+            static char buf[32];
+            snprintf(buf, sizeof buf, "<unknown_%04x>", val);
+            res = buf;
+        }
+
         return res;
     }
 };

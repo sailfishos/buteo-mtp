@@ -1,7 +1,9 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2014 - 2020 Jolla Ltd.
+* Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
 *
@@ -159,7 +161,17 @@ public:
     /// \return MTP response.
     MTPResponseCode getPath( const quint32 &handle, QString &path ) const;
 
+    /// Query whether initiator should be sent object change notifications
+    /// \param handle [in] object handle.
+    /// \param eventsEnabled [out] whether events should be sent
+    /// \return MTP response.
     MTPResponseCode getEventsEnabled( const quint32 &handle, bool &eventsEnabled ) const;
+
+    /// Enable/Disable sending object change notifications to initiator
+    /// \param handle [in] object handle.
+    /// \param eventsEnabled [in] whether events should be sent
+    /// \return MTP response.
+    MTPResponseCode setEventsEnabled( const quint32 &handle, bool eventsEnabled ) const;
 
     /// Given an object handle, provides the object's objectinfo dataset.
     /// \param handle [in] the object handle.
@@ -175,22 +187,36 @@ public:
     /// \param isLastSegment [in] If true, this is the final segment in a multi segment write operation
     MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment, bool isLastSegment ) const;
 
+    /// Overwrites a block of data in a storage item.
+    /// \param handle [in] the object handle.
+    /// \param offset [in] offset where writing starts.
+    /// \param dataContent [in] the data to be written.
+    /// \param dataLength [in] the length of the data to be written.
+    /// \param isFirstSegment [in] If true, this is the first segment in a multi segment write operation
+    /// \param isLastSegment [in] If true, this is the final segment in a multi segment write operation
+    /// \return MTP response.
+    MTPResponseCode writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent, quint32 dataLength, bool isFirstSegment, bool isLastSegment) const;
+
     /// Reads data from a storage item.
     /// \param handle [in] the object handle.
     /// \readBuffer [in] the buffer where data will written. The buffer must be allocated by the caller
     /// \readBufferLen [in, out] the length of the input buffer. At most this amount of data will be read from the object. The function will return the actual number of bytes read in this buffer
     /// \param readOffset [in] The offset, in bytes, into the object to be read from
-    MTPResponseCode readData( const ObjHandle &handle, char *readBuffer, qint32 &readBufferLen, quint32 readOffset ) const;
+    MTPResponseCode readData( const ObjHandle &handle, char *readBuffer, quint32 readBufferLen, quint64 readOffset ) const;
 
     /// Truncates an item to a certain size.
     /// \param handle [in] the object handle.
     /// \size [in] the size in bytes.
-    MTPResponseCode truncateItem( const ObjHandle &handle, const quint32 &size ) const;
+    MTPResponseCode truncateItem( const ObjHandle &handle, const quint64 &size ) const;
 
     MTPResponseCode getObjectPropertyValue(const ObjHandle &handle,
             QList<MTPObjPropDescVal> &propValList);
 
     MTPResponseCode setObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool sendObjectPropList = false);
+
+    /// Flush cached object property values to force re-evaluation on the next query
+    /// \param handle [in] the object handle.
+    void flushCachedObjectPropertyValues(const ObjHandle &handle);
 
     /// \return true iff all storage plugins have completed enumeration
     bool storageIsReady();

@@ -1,7 +1,9 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2016 - 2020 Jolla Ltd.
+* Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
 *
@@ -62,9 +64,10 @@ void StorageItem::setEventsEnabled(bool enabled)
 {
     if( m_eventsEnabled != enabled ) {
         m_eventsEnabled = enabled;
-        if( m_eventsEnabled ) {
+        if( m_eventsEnabled )
             MTP_LOG_INFO("events enabled for:" << m_path);
-        }
+        else
+            MTP_LOG_INFO("events disabled for:" << m_path);
     }
 }
 
