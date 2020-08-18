@@ -2,6 +2,7 @@
 * This file is part of libmeegomtp package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
 *
@@ -41,6 +42,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include <QDebug>
 #include <QFile>
@@ -1032,7 +1034,7 @@ MTPResponseCode FSStoragePlugin::createFile( const QString &path, MTPObjectInfo 
     /* Resize to expected content length */
     quint64 size = info ? info->mtpObjectCompressedSize : 0;
 
-    if( !file.resize(size) ) {
+    if( fallocate(file.handle(), 0, 0, size) ) {
         MTP_LOG_WARNING("failed to set file:" << path << " to size:" << size);
     }
 
