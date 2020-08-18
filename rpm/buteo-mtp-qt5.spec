@@ -1,5 +1,5 @@
 Name:     buteo-mtp-qt5
-Version:  0.7.1
+Version:  0.7.10
 Release:  1
 Summary:  MTP library
 License:  BSD and LGPLv2
