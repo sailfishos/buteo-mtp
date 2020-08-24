@@ -1,7 +1,9 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2020 Jolla Ltd.
+* Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
 *
@@ -278,7 +280,18 @@ bool XMLHandler::characters(const QString& aStr)
         result = ok;
         break;
     case MTPEXTN:
-        m_devInfo->m_mtpExtension = aStr;
+        /* What extensions buteo-mtp can support depends on code.
+         *
+         * Adding new extensions manually does not actually make
+         * them supported, and already existing config files based
+         * on old templates might not list all extensions buteo-mtp
+         * currently supports -> better ignore this configuration
+         * element altogether.
+         */
+        if( m_devInfo->m_mtpExtension != aStr ) {
+            MTP_LOG_INFO("Ignoring configured mtp extensions:" << aStr
+                         << "Using built in defaults:" << m_devInfo->m_mtpExtension);
+        }
         result = true;
         break;
     case FNMODE:

@@ -1,7 +1,9 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2013 - 2020 Jolla Ltd.
+* Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
 *
@@ -50,7 +52,7 @@ using namespace meegomtp1dot0;
 #define VENDOREXTN_DEFAULT 0x00000006
 #define DEVTYPE_DEFAULT 0x00000003
 #define MTPVER_DEFAULT 100
-#define MTPEXTN_DEFAULT "microsoft.com: 1.0; microsoft.com/WMPPD: 11.0; "
+#define MTPEXTN_DEFAULT "microsoft.com: 1.0; microsoft.com/WMPPD: 11.0; android.com: 1.0;"
 #define FNMODE_DEFAULT 0
 #define MFR_DEFAULT "Nemo"
 #define MODEL_DEFAULT "Nemo"
@@ -96,7 +98,12 @@ quint16 DeviceInfo::m_operationsSupportedTable[] = {
     MTP_OP_GetObjectPropValue,
     MTP_OP_SetObjectPropValue,
     MTP_OP_GetObjectReferences,
-    MTP_OP_SetObjectReferences
+    MTP_OP_SetObjectReferences,
+    MTP_OP_ANDROID_GetPartialObject64,
+    MTP_OP_ANDROID_SendPartialObject64,
+    MTP_OP_ANDROID_TruncateObject64,
+    MTP_OP_ANDROID_BeginEditObject,
+    MTP_OP_ANDROID_EndEditObject,
 };
 
 quint16 DeviceInfo::m_audChannelTable[] = {
@@ -306,14 +313,18 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
     xmlReader.setErrorHandler(&handler);
     m_xmlOk = false;
 
+    /* Note: The way deviceinfo.xml file is generated, updated and used makes it
+     * more like a hindrance rather than a useful feature. It contains things that
+     * are clearly dependant on buteo-mtp version (e.g. supported commands, events,
+     * formats) but the content of the file gets locked to whatever template was
+     * installed in the device on the first time mtp mode got activated. For this
+     * reason the config is augmented at runtime instead of being used as-is.
+     */
+
     if(0 == xmlReader.parse(&source))
     {
         MTP_LOG_CRITICAL("Failure reading deviceinfo.xml, using default hard-coded values\n");
         //FIXME Hard code the QVectors themselves by default? Then we can avoid the memcpy.
-        for( quint32 i = 0 ; i < sizeof(m_operationsSupportedTable)/sizeof(m_operationsSupportedTable[0]); i++ )
-        {
-            m_mtpOperationsSupported.append( m_operationsSupportedTable[i] );
-        }
         for( quint32 i = 0 ; i < sizeof(m_eventsSupportedTable)/sizeof(m_eventsSupportedTable[0]); i++ )
         {
             m_mtpEventsSupported.append( m_eventsSupportedTable[i] );
@@ -340,8 +351,13 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
         m_xmlOk = true;
     }
 
-    /* The supported object formats specified in the configuration file
+    /* The supported opcodes, object formats, etc specified in the configuration file
      * are used to augment the built-in configuration, not to override it. */
+    for( quint32 i = 0 ; i < sizeof(m_operationsSupportedTable)/sizeof(m_operationsSupportedTable[0]); i++ )
+    {
+        if( !m_mtpOperationsSupported.contains(m_operationsSupportedTable[i]) )
+            m_mtpOperationsSupported.append(m_operationsSupportedTable[i]);
+    }
     for( quint32 i = 0 ; i < sizeof(m_commonFormatsTable)/sizeof(m_commonFormatsTable[0]); i++ )
     {
         if( !m_commonFormats.contains(m_commonFormatsTable[i]) )

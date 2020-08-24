@@ -1,7 +1,9 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2013 - 2020 Jolla Ltd.
+* Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
 *
@@ -103,13 +105,17 @@ public:
 
     MTPResponseCode getEventsEnabled( const quint32 &handle, bool &eventsEnabled ) const;
 
+    MTPResponseCode setEventsEnabled( const quint32 &handle, bool eventsEnabled ) const;
+
     MTPResponseCode getObjectInfo( const ObjHandle &handle, const MTPObjectInfo *&objectInfo );
 
     MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment, bool isLastSegment );
 
-    MTPResponseCode readData( const ObjHandle &handle, char *readBuffer, qint32 &readBufferLen, quint32 readOffset );
+    MTPResponseCode writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent, quint32 dataLength, bool isFirstSegment, bool isLastSegment);
 
-    MTPResponseCode truncateItem( const ObjHandle &handle, const quint32 &size );
+    MTPResponseCode readData( const ObjHandle &handle, char *readBuffer, quint32 readBufferLen, quint64 readOffset );
+
+    MTPResponseCode truncateItem( const ObjHandle &handle, const quint64 &size );
 
     MTPResponseCode getObjectPropertyValue(const ObjHandle &handle,
             QList<MTPObjPropDescVal> &propValList);

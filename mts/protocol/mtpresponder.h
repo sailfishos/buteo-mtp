@@ -1,7 +1,9 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2013 - 2020 Jolla Ltd.
+* Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Santosh Puranik <santosh.puranik@nokia.com>
 *
@@ -229,6 +231,12 @@ class MTPResponder : public QObject
             }
         }*m_sendObjectSequencePtr;                                          ///< This structure stores information from a SendObjectInfo operation for a future SendObject operation
 
+        struct MTPEditObjectSequence
+        {
+            ObjHandle objHandle = 0;                                        ///< Handle of object being edited
+            quint64 writeOffset = 0;                                        ///< Write offset for incoming data packets
+        } *m_editObjectSequencePtr;                                         ///< This structure stores information from a EditObjectInfo operation for a future SendPartialObject64 operation
+
         struct MTPTransactionSequence
         {
             quint32                             mtpSessionId;               ///< Current MTP session ID
@@ -244,20 +252,11 @@ class MTPResponder : public QObject
 
         struct SendObjectSegment
         {
-            quint64 totalDataLen;                                           ///< The total object size
-            quint32 payloadLen;                                             ///< The length of the current segment
-            quint32 offset;                                                 ///< Offset into the object (current segment)
-            quint32 bytesSent;                                              ///< Bytes of the object transferred so far
-            ObjHandle objHandle;                                            ///< The object handle
-            bool segmentationStarted;                                       ///< Flag to indicate state of segmentation
-            bool headerSent;                                                ///< Flag to indicate if the MTP header has been sent
-            bool sendResp;                                                  ///< Flag to indicate if MTP response phase can begin
-            
-            SendObjectSegment() : totalDataLen(0), payloadLen(0), offset(0), bytesSent(0), 
-            objHandle(0), segmentationStarted(false), headerSent(false), sendResp(0)
-            {
-            }
-        }m_segmentedSender;                                                 ///< This structure holds data for segmented getObject operations
+            ObjHandle objHandle = 0;                                       ///< The object handle
+            quint64 offsetNow = 0;                                         ///< Offset into the object (current segment)
+            quint64 offsetEnd = 0;                                         ///< End of transfer offset
+            quint64 bytesSent = 0;                                         ///< Bytes of the object transferred so far
+        } m_segmentedSender;                                               ///< This structure holds data for segmented getObject operations
 
         /// Constructor for MTPResponder
         /// \param transport [in] The transport type to be used by the responder
@@ -340,7 +339,25 @@ class MTPResponder : public QObject
         
         /// Handles Device info MTP operation (request phase)
         void copyObjectReq();
-        
+
+        /// Handles android.com 1.0 get partial object MTP operation (request phase)
+        void getPartialObject64Req();
+
+        /// Handles android.com 1.0 send partial object MTP operation (request phase)
+        void sendPartialObject64Req();
+
+        /// Handles android.com 1.0 truncate object MTP operation (request phase)
+        void truncateObject64Req();
+
+        /// Handles android.com 1.0 begin edit object MTP operation (request phase)
+        void beginEditObjectReq();
+
+        /// Handles android.com 1.0 end edit object MTP operation (request phase)
+        void endEditObjectReq();
+
+        // Logic common for getObjectReq, getPartialObjectReq and getPartialObject64Req
+        void getObjectCommon(quint32 handle, quint64 offs, quint64 size);
+
         /// Handles Device info MTP operation (request phase)
         void getObjPropsSupportedReq();
         
@@ -386,7 +403,15 @@ class MTPResponder : public QObject
         /// \param isLastPacket [in] true if this is the last segment in the
         /// data phase 
         void sendObjectData(quint8* data, quint32 dataLen, bool isFirstPacket, bool isLastPacket);
-        
+
+        /// Handles android.com 1.0 send partial object MTP operation (data phase)
+        /// \param data [in] The object data (or the container segment data)
+        /// \param dataLen [in] The length of the data, in bytes
+        /// \param isFirstPacket [in] true if this is the first segment in the data phase
+        /// \param isLastPacket [in] true if this is the last segment in the data phase
+        /// \return MTP response
+        MTPResponseCode sendPartialObject64Data(const quint8 *data, quint32 dataLen, bool isFirstPacket, bool isLastPacket);
+
         /// Handles SendObjectInfo MTP operation (data pahase)
         /// \param recvContainer
         void setObjectPropListData();

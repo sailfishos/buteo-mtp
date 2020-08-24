@@ -1,7 +1,9 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2018 - 2020 Jolla Ltd.
+* Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Santosh Puranik <santosh.puranik@nokia.com>
 *
@@ -207,7 +209,9 @@ MTPRxContainer& MTPRxContainer::operator>>(QVector<MtpInt128> &d)
     quint32 sz = 0;
     operator>>(sz);
     d.resize(sz);
-    memcpy(d.data(), m_buffer + m_offset, (sz * sizeof(MtpInt128)));
+    memcpy(static_cast<void *>(d.data()),
+           static_cast<void *>(m_buffer + m_offset),
+           sz * sizeof(MtpInt128));
     m_offset += sz * sizeof(MtpInt128);
     return *this;
 }

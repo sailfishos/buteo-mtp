@@ -12,6 +12,17 @@
 #define MTP_EP_PATH_OUT        "/dev/mtp/ep2"
 #define MTP_EP_PATH_INTERRUPT  "/dev/mtp/ep3"
 
+/* Suppress warnings about deprecated kernel structures.
+ *
+ * This code needs to support devices with old kernels
+ * that use structures/types that have been marked as
+ * deprecated in later ones - which produces diagnostic
+ * noise when building for devices with recent enough
+ * kernels.
+ */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 struct mtp1_descs_s {
    struct usb_interface_descriptor intf;
    struct usb_endpoint_descriptor_no_audio mtp_ep_in;
@@ -55,5 +66,7 @@ struct mtp1_descriptors_s_incompatible {
 } __attribute__((packed));
 
 extern const struct usb_functionfs_descs_head_incompatible mtp1descriptors_header_incompatible;
+
+#pragma GCC diagnostic pop
 
 #endif
