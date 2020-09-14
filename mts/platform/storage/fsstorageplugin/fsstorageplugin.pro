@@ -10,7 +10,7 @@ QT -= gui
 
 PKGCONFIG += blkid mount
 
-system(qdbusxml2cpp -c ThumbnailerProxy -p thumbnailerproxy.h:thumbnailerproxy.cpp -i thumbnailpathlist.h ./org.nemomobile.Thumbnailer.xml)
+system($$[QT_INSTALL_BINS]/qdbusxml2cpp -c ThumbnailerProxy -p thumbnailerproxy.h:thumbnailerproxy.cpp -i thumbnailpathlist.h ./org.nemomobile.Thumbnailer.xml)
 
 DEPENDPATH += . \
               .. \
