@@ -3533,8 +3533,9 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
     }
     if(true == sendObjectPropList)
     {
-        m_tracker->setPropVals(storageItem->m_path, propValList);
 #if 0
+        // Disable this as tracker extracts better information, and doesn't like data from other sources.
+        m_tracker->setPropVals(storageItem->m_path, propValList);
         // Ask tracker to ignore the current file, this is because we already have
         // all required metadata from the initiator.
         m_tracker->ignoreNextUpdate(QStringList(m_tracker->generateIri(storageItem->m_path)));
