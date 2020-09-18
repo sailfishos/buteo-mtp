@@ -181,7 +181,10 @@ void StorageTracker::populateFunctionMap()
     m_handlerTable[MTP_OBJ_PROP_Buffer_Size] = getBufferSize;
     m_handlerTable[MTP_OBJ_PROP_Encoding_Quality] = getEncodingQuality;
 #endif
-
+/* These direct settings of file properties aren't expected by tracker, and don't match what tracker
+ * is expecting. Disable them as they cause an error in tracker-extract when it tries to update them
+ */
+#if 0
     // Setters
     m_handlerTableUpdate[MTP_OBJ_PROP_Date_Created] = setDateCreated;
     m_handlerTableUpdate[MTP_OBJ_PROP_Name] = setName;
@@ -210,7 +213,7 @@ void StorageTracker::populateFunctionMap()
     m_handlerTableUpdate[MTP_OBJ_PROP_Use_Count] = setUseCount;
     m_handlerTableUpdate[MTP_OBJ_PROP_DRM_Status] = setDRMStatus;
     // We don't support the below as of now.
-#if 0
+
     m_handlerTableUpdate[MTP_OBJ_PROP_Keywords] = setKeywords;
     m_handlerTableUpdate[MTP_OBJ_PROP_Subtitle] = setSubtitle;
     m_handlerTableUpdate[MTP_OBJ_PROP_Hidden] = setHidden;
