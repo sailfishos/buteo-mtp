@@ -136,6 +136,10 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
             if (pattern.contains("%u")) {
                 pattern.replace("%u", QProcessEnvironment::systemEnvironment().value("USER"));
             }
+            // If path contains "%h" replace it with the current home directory
+            if (pattern.contains("%h")) {
+                pattern.replace("%h", QProcessEnvironment::systemEnvironment().value("HOME"));
+            }
             QString description;
             if (!pattern.contains('*') && !pattern.contains('?')) {
                 description = storage.attribute("description");
