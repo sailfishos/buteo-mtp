@@ -7,4 +7,3 @@ EnvironmentFile=-/var/lib/environment/buteo-mtp/*.conf
 ExecStart=/usr/libexec/mtp_service $SERVICE_PARAMETERS
 Restart=always
 RestartSec=1
-Nice=-10
