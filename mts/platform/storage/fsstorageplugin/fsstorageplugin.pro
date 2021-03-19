@@ -9,6 +9,7 @@ QT += dbus xml
 QT -= gui
 
 PKGCONFIG += blkid mount
+PKGCONFIG += nemodbus
 
 system($$[QT_INSTALL_BINS]/qdbusxml2cpp -c ThumbnailerProxy -p thumbnailerproxy.h:thumbnailerproxy.cpp -i thumbnailpathlist.h ./org.nemomobile.Thumbnailer.xml)
 

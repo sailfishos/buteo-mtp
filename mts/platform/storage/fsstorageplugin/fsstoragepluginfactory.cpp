@@ -1,9 +1,7 @@
 /*
  * This file is a part of buteo-mtp package.
  *
- * Copyright (C) 2014 Jolla Ltd.
- *
- * Contact: Jakub Adam <jakub.adam@jollamobile.com>
+ * Copyright (c) 2014 - 2021 Jolla Ltd.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -37,13 +35,74 @@
 #include <QDirIterator>
 #include <QDomDocument>
 #include <QProcessEnvironment>
+#include <QDBusInterface>
+#include <QDBusReply>
+#include <nemo-dbus/dbus.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <mntent.h>
 #include <unistd.h>
 #include <glob.h>
 
+#include <udisks2defines.h> // systemsettings
+
 using namespace meegomtp1dot0;
+
+#define UDISKS2_MANAGER_METHOD_GETBLOCKDEVICES "GetBlockDevices"
+#define UDISKS2_BLOCK_PROPERTY_IDLABEL "IdLabel"
+#define UDISKS2_FILESYSTEM_PROPERTY_MOUNTPOINTS "MountPoints"
+#define DBUS_OBJECT_PROPERTIES_METHOD_GET "Get"
+
+static QHash<QString, QString> *generateDeviceLabelHash()
+{
+    QHash<QString, QString> *deviceLabelHash = new QHash<QString, QString>;
+    /* Buteo-mtp does not otherwise need / connect to systembus -> use a connection that can be closed */
+    QString connectionName("privateSystemBusConnection");
+    QDBusConnection systemBus(QDBusConnection::connectToBus(QDBusConnection::SystemBus, connectionName));
+    QDBusInterface managerInterface(UDISKS2_SERVICE, UDISKS2_MANAGER_PATH, UDISKS2_MANAGER_INTERFACE, systemBus);
+    QVariantMap defaultOptions({{QLatin1String("auth.no_user_interaction"), QVariant(true)}});
+    QDBusReply<QList<QDBusObjectPath> > blockDevicesReply(managerInterface.call(UDISKS2_MANAGER_METHOD_GETBLOCKDEVICES, defaultOptions));
+    if (!blockDevicesReply.isValid()) {
+        QDBusError err(blockDevicesReply.error());
+        MTP_LOG_WARNING(QString("failed to get block device list from udisks: %1: %2").arg(err.name()).arg(err.message()));
+    } else {
+        for (const QDBusObjectPath &object : blockDevicesReply.value()) {
+            QDBusInterface propertiesInterface(UDISKS2_SERVICE, object.path(), DBUS_OBJECT_PROPERTIES_INTERFACE, systemBus);
+            QDBusReply<QVariant> deviceLabelReply(propertiesInterface.call(DBUS_OBJECT_PROPERTIES_METHOD_GET, UDISKS2_BLOCK_INTERFACE, UDISKS2_BLOCK_PROPERTY_IDLABEL));
+            if (!deviceLabelReply.isValid()) {
+                QDBusError err(deviceLabelReply.error());
+                MTP_LOG_WARNING(QString("failed to get disk label for %1: %2: %3").arg(object.path()).arg(err.name()).arg(err.message()));
+                continue;
+            }
+            QString deviceLabel(deviceLabelReply.value().toString());
+            if (deviceLabel.isEmpty())
+                continue;
+            QDBusReply<QVariant> mountPointsReply(propertiesInterface.call(DBUS_OBJECT_PROPERTIES_METHOD_GET, UDISKS2_FILESYSTEM_INTERFACE, UDISKS2_FILESYSTEM_PROPERTY_MOUNTPOINTS));
+            if (!mountPointsReply.isValid()) {
+                QDBusError err(mountPointsReply.error());
+                MTP_LOG_WARNING(QString("failed to get mountpoints for %1: %2: %3").arg(object.path()).arg(err.name()).arg(err.message()));
+                continue;
+            }
+            QByteArrayList mountPointsList(NemoDBus::demarshallArgument<QByteArrayList>(mountPointsReply.value()));
+            for (const QByteArray &bytes : mountPointsList)
+                deviceLabelHash->insert(QString(bytes.constData()), deviceLabel);
+        }
+    }
+    QDBusConnection::disconnectFromBus(connectionName);
+    return deviceLabelHash;
+}
+
+static QString generateLabel(const QString &path)
+{
+    static unsigned cardCount = 0;
+    static QHash<QString, QString> *deviceLabelHash = nullptr;
+    if (!deviceLabelHash)
+        deviceLabelHash = generateDeviceLabelHash();
+    QString label(deviceLabelHash->value(path));
+    if (label.isEmpty())
+        (*deviceLabelHash)[path] = label = QString("Card %1").arg(++cardCount);
+    return label;
+}
 
 const char *FSStoragePluginFactory::CONFIG_DIR = "/etc/fsstorage.d";
 
@@ -157,7 +216,7 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
                 QString desc(description);
                 description.clear();
                 if (desc.isEmpty())
-                    desc = QFileInfo(path).baseName();
+                    desc = generateLabel(path);
                 descs[desc] = path;
             }
             globfree(&gl);
