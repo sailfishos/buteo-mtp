@@ -94,21 +94,65 @@ static QHash<QString, QString> *generateDeviceLabelHash()
 
 static QString generateLabel(const QString &path)
 {
-    static unsigned cardCount = 0;
     static QHash<QString, QString> *deviceLabelHash = nullptr;
     if (!deviceLabelHash)
         deviceLabelHash = generateDeviceLabelHash();
     QString label(deviceLabelHash->value(path));
-    if (label.isEmpty())
-        (*deviceLabelHash)[path] = label = QString("Card %1").arg(++cardCount);
+    if (label.isEmpty()) {
+        label = QLatin1String("Card");
+        (*deviceLabelHash)[path] = label;
+    }
     return label;
 }
 
 const char *FSStoragePluginFactory::CONFIG_DIR = "/etc/fsstorage.d";
 
+static void makeLabelsUnique(QMap<QString, QString> &pathLabels, QSet<QString> &reservedLabels)
+{
+    /* The idea is, given a set of labels with duplicates like:
+     * - "foo", "foo", "foo 2", "foo 3"
+     *
+     * The set is iterated and modified until all are unique:
+     * - "foo 1", "foo 2", "foo 2", "foo 3"
+     * - "foo 1", "foo 2.1", "foo 2.2", "foo 3"
+     *
+     * ... or maximum iteration count is reached - in which
+     * case the rest of the logic ignores duplicate entries.
+     */
+    for (int iteration = 0; iteration < 5; ++iteration) {
+        QMap<QString, int> labelCount;
+        QMap<QString, int> labelIndex;
+        // Seed counts from labels that have already been taken in use
+        for (const QString &label : reservedLabels.values())
+            labelCount[label] = labelCount.value(label, 0) + 1;
+        // Check if current labels-to-add are unique and unused
+        int maxCount = 0;
+        for (const QString &label : pathLabels.values()) {
+            int count = labelCount.value(label, 0) + 1;
+            labelCount[label] = count;
+            maxCount = qMax(maxCount, count);
+        }
+        if (maxCount < 2)
+            break;
+        // Modify conflicting labels
+        for (const QString &path : pathLabels.keys()) {
+            QString label = pathLabels[path];
+            if (labelCount[label] < 2)
+                continue;
+            int index = labelIndex.value(label, 0) + 1;
+            labelIndex[label] = index;
+            if (iteration == 0)
+                pathLabels[path] = QString("%1 %2").arg(label).arg(index);
+            else
+                pathLabels[path] = QString("%1.%2").arg(label).arg(index);
+        }
+    }
+}
+
 QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
 {
     QSet<QString> alreadyExported;
+    QSet<QString> reservedLabels;
     QList<StoragePlugin *> result;
     QDirIterator it(CONFIG_DIR, QDir::Files);
     while (it.hasNext()) {
@@ -184,8 +228,8 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
             }
         }
 
-        // "descs" maps from user-visible storage names to exported paths
-        QMap<QString, QString> descs;
+        // directory path to storage label mapping
+        QMap<QString, QString> pathLabels;
         if (storage.hasAttribute("path")) {
             /* Treat 'path' attribute as a glob pattern. If it actually
              * contains wildcard characters, use basenames of matching
@@ -213,11 +257,13 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
                 if (!S_ISDIR(st.st_mode))
                     continue;
                 QString path = QString::fromUtf8(gl.gl_pathv[i]);
+                if (pathLabels.contains(path) || alreadyExported.contains(path))
+                    continue;
                 QString desc(description);
                 description.clear();
                 if (desc.isEmpty())
                     desc = generateLabel(path);
-                descs[desc] = path;
+                pathLabels[path] = desc;
             }
             globfree(&gl);
         } else {
@@ -230,6 +276,9 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
                 continue;
             }
             while (struct mntent *ent = getmntent(mntf)) {
+                QString path = QString::fromUtf8(ent->mnt_dir);
+                if (pathLabels.contains(path) || alreadyExported.contains(path))
+                    continue;
                 QString devname(ent->mnt_fsname);
                 // Use startsWith to catch partitions of the main dev
                 if (devname.startsWith(blockdev)) {
@@ -240,17 +289,22 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
                     QString description = storage.attribute("description");
                     if (!devname.isEmpty() && devname != "p1")
                         description.append(" ").append(devname);
-                    descs[description] = ent->mnt_dir;
+                    pathLabels[path] = description;
                 }
             }
         }
 
-        foreach (QString desc, descs.keys()) {
+        makeLabelsUnique(pathLabels, reservedLabels);
+
+        for (const QString &path : pathLabels.keys()) {
             /* Make sure a directory gets exported only once even if
              * it would match multiple configuration files. */
-            const QString path = descs[desc];
             if( alreadyExported.contains(path) )
                 continue;
+            const QString desc = pathLabels[path];
+            if (reservedLabels.contains(desc))
+                continue;
+            reservedLabels.insert(desc);
             alreadyExported.insert(path);
 
             // The description is the important part; name is mostly internal.
