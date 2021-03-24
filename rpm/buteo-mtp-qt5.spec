@@ -21,6 +21,7 @@ BuildRequires: pkgconfig(mlite5)
 BuildRequires: pkgconfig(Qt5Gui)
 BuildRequires: ssu-devel >= 0.37.9
 BuildRequires: pkgconfig(systemsettings) >= 0.2.25
+BuildRequires: pkgconfig(nemodbus) >= 2.1.16
 Requires: mtp-vendor-configuration
 Requires: thumbnaild
 Requires: libqt5sparql-tracker-direct

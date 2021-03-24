@@ -1,9 +1,7 @@
 /*
  * This file is a part of buteo-mtp package.
  *
- * Copyright (C) 2014 Jolla Ltd.
- *
- * Contact: Jakub Adam <jakub.adam@jollamobile.com>
+ * Copyright (c) 2014 - 2021 Jolla Ltd.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -37,19 +35,124 @@
 #include <QDirIterator>
 #include <QDomDocument>
 #include <QProcessEnvironment>
+#include <QDBusInterface>
+#include <QDBusReply>
+#include <nemo-dbus/dbus.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <mntent.h>
 #include <unistd.h>
 #include <glob.h>
 
+#include <udisks2defines.h> // systemsettings
+
 using namespace meegomtp1dot0;
 
+#define UDISKS2_MANAGER_METHOD_GETBLOCKDEVICES "GetBlockDevices"
+#define UDISKS2_BLOCK_PROPERTY_IDLABEL "IdLabel"
+#define UDISKS2_FILESYSTEM_PROPERTY_MOUNTPOINTS "MountPoints"
+#define DBUS_OBJECT_PROPERTIES_METHOD_GET "Get"
+
+static QHash<QString, QString> *generateDeviceLabelHash()
+{
+    QHash<QString, QString> *deviceLabelHash = new QHash<QString, QString>;
+    /* Buteo-mtp does not otherwise need / connect to systembus -> use a connection that can be closed */
+    QString connectionName("privateSystemBusConnection");
+    QDBusConnection systemBus(QDBusConnection::connectToBus(QDBusConnection::SystemBus, connectionName));
+    QDBusInterface managerInterface(UDISKS2_SERVICE, UDISKS2_MANAGER_PATH, UDISKS2_MANAGER_INTERFACE, systemBus);
+    QVariantMap defaultOptions({{QLatin1String("auth.no_user_interaction"), QVariant(true)}});
+    QDBusReply<QList<QDBusObjectPath> > blockDevicesReply(managerInterface.call(UDISKS2_MANAGER_METHOD_GETBLOCKDEVICES, defaultOptions));
+    if (!blockDevicesReply.isValid()) {
+        QDBusError err(blockDevicesReply.error());
+        MTP_LOG_WARNING(QString("failed to get block device list from udisks: %1: %2").arg(err.name()).arg(err.message()));
+    } else {
+        for (const QDBusObjectPath &object : blockDevicesReply.value()) {
+            QDBusInterface propertiesInterface(UDISKS2_SERVICE, object.path(), DBUS_OBJECT_PROPERTIES_INTERFACE, systemBus);
+            QDBusReply<QVariant> deviceLabelReply(propertiesInterface.call(DBUS_OBJECT_PROPERTIES_METHOD_GET, UDISKS2_BLOCK_INTERFACE, UDISKS2_BLOCK_PROPERTY_IDLABEL));
+            if (!deviceLabelReply.isValid()) {
+                QDBusError err(deviceLabelReply.error());
+                MTP_LOG_WARNING(QString("failed to get disk label for %1: %2: %3").arg(object.path()).arg(err.name()).arg(err.message()));
+                continue;
+            }
+            QString deviceLabel(deviceLabelReply.value().toString());
+            if (deviceLabel.isEmpty())
+                continue;
+            QDBusReply<QVariant> mountPointsReply(propertiesInterface.call(DBUS_OBJECT_PROPERTIES_METHOD_GET, UDISKS2_FILESYSTEM_INTERFACE, UDISKS2_FILESYSTEM_PROPERTY_MOUNTPOINTS));
+            if (!mountPointsReply.isValid()) {
+                QDBusError err(mountPointsReply.error());
+                MTP_LOG_WARNING(QString("failed to get mountpoints for %1: %2: %3").arg(object.path()).arg(err.name()).arg(err.message()));
+                continue;
+            }
+            QByteArrayList mountPointsList(NemoDBus::demarshallArgument<QByteArrayList>(mountPointsReply.value()));
+            for (const QByteArray &bytes : mountPointsList)
+                deviceLabelHash->insert(QString(bytes.constData()), deviceLabel);
+        }
+    }
+    QDBusConnection::disconnectFromBus(connectionName);
+    return deviceLabelHash;
+}
+
+static QString generateLabel(const QString &path)
+{
+    static QHash<QString, QString> *deviceLabelHash = nullptr;
+    if (!deviceLabelHash)
+        deviceLabelHash = generateDeviceLabelHash();
+    QString label(deviceLabelHash->value(path));
+    if (label.isEmpty()) {
+        label = QLatin1String("Card");
+        (*deviceLabelHash)[path] = label;
+    }
+    return label;
+}
+
 const char *FSStoragePluginFactory::CONFIG_DIR = "/etc/fsstorage.d";
+
+static void makeLabelsUnique(QMap<QString, QString> &pathLabels, QSet<QString> &reservedLabels)
+{
+    /* The idea is, given a set of labels with duplicates like:
+     * - "foo", "foo", "foo 2", "foo 3"
+     *
+     * The set is iterated and modified until all are unique:
+     * - "foo 1", "foo 2", "foo 2", "foo 3"
+     * - "foo 1", "foo 2.1", "foo 2.2", "foo 3"
+     *
+     * ... or maximum iteration count is reached - in which
+     * case the rest of the logic ignores duplicate entries.
+     */
+    for (int iteration = 0; iteration < 5; ++iteration) {
+        QMap<QString, int> labelCount;
+        QMap<QString, int> labelIndex;
+        // Seed counts from labels that have already been taken in use
+        for (const QString &label : reservedLabels.values())
+            labelCount[label] = labelCount.value(label, 0) + 1;
+        // Check if current labels-to-add are unique and unused
+        int maxCount = 0;
+        for (const QString &label : pathLabels.values()) {
+            int count = labelCount.value(label, 0) + 1;
+            labelCount[label] = count;
+            maxCount = qMax(maxCount, count);
+        }
+        if (maxCount < 2)
+            break;
+        // Modify conflicting labels
+        for (const QString &path : pathLabels.keys()) {
+            QString label = pathLabels[path];
+            if (labelCount[label] < 2)
+                continue;
+            int index = labelIndex.value(label, 0) + 1;
+            labelIndex[label] = index;
+            if (iteration == 0)
+                pathLabels[path] = QString("%1 %2").arg(label).arg(index);
+            else
+                pathLabels[path] = QString("%1.%2").arg(label).arg(index);
+        }
+    }
+}
 
 QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
 {
     QSet<QString> alreadyExported;
+    QSet<QString> reservedLabels;
     QList<StoragePlugin *> result;
     QDirIterator it(CONFIG_DIR, QDir::Files);
     while (it.hasNext()) {
@@ -125,8 +228,8 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
             }
         }
 
-        // "descs" maps from user-visible storage names to exported paths
-        QMap<QString, QString> descs;
+        // directory path to storage label mapping
+        QMap<QString, QString> pathLabels;
         if (storage.hasAttribute("path")) {
             /* Treat 'path' attribute as a glob pattern. If it actually
              * contains wildcard characters, use basenames of matching
@@ -154,11 +257,13 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
                 if (!S_ISDIR(st.st_mode))
                     continue;
                 QString path = QString::fromUtf8(gl.gl_pathv[i]);
+                if (pathLabels.contains(path) || alreadyExported.contains(path))
+                    continue;
                 QString desc(description);
                 description.clear();
                 if (desc.isEmpty())
-                    desc = QFileInfo(path).baseName();
-                descs[desc] = path;
+                    desc = generateLabel(path);
+                pathLabels[path] = desc;
             }
             globfree(&gl);
         } else {
@@ -171,6 +276,9 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
                 continue;
             }
             while (struct mntent *ent = getmntent(mntf)) {
+                QString path = QString::fromUtf8(ent->mnt_dir);
+                if (pathLabels.contains(path) || alreadyExported.contains(path))
+                    continue;
                 QString devname(ent->mnt_fsname);
                 // Use startsWith to catch partitions of the main dev
                 if (devname.startsWith(blockdev)) {
@@ -181,17 +289,22 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
                     QString description = storage.attribute("description");
                     if (!devname.isEmpty() && devname != "p1")
                         description.append(" ").append(devname);
-                    descs[description] = ent->mnt_dir;
+                    pathLabels[path] = description;
                 }
             }
         }
 
-        foreach (QString desc, descs.keys()) {
+        makeLabelsUnique(pathLabels, reservedLabels);
+
+        for (const QString &path : pathLabels.keys()) {
             /* Make sure a directory gets exported only once even if
              * it would match multiple configuration files. */
-            const QString path = descs[desc];
             if( alreadyExported.contains(path) )
                 continue;
+            const QString desc = pathLabels[path];
+            if (reservedLabels.contains(desc))
+                continue;
+            reservedLabels.insert(desc);
             alreadyExported.insert(path);
 
             // The description is the important part; name is mostly internal.
