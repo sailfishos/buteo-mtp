@@ -71,9 +71,9 @@ static QString getVideoBitRate (const QString&);
 static QString getFramesPerThousandSecs (const QString&);
 static QString getDRMStatus (const QString&);
 
-
-static void setDateCreated (const QString& iri, QString& val, QStringList& domains, QString &extraInserts);
 static void setName (const QString& iri, QString& val, QStringList& domains, QString &extraInserts);
+#if 0
+static void setDateCreated (const QString& iri, QString& val, QStringList& domains, QString &extraInserts);
 static void setArtist (const QString& iri, QString& val, QStringList& domains, QString &extraInserts);
 static void setWidth (const QString& iri, QString& val, QStringList& domains, QString &extraInserts);
 static void setHeight (const QString& iri, QString& val, QStringList& domains, QString &extraInserts);
@@ -92,6 +92,7 @@ static void setAudioBitRate (const QString& iri, QString& val, QStringList& doma
 static void setVideoFourCCCodec (const QString& iri, QString& val, QStringList& domains, QString &extraInserts);
 static void setVideoBitRate (const QString& iri, QString& val, QStringList& domains, QString &extraInserts);
 static void setFramesPerThousandSecs (const QString& iri, QString& val, QStringList& domains, QString &extraInserts);
+#endif
 
 static void trackerQuery(const QString&, QVector<QStringList> &res);
 static void trackerUpdateQuery(const QString&);
@@ -1200,20 +1201,6 @@ QString getFramesPerThousandSecs (const QString& iri)
     return ret;
 }
 
-void setDateCreated (const QString& iri, QString& val, QStringList& domains, QString &/*extraInserts*/)
-{
-    if(iri.isNull())
-    {
-        val = QString("nie:contentCreated");
-        domains.append("nie:InformationElement");
-    }
-    else
-    {
-        QString query = QString("DELETE{?f nie:contentCreated ?fld} WHERE{?f nie:url '") + iri + QString("' ; nie:contentCreated ?fld} INSERT{?f nie:contentCreated '") + val + QString("'} WHERE{?f a nie:InformationElement; nie:url '") + iri + QString("'}");
-        return trackerUpdateQuery(query);
-    }
-}
-
 void setName (const QString& iri, QString& val, QStringList& domains, QString &/*extraInserts*/)
 {
     if(iri.isNull())
@@ -1224,6 +1211,21 @@ void setName (const QString& iri, QString& val, QStringList& domains, QString &/
     else
     {
         QString query = QString("DELETE{?f nie:title ?fld} WHERE{?f nie:url '") + iri + QString("' ; nie:title ?fld} INSERT{?f nie:title '") + val + QString("'} WHERE{?f a nie:InformationElement; nie:url '") + iri + QString("'}");
+        return trackerUpdateQuery(query);
+    }
+}
+
+#if 0
+void setDateCreated (const QString& iri, QString& val, QStringList& domains, QString &/*extraInserts*/)
+{
+    if(iri.isNull())
+    {
+        val = QString("nie:contentCreated");
+        domains.append("nie:InformationElement");
+    }
+    else
+    {
+        QString query = QString("DELETE{?f nie:contentCreated ?fld} WHERE{?f nie:url '") + iri + QString("' ; nie:contentCreated ?fld} INSERT{?f nie:contentCreated '") + val + QString("'} WHERE{?f a nie:InformationElement; nie:url '") + iri + QString("'}");
         return trackerUpdateQuery(query);
     }
 }
@@ -1481,6 +1483,7 @@ void setFramesPerThousandSecs (const QString& iri, QString& val, QStringList& do
         return trackerUpdateQuery(query);
     }
 }
+#endif
 
 void StorageTracker::ignoreNextUpdateFinished(QDBusPendingCallWatcher *pcw)
 {
