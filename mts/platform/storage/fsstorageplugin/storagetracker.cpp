@@ -97,7 +97,9 @@ static void setFramesPerThousandSecs (const QString& iri, QString& val, QStringL
 static void trackerQuery(const QString&, QVector<QStringList> &res);
 static void trackerUpdateQuery(const QString&);
 static void convertResultByTypeAndCode(const QString&, QString&, MTPDataType, MTPObjPropertyCode, QVariant&);
+#if 0
 static QString getValAsString(const QVariant& propVal, MTPDataType type, MTPObjPropertyCode code);
+#endif
 static QString generateIriForTracker(const QString& path);
 static void deletePlaylistByIri(const QString &iri);
 
@@ -390,6 +392,7 @@ static void convertResultByTypeAndCode(const QString& filePath, QString& res, MT
     }
 }
 
+#if 0
 static QString getValAsString(const QVariant& propVal, MTPDataType type, MTPObjPropertyCode code)
 {
     QString ret;
@@ -495,6 +498,7 @@ static QString getValAsString(const QVariant& propVal, MTPDataType type, MTPObjP
     ret.replace(QRegExp("'"), "\\'");
     return ret;
 }
+#endif
 
 QString StorageTracker::buildQuery(const QString &filePath, QList<MTPObjPropDescVal> &propValList)
 {
@@ -674,6 +678,7 @@ bool StorageTracker::getObjectProperty(const QString& path, MTPObjPropertyCode e
     return true;
 }
 
+#if 0
 QString StorageTracker::buildUpdateQuery(const QString &filePath, QList<MTPObjPropDescVal> &propValList)
 {
     QString iri = generateIriForTracker(filePath);
@@ -744,18 +749,29 @@ QString StorageTracker::buildUpdateQuery(const QString &filePath, QList<MTPObjPr
         return (insert + props + end + extraInserts);
     }
 }
+#endif
 
 void StorageTracker::setPropVals(const QString &filePath, QList<MTPObjPropDescVal> &propValList)
 {
+    Q_UNUSED(filePath);
+    Q_UNUSED(propValList);
+#if 0 // update table not populated at the moment
     QString query = buildUpdateQuery(filePath, propValList);
     if(false == query.isNull())
     {
         trackerUpdateQuery(query);
     }
+#endif
 }
 
 bool StorageTracker::setObjectProperty(const QString& path, MTPObjPropertyCode ePropertyCode, MTPDataType type, const QVariant& propVal)
 {
+    Q_UNUSED(path);
+    Q_UNUSED(ePropertyCode);
+    Q_UNUSED(type);
+    Q_UNUSED(propVal);
+    return false;
+#if 0
     if(!m_handlerTableUpdate.contains(ePropertyCode))
     {
         MTP_LOG_WARNING("Write handler for object property not found!::" << ePropertyCode);
@@ -768,6 +784,7 @@ bool StorageTracker::setObjectProperty(const QString& path, MTPObjPropertyCode e
     QString extraInserts;
     pFunc(iri, val, domains, extraInserts);
     return true;
+#endif
 }
 
 static QSparqlConnection *trackerConnection()
