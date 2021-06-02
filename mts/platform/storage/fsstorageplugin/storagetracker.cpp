@@ -107,11 +107,14 @@ static QString getValAsString(const QVariant& propVal, MTPDataType type, MTPObjP
 static QString generateIriForTracker(const QString& path);
 static void deletePlaylistByIri(const QString &iri);
 
+#if 0 // compile again if ignoreNextUpdate() gets used some day
 static const QString MINER_DEST("org.freedesktop.Tracker1.Miner.Files");
 static const QString MINER_PATH("/org/freedesktop/Tracker1/Miner/Files");
 static const QString MINER_IF("org.freedesktop.Tracker1.Miner");
+#endif
 
-StorageTracker::StorageTracker() : m_minerInterface(MINER_DEST, MINER_PATH, MINER_IF, QDBusConnection::sessionBus())
+StorageTracker::StorageTracker()
+//    : m_minerInterface(MINER_DEST, MINER_PATH, MINER_IF, QDBusConnection::sessionBus())
 {
     populateFunctionMap();
 }
@@ -1508,7 +1511,6 @@ void setFramesPerThousandSecs (const QString& iri, QString& val, QStringList& do
         return trackerUpdateQuery(query);
     }
 }
-#endif
 
 void StorageTracker::ignoreNextUpdateFinished(QDBusPendingCallWatcher *pcw)
 {
@@ -1530,6 +1532,7 @@ void StorageTracker::ignoreNextUpdate(const QStringList &iris)
                 this, &StorageTracker::ignoreNextUpdateFinished);
     }
 }
+#endif
 
 QString StorageTracker::savePlaylist(const QString &playlistPath, QStringList &entries)
 {
