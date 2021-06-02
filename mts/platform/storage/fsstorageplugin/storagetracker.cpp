@@ -60,14 +60,18 @@ static QString getTrack (const QString&);
 static QString getGenre (const QString&);
 static QString getUseCount (const QString&);
 static QString getAlbumName (const QString&);
+#if 0
 static QString getBitrateType (const QString&);
+#endif
 static QString getSampleRate (const QString&);
 static QString getNbrOfChannels (const QString&);
+#if 0
 static QString getAudioBitDepth (const QString&);
 static QString getAudioWAVECodec (const QString&);
 static QString getAudioBitRate (const QString&);
 static QString getVideoFourCCCodec (const QString&);
 static QString getVideoBitRate (const QString&);
+#endif
 static QString getFramesPerThousandSecs (const QString&);
 static QString getDRMStatus (const QString&);
 
@@ -135,15 +139,15 @@ void StorageTracker::populateFunctionMap()
     //m_handlerTable[MTP_OBJ_PROP_Original_Release_Date] = getOriginalReleaseDate;
     m_handlerTable[MTP_OBJ_PROP_Album_Name] = getAlbumName;
     //m_handlerTable[MTP_OBJ_PROP_Album_Artist] = getAlbumArtist;
-    m_handlerTable[MTP_OBJ_PROP_Bitrate_Type] = getBitrateType;
+    //m_handlerTable[MTP_OBJ_PROP_Bitrate_Type] = getBitrateType;
     m_handlerTable[MTP_OBJ_PROP_Sample_Rate] = getSampleRate;
     m_handlerTable[MTP_OBJ_PROP_Nbr_Of_Channels] = getNbrOfChannels;
-    m_handlerTable[MTP_OBJ_PROP_Audio_BitDepth] = getAudioBitDepth;
+    //m_handlerTable[MTP_OBJ_PROP_Audio_BitDepth] = getAudioBitDepth;
     //m_handlerTable[MTP_OBJ_PROP_Scan_Type] = getScanType;
-    m_handlerTable[MTP_OBJ_PROP_Audio_WAVE_Codec] = getAudioWAVECodec;
-    m_handlerTable[MTP_OBJ_PROP_Audio_BitRate] = getAudioBitRate;
-    m_handlerTable[MTP_OBJ_PROP_Video_FourCC_Codec] = getVideoFourCCCodec;
-    m_handlerTable[MTP_OBJ_PROP_Video_BitRate] = getVideoBitRate;
+    //m_handlerTable[MTP_OBJ_PROP_Audio_WAVE_Codec] = getAudioWAVECodec;
+    //m_handlerTable[MTP_OBJ_PROP_Audio_BitRate] = getAudioBitRate;
+    //m_handlerTable[MTP_OBJ_PROP_Video_FourCC_Codec] = getVideoFourCCCodec;
+    //m_handlerTable[MTP_OBJ_PROP_Video_BitRate] = getVideoBitRate;
     m_handlerTable[MTP_OBJ_PROP_Frames_Per_Thousand_Secs] = getFramesPerThousandSecs;
     m_handlerTable[MTP_OBJ_PROP_DRM_Status] = getDRMStatus;
     //m_handlerTable[MTP_OBJ_PROP_KeyFrame_Distance] = getKeyFrameDistance;
@@ -263,14 +267,14 @@ void StorageTracker::populateFunctionMap()
     m_trackerPropertyTable.insert(QString("nmm:trackNumber"));
     m_trackerPropertyTable.insert(QString("nfo:genre"));
     m_trackerPropertyTable.insert(QString("nmm:musicAlbum"));
-    m_trackerPropertyTable.insert(QString("nfo:bitrateType"));
+    //m_trackerPropertyTable.insert(QString("nfo:bitrateType"));
     m_trackerPropertyTable.insert(QString("nfo:sampleRate"));
     m_trackerPropertyTable.insert(QString("nfo:channels"));
-    m_trackerPropertyTable.insert(QString("nfo:bitDepth"));
-    m_trackerPropertyTable.insert(QString("mtp:waveFormat"));
-    m_trackerPropertyTable.insert(QString("nfo:averageAudioBitrate"));
-    m_trackerPropertyTable.insert(QString("mtp:fourCC"));
-    m_trackerPropertyTable.insert(QString("nfo:averageVideoBitrate"));
+    //m_trackerPropertyTable.insert(QString("nfo:bitDepth"));
+    //m_trackerPropertyTable.insert(QString("mtp:waveFormat"));
+    //m_trackerPropertyTable.insert(QString("nfo:averageAudioBitrate"));
+    //m_trackerPropertyTable.insert(QString("mtp:fourCC"));
+    //m_trackerPropertyTable.insert(QString("nfo:averageVideoBitrate"));
     m_trackerPropertyTable.insert(QString("nfo:frameRate"));
     m_trackerPropertyTable.insert(QString("nie:usageCounter"));
     m_trackerPropertyTable.insert(QString("nfo:isContentEncrypted"));
@@ -1047,6 +1051,7 @@ QString getAlbumName (const QString& iri)
     return ret;
 }
 
+#if 0
 QString getBitrateType (const QString& iri)
 {
     if(iri.isNull())
@@ -1065,6 +1070,7 @@ QString getBitrateType (const QString& iri)
     }
     return ret;
 }
+#endif
 
 QString getSampleRate (const QString& iri)
 {
@@ -1104,6 +1110,7 @@ QString getNbrOfChannels (const QString& iri)
     return ret;
 }
 
+#if 0
 QString getAudioBitDepth (const QString& iri)
 {
     if(iri.isNull())
@@ -1198,6 +1205,7 @@ QString getVideoBitRate (const QString& iri)
     }
     return ret;
 }
+#endif
 
 QString getFramesPerThousandSecs (const QString& iri)
 {
