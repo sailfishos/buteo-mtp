@@ -253,27 +253,27 @@ void StorageTracker::populateFunctionMap()
 #endif
 
     // Populate the map of tracker properties supported
-    m_trackerPropertyTable.insert(QString("nie:url"), 0);
-    m_trackerPropertyTable.insert(QString("nie:contentCreated"), 0);
-    m_trackerPropertyTable.insert(QString("nie:title"), 0);
-    m_trackerPropertyTable.insert(QString("nmm:performer"), 0);
-    m_trackerPropertyTable.insert(QString("nfo:width"), 0);
-    m_trackerPropertyTable.insert(QString("nfo:height"), 0);
-    m_trackerPropertyTable.insert(QString("nfo:duration"), 0);
-    m_trackerPropertyTable.insert(QString("nmm:trackNumber"), 0);
-    m_trackerPropertyTable.insert(QString("nfo:genre"), 0);
-    m_trackerPropertyTable.insert(QString("nmm:musicAlbum"), 0);
-    m_trackerPropertyTable.insert(QString("nfo:bitrateType"), 0);
-    m_trackerPropertyTable.insert(QString("nfo:sampleRate"), 0);
-    m_trackerPropertyTable.insert(QString("nfo:channels"), 0);
-    m_trackerPropertyTable.insert(QString("nfo:bitDepth"), 0);
-    m_trackerPropertyTable.insert(QString("mtp:waveFormat"), 0);
-    m_trackerPropertyTable.insert(QString("nfo:averageAudioBitrate"), 0);
-    m_trackerPropertyTable.insert(QString("mtp:fourCC"), 0);
-    m_trackerPropertyTable.insert(QString("nfo:averageVideoBitrate"), 0);
-    m_trackerPropertyTable.insert(QString("nfo:frameRate"), 0);
-    m_trackerPropertyTable.insert(QString("nie:usageCounter"), 0);
-    m_trackerPropertyTable.insert(QString("nfo:isContentEncrypted"), 0);
+    m_trackerPropertyTable.insert(QString("nie:url"));
+    m_trackerPropertyTable.insert(QString("nie:contentCreated"));
+    m_trackerPropertyTable.insert(QString("nie:title"));
+    m_trackerPropertyTable.insert(QString("nmm:performer"));
+    m_trackerPropertyTable.insert(QString("nfo:width"));
+    m_trackerPropertyTable.insert(QString("nfo:height"));
+    m_trackerPropertyTable.insert(QString("nfo:duration"));
+    m_trackerPropertyTable.insert(QString("nmm:trackNumber"));
+    m_trackerPropertyTable.insert(QString("nfo:genre"));
+    m_trackerPropertyTable.insert(QString("nmm:musicAlbum"));
+    m_trackerPropertyTable.insert(QString("nfo:bitrateType"));
+    m_trackerPropertyTable.insert(QString("nfo:sampleRate"));
+    m_trackerPropertyTable.insert(QString("nfo:channels"));
+    m_trackerPropertyTable.insert(QString("nfo:bitDepth"));
+    m_trackerPropertyTable.insert(QString("mtp:waveFormat"));
+    m_trackerPropertyTable.insert(QString("nfo:averageAudioBitrate"));
+    m_trackerPropertyTable.insert(QString("mtp:fourCC"));
+    m_trackerPropertyTable.insert(QString("nfo:averageVideoBitrate"));
+    m_trackerPropertyTable.insert(QString("nfo:frameRate"));
+    m_trackerPropertyTable.insert(QString("nie:usageCounter"));
+    m_trackerPropertyTable.insert(QString("nfo:isContentEncrypted"));
 }
 
 static void convertResultByTypeAndCode(const QString& filePath, QString& res, MTPDataType type, MTPObjPropertyCode code, QVariant& convertedResult)

@@ -34,6 +34,7 @@
 
 #include <QVariant>
 #include <QList>
+#include <QSet>
 #include <QDBusInterface>
 #include <QDBusPendingCallWatcher>
 #include "mtptypes.h"
@@ -80,7 +81,7 @@ friend class FSStoragePlugin_test;
 #if 0
         QHash<MTPObjPropertyCode, fpTrackerUpdateQueryHandler> m_handlerTableUpdate;
 #endif
-        QHash<QString, int> m_trackerPropertyTable;
+        QSet<QString> m_trackerPropertyTable;
         void populateFunctionMap();
         QString buildQuery(const QString &filePath, QList<MTPObjPropDescVal> &propValList);
         QString buildMassQuery(const QString &path,
