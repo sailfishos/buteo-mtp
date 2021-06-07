@@ -1313,6 +1313,7 @@ void FSStoragePlugin_test::testGetObjectPropertyValueFromStorage()
     QCOMPARE( v.toInt(), 0 );
 }
 
+#if 0
 void FSStoragePlugin_test::testGetObjectPropertyValueFromTracker()
 {
     MTPResponseCode response;
@@ -1592,6 +1593,7 @@ void FSStoragePlugin_test::testSetObjectPropertyValueInTracker()
     response = m_storage->setObjectPropertyValue( handle, propValList );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
+#endif
 
 void FSStoragePlugin_test::testGetInvalidObjectPropertyValueFromStorage()
 {

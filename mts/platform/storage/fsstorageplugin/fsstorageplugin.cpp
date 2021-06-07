@@ -3345,6 +3345,7 @@ MTPResponseCode FSStoragePlugin:: getObjectPropertyValueFromStorage( const ObjHa
     return code;
 }
 
+#if 0 // was only called from unit test
 MTPResponseCode FSStoragePlugin::getObjectPropertyValueFromTracker( const ObjHandle &handle,
                                                    MTPObjPropertyCode propCode,
                                                    QVariant &value, MTPDataType type )
@@ -3362,6 +3363,7 @@ MTPResponseCode FSStoragePlugin::getObjectPropertyValueFromTracker( const ObjHan
     }
     return code;
 }
+#endif
 
 MTPResponseCode FSStoragePlugin::getObjectPropertyValue(const ObjHandle &handle,
         QList<MTPObjPropDescVal> &propValList)

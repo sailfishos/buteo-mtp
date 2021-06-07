@@ -669,6 +669,7 @@ void StorageTracker::getChildPropVals(const QString& parentPath,
     }
 }
 
+#if 0
 // Fetch the property value for the object referenced by the iri (ex: file:///home/user/MyDocs/1.mp3).
 // Caller must free the pResult by calling storage_tracker_free_tracker_result
 bool StorageTracker::getObjectProperty(const QString& path, MTPObjPropertyCode ePropertyCode, MTPDataType type, QVariant& result)
@@ -684,6 +685,7 @@ bool StorageTracker::getObjectProperty(const QString& path, MTPObjPropertyCode e
     convertResultByTypeAndCode(path, ret, type, ePropertyCode,result);
     return true;
 }
+#endif
 
 #if 0
 QString StorageTracker::buildUpdateQuery(const QString &filePath, QList<MTPObjPropDescVal> &propValList)

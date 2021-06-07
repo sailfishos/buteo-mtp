@@ -56,7 +56,7 @@ friend class FSStoragePlugin_test;
         ~StorageTracker();
         bool getPropVals(const QString &filePath, QList<MTPObjPropDescVal> &propValList);
         void setPropVals(const QString &filePath, QList<MTPObjPropDescVal> &propValList);
-        bool getObjectProperty(const QString& filePath, MTPObjPropertyCode ePropertyCode, MTPDataType type, QVariant& propVal);
+        //bool getObjectProperty(const QString& filePath, MTPObjPropertyCode ePropertyCode, MTPDataType type, QVariant& propVal);
         bool setObjectProperty(const QString& filePath, MTPObjPropertyCode ePropertyCode, MTPDataType type, const QVariant& propVal);
         void getChildPropVals(const QString& parentPath,
                 const QList<const MtpObjPropDesc *>& properties,

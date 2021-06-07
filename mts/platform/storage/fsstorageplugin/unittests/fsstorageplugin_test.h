@@ -85,8 +85,8 @@ private slots:
     void testTruncateItem();
     void testGetPath();
     void testGetObjectPropertyValueFromStorage();
-    void testGetObjectPropertyValueFromTracker();
-    void testSetObjectPropertyValueInTracker();
+    //void testGetObjectPropertyValueFromTracker();
+    //void testSetObjectPropertyValueInTracker();
     void testGetInvalidObjectPropertyValueFromStorage();
     void testInotifyCreate();
     void testInotifyModify();

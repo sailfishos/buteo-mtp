@@ -370,9 +370,11 @@ private:
     MTPResponseCode getObjectPropertyValueFromStorage( const ObjHandle &handle,
                                                        MTPObjPropertyCode propCode,
                                                        QVariant &value, MTPDataType type );
+#if 0
     MTPResponseCode getObjectPropertyValueFromTracker( const ObjHandle &handle,
                                                        MTPObjPropertyCode propCode,
                                                        QVariant &value, MTPDataType type );
+#endif
 
     /// Is storage item an image file that the thumbnailer can process
     bool isThumbnailableImage(StorageItem*);
