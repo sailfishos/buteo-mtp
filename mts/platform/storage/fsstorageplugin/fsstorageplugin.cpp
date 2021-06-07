@@ -3523,6 +3523,7 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
                 code = MTP_RESP_OK;
             }
         }
+#if 0
         else if((false == sendObjectPropList) && (false == storageItem->m_path.isEmpty()))
         {
             // go to tracker
@@ -3532,6 +3533,7 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
                     MTP_RESP_OK : code;
             }
         }
+#endif
     }
     if(true == sendObjectPropList)
     {
