@@ -61,12 +61,10 @@ friend class FSStoragePlugin_test;
 
     private:
         QHash<MTPObjPropertyCode, fpTrackerQueryHandler> m_handlerTable;
-        QSet<QString> m_trackerPropertyTable;
         void populateFunctionMap();
         QString buildQuery(const QString &filePath, QList<MTPObjPropDescVal> &propValList);
         QString buildMassQuery(const QString &path,
                 const QList<const MtpObjPropDesc *> &properties);
-        bool isTrackerPropertySupported(const QString &property);
 };
 }
 #endif

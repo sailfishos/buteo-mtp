@@ -91,23 +91,6 @@ void StorageTracker::populateFunctionMap()
     m_handlerTable[MTP_OBJ_PROP_Nbr_Of_Channels] = getNbrOfChannels;
     m_handlerTable[MTP_OBJ_PROP_Frames_Per_Thousand_Secs] = getFramesPerThousandSecs;
     m_handlerTable[MTP_OBJ_PROP_DRM_Status] = getDRMStatus;
-
-    // Populate the map of tracker properties supported
-    m_trackerPropertyTable.insert(QString("nie:url"));
-    m_trackerPropertyTable.insert(QString("nie:contentCreated"));
-    m_trackerPropertyTable.insert(QString("nie:title"));
-    m_trackerPropertyTable.insert(QString("nmm:performer"));
-    m_trackerPropertyTable.insert(QString("nfo:width"));
-    m_trackerPropertyTable.insert(QString("nfo:height"));
-    m_trackerPropertyTable.insert(QString("nfo:duration"));
-    m_trackerPropertyTable.insert(QString("nmm:trackNumber"));
-    m_trackerPropertyTable.insert(QString("nfo:genre"));
-    m_trackerPropertyTable.insert(QString("nmm:musicAlbum"));
-    m_trackerPropertyTable.insert(QString("nfo:sampleRate"));
-    m_trackerPropertyTable.insert(QString("nfo:channels"));
-    m_trackerPropertyTable.insert(QString("nfo:frameRate"));
-    m_trackerPropertyTable.insert(QString("nie:usageCounter"));
-    m_trackerPropertyTable.insert(QString("nfo:isContentEncrypted"));
 }
 
 static void convertResultByTypeAndCode(const QString& filePath, QString& res, MTPDataType type, MTPObjPropertyCode code, QVariant& convertedResult)
@@ -681,9 +664,4 @@ QString StorageTracker::generateIri(const QString &path)
 bool StorageTracker::supportsProperty(MTPObjPropertyCode code) const
 {
     return m_handlerTable.contains(code);
-}
-
-bool StorageTracker::isTrackerPropertySupported(const QString &property)
-{
-    return m_trackerPropertyTable.contains(property);
 }
