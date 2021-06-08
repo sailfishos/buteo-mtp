@@ -536,72 +536,6 @@ void FSStoragePlugin::disableObjectEvents()
     }
 }
 
-#if 0
-/************************************************************
- * void FSStoragePlugin::syncPlaylists
- ***********************************************************/
-void FSStoragePlugin::syncPlaylists()
-{
-    // Ensure that both abstract and normal playlist directory are there
-    QDir dir( m_storagePath );
-    if( !dir.exists( "Playlists" ) )
-    {
-        dir.mkpath( "Playlists" );
-    }
-
-    // We need to synchronize the directories (while the dev was offline something could happened)
-
-    // First read the Playlists dir and store in a vector
-    QList<QString> playlistItems;
-    dir = QDir( m_playlistPath );
-    QStringList contents = dir.entryList();
-    for( int i = 0; i < contents.size(); ++i )
-    {
-        QString name = contents.at(i);
-        if( name.endsWith( ".pla" ) )
-        {
-            QString path = m_playlistPath + QString("/") + name;
-            // Check if the playlist is in tracker
-            if(false == m_tracker->isPlaylistExisting(path))
-            {
-                // Delete file from disk
-                QFile f(path);
-                f.remove();
-            }
-        }
-
-    }
-
-    // Second read the internal playlist dir and check if there exists a corresponding file in the
-    // Playlists directory, if not, create it.
-    // TODO In the future this should synchronize the device playlists
-    dir = QDir( m_internalPlaylistPath );
-    contents = dir.entryList();
-    for( int i = 0; i < contents.size(); ++i )
-    {
-        QString name = contents.at(i);
-        if( name.endsWith( ".m3u" ) )
-        {
-            if( !playlistItems.contains( name.replace( ".m3u", ".pla" ) ) )
-            {
-                QFile file( m_playlistPath + "/" + name );
-                file.open( QIODevice::ReadWrite );
-                file.close();
-            }
-            else
-            {
-                playlistItems.removeOne( name );
-            }
-        }
-    }
-
-    for(QList<QString>::const_iterator i = playlistItems.constBegin(); i != playlistItems.constEnd(); ++i)
-    {
-        QFile file( m_playlistPath + "/" + *i );
-        file.remove();
-    }
-}
-#endif
 /************************************************************
  * void FSStoragePlugin::readPlaylists
  ***********************************************************/
@@ -670,39 +604,6 @@ void FSStoragePlugin::assignPlaylistReferences()
         }
     }
 }
-
-#if 0
-/************************************************************
- * void FSStoragePlugin::openPlaylists
- ***********************************************************/
-QVector<ObjHandle> FSStoragePlugin::readInternalAbstractPlaylist( StorageItem *item )
-{
-    QVector<ObjHandle> playlistRefs;
-    if( !item )
-    {
-        return playlistRefs;
-    }
-    char filePath[256]; // the max path length // FIXME
-    QFile file( item->m_path );
-    if( file.open( QIODevice::ReadOnly ) )
-    {
-        while( !file.atEnd() )
-        {
-            int bytesRead = file.readLine( filePath, 256 );
-            if( -1 == bytesRead || filePath[bytesRead -1] != '\n' || filePath[0] == '#' )
-            {
-                continue;
-            }
-            filePath[bytesRead -1] = '\0';
-            if( m_pathNamesMap.contains( QString( filePath ) ) )
-            {
-                playlistRefs.append( m_pathNamesMap.value( QString( filePath ) ) );
-            }
-        }
-    }
-    return playlistRefs;
-}
-#endif
 
 /************************************************************
  * void FSStoragePlugin::removePlaylist
@@ -1040,11 +941,6 @@ MTPResponseCode FSStoragePlugin::createFile( const QString &path, MTPObjectInfo 
     if( fallocate(file.handle(), 0, 0, size) ) {
         MTP_LOG_WARNING("failed to set file:" << path << " to size:" << size);
     }
-
-#if 0
-    // Ask tracker to ignore the next update (close) on this file
-    m_tracker->ignoreNextUpdate( QStringList( m_tracker->generateIri( path ) ) );
-#endif
 
     file.close();
 
@@ -2929,60 +2825,6 @@ void FSStoragePlugin::removeInvalidObjectReferences( const ObjHandle &handle )
 }
 
 /************************************************************
- * void FSStoragePlugin::setPlaylistReferences
- ***********************************************************/
-#if 0
-void FSStoragePlugin::setPlaylistReferences( const ObjHandle &handle , const QVector<ObjHandle> &references )
-{
-    if( !m_objectHandlesMap.contains( handle ) )
-    {
-        return;
-    }
-    StorageItem *storageItem = m_objectHandlesMap.value( handle );
-    if( !storageItem || "" == storageItem->m_path || !storageItem->m_objectInfo || !storageItem->m_path.endsWith( ".pla" ) )
-    {
-        return;
-    }
-    QString name = storageItem->m_objectInfo->mtpFileName;
-    name.replace( ".pla", ".m3u" );
-    QString path = m_internalPlaylistPath + "/" + name;
-    if( !path.endsWith( ".m3u" ) )
-    {
-        return;
-    }
-    QFile file( path );
-    if( file.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
-    {
-        file.write( "#EXTM3U\n", 8 );
-        for( int i = 0 ; i < references.size(); ++i )
-        {
-            if( !m_objectHandlesMap.contains( references[i] ) )
-            {
-                continue;
-            }
-            StorageItem *storageItem = m_objectHandlesMap.value( references[i] );
-            if( !storageItem )
-            {
-                continue;
-            }
-            QString refItemName = storageItem->m_path;
-            if( refItemName[refItemName.size() -1] == '\0' )
-            {
-                refItemName[refItemName.size() -1] = '\n';
-            }
-            else
-            {
-                refItemName += '\n';
-            }
-            QByteArray ba = refItemName.toUtf8();
-            char *writeBuffer = ba.data();
-            file.write( writeBuffer, strlen( writeBuffer ) );
-        }
-    }
-}
-#endif
-
-/************************************************************
  * void FSStoragePlugin::storeObjectReferences
  ***********************************************************/
 void FSStoragePlugin::storeObjectReferences()
@@ -3345,26 +3187,6 @@ MTPResponseCode FSStoragePlugin:: getObjectPropertyValueFromStorage( const ObjHa
     return code;
 }
 
-#if 0 // was only called from unit test
-MTPResponseCode FSStoragePlugin::getObjectPropertyValueFromTracker( const ObjHandle &handle,
-                                                   MTPObjPropertyCode propCode,
-                                                   QVariant &value, MTPDataType type )
-{
-    MTPResponseCode code = MTP_RESP_ObjectProp_Not_Supported;
-    StorageItem *storageItem = m_objectHandlesMap.value( handle );
-    if( !storageItem || storageItem->m_path.isEmpty() )
-    {
-        code = MTP_RESP_GeneralError;
-    }
-    else
-    {
-        code = m_tracker->getObjectProperty( storageItem->m_path, propCode, type, value ) ?
-               MTP_RESP_OK : code;
-    }
-    return code;
-}
-#endif
-
 MTPResponseCode FSStoragePlugin::getObjectPropertyValue(const ObjHandle &handle,
         QList<MTPObjPropDescVal> &propValList)
 {
@@ -3470,6 +3292,8 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
                                                          QList<MTPObjPropDescVal> &propValList,
                                                          bool sendObjectPropList /*=false*/ )
 {
+    Q_UNUSED(sendObjectPropList);
+
     MTPResponseCode code = MTP_RESP_OK;
     StorageItem *storageItem = m_objectHandlesMap.value( handle );
     if( !storageItem )
@@ -3523,28 +3347,8 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
                 code = MTP_RESP_OK;
             }
         }
-#if 0
-        else if((false == sendObjectPropList) && (false == storageItem->m_path.isEmpty()))
-        {
-            // go to tracker
-            if( !storageItem->m_path.isEmpty() )
-            {
-                code = m_tracker->setObjectProperty( storageItem->m_path, propDesc->uPropCode, propDesc->uDataType, value ) ?
-                    MTP_RESP_OK : code;
-            }
-        }
-#endif
     }
-    if(true == sendObjectPropList)
-    {
-#if 0
-        // Disable this as tracker extracts better information, and doesn't like data from other sources.
-        m_tracker->setPropVals(storageItem->m_path, propValList);
-        // Ask tracker to ignore the current file, this is because we already have
-        // all required metadata from the initiator.
-        m_tracker->ignoreNextUpdate(QStringList(m_tracker->generateIri(storageItem->m_path)));
-#endif
-    }
+
     return code;
 }
 

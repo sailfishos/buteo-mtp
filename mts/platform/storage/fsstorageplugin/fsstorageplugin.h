@@ -137,19 +137,11 @@ public slots:
     void getLargestPuoid( MtpInt128& puoid );
 
 private:
-    /// Creates playlist folders and sync .pla files with real playlists.
-    void syncPlaylists();
-
     /// Reads internal playlists.
     void assignPlaylistReferences();
 
-    /// Opens internal playlists.
-    QVector<ObjHandle> readInternalAbstractPlaylist( StorageItem* );
-
     /// Removes an internal playlist.
     void removePlaylist(const QString &path);
-
-    void setPlaylistReferences( const ObjHandle &handle , const QVector<ObjHandle> &references );
 
     /// Reads puoids from the puoids db, so that are preserved across MTP sessions.
     void populatePuoids();
@@ -370,11 +362,6 @@ private:
     MTPResponseCode getObjectPropertyValueFromStorage( const ObjHandle &handle,
                                                        MTPObjPropertyCode propCode,
                                                        QVariant &value, MTPDataType type );
-#if 0
-    MTPResponseCode getObjectPropertyValueFromTracker( const ObjHandle &handle,
-                                                       MTPObjPropertyCode propCode,
-                                                       QVariant &value, MTPDataType type );
-#endif
 
     /// Is storage item an image file that the thumbnailer can process
     bool isThumbnailableImage(StorageItem*);

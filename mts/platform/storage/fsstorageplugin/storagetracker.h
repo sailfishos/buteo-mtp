@@ -35,8 +35,6 @@
 #include <QVariant>
 #include <QList>
 #include <QSet>
-#include <QDBusInterface>
-#include <QDBusPendingCallWatcher>
 #include "mtptypes.h"
 
 class QString;
@@ -55,13 +53,9 @@ friend class FSStoragePlugin_test;
         StorageTracker();
         ~StorageTracker();
         bool getPropVals(const QString &filePath, QList<MTPObjPropDescVal> &propValList);
-        //void setPropVals(const QString &filePath, QList<MTPObjPropDescVal> &propValList);
-        //bool getObjectProperty(const QString& filePath, MTPObjPropertyCode ePropertyCode, MTPDataType type, QVariant& propVal);
-        //bool setObjectProperty(const QString& filePath, MTPObjPropertyCode ePropertyCode, MTPDataType type, const QVariant& propVal);
         void getChildPropVals(const QString& parentPath,
                 const QList<const MtpObjPropDesc *>& properties,
                 QMap<QString, QList<QVariant> > &values);
-        //void ignoreNextUpdate(const QStringList &filePaths);
         QString savePlaylist(const QString &playlistPath, QStringList &entries);
         void getPlaylists(QStringList &playlistIds, QList<QStringList> &lists, bool getExisting = false);
         bool isPlaylistExisting(const QString &path);
@@ -73,26 +67,14 @@ friend class FSStoragePlugin_test;
         QString generateIri(const QString &path);
         bool supportsProperty(MTPObjPropertyCode code) const;
 
-#if 0
-    public Q_SLOTS:
-        void ignoreNextUpdateFinished(QDBusPendingCallWatcher *pcw);
-#endif
-
     private:
         QHash<MTPObjPropertyCode, fpTrackerQueryHandler> m_handlerTable;
-#if 0
-        QHash<MTPObjPropertyCode, fpTrackerUpdateQueryHandler> m_handlerTableUpdate;
-#endif
         QSet<QString> m_trackerPropertyTable;
         void populateFunctionMap();
         QString buildQuery(const QString &filePath, QList<MTPObjPropDescVal> &propValList);
         QString buildMassQuery(const QString &path,
                 const QList<const MtpObjPropDesc *> &properties);
-#if 0
-        QString buildUpdateQuery(const QString &filePath, QList<MTPObjPropDescVal> &propValList);
-#endif
         bool isTrackerPropertySupported(const QString &property);
-        //QDBusInterface m_minerInterface;
 };
 }
 #endif
