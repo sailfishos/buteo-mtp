@@ -46,7 +46,6 @@ class QDir;
 namespace meegomtp1dot0
 {
 class FSInotify;
-class StorageTracker;
 class Thumbnailer;
 class StorageItem;
 }
@@ -387,7 +386,6 @@ private:
     QString m_puoidsDbPath; ///< path where puoids will be stored persistently.
     QString m_objectReferencesDbPath; ///< path where references will be stored persistently.
     ObjHandle m_writeObjectHandle; ///< The obj handle for which a write operation is currently is progress. 0 means invalid handle, NOT root node!!
-    StorageTracker* m_tracker; ///< pointer to the tracker object
     Thumbnailer* m_thumbnailer; ///< pointer to the thumbnailer object
     FSInotify* m_inotify; ///< pointer to the inotify wrapper
     QHash<QString,quint16> m_formatByExtTable;

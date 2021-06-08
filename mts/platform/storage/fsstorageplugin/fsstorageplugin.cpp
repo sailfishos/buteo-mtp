@@ -33,7 +33,6 @@
 
 #include "fsstorageplugin.h"
 #include "fsinotify.h"
-#include "storagetracker.h"
 #include "storageitem.h"
 #include "thumbnailer.h"
 #include "trace.h"
@@ -436,7 +435,6 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
     // Register this type before creating the Thumbnailer
     qDBusRegisterMetaType<ThumbnailPathList>();
 
-    m_tracker = new StorageTracker();
     m_thumbnailer = new Thumbnailer();
     QObject::connect( m_thumbnailer, SIGNAL( thumbnailReady( const QString& ) ), this, SLOT( receiveThumbnail( const QString& ) ) );
     clearCachedInotifyEvent(); // initialize
@@ -502,8 +500,6 @@ FSStoragePlugin::~FSStoragePlugin()
         }
     }
 
-    delete m_tracker;
-    m_tracker = 0;
     delete m_thumbnailer;
     m_thumbnailer = 0;
     delete m_inotify;
@@ -3054,9 +3050,6 @@ MTPResponseCode FSStoragePlugin::getObjectPropertyValue(const ObjHandle &handle,
                 return response;
             }
         }
-
-        // Fetch whatever else remains from Tracker.
-        m_tracker->getPropVals(storageItem->m_path, propValList);
     }
     return MTP_RESP_OK;
 }
@@ -3084,48 +3077,6 @@ MTPResponseCode FSStoragePlugin::getChildPropertyValues(ObjHandle handle,
             childValues.append(QVariant());
             getObjectPropertyValueFromStorage(child->m_handle, desc->uPropCode,
                     childValues.last(), desc->uDataType);
-        }
-    }
-
-    QList<const MtpObjPropDesc *> trackerSupportedProperties;
-    foreach (const MtpObjPropDesc *desc, properties) {
-        if (m_tracker->supportsProperty(desc->uPropCode)) {
-            trackerSupportedProperties.append(desc);
-        }
-    }
-
-    QMap<QString, QList<QVariant> > trackerValues;
-    m_tracker->getChildPropVals(item->m_path, trackerSupportedProperties,
-            trackerValues);
-    if (trackerValues.isEmpty()) {
-        // Nothing more in Tracker, return immediately.
-        return MTP_RESP_OK;
-    }
-
-    // Merge the results.
-    QMap<ObjHandle, QList<QVariant> >::iterator it;
-    for (it = values.begin(); it != values.end(); ++it) {
-        StorageItem *child = m_objectHandlesMap[it.key()];
-        QList<QVariant> &childValues = it.value();
-        if (!trackerValues.contains(child->m_path)) {
-            MTP_LOG_INFO("Object" << child->m_path << "not found in tracker "
-                    "result set.");
-            continue;
-        }
-
-        QList<QVariant>::iterator trackerValuesIt =
-                trackerValues[child->m_path].begin();
-        for (int i = 0; i != properties.size(); ++i) {
-            if (!m_tracker->supportsProperty(properties[i]->uPropCode)) {
-                // Not in Tracker result set.
-                continue;
-            }
-
-            QVariant &value = childValues[i];
-            if (value.isNull()) {
-                value = *trackerValuesIt;
-            }
-            ++trackerValuesIt;
         }
     }
 
