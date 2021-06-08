@@ -137,12 +137,6 @@ public slots:
     void getLargestPuoid( MtpInt128& puoid );
 
 private:
-    /// Reads internal playlists.
-    void assignPlaylistReferences();
-
-    /// Removes an internal playlist.
-    void removePlaylist(const QString &path);
-
     /// Reads puoids from the puoids db, so that are preserved across MTP sessions.
     void populatePuoids();
 
@@ -394,8 +388,6 @@ private:
     StorageItem *m_root; ///< the root folder
     QString m_puoidsDbPath; ///< path where puoids will be stored persistently.
     QString m_objectReferencesDbPath; ///< path where references will be stored persistently.
-    QString m_playlistPath; ///< the path where playlists are stored.
-    QString m_internalPlaylistPath; ///< the path where internal abstract playlists are stored.
     ObjHandle m_writeObjectHandle; ///< The obj handle for which a write operation is currently is progress. 0 means invalid handle, NOT root node!!
     StorageTracker* m_tracker; ///< pointer to the tracker object
     Thumbnailer* m_thumbnailer; ///< pointer to the thumbnailer object
@@ -404,18 +396,6 @@ private:
     QHash<MTPObjFormatCode, QString> m_imageMimeTable; ///< Maps the MTP object format code (for image types only) to MIME type string
     QString m_mtpPersistentDBPath;
     MtpInt128 m_largestPuoid;
-
-    struct ExistingPlaylists
-    {
-        QStringList             playlistPaths;
-        QList<QStringList>      playlistEntries;
-    }m_existingPlaylists;
-
-    struct NewPlaylists
-    {
-        QStringList             playlistNames;
-        QList<QStringList>      playlistEntries;
-    }m_newPlaylists;
 
     QHash<ObjHandle, StorageItem*> m_objectHandlesMap; ///< each storage has a map of all it's object's handles to corresponding storage item.
     quint64 m_reportedFreeSpace;

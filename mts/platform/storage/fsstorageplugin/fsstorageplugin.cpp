@@ -427,8 +427,6 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
     m_puoidsDbPath += '-' + volumeLabel + '-' + filesystemUuid();
 
     m_objectReferencesDbPath = m_mtpPersistentDBPath + "/mtpreferences";
-    m_internalPlaylistPath = m_mtpPersistentDBPath + "/Playlists";
-    m_playlistPath = storagePath + "/Playlists";
 
     buildSupportedFormatsList();
 
@@ -460,9 +458,6 @@ bool FSStoragePlugin::enumerateStorage()
 {
     bool result = true;
 
-    // Make Playlists directory, if one does not exist.
-    QDir(m_storagePath).mkdir("Playlists");
-
     // Do the real work asynchronously. Queue a call to it, so that
     // it can run directly from the event loop without making our caller wait.
     QMetaObject::invokeMethod(this, "enumerateStorage_worker",
@@ -473,10 +468,6 @@ bool FSStoragePlugin::enumerateStorage()
 
 void FSStoragePlugin::enumerateStorage_worker()
 {
-    // Now read all existing and new playlists from the device (tracker)
-    m_tracker->getPlaylists(m_existingPlaylists.playlistPaths, m_existingPlaylists.playlistEntries, true);
-    m_tracker->getPlaylists(m_newPlaylists.playlistNames, m_newPlaylists.playlistEntries, false);
-
     // Add the root folder to storage
     addToStorage(m_storagePath, &m_root);
 
@@ -484,12 +475,6 @@ void FSStoragePlugin::enumerateStorage_worker()
 
     // Populate object references stored persistently and add them to the storage.
     populateObjectReferences();
-
-    // TODO: The playlist handling is yet unclear. For now, playlists are
-    // implemented as abstract 0 byte objects that contain references to other
-    // objects.
-    // Create playlist folders and sync .pla files with real playlists.
-    assignPlaylistReferences();
 
     /* Delay from waiting for "storage ready" is known cause
      * of issues. To ease debugging log when it is finished. */
@@ -534,84 +519,6 @@ void FSStoragePlugin::disableObjectEvents()
             i.value()->setEventsEnabled(false);
         }
     }
-}
-
-/************************************************************
- * void FSStoragePlugin::readPlaylists
- ***********************************************************/
-void FSStoragePlugin::assignPlaylistReferences()
-{
-    // Get the handle for the playlist path
-    ObjHandle playlistDirHandle = m_pathNamesMap[m_playlistPath];
-    if(0 == playlistDirHandle)
-    {
-        MTP_LOG_CRITICAL("No handle found for playlists directory!, playlists will be unavailable!");
-        return;
-    }
-    // Assign references based on the playlists we read from tracker
-    // First the existing playlists (that is those for which we already have a .pla file for)
-    QVector<ObjHandle> references;
-    ObjHandle refHandle = 0;
-    for(int i = 0; i < m_existingPlaylists.playlistPaths.size(); i++)
-    {
-        references.clear();
-        QString playlistPath = m_existingPlaylists.playlistPaths[i];
-        // Iterate over all entries, get their object handles, and assign references
-        if(m_pathNamesMap.contains(playlistPath))
-        {
-            refHandle = m_pathNamesMap[playlistPath];
-            // Iterate entries now
-            QStringList entries = m_existingPlaylists.playlistEntries[i];
-            foreach(QString entry, entries)
-            {
-                if(m_pathNamesMap.contains(entry))
-                {
-                    references.append(m_pathNamesMap[entry]);
-                }
-            }
-            m_objectReferencesMap[refHandle] = references;
-        }
-    }
-
-    // Now we do the same for the playlists that are new on the device
-    for(int i = 0; i < m_newPlaylists.playlistNames.size(); i++)
-    {
-        references.clear();
-        // Iterate over all entries, get their object handles, and assign references
-        QString playlistName = m_newPlaylists.playlistNames[i];
-        QString playlistPath = m_playlistPath + "/" + playlistName + ".pla";
-
-        // Also create a .pla file under <root>/Playlists add an nie:url for these playlists
-        MTPObjectInfo objInfo;
-        ObjHandle newHandle = 0;
-        objInfo.mtpFileName = playlistName + ".pla";
-        objInfo.mtpObjectFormat = MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist;
-        objInfo.mtpStorageId = m_storageId;
-        objInfo.mtpParentObject = playlistDirHandle;
-        if(MTP_RESP_OK == addItem(playlistDirHandle, newHandle, &objInfo))
-        {
-            QStringList entries = m_newPlaylists.playlistEntries[i];
-            foreach(QString entry, entries)
-            {
-                if(m_pathNamesMap.contains(entry))
-                {
-                    references.append(m_pathNamesMap[entry]);
-                }
-            }
-            m_objectReferencesMap[newHandle] = references;
-            // Set the nie:identifier field in the playlist to "sync" our pla file with tracker
-            m_tracker->setPlaylistPath(playlistName, playlistPath);
-        }
-    }
-}
-
-/************************************************************
- * void FSStoragePlugin::removePlaylist
- ***********************************************************/
-void FSStoragePlugin::removePlaylist(const QString &path)
-{
-    // Delete the playlist from tracker
-    m_tracker->deletePlaylist(path);
 }
 
 /************************************************************
@@ -1468,11 +1375,6 @@ MTPResponseCode FSStoragePlugin::deleteItemHelper( ObjHandle handle, bool remove
                 return MTP_RESP_GeneralError;
             }
         }
-        // If this an abstract playlist, also remove the internal playlist.
-        if(MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == storageItem->m_objectInfo->mtpObjectFormat)
-        {
-            removePlaylist(storageItem->m_path);
-        }
 
         removeFromStorage( handle, sendEvent );
     }
@@ -1817,12 +1719,6 @@ void FSStoragePlugin::adjustMovedItemsPath( QString newAncestorPath, StorageItem
     {
         // Move the URI in tracker too
         m_tracker->move(movedItem->m_path, destinationPath);
-
-        if( MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == movedItem->m_objectInfo->mtpObjectFormat )
-        {
-            // If this is a playlist, also need to update the playlist URL
-            m_tracker->movePlaylist(movedItem->m_path, destinationPath);
-        }
     }
     movedItem->m_path = destinationPath;
     m_pathNamesMap[movedItem->m_path] = movedItem->m_handle;
@@ -1869,12 +1765,6 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle,
         return MTP_RESP_GeneralError;
     }
 
-    if( storageItem->m_path == m_playlistPath )
-    {
-        MTP_LOG_WARNING("Don't play around with the Playlists directory!");
-        return MTP_RESP_AccessDenied;
-    }
-
     QString destinationPath = parentItem->m_path + "/" + storageItem->m_objectInfo->mtpFileName;
 
     // If this is a directory already exists, don't overwrite it.
@@ -1918,13 +1808,6 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle,
     //storageItem->m_nextSibling = 0;
     // Reset URI in tracker and ask it to ignore
     m_tracker->move(storageItem->m_path, destinationPath);
-
-    if(storageItem->m_objectInfo &&
-            MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == storageItem->m_objectInfo->mtpObjectFormat)
-    {
-        // If this is a playlist, also need to update the playlist URL
-        m_tracker->movePlaylist(storageItem->m_path, destinationPath);
-    }
 
     // update it's path and parent object.
     storageItem->m_path = destinationPath;
@@ -2724,7 +2607,6 @@ MTPResponseCode FSStoragePlugin::getReferences( const ObjHandle &handle , QVecto
         if( !m_objectHandlesMap.contains( *i ) )
         {
             i = references.erase( i );
-            // TODO: Remove the handle from the playlist too
         }
         else
         {
@@ -2763,11 +2645,7 @@ MTPResponseCode FSStoragePlugin::setReferences( const ObjHandle &handle , const 
         }
     }
     m_objectReferencesMap[handle] = references;
-    // Trigger a save of playlists into tracker
-    if(true == savePlaylist)
-    {
-        QString playlistId = m_tracker->savePlaylist(playlist->m_path, entries);
-    }
+
     return MTP_RESP_OK;
 }
 
@@ -2839,11 +2717,9 @@ void FSStoragePlugin::storeObjectReferences()
         item = m_objectHandlesMap.value(handle);
         if(0 == item || (MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == item->m_objectInfo->mtpObjectFormat))
         {
-            // 1) Possibly, the handle was removed from the objectHandles map, but
+            // Possibly, the handle was removed from the objectHandles map, but
             // still lingers in the object references map (It is cleared lazily
             // in getObjectReferences). Ignore this handle.
-            // 2) This object is an abstract playlist, which is stored only in tracker.
-            // Ignore this too.
             noOfHandles--;
             continue;
         }
@@ -3303,12 +3179,6 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
                 m_puoidsMap.remove(storageItem->m_path);
                 // Adjust path in tracker
                 m_tracker->move(storageItem->m_path, path);
-
-                if( MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == storageItem->m_objectInfo->mtpObjectFormat )
-                {
-                    // If this is a playlist, also need to update the playlist URL
-                    m_tracker->movePlaylist(storageItem->m_path, path);
-                }
 
                 storageItem->m_path = path;
                 storageItem->m_objectInfo->mtpFileName = newName;
