@@ -56,7 +56,6 @@ static QString getHeight (const QString&);
 static QString getDuration (const QString&);
 static QString getTrack (const QString&);
 static QString getGenre (const QString&);
-static QString getUseCount (const QString&);
 static QString getAlbumName (const QString&);
 static QString getSampleRate (const QString&);
 static QString getNbrOfChannels (const QString&);
@@ -88,7 +87,6 @@ void StorageTracker::populateFunctionMap()
     m_handlerTable[MTP_OBJ_PROP_Duration] = getDuration;
     m_handlerTable[MTP_OBJ_PROP_Track] = getTrack;
     m_handlerTable[MTP_OBJ_PROP_Genre] = getGenre;
-    m_handlerTable[MTP_OBJ_PROP_Use_Count] = getUseCount;
     m_handlerTable[MTP_OBJ_PROP_Album_Name] = getAlbumName;
     m_handlerTable[MTP_OBJ_PROP_Sample_Rate] = getSampleRate;
     m_handlerTable[MTP_OBJ_PROP_Nbr_Of_Channels] = getNbrOfChannels;
@@ -596,25 +594,6 @@ QString getGenre (const QString& iri)
     QString ret;
 
     QString query = QString("SELECT ?fld WHERE{?f a nie:InformationElement ; nie:url '") + iri + QString("' ; nfo:genre ?fld}");
-    trackerQuery(query, res);
-
-    if((1 == res.size()) && (1 == res[0].size()))
-    {
-        ret = (res[0])[0];
-    }
-    return ret;
-}
-
-QString getUseCount (const QString& iri)
-{
-    if(iri.isNull())
-    {
-        return QString("nie:usageCounter");
-    }
-    QVector<QStringList> res;
-    QString ret;
-
-    QString query = QString("SELECT ?fld WHERE{?f a nie:InformationElement ; nie:url '") + iri + QString("' ; nie:usageCounter ?fld}");
     trackerQuery(query, res);
 
     if((1 == res.size()) && (1 == res[0].size()))
