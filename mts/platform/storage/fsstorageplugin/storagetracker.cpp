@@ -64,7 +64,6 @@ static QString getDRMStatus (const QString&);
 
 static void trackerQuery(const QString&, QVector<QStringList> &res);
 static void convertResultByTypeAndCode(const QString&, QString&, MTPDataType, MTPObjPropertyCode, QVariant&);
-static QString generateIriForTracker(const QString& path);
 
 StorageTracker::StorageTracker()
 {
@@ -229,7 +228,7 @@ static void convertResultByTypeAndCode(const QString& filePath, QString& res, MT
 
 QString StorageTracker::buildQuery(const QString &filePath, QList<MTPObjPropDescVal> &propValList)
 {
-    QString iri = generateIriForTracker(filePath);
+    QString iri = generateIri(filePath);
     QString select("SELECT ");
     QString where("WHERE{?file a nie:DataObject;nie:url '" + iri + "'");
     QString end("}");
@@ -315,7 +314,7 @@ QString StorageTracker::buildMassQuery(const QString &path,
                    "?x a nie:DataObject; nie:url ?iri. "
                    "%2 "
                    "FILTER regex(?iri, '^%3/[^/]*$') }")
-                   .arg(select).arg(where).arg(generateIriForTracker(path));
+                   .arg(select).arg(where).arg(generateIri(path));
 }
 
 bool StorageTracker::getPropVals(const QString &filePath, QList<MTPObjPropDescVal> &propValList)
@@ -412,14 +411,6 @@ static void trackerQuery(const QString& query, QVector<QStringList> &res)
     }
 
     delete result;
-}
-
-static QString generateIriForTracker(const QString& path)
-{
-    QUrl url(IRI_PREFIX + path);
-    QString iri = url.toEncoded();
-    iri.replace(QRegExp("'"), "\\'");
-    return iri;
 }
 
 QString getDateCreated (const QString& iri)
@@ -681,7 +672,10 @@ QString getFramesPerThousandSecs (const QString& iri)
 
 QString StorageTracker::generateIri(const QString &path)
 {
-    return generateIriForTracker(path);
+    QUrl url(IRI_PREFIX + path);
+    QString iri = url.toEncoded();
+    iri.replace(QRegExp("'"), "\\'");
+    return iri;
 }
 
 bool StorageTracker::supportsProperty(MTPObjPropertyCode code) const
