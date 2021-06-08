@@ -64,7 +64,6 @@ static QString getFramesPerThousandSecs (const QString&);
 static QString getDRMStatus (const QString&);
 
 static void trackerQuery(const QString&, QVector<QStringList> &res);
-static void trackerUpdateQuery(const QString&);
 static void convertResultByTypeAndCode(const QString&, QString&, MTPDataType, MTPObjPropertyCode, QVariant&);
 static QString generateIriForTracker(const QString& path);
 
@@ -417,14 +416,6 @@ static void trackerQuery(const QString& query, QVector<QStringList> &res)
     delete result;
 }
 
-static void trackerUpdateQuery(const QString& query)
-{
-    // Ignore result for now...
-    MTP_LOG_INFO(query);
-
-    delete trackerConnection()->syncExec(QSparqlQuery(query, QSparqlQuery::InsertStatement));
-}
-
 static QString generateIriForTracker(const QString& path)
 {
     QUrl url(IRI_PREFIX + path);
@@ -709,28 +700,6 @@ QString getFramesPerThousandSecs (const QString& iri)
     return ret;
 }
 
-void StorageTracker::move(const QString &fromPath, const QString &toPath)
-{
-    // Move the nie:url of the file fromPath --> toPath
-    QString fromIri = generateIriForTracker(fromPath);
-    QString toIri = generateIriForTracker(toPath);
-    QVector<QStringList> resultSet;
-
-    // Get the tracker URN for the from IRI
-    trackerQuery(QString("SELECT ?f WHERE{?f a nfo:FileDataObject ; nie:url '" + fromIri + QString("'}")), resultSet);
-    if(0 == resultSet.size() || 0 == resultSet[0].size())
-    {
-        MTP_LOG_CRITICAL("Failed query for tracker URN for path" << fromPath);
-        return;
-    }
-    QString urn = resultSet[0][0];
-    // Delete the old nie:url and insert a new one
-    QString query = QString("DELETE {<") + urn + QString("> nie:url ?f} WHERE {<") + urn + QString("> nie:url ?f}");
-    trackerUpdateQuery(query);
-    query = QString("INSERT {<") + urn + ("> a nie:DataObject ; nie:url '") + toIri + ("'}");
-    trackerUpdateQuery(query);
-}
-
 QString StorageTracker::generateIri(const QString &path)
 {
     return generateIriForTracker(path);
@@ -739,75 +708,6 @@ QString StorageTracker::generateIri(const QString &path)
 bool StorageTracker::supportsProperty(MTPObjPropertyCode code) const
 {
     return m_handlerTable.contains(code);
-}
-
-void StorageTracker::copy(const QString &fromPath, const QString &toPath)
-{
-    QString fromIri = generateIriForTracker(fromPath);
-    QString toIri = generateIriForTracker(toPath);
-    QString query;
-    QVector<QStringList> resultSet;
-
-    // Get the tracker URN for the from IRI
-    trackerQuery(QString("SELECT ?f WHERE{?f a nie:DataObject ; nie:url '" + fromIri + QString("'}")), resultSet);
-    if(0 == resultSet.size() || 0 == resultSet[0].size())
-    {
-        MTP_LOG_CRITICAL("Failed query for tracker URN" << fromPath);
-        return;
-    }
-    QString urn = resultSet[0][0];
-
-    resultSet.clear();
-
-    // Now get all available properties for the from URN
-    query = QString("SELECT ?p ?v WHERE{<") + urn + QString("> ?p ?v}");
-    trackerQuery(query, resultSet);
-
-    QStringList domains;
-    QString insert = QString("DELETE {?file a rdfs:Resource} WHERE {?file nie:url '") + toIri + QString("'} INSERT { _:x a ");
-    QString props;
-    QString end = QString("}");
-    // Iterate over the result set and get a map of properties that we support
-    for(int i = 0; i < resultSet.size(); i++)
-    {
-        QString predicate = resultSet[i][0];
-        QString value = resultSet[i][1];
-
-        if(predicate == RDF_TYPE)
-        {
-            // Add this value to the domains field...
-            domains.append(QString("<") + value + QString(">"));
-        }
-        else
-        {
-            // Check if the property is supported, if so, we retain it, else
-            // remove it from the vector
-            predicate = predicate.mid(predicate.lastIndexOf('/') + 1);
-            predicate.replace('#', ':');
-            if(false == isTrackerPropertySupported(predicate))
-            {
-                resultSet.remove(i);
-                i--;
-                continue;
-            }
-            else if(QString("nie:url") == predicate)
-            {
-                // Replace the value in nie:url with the new url
-                value = QString(" '") + toIri + QString("' ");
-            }
-            else
-            {
-                value = QString(" '") + value + QString("' ");
-            }
-            props += QString(";") + predicate + value;
-        }
-    }
-    // Formulate and execute query
-    insert += domains.join(QString(","));
-    insert += props;
-    insert += end;
-
-    trackerUpdateQuery(insert);
 }
 
 bool StorageTracker::isTrackerPropertySupported(const QString &property)

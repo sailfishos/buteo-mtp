@@ -56,8 +56,6 @@ friend class FSStoragePlugin_test;
         void getChildPropVals(const QString& parentPath,
                 const QList<const MtpObjPropDesc *>& properties,
                 QMap<QString, QList<QVariant> > &values);
-        void move(const QString &fromPath, const QString &toPath);
-        void copy(const QString &fromPath, const QString &toPath);
         QString generateIri(const QString &path);
         bool supportsProperty(MTPObjPropertyCode code) const;
 

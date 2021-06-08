@@ -1655,9 +1655,6 @@ MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle,
     // Write the content to the new item.
     MTPResponseCode response = MTP_RESP_OK;
 
-    // Apply metadata for the destination path
-    m_tracker->copy(storageItem->m_path, destinationPath);
-
     // Create the new item.
     ObjHandle ignoredHandle;
     response = destinationStorage->addItem( ignoredHandle, copiedObjectHandle,
@@ -1706,7 +1703,7 @@ MTPResponseCode FSStoragePlugin::copyObject( const ObjHandle &handle,
 /************************************************************
  * void FSStoragePlugin::adjustMovedItemsPath
  ***********************************************************/
-void FSStoragePlugin::adjustMovedItemsPath( QString newAncestorPath, StorageItem* movedItem, bool updateInTracker /*= false*/ )
+void FSStoragePlugin::adjustMovedItemsPath( QString newAncestorPath, StorageItem* movedItem)
 {
     if( !movedItem )
     {
@@ -1715,17 +1712,12 @@ void FSStoragePlugin::adjustMovedItemsPath( QString newAncestorPath, StorageItem
 
     m_pathNamesMap.remove( movedItem->m_path );
     QString destinationPath = newAncestorPath + "/" + movedItem->m_objectInfo->mtpFileName;
-    if(true == updateInTracker)
-    {
-        // Move the URI in tracker too
-        m_tracker->move(movedItem->m_path, destinationPath);
-    }
     movedItem->m_path = destinationPath;
     m_pathNamesMap[movedItem->m_path] = movedItem->m_handle;
     StorageItem *itr = movedItem->m_firstChild;
     while( itr )
     {
-        adjustMovedItemsPath( movedItem->m_path, itr, updateInTracker );
+        adjustMovedItemsPath(movedItem->m_path, itr);
         itr = itr->m_nextSibling;
     }
 }
@@ -1799,15 +1791,13 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle,
     StorageItem *itr = storageItem->m_firstChild;
     while( itr )
     {
-        adjustMovedItemsPath( destinationPath, itr, true );
+        adjustMovedItemsPath(destinationPath, itr);
         itr = itr->m_nextSibling;
     }
 
     // link it to the new parent
     linkChildStorageItem( storageItem, parentItem );
     //storageItem->m_nextSibling = 0;
-    // Reset URI in tracker and ask it to ignore
-    m_tracker->move(storageItem->m_path, destinationPath);
 
     // update it's path and parent object.
     storageItem->m_path = destinationPath;
@@ -3177,8 +3167,6 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
             {
                 m_pathNamesMap.remove(storageItem->m_path);
                 m_puoidsMap.remove(storageItem->m_path);
-                // Adjust path in tracker
-                m_tracker->move(storageItem->m_path, path);
 
                 storageItem->m_path = path;
                 storageItem->m_objectInfo->mtpFileName = newName;
@@ -3189,7 +3177,7 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
                 StorageItem *itr = storageItem->m_firstChild;
                 while( itr )
                 {
-                    adjustMovedItemsPath( path, itr, true );
+                    adjustMovedItemsPath(path, itr);
                     itr = itr->m_nextSibling;
                 }
                 code = MTP_RESP_OK;

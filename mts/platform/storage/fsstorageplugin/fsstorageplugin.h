@@ -229,9 +229,7 @@ private:
     /// This method helps recursively modify the "path" field of a StorageItem ther has been moved.
     /// \param newAncestorPath [in] the new ancestor for the moved item and it's children.
     /// \movedItem [in] the moved item.
-    /// \updateInTracker [in] If true, the function also updates the URIs in
-    /// tracker
-    void adjustMovedItemsPath( QString newAncestorPath, StorageItem* movedItem, bool updateInTracker = false );
+    void adjustMovedItemsPath(QString newAncestorPath, StorageItem* movedItem);
 
     /// Gets the object format of a storage item.
     /// \param storageItem [in] the storage item.
