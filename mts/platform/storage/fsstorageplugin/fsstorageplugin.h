@@ -372,12 +372,6 @@ private:
     /// Adds inotify watch on a directory and sub dirs if any.
     void addWatchDescriptorRecursively( StorageItem *item );
 
-    /// Returns recursively the list of files (and directories) under a given item,
-    /// and the new paths for all those file, if they were moved under a new
-    /// root
-    void getFileListRecursively(const StorageItem *storageItem, const QString &destinationPath,
-                                QStringList &fileList);
-
     /// Removes watch descriptors on a directory.
     void removeWatchDescriptor( StorageItem* item );
 

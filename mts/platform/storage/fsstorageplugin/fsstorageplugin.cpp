@@ -1935,28 +1935,6 @@ MTPResponseCode FSStoragePlugin::moveObject( const ObjHandle &handle,
 }
 
 /************************************************************
- * MTPResponseCode FSStoragePlugin::getFileListRecursively
- ***********************************************************/
-void FSStoragePlugin::getFileListRecursively(const StorageItem *storageItem, const QString &destinationPath, QStringList &fileList)
-{
-    // For every file to be moved, get the old path and new path recursively
-    if(0 == storageItem)
-    {
-        return;
-    }
-    // Add this iri to the list
-    fileList.append(m_tracker->generateIri(storageItem->m_path));
-    // Add the destination iri to the list
-    fileList.append(m_tracker->generateIri(destinationPath));
-    StorageItem *itr = storageItem->m_firstChild;
-    while( itr )
-    {
-        getFileListRecursively( itr, destinationPath + "/" + itr->m_objectInfo->mtpFileName, fileList );
-        itr = itr->m_nextSibling;
-    }
-}
-
-/************************************************************
  * MTPResponseCode FSStoragePlugin::getObjectInfo
  ***********************************************************/
 MTPResponseCode FSStoragePlugin::getObjectInfo( const ObjHandle &handle, const MTPObjectInfo *&objectInfo )
