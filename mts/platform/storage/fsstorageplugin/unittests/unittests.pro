@@ -1,7 +1,6 @@
 include(../../../../common.pri)
 
 CONFIG += warn_off debug_and_release
-CONFIG += qtsparql
 
 PKGCONFIG += buteosyncfw5 Qt5SystemInfo
 
@@ -42,7 +41,6 @@ HEADERS += fsstorageplugin_test.h \
            ../fsinotify.h \
            ../thumbnailer.h \
            ../thumbnailerproxy.h \
-           ../storagetracker.h \
            ../../storagefactory.h \
            ../storageitem.h \
            mts.h \
@@ -69,7 +67,6 @@ SOURCES += fsstorageplugin_test.cpp \
            ../storageitem.cpp \
            ../thumbnailer.cpp \
            ../thumbnailerproxy.cpp \
-           ../storagetracker.cpp \
            ../../storagefactory.cpp \
            ../../storageplugin.cpp \
            mts.cpp \

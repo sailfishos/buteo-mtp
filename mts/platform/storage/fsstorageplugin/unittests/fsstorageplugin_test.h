@@ -85,17 +85,11 @@ private slots:
     void testTruncateItem();
     void testGetPath();
     void testGetObjectPropertyValueFromStorage();
-    void testGetObjectPropertyValueFromTracker();
-    void testSetObjectPropertyValueInTracker();
     void testGetInvalidObjectPropertyValueFromStorage();
     void testInotifyCreate();
     void testInotifyModify();
     void testInotifyMove();
     void testInotifyDelete();
-    void testReadPlaylists();
-    void testDeletePlaylists();
-    void testCreatePlaylists();
-    void testPlaylistsPersistence();
     void testThumbnailer();
     void cleanupTestCase();
 

@@ -7,12 +7,7 @@ LIBS += -lssu
 
 CONFIG += link_pkgconfig debug
 
-equals(QT_MAJOR_VERSION, 4): {
-    CONFIG += mobility
-    MOBILITY = systeminfo
-    PKGCONFIG += buteosyncfw
-}
-equals(QT_MAJOR_VERSION, 5): PKGCONFIG += Qt5SystemInfo buteosyncfw5
+PKGCONFIG += Qt5SystemInfo buteosyncfw5
 
 #QMAKE_CXXFLAGS += -O0 -Werror
 

@@ -3,7 +3,7 @@ include(../../../common.pri)
 TEMPLATE = lib
 TARGET = fsstorage
 
-CONFIG += plugin debug qtsparql
+CONFIG += plugin debug
 
 QT += dbus xml
 QT -= gui
@@ -29,7 +29,6 @@ INCLUDEPATH += . \
 
 # Input
 HEADERS += fsstorageplugin.h \
-           storagetracker.h \
            ../storageplugin.h \
            thumbnailerproxy.h \
            thumbnailer.h \
@@ -38,7 +37,6 @@ HEADERS += fsstorageplugin.h \
 
 SOURCES += fsstorageplugin.cpp \
            fsstoragepluginfactory.cpp \
-           storagetracker.cpp \
            thumbnailerproxy.cpp \
            thumbnailer.cpp \
            fsinotify.cpp \

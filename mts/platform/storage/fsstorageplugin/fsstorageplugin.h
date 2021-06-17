@@ -46,7 +46,6 @@ class QDir;
 namespace meegomtp1dot0
 {
 class FSInotify;
-class StorageTracker;
 class Thumbnailer;
 class StorageItem;
 }
@@ -137,20 +136,6 @@ public slots:
     void getLargestPuoid( MtpInt128& puoid );
 
 private:
-    /// Creates playlist folders and sync .pla files with real playlists.
-    void syncPlaylists();
-
-    /// Reads internal playlists.
-    void assignPlaylistReferences();
-
-    /// Opens internal playlists.
-    QVector<ObjHandle> readInternalAbstractPlaylist( StorageItem* );
-
-    /// Removes an internal playlist.
-    void removePlaylist(const QString &path);
-
-    void setPlaylistReferences( const ObjHandle &handle , const QVector<ObjHandle> &references );
-
     /// Reads puoids from the puoids db, so that are preserved across MTP sessions.
     void populatePuoids();
 
@@ -243,9 +228,7 @@ private:
     /// This method helps recursively modify the "path" field of a StorageItem ther has been moved.
     /// \param newAncestorPath [in] the new ancestor for the moved item and it's children.
     /// \movedItem [in] the moved item.
-    /// \updateInTracker [in] If true, the function also updates the URIs in
-    /// tracker
-    void adjustMovedItemsPath( QString newAncestorPath, StorageItem* movedItem, bool updateInTracker = false );
+    void adjustMovedItemsPath(QString newAncestorPath, StorageItem* movedItem);
 
     /// Gets the object format of a storage item.
     /// \param storageItem [in] the storage item.
@@ -370,9 +353,6 @@ private:
     MTPResponseCode getObjectPropertyValueFromStorage( const ObjHandle &handle,
                                                        MTPObjPropertyCode propCode,
                                                        QVariant &value, MTPDataType type );
-    MTPResponseCode getObjectPropertyValueFromTracker( const ObjHandle &handle,
-                                                       MTPObjPropertyCode propCode,
-                                                       QVariant &value, MTPDataType type );
 
     /// Is storage item an image file that the thumbnailer can process
     bool isThumbnailableImage(StorageItem*);
@@ -382,12 +362,6 @@ private:
 
     /// Adds inotify watch on a directory and sub dirs if any.
     void addWatchDescriptorRecursively( StorageItem *item );
-
-    /// Returns recursively the list of files (and directories) under a given item,
-    /// and the new paths for all those file, if they were moved under a new
-    /// root
-    void getFileListRecursively(const StorageItem *storageItem, const QString &destinationPath,
-                                QStringList &fileList);
 
     /// Removes watch descriptors on a directory.
     void removeWatchDescriptor( StorageItem* item );
@@ -411,28 +385,13 @@ private:
     StorageItem *m_root; ///< the root folder
     QString m_puoidsDbPath; ///< path where puoids will be stored persistently.
     QString m_objectReferencesDbPath; ///< path where references will be stored persistently.
-    QString m_playlistPath; ///< the path where playlists are stored.
-    QString m_internalPlaylistPath; ///< the path where internal abstract playlists are stored.
     ObjHandle m_writeObjectHandle; ///< The obj handle for which a write operation is currently is progress. 0 means invalid handle, NOT root node!!
-    StorageTracker* m_tracker; ///< pointer to the tracker object
     Thumbnailer* m_thumbnailer; ///< pointer to the thumbnailer object
     FSInotify* m_inotify; ///< pointer to the inotify wrapper
     QHash<QString,quint16> m_formatByExtTable;
     QHash<MTPObjFormatCode, QString> m_imageMimeTable; ///< Maps the MTP object format code (for image types only) to MIME type string
     QString m_mtpPersistentDBPath;
     MtpInt128 m_largestPuoid;
-
-    struct ExistingPlaylists
-    {
-        QStringList             playlistPaths;
-        QList<QStringList>      playlistEntries;
-    }m_existingPlaylists;
-
-    struct NewPlaylists
-    {
-        QStringList             playlistNames;
-        QList<QStringList>      playlistEntries;
-    }m_newPlaylists;
 
     QHash<ObjHandle, StorageItem*> m_objectHandlesMap; ///< each storage has a map of all it's object's handles to corresponding storage item.
     quint64 m_reportedFreeSpace;
