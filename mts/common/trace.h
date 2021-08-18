@@ -32,9 +32,10 @@
 #ifndef  PRN_TRACE_H
 # define PRN_TRACE_H
 # include <QtGlobal>
-// Use logging macros available in sync-fw
-# include <buteosyncfw5/LogMacros.h>
+# include <QLoggingCategory>
 # include "mts.h"
+
+Q_DECLARE_LOGGING_CATEGORY(lcMtp)
 
 # define MTP_LOG_LEVEL_CRITICAL      1
 # define MTP_LOG_LEVEL_WARNING       2
@@ -47,18 +48,18 @@
 # endif
 
 /*Critical logs always enabled, use selectively*/
-# define MTP_LOG_CRITICAL(msg)     do { LOG_CRITICAL(msg); } while(0)
+# define MTP_LOG_CRITICAL(msg)     do { qCCritical(lcMtp) << msg; } while(0)
 
 # if MTP_LOG_LEVEL < MTP_LOG_LEVEL_WARNING
 #  define MTP_LOG_WARNING(msg)     do {} while(0)
 # else
-#  define MTP_LOG_WARNING(msg)     do { LOG_WARNING(msg); } while(0)
+#  define MTP_LOG_WARNING(msg)     do { qCWarning(lcMtp) << msg; } while(0)
 # endif
 
 # if MTP_LOG_LEVEL < MTP_LOG_LEVEL_INFO
 #  define MTP_LOG_INFO(msg)        do {} while(0)
 # else
-#  define MTP_LOG_INFO(msg)        do { LOG_INFO(msg); } while(0)
+#  define MTP_LOG_INFO(msg)        do { qCInfo(lcMtp) << msg; } while(0)
 # endif
 
 /* Tracing macros should produce output only at the highest log level */
@@ -66,7 +67,7 @@
 # if MTP_LOG_LEVEL < MTP_LOG_LEVEL_TRACE
 #  define MTP_LOG_TRACE(msg)       do {} while(0)
 # else
-#  define MTP_LOG_TRACE(msg)       do { LOG_DEBUG(msg); } while(0)
+#  define MTP_LOG_TRACE(msg)       do { qCDebug(lcMtp) << msg; } while(0)
 # endif
 
 # if MTP_LOG_LEVEL < MTP_LOG_LEVEL_TRACE_EXTRA

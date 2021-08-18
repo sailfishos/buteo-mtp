@@ -31,7 +31,7 @@
 #include <QEventLoop>
 #include <QStringList>
 #include <QTimer>
-#include <Logger.h>
+#include <QLoggingCategory>
 #include <MGConfItem>
 #include "mts.h"
 
@@ -67,11 +67,7 @@ int main(int argc, char** argv)
     QCommandLineParser parser;
     parser.setApplicationDescription("standalone buteo-mtp daemon");
     parser.addHelpOption();
-    QCommandLineOption logToHomeOption(QStringList() << "d" << "log-to-home",
-                                       "Log to \"$HOME/mtp.log\".");
-    parser.addOption(logToHomeOption);
     parser.process(app);
-    bool logToHome(parser.isSet(logToHomeOption));
 
     /* Get symlink policy from dconf */
     setupSymLinkPolicy();
@@ -94,16 +90,8 @@ int main(int argc, char** argv)
     bool ok = Mts::getInstance()->activate();
     if( ok )
     {
-        if (logToHome)
-        {
-            Buteo::Logger::createInstance(QDir::homePath() + "/mtp.log", false, 0);
-            if (!Mts::getInstance()->debugLogsEnabled())
-            {
-                Mts::getInstance()->toggleDebugLogs();
-            }
-
-            Buteo::Logger::instance()->enable();
-        }
+        QLoggingCategory lcMtp("buteo.mtp");
+        lcMtp.setEnabled(QtDebugMsg, Mts::getInstance()->debugLogsEnabled());
         app.exec();
     }
     else
