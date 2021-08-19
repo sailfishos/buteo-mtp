@@ -7,7 +7,7 @@ LIBS += -lssu
 
 CONFIG += link_pkgconfig debug
 
-PKGCONFIG += Qt5SystemInfo buteosyncfw5
+PKGCONFIG += Qt5SystemInfo
 
 #QMAKE_CXXFLAGS += -O0 -Werror
 

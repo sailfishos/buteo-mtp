@@ -2,7 +2,7 @@ include(../../common.pri)
 
 CONFIG += warn_off debug_and_release
 
-PKGCONFIG += buteosyncfw5 Qt5SystemInfo
+PKGCONFIG += Qt5SystemInfo
 
 LIBS += -ldl -lssu
 TEMPLATE = app
