@@ -10,7 +10,6 @@ LIBS += -L../mts -lmeegomtp
 
 QT -= gui
 CONFIG += link_pkgconfig
-PKGCONFIG += buteosyncfw5
 PKGCONFIG += mlite5
 
 SOURCES += service.cpp

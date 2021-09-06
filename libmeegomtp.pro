@@ -4,11 +4,6 @@ TEMPLATE = subdirs
 mts.subdir = mts
 mts.target = sub-mts
 
-# "/usr/lib*/buteo-plugins-qt5/libmptserver.so" - plugin used by msyncd
-mtpserver.subdir = mtpserver
-mtpserver.target = sub-mtpserver
-mtpserver.depends = sub-mts
-
 # "/usr/lib*/mtp/libfsstorage.so" - plugin used by "libmeegomtp.so"
 mts_fsstorage_plugin.subdir = mts/platform/storage/fsstorageplugin
 mts_fsstorage_plugin.target = sub-mts-fsstorage-plugin
@@ -51,7 +46,6 @@ mts_protocol_tests.depends = sub-mts
 SUBDIRS += \
     mts \
     test \
-    mtpserver \
     mts_storage_tests \
     mts_fsstorage_plugin \
     mts_fsstorage_tests \

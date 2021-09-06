@@ -12,7 +12,6 @@ BuildRequires: pkgconfig(Qt5DBus)
 BuildRequires: pkgconfig(Qt5Xml)
 BuildRequires: pkgconfig(Qt5Qml)
 BuildRequires: pkgconfig(Qt5Test)
-BuildRequires: pkgconfig(buteosyncfw5)
 BuildRequires: pkgconfig(Qt5SystemInfo)
 BuildRequires: pkgconfig(blkid)
 BuildRequires: pkgconfig(mount)
@@ -32,8 +31,6 @@ Obsoletes: buteo-mtp < %{version}
 %description
 %{summary}.
 
-# TODO: once proper activation as msyncd plugin works as expected,
-#       move user session startup into sub-package
 %files
 %defattr(-,root,root,-)
 %{_unitdir}/*.mount
@@ -76,19 +73,6 @@ Requires: %{name} = %{version}-%{release}
 %defattr(-,root,root,-)
 %{_includedir}/*
 %{_libdir}/*.so
-
-
-%package sync-plugin
-Summary: MTP plugin for buteo-sync
-
-%description sync-plugin
-%{summary}.
-
-%files sync-plugin
-%defattr(-,root,root,-)
-%{_libdir}/buteo-plugins-qt5/*.so
-%config %{_sysconfdir}/buteo/profiles/server/*.xml
-
 
 %package tests
 Summary: Tests for %{name}
