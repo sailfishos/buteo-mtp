@@ -299,8 +299,7 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
     QFile fileDst(getDeviceInfoXmlPath());
 #ifndef UT_ON
     QFile fileSrc("/usr/share/mtp/deviceinfo.xml");
-    if( !fileDst.exists() )
-    {
+    if ( !fileDst.exists() ) {
         fileSrc.copy(m_deviceInfoXmlPath);
         m_newConfigFileWasCreated = true;
     }
@@ -321,61 +320,48 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
      * reason the config is augmented at runtime instead of being used as-is.
      */
 
-    if(0 == xmlReader.parse(&source))
-    {
+    if (0 == xmlReader.parse(&source)) {
         MTP_LOG_CRITICAL("Failure reading deviceinfo.xml, using default hard-coded values\n");
         //FIXME Hard code the QVectors themselves by default? Then we can avoid the memcpy.
-        for( quint32 i = 0 ; i < sizeof(m_eventsSupportedTable)/sizeof(m_eventsSupportedTable[0]); i++ )
-        {
+        for ( quint32 i = 0 ; i < sizeof(m_eventsSupportedTable) / sizeof(m_eventsSupportedTable[0]); i++ ) {
             m_mtpEventsSupported.append( m_eventsSupportedTable[i] );
         }
-        for( quint32 i = 0 ; i < sizeof(m_devPropsSupportedTable)/sizeof(m_devPropsSupportedTable[0]); i++ )
-        {
+        for ( quint32 i = 0 ; i < sizeof(m_devPropsSupportedTable) / sizeof(m_devPropsSupportedTable[0]); i++ ) {
             m_mtpDevicePropertiesSupported.append( m_devPropsSupportedTable[i] );
         }
-        for( quint32 i = 0 ; i < sizeof(m_audChannelTable)/sizeof(m_audChannelTable[0]); i++ )
-        {
+        for ( quint32 i = 0 ; i < sizeof(m_audChannelTable) / sizeof(m_audChannelTable[0]); i++ ) {
             m_audioChannels.append( m_audChannelTable[i] );
         }
-        for( quint32 i = 0 ; i < sizeof(m_vidChannelTable)/sizeof(m_vidChannelTable[0]); i++ )
-        {
+        for ( quint32 i = 0 ; i < sizeof(m_vidChannelTable) / sizeof(m_vidChannelTable[0]); i++ ) {
             m_videoChannels.append( m_vidChannelTable[i] );
         }
-        for( quint32 i = 0 ; i < sizeof(m_supportedCodecsTable)/sizeof(m_supportedCodecsTable[0]); i++ )
-        {
+        for ( quint32 i = 0 ; i < sizeof(m_supportedCodecsTable) / sizeof(m_supportedCodecsTable[0]); i++ ) {
             m_supportedCodecs.append( m_supportedCodecsTable[i] );
         }
-    }
-    else
-    {
+    } else {
         m_xmlOk = true;
     }
 
     /* The supported opcodes, object formats, etc specified in the configuration file
      * are used to augment the built-in configuration, not to override it. */
-    for( quint32 i = 0 ; i < sizeof(m_operationsSupportedTable)/sizeof(m_operationsSupportedTable[0]); i++ )
-    {
-        if( !m_mtpOperationsSupported.contains(m_operationsSupportedTable[i]) )
+    for ( quint32 i = 0 ; i < sizeof(m_operationsSupportedTable) / sizeof(m_operationsSupportedTable[0]); i++ ) {
+        if ( !m_mtpOperationsSupported.contains(m_operationsSupportedTable[i]) )
             m_mtpOperationsSupported.append(m_operationsSupportedTable[i]);
     }
-    for( quint32 i = 0 ; i < sizeof(m_commonFormatsTable)/sizeof(m_commonFormatsTable[0]); i++ )
-    {
-        if( !m_commonFormats.contains(m_commonFormatsTable[i]) )
+    for ( quint32 i = 0 ; i < sizeof(m_commonFormatsTable) / sizeof(m_commonFormatsTable[0]); i++ ) {
+        if ( !m_commonFormats.contains(m_commonFormatsTable[i]) )
             m_commonFormats.append( m_commonFormatsTable[i] );
     }
-    for( quint32 i = 0 ; i < sizeof(m_audioFormatsTable)/sizeof(m_audioFormatsTable[0]); i++ )
-    {
-        if( !m_audioFormats.contains( m_audioFormatsTable[i]) )
+    for ( quint32 i = 0 ; i < sizeof(m_audioFormatsTable) / sizeof(m_audioFormatsTable[0]); i++ ) {
+        if ( !m_audioFormats.contains( m_audioFormatsTable[i]) )
             m_audioFormats.append( m_audioFormatsTable[i] );
     }
-    for( quint32 i = 0 ; i < sizeof(m_imageFormatsTable)/sizeof(m_imageFormatsTable[0]); i++ )
-    {
-        if( !m_imageFormats.contains( m_imageFormatsTable[i]) )
+    for ( quint32 i = 0 ; i < sizeof(m_imageFormatsTable) / sizeof(m_imageFormatsTable[0]); i++ ) {
+        if ( !m_imageFormats.contains( m_imageFormatsTable[i]) )
             m_imageFormats.append( m_imageFormatsTable[i] );
     }
-    for( quint32 i = 0 ; i < sizeof(m_videoFormatsTable)/sizeof(m_videoFormatsTable[0]); i++ )
-    {
-        if( !m_videoFormats.contains( m_videoFormatsTable[i]) )
+    for ( quint32 i = 0 ; i < sizeof(m_videoFormatsTable) / sizeof(m_videoFormatsTable[0]); i++ ) {
+        if ( !m_videoFormats.contains( m_videoFormatsTable[i]) )
             m_videoFormats.append( m_videoFormatsTable[i] );
     }
 
@@ -392,7 +378,7 @@ DeviceInfo::~DeviceInfo()
 /*******************************************
  * const QString& DeviceInfo::syncPartner
  ******************************************/
-const QString& DeviceInfo::syncPartner( bool /*current*/ ) const
+const QString &DeviceInfo::syncPartner( bool /*current*/ ) const
 {
     return m_syncPartner;
 }
@@ -400,7 +386,7 @@ const QString& DeviceInfo::syncPartner( bool /*current*/ ) const
 /*******************************************
  * QString& DeviceInfo::copyrightInfo
  ******************************************/
-const QString& DeviceInfo::copyrightInfo( bool /*current*/ ) const
+const QString &DeviceInfo::copyrightInfo( bool /*current*/ ) const
 {
     return m_copyrightInfo;
 }
@@ -408,7 +394,7 @@ const QString& DeviceInfo::copyrightInfo( bool /*current*/ ) const
 /*******************************************
  * const QString& DeviceInfo::deviceFriendlyName
  ******************************************/
-const QString& DeviceInfo::deviceFriendlyName( bool /*current*/ )
+const QString &DeviceInfo::deviceFriendlyName( bool /*current*/ )
 {
     return m_deviceFriendlyName;
 }
@@ -437,7 +423,7 @@ const QVector<quint8> DeviceInfo::deviceIcon()
 /*******************************************
  * const quint16& DeviceInfo::standardVersion
  ******************************************/
-const quint16& DeviceInfo::standardVersion() const
+const quint16 &DeviceInfo::standardVersion() const
 {
     return m_standardVersion;
 }
@@ -445,7 +431,7 @@ const quint16& DeviceInfo::standardVersion() const
 /*******************************************
  * const quint32& DeviceInfo::vendorExtension
  ******************************************/
-const quint32& DeviceInfo::vendorExtension() const
+const quint32 &DeviceInfo::vendorExtension() const
 {
     return m_vendorExtension;
 }
@@ -453,7 +439,7 @@ const quint32& DeviceInfo::vendorExtension() const
 /*******************************************
  * const quint16& DeviceInfo::MTPVersion
  ******************************************/
-const quint16& DeviceInfo::MTPVersion() const
+const quint16 &DeviceInfo::MTPVersion() const
 {
     return m_mtpVersion;
 }
@@ -461,7 +447,7 @@ const quint16& DeviceInfo::MTPVersion() const
 /*******************************************
  * const QString& DeviceInfo::MTPExtension
  ******************************************/
-const QString& DeviceInfo::MTPExtension() const
+const QString &DeviceInfo::MTPExtension() const
 {
     return m_mtpExtension;
 }
@@ -469,7 +455,7 @@ const QString& DeviceInfo::MTPExtension() const
 /*******************************************
  * const QString& DeviceInfo::manufacturer
  ******************************************/
-const QString& DeviceInfo::manufacturer() const
+const QString &DeviceInfo::manufacturer() const
 {
     return m_manufacturer;
 }
@@ -477,7 +463,7 @@ const QString& DeviceInfo::manufacturer() const
 /*******************************************
  * const QString& DeviceInfo::model
  ******************************************/
-const QString& DeviceInfo::model() const
+const QString &DeviceInfo::model() const
 {
     return m_model;
 }
@@ -485,7 +471,7 @@ const QString& DeviceInfo::model() const
 /*******************************************
  * const QString& DeviceInfo::deviceVersion
  ******************************************/
-const QString& DeviceInfo::deviceVersion() const
+const QString &DeviceInfo::deviceVersion() const
 {
     return m_deviceVersion;
 }
@@ -493,7 +479,7 @@ const QString& DeviceInfo::deviceVersion() const
 /*******************************************
  * const QString& DeviceInfo::serialNo
  ******************************************/
-const QString& DeviceInfo::serialNo() const
+const QString &DeviceInfo::serialNo() const
 {
     return m_serialNo;
 }
@@ -509,7 +495,7 @@ quint32 DeviceInfo::deviceType() const
 /*******************************************
  * const quint16& DeviceInfo::functionalMode
  ******************************************/
-const quint16& DeviceInfo::functionalMode() const
+const quint16 &DeviceInfo::functionalMode() const
 {
     return m_functionalMode;
 }
@@ -517,7 +503,7 @@ const quint16& DeviceInfo::functionalMode() const
 /*******************************************
  * void DeviceInfo::setSyncPartner
  ******************************************/
-void DeviceInfo::setSyncPartner( const QString& syncPartner )
+void DeviceInfo::setSyncPartner( const QString &syncPartner )
 {
     m_syncPartner = syncPartner;
 
@@ -528,7 +514,7 @@ void DeviceInfo::setSyncPartner( const QString& syncPartner )
 /*******************************************
  * void DeviceInfo::setDeviceFriendlyName
  ******************************************/
-void DeviceInfo::setDeviceFriendlyName( const QString& deviceFriendlyName )
+void DeviceInfo::setDeviceFriendlyName( const QString &deviceFriendlyName )
 {
     m_deviceFriendlyName = deviceFriendlyName;
 
@@ -544,22 +530,18 @@ void DeviceInfo::modifyDeviceInfoXml( QString devPropName, QString value )
     QDomDocument document;
     QDomElement element;
     QFile file(getDeviceInfoXmlPath());
-    if( file.open( QIODevice::ReadOnly) )
-    {
+    if ( file.open( QIODevice::ReadOnly) ) {
         document.setContent(&file);
         file.close();
         QDomNodeList elementList = document.elementsByTagName("DevPropValue");
-        for( int i = 0 ; i < elementList.count(); i++ )
-        {
+        for ( int i = 0 ; i < elementList.count(); i++ ) {
             element = elementList.item( i ).toElement();
-            if( devPropName == element.attribute( "id" ) )
-            {
+            if ( devPropName == element.attribute( "id" ) ) {
                 // Assuming first child is the text node containing the friendly name
                 element.removeChild( element.firstChild() );
                 QDomText text = document.createTextNode( value );
                 element.appendChild( text );
-                if( file.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
-                {
+                if ( file.open( QIODevice::WriteOnly | QIODevice::Truncate ) ) {
                     QTextStream ts( &file );
                     ts << document.toString();
                 }
@@ -582,7 +564,7 @@ QString DeviceInfo::getDeviceInfoXmlPath()
 
         tmpPath = tmpPath + "/.cache/mtp";
         QDir tmpDir = QDir(tmpPath);
-        if (!tmpDir.exists()){
+        if (!tmpDir.exists()) {
             if (!tmpDir.mkpath(tmpPath))
                 qFatal("Unable to create ~/.cache/mtp/");
         }
@@ -620,7 +602,7 @@ void DeviceInfo::setBatteryLevel(quint8 level)
 /*******************************************
  * m_formFlag DeviceInfo::getBatteryLevelForm
  ******************************************/
-const QVector<quint16>& DeviceInfo::MTPOperationsSupported() const
+const QVector<quint16> &DeviceInfo::MTPOperationsSupported() const
 {
     return m_mtpOperationsSupported;
 }
@@ -628,7 +610,7 @@ const QVector<quint16>& DeviceInfo::MTPOperationsSupported() const
 /*******************************************
  * quint16* DeviceInfo::MTPEventsSupported
  ******************************************/
-const QVector<quint16>& DeviceInfo::MTPEventsSupported() const
+const QVector<quint16> &DeviceInfo::MTPEventsSupported() const
 {
     return m_mtpEventsSupported;
 }
@@ -636,7 +618,7 @@ const QVector<quint16>& DeviceInfo::MTPEventsSupported() const
 /*******************************************
  * quint16* DeviceInfo::MTPDevicePropertiesSupported
  ******************************************/
-const QVector<quint16>& DeviceInfo::MTPDevicePropertiesSupported() const
+const QVector<quint16> &DeviceInfo::MTPDevicePropertiesSupported() const
 {
     return m_mtpDevicePropertiesSupported;
 }
@@ -644,7 +626,7 @@ const QVector<quint16>& DeviceInfo::MTPDevicePropertiesSupported() const
 /*******************************************
  * quint16* DeviceInfo::supportedFormats
  ******************************************/
-const QVector<quint16>& DeviceInfo::supportedFormats() const
+const QVector<quint16> &DeviceInfo::supportedFormats() const
 {
     return m_supportedFormats;
 }
@@ -656,23 +638,15 @@ quint16 DeviceInfo::getFormatCodeCategory(quint16 formatCode)
 {
     quint16 formatCategory = MTP_UNSUPPORTED_FORMAT;
 
-    if(m_commonFormats.contains(formatCode))
-    {
+    if (m_commonFormats.contains(formatCode)) {
         formatCategory = MTP_COMMON_FORMAT;
-    }
-    else if(m_audioFormats.contains(formatCode))
-    {
+    } else if (m_audioFormats.contains(formatCode)) {
         formatCategory = MTP_AUDIO_FORMAT;
-    }
-    else if(m_videoFormats.contains(formatCode))
-    {
+    } else if (m_videoFormats.contains(formatCode)) {
         formatCategory = MTP_VIDEO_FORMAT;
-    }
-    else  if(m_imageFormats.contains(formatCode))
-    {
+    } else  if (m_imageFormats.contains(formatCode)) {
         formatCategory = MTP_IMAGE_FORMAT;
-    }
-    else {
+    } else {
         qWarning("Unhandled formatCode: 0x%04x", formatCode);
         formatCategory = MTP_COMMON_FORMAT;
     }
@@ -722,7 +696,7 @@ quint32 DeviceInfo::videoMaxHeight()
 /*******************************************
  * quint16* DeviceInfo::videoChannels(quint32& no)
  ******************************************/
-const QVector<quint16>& DeviceInfo::videoChannels() const
+const QVector<quint16> &DeviceInfo::videoChannels() const
 {
     return m_videoChannels;
 }
@@ -730,7 +704,7 @@ const QVector<quint16>& DeviceInfo::videoChannels() const
 /*******************************************
  * quint16* DeviceInfo::audioChannels
  ******************************************/
-const QVector<quint16>& DeviceInfo::audioChannels() const
+const QVector<quint16> &DeviceInfo::audioChannels() const
 {
     return m_audioChannels;
 }
@@ -738,7 +712,7 @@ const QVector<quint16>& DeviceInfo::audioChannels() const
 /*******************************************
  * const quint32& DeviceInfo::videoMinFPS
  ******************************************/
-const quint32& DeviceInfo::videoMinFPS() const
+const quint32 &DeviceInfo::videoMinFPS() const
 {
     return m_videoMinFPS;
 }
@@ -746,7 +720,7 @@ const quint32& DeviceInfo::videoMinFPS() const
 /*******************************************
  * const quint32& DeviceInfo::videoMaxFPS
  ******************************************/
-const quint32& DeviceInfo::videoMaxFPS() const
+const quint32 &DeviceInfo::videoMaxFPS() const
 {
     return m_videoMaxFPS;
 }
@@ -754,7 +728,7 @@ const quint32& DeviceInfo::videoMaxFPS() const
 /*******************************************
  * const quint16& DeviceInfo::videoScanType
  ******************************************/
-const quint16& DeviceInfo::videoScanType() const
+const quint16 &DeviceInfo::videoScanType() const
 {
     return m_videoScanType;
 }
@@ -762,7 +736,7 @@ const quint16& DeviceInfo::videoScanType() const
 /*******************************************
  * const quint32& DeviceInfo::videoSampleRate
  ******************************************/
-const quint32& DeviceInfo::videoSampleRate() const
+const quint32 &DeviceInfo::videoSampleRate() const
 {
     return m_videoSampleRate;
 }
@@ -770,7 +744,7 @@ const quint32& DeviceInfo::videoSampleRate() const
 /*******************************************
  * const quint32& DeviceInfo::audioSampleRate()
  ******************************************/
-const quint32& DeviceInfo::audioSampleRate() const
+const quint32 &DeviceInfo::audioSampleRate() const
 {
     return m_audioSampleRate;
 }
@@ -778,7 +752,7 @@ const quint32& DeviceInfo::audioSampleRate() const
 /*******************************************
  * const quint32& DeviceInfo::videoMinBitRate
  ******************************************/
-const quint32& DeviceInfo::videoMinBitRate() const
+const quint32 &DeviceInfo::videoMinBitRate() const
 {
     return m_videoMinBitRate;
 }
@@ -786,7 +760,7 @@ const quint32& DeviceInfo::videoMinBitRate() const
 /*******************************************
  * const quint32& DeviceInfo::videoMaxBitRate
  ******************************************/
-const quint32& DeviceInfo::videoMaxBitRate() const
+const quint32 &DeviceInfo::videoMaxBitRate() const
 {
     return m_videoMaxBitRate;
 }
@@ -794,7 +768,7 @@ const quint32& DeviceInfo::videoMaxBitRate() const
 /*******************************************
  * const quint32& DeviceInfo::audioMinBitRate
  ******************************************/
-const quint32& DeviceInfo::audioMinBitRate() const
+const quint32 &DeviceInfo::audioMinBitRate() const
 {
     return m_audioMinBitRate;
 }
@@ -802,7 +776,7 @@ const quint32& DeviceInfo::audioMinBitRate() const
 /*******************************************
  * const quint32& DeviceInfo::audioMaxBitRate
  ******************************************/
-const quint32& DeviceInfo::audioMaxBitRate() const
+const quint32 &DeviceInfo::audioMaxBitRate() const
 {
     return m_audioMaxBitRate;
 }
@@ -810,7 +784,7 @@ const quint32& DeviceInfo::audioMaxBitRate() const
 /*******************************************
  * const quint32& DeviceInfo::videoAudioMinBitRate
  ******************************************/
-const quint32& DeviceInfo::videoAudioMinBitRate() const
+const quint32 &DeviceInfo::videoAudioMinBitRate() const
 {
     return m_videoAudioMinBitRate;
 }
@@ -818,7 +792,7 @@ const quint32& DeviceInfo::videoAudioMinBitRate() const
 /*******************************************
  * const quint32& DeviceInfo::videoAudioMaxBitRate
  ******************************************/
-const quint32& DeviceInfo::videoAudioMaxBitRate() const
+const quint32 &DeviceInfo::videoAudioMaxBitRate() const
 {
     return m_videoAudioMaxBitRate;
 }
@@ -826,7 +800,7 @@ const quint32& DeviceInfo::videoAudioMaxBitRate() const
 /*******************************************
  * const quint32& DeviceInfo::videoMinKFD
  ******************************************/
-const quint32& DeviceInfo::videoMinKFD() const
+const quint32 &DeviceInfo::videoMinKFD() const
 {
     return m_videoMinKFD;
 }
@@ -834,7 +808,7 @@ const quint32& DeviceInfo::videoMinKFD() const
 /*******************************************
  * const quint32& DeviceInfo::videoMaxKFD
  ******************************************/
-const quint32& DeviceInfo::videoMaxKFD() const
+const quint32 &DeviceInfo::videoMaxKFD() const
 {
     return m_videoMaxKFD;
 }
@@ -842,7 +816,7 @@ const quint32& DeviceInfo::videoMaxKFD() const
 /*******************************************
  * quint32* DeviceInfo::supportedAudioCodecs
  ******************************************/
-const QVector<quint32>& DeviceInfo::supportedAudioCodecs() const
+const QVector<quint32> &DeviceInfo::supportedAudioCodecs() const
 {
     return m_supportedCodecs;
 }

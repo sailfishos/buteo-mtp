@@ -51,7 +51,7 @@ DeviceInfoProvider::DeviceInfoProvider()
     m_serialNo = ssuDeviceInfo.deviceUid();
 
     m_deviceVersion = QString("%1 HW: %2").arg(di.version(QDeviceInfo::Os))
-                                          .arg(di.version(QDeviceInfo::Firmware));
+                      .arg(di.version(QDeviceInfo::Firmware));
 
     m_manufacturer = di.manufacturer().isEmpty() ? m_manufacturer : di.manufacturer();
     m_model = di.model().isEmpty() ? m_model : di.model();
@@ -59,8 +59,7 @@ DeviceInfoProvider::DeviceInfoProvider()
     connect(m_batteryStatus, &BatteryStatus::chargePercentageChanged,
             this, &DeviceInfoProvider::onBatteryPercentageChanged);
 
-    if(m_newConfigFileWasCreated)
-    {
+    if (m_newConfigFileWasCreated) {
         /* Query DeviceModel from SSU and use it to override the value of
          * the friendly name -property defined in the XML configuration */
         QString deviceModel = ssuDeviceInfo.displayName(Ssu::DeviceModel);

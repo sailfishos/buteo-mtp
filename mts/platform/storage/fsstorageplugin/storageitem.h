@@ -35,8 +35,7 @@
 #include "mtptypes.h"
 #include <QString>
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class StorageItem
 {
 #ifdef UT_ON
@@ -57,8 +56,9 @@ public:
     /// Is sending of object changed notifications allowed
     bool eventsAreEnabled(void) const;
 
-     // Allow read access to item path
-    const QString &path(void) const {
+    // Allow read access to item path
+    const QString &path(void) const
+    {
         return m_path;
     }
 

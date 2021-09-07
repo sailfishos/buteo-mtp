@@ -70,7 +70,7 @@ MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLe
 
     // bulk read data
     QObject::connect(&m_bulkRead, SIGNAL(dataReady()),
-        this, SLOT(handleDataReady()), Qt::QueuedConnection);
+                     this, SLOT(handleDataReady()), Qt::QueuedConnection);
 
     // bulk write data
     QObject::connect(&m_bulkWrite, &QThread::finished,
@@ -78,7 +78,7 @@ MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLe
                      Qt::QueuedConnection);
 
     // event write control
-    MTPResponder* responder = MTPResponder::instance();
+    MTPResponder *responder = MTPResponder::instance();
     QObject::connect(responder, &MTPResponder::commandPending,
                      this, &MTPTransporterUSB::onCommandPending);
     QObject::connect(responder, &MTPResponder::commandIdle,
@@ -87,7 +87,7 @@ MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLe
 
 void MTPTransporterUSB::onCommandFinished()
 {
-    if( m_responderBusy ) {
+    if ( m_responderBusy ) {
         m_responderBusy = false;
         MTP_LOG_TRACE("m_responderBusy:" << m_responderBusy);
         sendQueuedEvent();
@@ -96,7 +96,7 @@ void MTPTransporterUSB::onCommandFinished()
 
 void MTPTransporterUSB::onCommandPending()
 {
-    if( !m_responderBusy ) {
+    if ( !m_responderBusy ) {
         m_responderBusy = true;
         MTP_LOG_TRACE("m_responderBusy:" << m_responderBusy);
     }
@@ -109,7 +109,7 @@ bool MTPTransporterUSB::writeMtpDescriptors()
 
     if (errno == EINVAL) {
         MTP_LOG_WARNING("Kernel did not accept endpoint descriptors;"
-            " trying 'ss_count' workaround");
+                        " trying 'ss_count' workaround");
         // Some android kernels changed the usb_functionfs_descs_head size
         // by adding an ss_count member. Try it that way.
         mtp1_descriptors_s_incompatible descs;
@@ -121,7 +121,7 @@ bool MTPTransporterUSB::writeMtpDescriptors()
     }
 
     MTP_LOG_CRITICAL("Couldn't write descriptors to control endpoint file"
-        << MTP_EP_PATH_CONTROL);
+                     << MTP_EP_PATH_CONTROL);
     return false;
 }
 
@@ -131,7 +131,7 @@ bool MTPTransporterUSB::writeMtpStrings()
         return true;
 
     MTP_LOG_CRITICAL("Couldn't write strings to control endpoint file"
-        << MTP_EP_PATH_CONTROL);
+                     << MTP_EP_PATH_CONTROL);
     return false;
 }
 
@@ -141,32 +141,29 @@ bool MTPTransporterUSB::activate()
     int success = false;
 
     m_ctrlFd = open(MTP_EP_PATH_CONTROL, O_RDWR);
-    if(-1 == m_ctrlFd)
-    {
+    if (-1 == m_ctrlFd) {
         MTP_LOG_CRITICAL("Couldn't open control endpoint file " << MTP_EP_PATH_CONTROL);
-    }
-    else
-    {
+    } else {
         if (writeMtpDescriptors() && writeMtpStrings()) {
             success = true;
             MTP_LOG_INFO("mtp function set up");
         }
     }
 
-    if(success) {
+    if (success) {
         m_ctrl.setFd(m_ctrlFd);
         QObject::connect(&m_ctrl, SIGNAL(startIO()),
-            this, SLOT(startRead()), Qt::QueuedConnection);
+                         this, SLOT(startRead()), Qt::QueuedConnection);
         QObject::connect(&m_ctrl, SIGNAL(stopIO()),
-            this, SLOT(stopRead()), Qt::QueuedConnection);
+                         this, SLOT(stopRead()), Qt::QueuedConnection);
         QObject::connect(&m_ctrl, SIGNAL(bindUSB()),
-            this, SLOT(openDevices()), Qt::QueuedConnection);
+                         this, SLOT(openDevices()), Qt::QueuedConnection);
         QObject::connect(&m_ctrl, SIGNAL(unbindUSB()),
-            this, SLOT(closeDevices()), Qt::QueuedConnection);
+                         this, SLOT(closeDevices()), Qt::QueuedConnection);
         QObject::connect(&m_ctrl, SIGNAL(deviceReset()),
-            this, SIGNAL(deviceReset()), Qt::QueuedConnection);
+                         this, SIGNAL(deviceReset()), Qt::QueuedConnection);
         QObject::connect(&m_ctrl, SIGNAL(cancelTransaction()),
-            this, SIGNAL(cancelTransaction()), Qt::QueuedConnection);
+                         this, SIGNAL(cancelTransaction()), Qt::QueuedConnection);
         m_ctrl.start();
     }
 
@@ -231,12 +228,21 @@ MTPTransporterUSB::~MTPTransporterUSB()
 static const char *InterruptWriterStateRepr(int state)
 {
     const char *repr = "INTERRUPT_WRITER_<UNKNOWN>";
-    switch( state ) {
-    case MTPTransporterUSB::INTERRUPT_WRITER_IDLE:     repr = "INTERRUPT_WRITER_IDLE";     break;
-    case MTPTransporterUSB::INTERRUPT_WRITER_BUSY:     repr = "INTERRUPT_WRITER_BUSY";     break;
-    case MTPTransporterUSB::INTERRUPT_WRITER_RETRY:    repr = "INTERRUPT_WRITER_RETRY";    break;
-    case MTPTransporterUSB::INTERRUPT_WRITER_DISABLED: repr = "INTERRUPT_WRITER_DISABLED"; break;
-    default: break;
+    switch ( state ) {
+    case MTPTransporterUSB::INTERRUPT_WRITER_IDLE:
+        repr = "INTERRUPT_WRITER_IDLE";
+        break;
+    case MTPTransporterUSB::INTERRUPT_WRITER_BUSY:
+        repr = "INTERRUPT_WRITER_BUSY";
+        break;
+    case MTPTransporterUSB::INTERRUPT_WRITER_RETRY:
+        repr = "INTERRUPT_WRITER_RETRY";
+        break;
+    case MTPTransporterUSB::INTERRUPT_WRITER_DISABLED:
+        repr = "INTERRUPT_WRITER_DISABLED";
+        break;
+    default:
+        break;
     }
     return repr;
 }
@@ -244,8 +250,7 @@ static const char *InterruptWriterStateRepr(int state)
 
 void MTPTransporterUSB::setEventsBusy(int state)
 {
-    if( m_events_busy != state )
-    {
+    if ( m_events_busy != state ) {
         MTP_LOG_TRACE("m_events_busy:"
                       << InterruptWriterStateRepr(m_events_busy)
                       << "->"
@@ -255,12 +260,11 @@ void MTPTransporterUSB::setEventsBusy(int state)
 }
 
 
-bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLastPacket)
+bool MTPTransporterUSB::sendData(const quint8 *data, quint32 dataLen, bool isLastPacket)
 {
     // TODO: can't handle re-entrant calls with the current design.
 
-    if(m_writer_busy)
-    {
+    if (m_writer_busy) {
         // If we get here, packets are be lost and protocol broken
         MTP_LOG_CRITICAL("Refusing recursive bulk write request");
         return false;
@@ -277,7 +281,7 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
         while (m_events_busy == INTERRUPT_WRITER_BUSY) {
             QCoreApplication::sendPostedEvents();
 
-            if( m_events_busy != INTERRUPT_WRITER_BUSY )
+            if ( m_events_busy != INTERRUPT_WRITER_BUSY )
                 break;
 
             QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
@@ -296,11 +300,11 @@ bool MTPTransporterUSB::sendData(const quint8* data, quint32 dataLen, bool isLas
 
     // The bulk writer will make sure that processEvents is woken up
     // when the result is ready.
-    while(!m_bulkWrite.resultReady()) {
+    while (!m_bulkWrite.resultReady()) {
 
         QCoreApplication::sendPostedEvents();
 
-        if( m_bulkWrite.resultReady() )
+        if ( m_bulkWrite.resultReady() )
             break;
 
         QCoreApplication::processEvents(QEventLoop::WaitForMoreEvents);
@@ -328,7 +332,7 @@ void MTPTransporterUSB::sessionOpenChanged(bool isOpen)
             m_events_failed = 0;
 
         // re-enable event sending
-        if( m_events_busy == INTERRUPT_WRITER_DISABLED )
+        if ( m_events_busy == INTERRUPT_WRITER_DISABLED )
             setEventsBusy(INTERRUPT_WRITER_IDLE);
 
         /* If host does not close session due to errors or by design, it
@@ -342,10 +346,10 @@ void MTPTransporterUSB::sessionOpenChanged(bool isOpen)
 
 void MTPTransporterUSB::sendQueuedEvent()
 {
-    if( m_writer_busy )
+    if ( m_writer_busy )
         return;
 
-    if( m_responderBusy )
+    if ( m_responderBusy )
         return;
 
     if (!m_inSession)
@@ -354,13 +358,13 @@ void MTPTransporterUSB::sendQueuedEvent()
     if (m_writer_busy)
         return;
 
-    if( m_events_busy == INTERRUPT_WRITER_DISABLED )
+    if ( m_events_busy == INTERRUPT_WRITER_DISABLED )
         return;
 
     if (m_events_busy == INTERRUPT_WRITER_BUSY )
         return;
 
-    if( m_events_busy == INTERRUPT_WRITER_IDLE ) {
+    if ( m_events_busy == INTERRUPT_WRITER_IDLE ) {
         if (!m_intrWrite.hasData())
             return;
     }
@@ -376,7 +380,7 @@ void MTPTransporterUSB::sendQueuedEvent()
     m_intrWrite.sendOne();
 }
 
-bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLastPacket)
+bool MTPTransporterUSB::sendEvent(const quint8 *data, quint32 dataLen, bool isLastPacket)
 {
     Q_UNUSED(isLastPacket);
 
@@ -406,10 +410,9 @@ bool MTPTransporterUSB::sendEvent(const quint8* data, quint32 dataLen, bool isLa
 }
 void MTPTransporterUSB::eventTimeout()
 {
-    if( m_writer_busy ) {
+    if ( m_writer_busy ) {
         MTP_LOG_WARNING("event write timeout during send data - retry later");
-    }
-    else {
+    } else {
         ++m_events_failed;
 
         /* The intr write did not complete in expected time.
@@ -417,7 +420,7 @@ void MTPTransporterUSB::eventTimeout()
         MTP_LOG_WARNING("event write timeout" << m_events_failed
                         << "/" << MAX_EVENT_SEND_FAILURES);
 
-        if( m_events_failed == MAX_EVENT_SEND_FAILURES ) {
+        if ( m_events_failed == MAX_EVENT_SEND_FAILURES ) {
             MTP_LOG_WARNING("event sending disabled - too many send failures");
 
             /* Clear the queue so that it won't spoil the next session */
@@ -440,13 +443,13 @@ void MTPTransporterUSB::eventCompleted(int result)
     // cancel timeout
     m_event_cancel->stop();
 
-    if( m_events_busy != INTERRUPT_WRITER_BUSY ) {
+    if ( m_events_busy != INTERRUPT_WRITER_BUSY ) {
         // We have thread synchronization issue
         MTP_LOG_CRITICAL("unhandled intr writer result");
         return;
     }
 
-    switch( result ) {
+    switch ( result ) {
     case INTERRUPT_WRITE_SUCCESS:
         // reset failure counter
         m_events_failed = 0;
@@ -540,21 +543,17 @@ void MTPTransporterUSB::processReceivedData()
     m_bulkRead.getData(&data, &dataLen);
     //MTP_LOG_INFO("data=" << (void*)data << "dataLen=" << dataLen);
 
-    while (dataLen > 0)
-    {
+    while (dataLen > 0) {
         quint32 chunkLen;
 
-        if (m_containerReadLen == 0)
-        {
+        if (m_containerReadLen == 0) {
             // TODO: Change for big-endian machines
             m_containerReadLen = (*(const quint32 *)data);
-            if(0xFFFFFFFF == m_containerReadLen)
-            {
+            if (0xFFFFFFFF == m_containerReadLen) {
                 // For object transfers > 4GB
                 quint64 objectSize = 0;
                 emit fetchObjectSize((quint8 *)data, &objectSize);
-                if(objectSize > (0xFFFFFFFF - MTP_HEADER_SIZE))
-                {
+                if (objectSize > (0xFFFFFFFF - MTP_HEADER_SIZE)) {
                     m_containerReadLen = objectSize + MTP_HEADER_SIZE;
                 }
             }
@@ -565,7 +564,7 @@ void MTPTransporterUSB::processReceivedData()
         chunkLen = ((quint32) dataLen < m_containerReadLen) ? dataLen : m_containerReadLen;
         m_containerReadLen -= chunkLen;
 
-        emit dataReceived((quint8*)data, chunkLen, isFirstPacket, (m_containerReadLen == 0));
+        emit dataReceived((quint8 *)data, chunkLen, isFirstPacket, (m_containerReadLen == 0));
 
         // The connection might have been reset during data handling,
         // which makes the current buffer invalid.
@@ -586,16 +585,14 @@ void MTPTransporterUSB::openDevices()
     MTP_LOG_INFO("MTP opening endpoint devices");
 
     m_inFd = open(MTP_EP_PATH_IN, O_RDWR);
-    if(-1 == m_inFd)
-    {
+    if (-1 == m_inFd) {
         MTP_LOG_CRITICAL("Couldn't open IN endpoint file " << MTP_EP_PATH_IN);
     } else {
         m_bulkWrite.setFd(m_inFd);
     }
 
     m_outFd = open(MTP_EP_PATH_OUT, O_RDWR);
-    if(-1 == m_outFd)
-    {
+    if (-1 == m_outFd) {
         MTP_LOG_CRITICAL("Couldn't open OUT endpoint file " << MTP_EP_PATH_OUT);
     } else {
         m_bulkRead.setFd(m_outFd);
@@ -603,8 +600,7 @@ void MTPTransporterUSB::openDevices()
     }
 
     m_intrFd = open(MTP_EP_PATH_INTERRUPT, O_RDWR);
-    if(-1 == m_intrFd)
-    {
+    if (-1 == m_intrFd) {
         MTP_LOG_CRITICAL("Couldn't open INTR endpoint file " << MTP_EP_PATH_INTERRUPT);
     } else {
         m_intrWrite.setFd(m_intrFd);
@@ -624,17 +620,17 @@ void MTPTransporterUSB::closeDevices()
     stopRead();
     m_intrWrite.reset();
 
-    if(m_outFd != -1) {
+    if (m_outFd != -1) {
         close(m_outFd);
         m_bulkWrite.setFd(-1);
         m_outFd = -1;
     }
-    if(m_inFd != -1) {
+    if (m_inFd != -1) {
         close(m_inFd);
         m_bulkRead.setFd(-1);
         m_inFd = -1;
     }
-    if(m_intrFd != -1) {
+    if (m_intrFd != -1) {
         close(m_intrFd);
         m_intrWrite.setFd(-1);
         m_intrFd = -1;

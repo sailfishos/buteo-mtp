@@ -52,181 +52,96 @@ XMLHandler::~XMLHandler()
 /******************************************
  * XMLHandler::startElement
  *****************************************/
-bool XMLHandler::startElement(const QString&, 
-                              const QString&,
-                              const QString& aName, 
-                              const QXmlAttributes&)
+bool XMLHandler::startElement(const QString &,
+                              const QString &,
+                              const QString &aName,
+                              const QXmlAttributes &)
 {
-    if (aName == "DeviceInfo")
-    {
+    if (aName == "DeviceInfo") {
         m_state = START;
-    }
-    else if (aName == "StdVersion")
-    {
+    } else if (aName == "StdVersion") {
         m_state = STDVERSION;
-    }
-    else if (aName == "MTPVendorExtn")
-    {
+    } else if (aName == "MTPVendorExtn") {
         m_state = MTPVNDEXTN;
-    }
-    else if (aName == "MTPVersion")
-    {
+    } else if (aName == "MTPVersion") {
         m_state = MTPVERSION;
-    }
-    else if (aName == "MTPExtn")
-    {
+    } else if (aName == "MTPExtn") {
         m_state = MTPEXTN;
-    }
-    else if (aName == "FnMode")
-    {
+    } else if (aName == "FnMode") {
         m_state = FNMODE;
-    }
-    else if (aName == "Manufacturer")
-    {
+    } else if (aName == "Manufacturer") {
         m_state = MANU;
-    }
-    else if (aName == "Model")
-    {
+    } else if (aName == "Model") {
         m_state = MODEL;
-    }
-    else if (aName == "DeviceVersion")
-    {
+    } else if (aName == "DeviceVersion") {
         m_state = DEVVER;
-    }
-    else if (aName == "SerialNumber")
-    {
+    } else if (aName == "SerialNumber") {
         m_state = SERIAL;
-    }
-    else if (aName == "OpCode")
-    {
+    } else if (aName == "OpCode") {
         m_state = OPCODE;
-    }
-    else if (aName == "EvCode")
-    {
+    } else if (aName == "EvCode") {
         m_state = EVCODE;
-    }
-    else if (aName == "DevPropCode")
-    {
+    } else if (aName == "DevPropCode") {
         m_state = DEVPROPCODE;
-    }
-    else if (aName == "DevPropValue")
-    {
+    } else if (aName == "DevPropValue") {
         m_state = DEVPROPVAL;
-    }
-    else if (aName == "Codec")
-    {
+    } else if (aName == "Codec") {
         m_state = CODEC;
-    }
-    else if(aName == "ImageMinWidth")
-    {
+    } else if (aName == "ImageMinWidth") {
         m_state = IMINWIDTH;
-    }
-    else if(aName == "ImageMaxWidth")
-    {
+    } else if (aName == "ImageMaxWidth") {
         m_state = IMAXWIDTH;
-    }
-    else if(aName == "ImageMinHeight")
-    {
+    } else if (aName == "ImageMinHeight") {
         m_state = IMINHEIGHT;
-    }
-    else if(aName == "ImageMaxHeight")
-    {
+    } else if (aName == "ImageMaxHeight") {
         m_state = IMAXHEIGHT;
-    }
-    else if(aName == "VideoMinWidth")
-    {
+    } else if (aName == "VideoMinWidth") {
         m_state = VMINWIDTH;
-    }
-    else if(aName == "VideoMaxWidth")
-    {
+    } else if (aName == "VideoMaxWidth") {
         m_state = VMAXWIDTH;
-    }
-    else if(aName == "VideoMinHeight")
-    {
+    } else if (aName == "VideoMinHeight") {
         m_state = VMINHEIGHT;
-    }
-    else if(aName == "VideoMaxHeight")
-    {
+    } else if (aName == "VideoMaxHeight") {
         m_state = VMAXHEIGHT;
-    }
-    else if (aName == "VideoChannel")
-    {
+    } else if (aName == "VideoChannel") {
         m_state = VCHANNEL;
-    }
-    else if (aName == "VideoMinFPS")
-    {
+    } else if (aName == "VideoMinFPS") {
         m_state = VMINFPS;
-    }
-    else if (aName == "VideoMaxFPS")
-    {
+    } else if (aName == "VideoMaxFPS") {
         m_state = VMAXFPS;
-    }
-    else if (aName == "VideoScanType")
-    {
+    } else if (aName == "VideoScanType") {
         m_state = VSCANTYPE;
-    }
-    else if (aName == "VideoSampleRate")
-    {
+    } else if (aName == "VideoSampleRate") {
         m_state = VSAMPLERATE;
-    }
-    else if (aName == "VideoMinBitRate")
-    {
+    } else if (aName == "VideoMinBitRate") {
         m_state = VMINBR;
-    }
-    else if (aName == "VideoMaxBitRate")
-    {
+    } else if (aName == "VideoMaxBitRate") {
         m_state = VMAXBR;
-    }
-    else if (aName == "AudioMinBitRate")
-    {
+    } else if (aName == "AudioMinBitRate") {
         m_state = AMINBR;
-    }
-    else if (aName == "AudioMaxBitRate")
-    {
+    } else if (aName == "AudioMaxBitRate") {
         m_state = AMAXBR;
-    }
-    else if (aName == "VideoAudioMinBitRate")
-    {
+    } else if (aName == "VideoAudioMinBitRate") {
         m_state = VAUDMINBR;
-    }
-    else if (aName == "VideoAudioMaxBitRate")
-    {
+    } else if (aName == "VideoAudioMaxBitRate") {
         m_state = VAUDMAXBR;
-    }
-    else if (aName == "VideoMinKeyFrameDist")
-    {
+    } else if (aName == "VideoMinKeyFrameDist") {
         m_state = VMINKFD;
-    }
-    else if (aName == "VideoMaxKeyFrameDist")
-    {
+    } else if (aName == "VideoMaxKeyFrameDist") {
         m_state = VMAXKFD;
-    }
-    else if (aName == "AudioChannel")
-    {
+    } else if (aName == "AudioChannel") {
         m_state = ACHANNEL;
-    }
-    else if (aName == "AudioSampleRate")
-    {
+    } else if (aName == "AudioSampleRate") {
         m_state = ASAMPLERATE;
-    }
-    else if(aName == "CommonFormat")
-    {
+    } else if (aName == "CommonFormat") {
         m_state = COMMONF;
-    }
-    else if(aName == "ImageFormat")
-    {
+    } else if (aName == "ImageFormat") {
         m_state = IMAGEF;
-    }
-    else if(aName == "AudioFormat")
-    {
+    } else if (aName == "AudioFormat") {
         m_state = AUDIOF;
-    }
-    else if(aName == "VideoFormat")
-    {
+    } else if (aName == "VideoFormat") {
         m_state = VIDEOF;
-    }
-    else
-    {
+    } else {
         m_state = DEFAULT;
     }
     return true;
@@ -235,12 +150,11 @@ bool XMLHandler::startElement(const QString&,
 /******************************************
  * XMLHandler::endElement
  *****************************************/
-bool XMLHandler::endElement(const QString&, 
-                            const QString&,
-                            const QString&)
+bool XMLHandler::endElement(const QString &,
+                            const QString &,
+                            const QString &)
 {
-    if (m_state == DEFAULT)
-    {
+    if (m_state == DEFAULT) {
         return false;
     }
     return true;
@@ -249,30 +163,28 @@ bool XMLHandler::endElement(const QString&,
 /******************************************
  * XMLHandler::characters
  *****************************************/
-bool XMLHandler::characters(const QString& aStr)
+bool XMLHandler::characters(const QString &aStr)
 {
-    if (aStr.simplified().size() == 0 || !m_devInfo)
-    {
-      return true;
+    if (aStr.simplified().size() == 0 || !m_devInfo) {
+        return true;
     }
 
     bool ok;
     bool result = false;
 
-    switch (m_state)
-    {
+    switch (m_state) {
     case DEFAULT:
-         result = false;
+        result = false;
         break;
     case START:
-         result = true;
+        result = true;
         break;
     case STDVERSION:
         m_devInfo->m_standardVersion = aStr.toUShort(&ok);
         result = ok;
         break;
     case MTPVNDEXTN:
-        m_devInfo->m_vendorExtension = aStr.toUInt(&ok,16);
+        m_devInfo->m_vendorExtension = aStr.toUInt(&ok, 16);
         result = ok;
         break;
     case MTPVERSION:
@@ -288,14 +200,14 @@ bool XMLHandler::characters(const QString& aStr)
          * currently supports -> better ignore this configuration
          * element altogether.
          */
-        if( m_devInfo->m_mtpExtension != aStr ) {
+        if ( m_devInfo->m_mtpExtension != aStr ) {
             MTP_LOG_INFO("Ignoring configured mtp extensions:" << aStr
                          << "Using built in defaults:" << m_devInfo->m_mtpExtension);
         }
         result = true;
         break;
     case FNMODE:
-        m_devInfo->m_functionalMode = aStr.toUShort(&ok,16);
+        m_devInfo->m_functionalMode = aStr.toUShort(&ok, 16);
         result = ok;
         break;
     case MANU:
@@ -315,41 +227,39 @@ bool XMLHandler::characters(const QString& aStr)
         result = true;
         break;
     case OPCODE:
-        m_devInfo->m_mtpOperationsSupported.append(aStr.toUShort(&ok,16));
+        m_devInfo->m_mtpOperationsSupported.append(aStr.toUShort(&ok, 16));
         result = ok;
         break;
     case EVCODE:
-        m_devInfo->m_mtpEventsSupported.append(aStr.toUShort(&ok,16));
+        m_devInfo->m_mtpEventsSupported.append(aStr.toUShort(&ok, 16));
         result = ok;
         break;
     case DEVPROPCODE:
-        m_devpropcode = aStr.toUShort(&ok,16);
+        m_devpropcode = aStr.toUShort(&ok, 16);
         m_devInfo->m_mtpDevicePropertiesSupported.append(m_devpropcode);
         result = ok;
         break;
-    case DEVPROPVAL:
-    {
-        switch(m_devpropcode)
-        {
-            case 0xD402:
-                m_devInfo->m_deviceFriendlyName = aStr;
-                break;
-            case 0xD401:
-                m_devInfo->m_syncPartner = aStr;
-                break;
-            case 0x501F:
-                m_devInfo->m_copyrightInfo = aStr;
-                break;
-            case 0xD407:
-                m_devInfo->m_deviceType = aStr.toUInt(&ok, 16);
-                result = ok;
-                break;
+    case DEVPROPVAL: {
+        switch (m_devpropcode) {
+        case 0xD402:
+            m_devInfo->m_deviceFriendlyName = aStr;
+            break;
+        case 0xD401:
+            m_devInfo->m_syncPartner = aStr;
+            break;
+        case 0x501F:
+            m_devInfo->m_copyrightInfo = aStr;
+            break;
+        case 0xD407:
+            m_devInfo->m_deviceType = aStr.toUInt(&ok, 16);
+            result = ok;
+            break;
         }
         result = true;
         break;
     }
     case CODEC:
-        m_devInfo->m_supportedCodecs.append(aStr.toUInt(&ok,16));
+        m_devInfo->m_supportedCodecs.append(aStr.toUInt(&ok, 16));
         result = ok;
         break;
     case IMINWIDTH:
@@ -385,7 +295,7 @@ bool XMLHandler::characters(const QString& aStr)
         result = ok;
         break;
     case VCHANNEL:
-        m_devInfo->m_videoChannels.append(aStr.toUShort(&ok,16));
+        m_devInfo->m_videoChannels.append(aStr.toUShort(&ok, 16));
         result = ok;
         break;
     case VMINFPS:
@@ -397,67 +307,67 @@ bool XMLHandler::characters(const QString& aStr)
         result = ok;
         break;
     case VSCANTYPE:
-        m_devInfo->m_videoScanType = aStr.toUShort(&ok,16);
+        m_devInfo->m_videoScanType = aStr.toUShort(&ok, 16);
         result = ok;
         break;
     case VSAMPLERATE:
-        m_devInfo->m_videoSampleRate = aStr.toUInt(&ok,16);
+        m_devInfo->m_videoSampleRate = aStr.toUInt(&ok, 16);
         result = ok;
         break;
     case VMINBR:
-        m_devInfo->m_videoMinBitRate = aStr.toUInt(&ok,16);
+        m_devInfo->m_videoMinBitRate = aStr.toUInt(&ok, 16);
         result = ok;
         break;
     case VMAXBR:
-        m_devInfo->m_videoMaxBitRate = aStr.toUInt(&ok,16);
+        m_devInfo->m_videoMaxBitRate = aStr.toUInt(&ok, 16);
         result = ok;
         break;
     case AMINBR:
-        m_devInfo->m_audioMinBitRate = aStr.toUInt(&ok,16);
+        m_devInfo->m_audioMinBitRate = aStr.toUInt(&ok, 16);
         result = ok;
         break;
     case AMAXBR:
-        m_devInfo->m_audioMaxBitRate = aStr.toUInt(&ok,16);
+        m_devInfo->m_audioMaxBitRate = aStr.toUInt(&ok, 16);
         result = ok;
         break;
     case VAUDMINBR:
-        m_devInfo->m_videoAudioMinBitRate = aStr.toUInt(&ok,16);
+        m_devInfo->m_videoAudioMinBitRate = aStr.toUInt(&ok, 16);
         result = ok;
         break;
     case VAUDMAXBR:
-        m_devInfo->m_videoAudioMaxBitRate = aStr.toUInt(&ok,16);
+        m_devInfo->m_videoAudioMaxBitRate = aStr.toUInt(&ok, 16);
         result = ok;
         break;
     case VMINKFD:
-        m_devInfo->m_videoMinKFD = aStr.toUInt(&ok,16);
+        m_devInfo->m_videoMinKFD = aStr.toUInt(&ok, 16);
         result = ok;
         break;
     case VMAXKFD:
-        m_devInfo->m_videoMaxKFD = aStr.toUInt(&ok,16);
+        m_devInfo->m_videoMaxKFD = aStr.toUInt(&ok, 16);
         result = ok;
         break;
     case ACHANNEL:
-        m_devInfo->m_audioChannels.append(aStr.toUShort(&ok,16));
+        m_devInfo->m_audioChannels.append(aStr.toUShort(&ok, 16));
         result = ok;
         break;
     case ASAMPLERATE:
-        m_devInfo->m_audioSampleRate = aStr.toUShort(&ok,16);
+        m_devInfo->m_audioSampleRate = aStr.toUShort(&ok, 16);
         result = ok;
         break;
     case COMMONF:
-        m_devInfo->m_commonFormats.append(aStr.toUShort(&ok,16));
+        m_devInfo->m_commonFormats.append(aStr.toUShort(&ok, 16));
         result = ok;
         break;
     case IMAGEF:
-        m_devInfo->m_imageFormats.append(aStr.toUShort(&ok,16));
+        m_devInfo->m_imageFormats.append(aStr.toUShort(&ok, 16));
         result = ok;
         break;
     case AUDIOF:
-        m_devInfo->m_audioFormats.append(aStr.toUShort(&ok,16));
+        m_devInfo->m_audioFormats.append(aStr.toUShort(&ok, 16));
         result = ok;
         break;
     case VIDEOF:
-        m_devInfo->m_videoFormats.append(aStr.toUShort(&ok,16));
+        m_devInfo->m_videoFormats.append(aStr.toUShort(&ok, 16));
         result = ok;
         break;
     default:

@@ -47,88 +47,87 @@
 /// values per object. Values are cached first either when a setObjectPropList/Value is called or a getObjectPropList/Value
 /// is called for an object already on the responder. Future access to these properties fetches the values from cache. The
 /// cache is updated when a property's value is modified. This class is a singleton.
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class ObjectPropertyCache
 {
-    public:
-        ObjectPropertyCache() {}
+public:
+    ObjectPropertyCache() {}
 
-        /// Add/Modify a property-value pair for an object to the cache.
-        /// \param handle [in] the object handle which needs to be added/modified
-        /// \param propertyCode [in] object property code
-        /// \param value [in] object property value
-        void add( ObjHandle handle, MTPObjPropertyCode propertyCode, const QVariant &value );
+    /// Add/Modify a property-value pair for an object to the cache.
+    /// \param handle [in] the object handle which needs to be added/modified
+    /// \param propertyCode [in] object property code
+    /// \param value [in] object property value
+    void add( ObjHandle handle, MTPObjPropertyCode propertyCode, const QVariant &value );
 
-        /// Add/Modify from an MTPObjectPropDesc structure
-        /// \param handle [in] the object handle which needs to be added/modified
-        /// \propDescVal [in] reference to a propDescVal structure
-        void add( ObjHandle handle, const MTPObjPropDescVal &propDescVal );
+    /// Add/Modify from an MTPObjectPropDesc structure
+    /// \param handle [in] the object handle which needs to be added/modified
+    /// \propDescVal [in] reference to a propDescVal structure
+    void add( ObjHandle handle, const MTPObjPropDescVal &propDescVal );
 
-        /// Add/Modify from a list of MTPObjectPropDesc structures
-        /// \param handle [in] the object handle which needs to be added/modified
-        /// \propDescValList [in] list of propDescVal structures
-        void add( ObjHandle handle, QList<MTPObjPropDescVal> propDescValList );
+    /// Add/Modify from a list of MTPObjectPropDesc structures
+    /// \param handle [in] the object handle which needs to be added/modified
+    /// \propDescValList [in] list of propDescVal structures
+    void add( ObjHandle handle, QList<MTPObjPropDescVal> propDescValList );
 
-        /// Remove a property-value pair for an object from the cache.
-        /// If there's no code specified then the object itself is removed
-        /// If this was the last property in the cache then the object itself is removed
-        /// \param handle [in] the object handle
-        /// \param propertyCode [in] object property code
-        void remove( ObjHandle handle, MTPObjPropertyCode propertyCode = 0x0000 );
+    /// Remove a property-value pair for an object from the cache.
+    /// If there's no code specified then the object itself is removed
+    /// If this was the last property in the cache then the object itself is removed
+    /// \param handle [in] the object handle
+    /// \param propertyCode [in] object property code
+    void remove( ObjHandle handle, MTPObjPropertyCode propertyCode = 0x0000 );
 
-        /// Remove from cached based on a MTPObjPropDescVal
-        /// If this was the only property in the cache then the object itself is removed
-        /// \param handle [in] the object handle
-        /// \propDescVal [in] reference to a propDescVal structure
-        void remove( ObjHandle handle, const MTPObjPropDescVal &propDescVal );
+    /// Remove from cached based on a MTPObjPropDescVal
+    /// If this was the only property in the cache then the object itself is removed
+    /// \param handle [in] the object handle
+    /// \propDescVal [in] reference to a propDescVal structure
+    void remove( ObjHandle handle, const MTPObjPropDescVal &propDescVal );
 
-        /// Remove a set of properties from cache based on a list of MTPObjPropDescVal
-        /// If these were the last set of properties in the cache then the object itself is removed
-        /// \param handle [in] the object handle which needs to be added/modified
-        /// \propDescValList [in] list of propDescVal structures
-        void remove( ObjHandle handle, QList<MTPObjPropDescVal> propDescValList );
+    /// Remove a set of properties from cache based on a list of MTPObjPropDescVal
+    /// If these were the last set of properties in the cache then the object itself is removed
+    /// \param handle [in] the object handle which needs to be added/modified
+    /// \propDescValList [in] list of propDescVal structures
+    void remove( ObjHandle handle, QList<MTPObjPropDescVal> propDescValList );
 
-        /// Get the value for an object given the handle and the object property code.
-        /// \param handle [in] the object handle
-        /// \param propertyCode [in] the object property code
-        /// \param value [out] the object property code's value
-        /// \return bool true if this property was cached and found, false otherwise
-        bool get( ObjHandle handle, MTPObjPropertyCode propertyCode, QVariant &value );
-        
-        /// Get the value for an object given the handle and a reference to a MTPObjPropDescVal structure.
-        /// The value is populated in the structure.
-        /// \param handle [in] the object handle
-        /// \param propDescVal [in/out] the object property code
-        /// \param value [out] the object property code's value
-        /// \return bool true if this property in the MTPObjPropDescVal structure was cached and found, false otherwise
-        bool get( ObjHandle handle, MTPObjPropDescVal &propDescVal );
+    /// Get the value for an object given the handle and the object property code.
+    /// \param handle [in] the object handle
+    /// \param propertyCode [in] the object property code
+    /// \param value [out] the object property code's value
+    /// \return bool true if this property was cached and found, false otherwise
+    bool get( ObjHandle handle, MTPObjPropertyCode propertyCode, QVariant &value );
 
-        /// Retrieves multiple property values of given object from the cache.
-        ///
-        /// The method fills in the property values into \c propDescValList.
-        /// Properties for which values aren't found in the cache are moved into
-        /// \c notFoundList, so both of these parameters must be provided.
-        ///
-        /// \param handle [in] the object handle.
-        /// \param propDescValList [in, out] list of propDescVal structures
-        ///                        whose values to retrieve.
-        /// \param notFoundList [out] properties that weren't found are moved
-        ///                     into this list.
-        ///
-        /// \return \c true if the cache was able to fill in all the properties
-        ///         (i.e. notFoundList is empty), otherwise \c false.
-        bool get(ObjHandle handle, QList<MTPObjPropDescVal> &propDescValList,
-                QList<MTPObjPropDescVal> &notFoundList);
+    /// Get the value for an object given the handle and a reference to a MTPObjPropDescVal structure.
+    /// The value is populated in the structure.
+    /// \param handle [in] the object handle
+    /// \param propDescVal [in/out] the object property code
+    /// \param value [out] the object property code's value
+    /// \return bool true if this property in the MTPObjPropDescVal structure was cached and found, false otherwise
+    bool get( ObjHandle handle, MTPObjPropDescVal &propDescVal );
 
-        /// clear everything in the cache
-        void clear();
+    /// Retrieves multiple property values of given object from the cache.
+    ///
+    /// The method fills in the property values into \c propDescValList.
+    /// Properties for which values aren't found in the cache are moved into
+    /// \c notFoundList, so both of these parameters must be provided.
+    ///
+    /// \param handle [in] the object handle.
+    /// \param propDescValList [in, out] list of propDescVal structures
+    ///                        whose values to retrieve.
+    /// \param notFoundList [out] properties that weren't found are moved
+    ///                     into this list.
+    ///
+    /// \return \c true if the cache was able to fill in all the properties
+    ///         (i.e. notFoundList is empty), otherwise \c false.
+    bool get(ObjHandle handle, QList<MTPObjPropDescVal> &propDescValList,
+             QList<MTPObjPropDescVal> &notFoundList);
 
-        ~ObjectPropertyCache();
+    /// clear everything in the cache
+    void clear();
 
-    private:
-        /// The cache!
-        QHash<ObjHandle, QHash<MTPObjPropertyCode,QVariant> > m_propertyMap;
+    ~ObjectPropertyCache();
+
+private:
+    /// The cache!
+    QHash<ObjHandle, QHash<MTPObjPropertyCode, QVariant> > m_propertyMap;
 };
 }
 #endif

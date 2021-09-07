@@ -47,8 +47,7 @@
 #define     MTP_NO_SESSION_ID            0xFFFFFFFF
 #define     MTP_NO_TRANSACTION_ID        0xFFFFFFFF
 
-enum TransportType
-{
+enum TransportType {
     INVALID = 0,
     USB = 1,
     DUMMY = 2
@@ -636,26 +635,24 @@ typedef quint16 MTPChannelConf;
 
 typedef quint32 MtpParam;
 
-struct MtpRequest
-{
-  MTPOperationCode opCode;      // The operation code for the request
-  QVector<MtpParam> params;     // Request parameters (size must be no more than 5)
-  quint8 *data;                 // Request data
-  quint32 dataLen;              // Data length
-  MtpRequest() : opCode(0), data(0), dataLen(0) {}     // Constructor
+struct MtpRequest {
+    MTPOperationCode opCode;      // The operation code for the request
+    QVector<MtpParam> params;     // Request parameters (size must be no more than 5)
+    quint8 *data;                 // Request data
+    quint32 dataLen;              // Data length
+    MtpRequest() : opCode(0), data(0), dataLen(0) {}     // Constructor
 };
 
-struct MtpResponse
-{
-  MTPResponseCode   respCode;   // The response code
-  QVector<MtpParam> params;     // Response parameters (size must be no more than 5)
-  quint8 *data;                 // Response data
-  quint32 dataLen;              // Data length
-  MtpResponse() :               // Constructor
-    respCode(MTP_RESP_OperationNotSupported),
-    data(0), dataLen(0)
-  {
-  }
+struct MtpResponse {
+    MTPResponseCode   respCode;   // The response code
+    QVector<MtpParam> params;     // Response parameters (size must be no more than 5)
+    quint8 *data;                 // Response data
+    quint32 dataLen;              // Data length
+    MtpResponse() :               // Constructor
+        respCode(MTP_RESP_OperationNotSupported),
+        data(0), dataLen(0)
+    {
+    }
 };
 
 #define MTP_FORM_FLAG_NONE          0x00
@@ -669,8 +666,7 @@ struct MtpResponse
 
 typedef quint8 MtpFormFlag;
 
-struct MTPStorageInfo
-{
+struct MTPStorageInfo {
     MTPStorageType storageType;
     MTPFileSystemType filesystemType;
     MTPStorageAccess accessCapability;
@@ -680,33 +676,30 @@ struct MTPStorageInfo
     QString storageDescription;
     QString volumeLabel;
     MTPStorageInfo() : storageType(MTP_STORAGE_TYPE_Undefined), filesystemType(MTP_FILE_SYSTEM_TYPE_Undefined),
-                       accessCapability(MTP_STORAGE_ACCESS_ReadOnly_NoDel), maxCapacity(0), freeSpace(0),
-                       freeSpaceInObjects(0xFFFFFFFF){}
+        accessCapability(MTP_STORAGE_ACCESS_ReadOnly_NoDel), maxCapacity(0), freeSpace(0),
+        freeSpaceInObjects(0xFFFFFFFF) {}
 };
 
-struct MtpRangeForm
-{
-  QVariant minValue;
-  QVariant maxValue;
-  QVariant stepSize;
-  MtpRangeForm(QVariant v1, QVariant v2, QVariant v3) : minValue(v1), maxValue(v2), stepSize(v3) {}
-  MtpRangeForm(){}
+struct MtpRangeForm {
+    QVariant minValue;
+    QVariant maxValue;
+    QVariant stepSize;
+    MtpRangeForm(QVariant v1, QVariant v2, QVariant v3) : minValue(v1), maxValue(v2), stepSize(v3) {}
+    MtpRangeForm() {}
 };
 
 Q_DECLARE_METATYPE(MtpRangeForm);
 
-struct MtpEnumForm
-{
-  quint16 uTotal; // Total number of enumeration values
-  QVector<QVariant> values;
-  MtpEnumForm() : uTotal(0) {}
-  MtpEnumForm(quint16 total, const QVector<QVariant>& vals) : uTotal(total), values(vals) {}
+struct MtpEnumForm {
+    quint16 uTotal; // Total number of enumeration values
+    QVector<QVariant> values;
+    MtpEnumForm() : uTotal(0) {}
+    MtpEnumForm(quint16 total, const QVector<QVariant> &vals) : uTotal(total), values(vals) {}
 };
 
 Q_DECLARE_METATYPE(MtpEnumForm);
 
-struct MtpInt128
-{
+struct MtpInt128 {
     char val[16]; // 16 bytes in LE
 
     // Default Constructor
@@ -718,30 +711,27 @@ struct MtpInt128
     // Constructor taking upper and lower 8 bytes.
     MtpInt128( quint64 lower, quint64 upper = 0 )
     {
-        for(qint32 i = 0; i < 8; i++)
-        {
+        for (qint32 i = 0; i < 8; i++) {
             val[i] = lower & 0xFF;
             lower >>= 8;
         }
-        for(qint32 i = 8; i < 16; i++)
-        {
+        for (qint32 i = 8; i < 16; i++) {
             val[i] = upper & 0xFF;
             upper >>= 8;
         }
     }
 
     // Increment operator
-    MtpInt128& operator++()
+    MtpInt128 &operator++()
     {
-        quint64 *lower = reinterpret_cast<quint64*>(val);
-        quint64 *upper = reinterpret_cast<quint64*>(val + 8);
+        quint64 *lower = reinterpret_cast<quint64 *>(val);
+        quint64 *upper = reinterpret_cast<quint64 *>(val + 8);
 
         ++*lower;
 
         // If the lower 8 bytes overflowed
         // due to this increment, increment the upper 8 bytes.
-        if( !*lower )
-        {
+        if ( !*lower ) {
             ++*upper;
         }
 
@@ -752,8 +742,7 @@ struct MtpInt128
     int compare( const MtpInt128 &rhs ) const
     {
         int diff = 0;
-        for(qint32 i = 15; ((i >= 0) && (0 == diff)) ; i--)
-        {
+        for (qint32 i = 15; ((i >= 0) && (0 == diff)) ; i--) {
             diff = this->val[i] - rhs.val[i];
         }
         return diff;
@@ -775,15 +764,14 @@ struct MtpInt128
     }
 
     // Assignment operator
-    MtpInt128& operator=( const MtpInt128 &rhs )
+    MtpInt128 &operator=( const MtpInt128 &rhs )
     {
-        for(qint32 i = 0; i < 16; i++)
-        {
+        for (qint32 i = 0; i < 16; i++) {
             val[i] = rhs.val[i];
         }
         return *this;
     }
-}__attribute__((packed));
+} __attribute__((packed));
 
 // Hashing function for MtpInt128 so that it can be used as a key in QHash
 inline uint qHash(const MtpInt128 &v)
@@ -809,55 +797,51 @@ Q_DECLARE_METATYPE(QVector<quint32>);
 Q_DECLARE_METATYPE(QVector<quint64>);
 Q_DECLARE_METATYPE(QVector<MtpInt128>);
 
-struct MtpDevPropDesc
-{
-  MTPDevPropertyCode  uPropCode;
-  MTPDataType     uDataType;
-  bool            bGetSet;
-  QVariant        defValue;
-  QVariant        currentValue;
-  MtpFormFlag     formFlag;
-  QVariant        formField;
+struct MtpDevPropDesc {
+    MTPDevPropertyCode  uPropCode;
+    MTPDataType     uDataType;
+    bool            bGetSet;
+    QVariant        defValue;
+    QVariant        currentValue;
+    MtpFormFlag     formFlag;
+    QVariant        formField;
 };
 
-struct MtpObjPropDesc
-{
-  MTPObjPropertyCode  uPropCode;
-  MTPDataType     uDataType;
-  bool            bGetSet;
-  QVariant        defValue;
-  quint32         groupCode;
-  MtpFormFlag     formFlag;
-  QVariant        formField; // Can only be the types as specified in table 5.1 of the MTP 1.0 spec.,
-  // ex: MtpRangeForm, MtpEnumForm, quint16, etc... Note: some types may be semantically incorrect such as
-  // a range/enum of arrays
+struct MtpObjPropDesc {
+    MTPObjPropertyCode  uPropCode;
+    MTPDataType     uDataType;
+    bool            bGetSet;
+    QVariant        defValue;
+    quint32         groupCode;
+    MtpFormFlag     formFlag;
+    QVariant        formField; // Can only be the types as specified in table 5.1 of the MTP 1.0 spec.,
+    // ex: MtpRangeForm, MtpEnumForm, quint16, etc... Note: some types may be semantically incorrect such as
+    // a range/enum of arrays
 };
 
 // A structure that is used to hold the MTP object property description
 // and value together. Can be used to fetch multiple object properties
 // from the storage.
-struct MTPObjPropDescVal
-{
+struct MTPObjPropDescVal {
     const MtpObjPropDesc *propDesc;
     QVariant propVal;
 
     MTPObjPropDescVal() :
-       propDesc(0)
+        propDesc(0)
     {
     }
 
     MTPObjPropDescVal(const MtpObjPropDesc *desc) :
-       propDesc(desc)
+        propDesc(desc)
     {
     }
     MTPObjPropDescVal(const MtpObjPropDesc *desc, const QVariant &val) :
-       propDesc(desc), propVal(val)
+        propDesc(desc), propVal(val)
     {
     }
 };
 
-struct MTPObjectInfo
-{
+struct MTPObjectInfo {
     quint32                 mtpStorageId;
     quint16                 mtpObjectFormat;
     quint16                 mtpProtectionStatus;
@@ -878,15 +862,16 @@ struct MTPObjectInfo
     QString                 mtpModificationDate;
     QString                 mtpKeywords;
     MTPObjectInfo() : mtpStorageId(0), mtpObjectFormat(MTP_OBF_FORMAT_Undefined),
-                      mtpProtectionStatus(MTP_PROTECTION_NoProtection), mtpObjectCompressedSize(0),
-                      mtpThumbFormat(MTP_OBF_FORMAT_Undefined), mtpThumbCompressedSize(0),
-                      mtpThumbPixelWidth(0), mtpThumbPixelHeight(0),
-                      mtpImagePixelWidth(0), mtpImagePixelHeight(0), mtpImageBitDepth(0),
-                      mtpParentObject(0), mtpAssociationType(MTP_ASSOCIATION_TYPE_Undefined),
-                      mtpAssociationDescription(0), mtpSequenceNumber(0)
-                      {}
+        mtpProtectionStatus(MTP_PROTECTION_NoProtection), mtpObjectCompressedSize(0),
+        mtpThumbFormat(MTP_OBF_FORMAT_Undefined), mtpThumbCompressedSize(0),
+        mtpThumbPixelWidth(0), mtpThumbPixelHeight(0),
+        mtpImagePixelWidth(0), mtpImagePixelHeight(0), mtpImageBitDepth(0),
+        mtpParentObject(0), mtpAssociationType(MTP_ASSOCIATION_TYPE_Undefined),
+        mtpAssociationDescription(0), mtpSequenceNumber(0)
+    {}
 
-    bool differsFrom(MTPObjectInfo *that) {
+    bool differsFrom(MTPObjectInfo *that)
+    {
         bool differs = false;
 #define CMP(memb) do {\
     if( this->memb != that->memb ) { \

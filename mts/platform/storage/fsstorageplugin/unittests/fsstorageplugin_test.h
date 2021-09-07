@@ -35,14 +35,12 @@
 #include <QtTest/QtTest>
 #include <QObject>
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class StoragePlugin;
 class FSStoragePlugin;
 }
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class FSStoragePlugin_test : public QObject
 {
     Q_OBJECT

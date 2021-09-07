@@ -38,52 +38,53 @@
 ///
 /// The MTPExtesnion class contains interfaces needed to implement an MTP extension. The interface
 /// methods all return a bool (true if the extension was able to handle the command, false otherwise)
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class MTPExtension
 {
-    public:
-        
-        /// Use to determine if the MTP operation has a data phase
-        /// \param opCode [in] The MTP operation code
-        /// \param hasDataPhase [out] true is returned here if the operation has data phase, false otherwise
-        /// \return Returns true if the operation is supported by the extension.
-        virtual bool operationHasDataPhase(MTPOperationCode opCode, bool &hasDataPhase) = 0;
+public:
 
-        /// Process the operation and return the response. Return status as true/false.
-        /// \param req [in] The MTP resquest (and data from data phase)
-        /// \param resp [out] The function returns the reponse (and data) in this parameter
-        /// \return Returns true if the operation is supported by the extension
-        virtual bool handleOperation(const MtpRequest &req, MtpResponse &resp) = 0;
-    
-        /// Use this to get the value of a device property
-        /// \param code [in] The MTP device property code
-        /// \param val [out] The device property value is returned in this parameter
-        /// \return Returns true if the device property is supported by the extension
-        virtual bool getDevPropValue(MTPDevPropertyCode code, QVariant &val, MTPResponseCode &respCode) = 0;
+    /// Use to determine if the MTP operation has a data phase
+    /// \param opCode [in] The MTP operation code
+    /// \param hasDataPhase [out] true is returned here if the operation has data phase, false otherwise
+    /// \return Returns true if the operation is supported by the extension.
+    virtual bool operationHasDataPhase(MTPOperationCode opCode, bool &hasDataPhase) = 0;
 
-        /// Use this to set the value of a device property
-        /// \param code [in] The MTP device property code
-        /// \param val [in] The device property value
-        /// \return Returns true if the device property is supported by the extension
-        virtual bool setDevPropValue(MTPDevPropertyCode code, const QVariant &val, MTPResponseCode &respCode) = 0;
+    /// Process the operation and return the response. Return status as true/false.
+    /// \param req [in] The MTP resquest (and data from data phase)
+    /// \param resp [out] The function returns the reponse (and data) in this parameter
+    /// \return Returns true if the operation is supported by the extension
+    virtual bool handleOperation(const MtpRequest &req, MtpResponse &resp) = 0;
 
-        /// Use this to get the value of an object property
-        /// \param path [in] The path to the MTP object
-        /// \param code [in] The MTP object property code
-        /// \param val [out] The device property value is returned in this parameter
-        /// \param respCode [out] The MTP response code is returned here.
-        /// \return Returns true if the object property is supported by the extension
-        virtual bool getObjPropValue(const QString &path, MTPObjPropertyCode code, QVariant &val, MTPResponseCode &respCode) = 0;
-    
-        /// Use this to set the value of an object property
-        /// \param path [in] The path to the MTP object
-        /// \param code [in] The MTP object property code
-        /// \param val [in] The device property value
-        /// \return Returns true if the object property is supported by the extension
-        virtual bool setObjPropValue(const QString &path, MTPObjPropertyCode code, const QVariant &val, MTPResponseCode &respCode) = 0;
+    /// Use this to get the value of a device property
+    /// \param code [in] The MTP device property code
+    /// \param val [out] The device property value is returned in this parameter
+    /// \return Returns true if the device property is supported by the extension
+    virtual bool getDevPropValue(MTPDevPropertyCode code, QVariant &val, MTPResponseCode &respCode) = 0;
 
-        virtual ~MTPExtension(){}
+    /// Use this to set the value of a device property
+    /// \param code [in] The MTP device property code
+    /// \param val [in] The device property value
+    /// \return Returns true if the device property is supported by the extension
+    virtual bool setDevPropValue(MTPDevPropertyCode code, const QVariant &val, MTPResponseCode &respCode) = 0;
+
+    /// Use this to get the value of an object property
+    /// \param path [in] The path to the MTP object
+    /// \param code [in] The MTP object property code
+    /// \param val [out] The device property value is returned in this parameter
+    /// \param respCode [out] The MTP response code is returned here.
+    /// \return Returns true if the object property is supported by the extension
+    virtual bool getObjPropValue(const QString &path, MTPObjPropertyCode code, QVariant &val,
+                                 MTPResponseCode &respCode) = 0;
+
+    /// Use this to set the value of an object property
+    /// \param path [in] The path to the MTP object
+    /// \param code [in] The MTP object property code
+    /// \param val [in] The device property value
+    /// \return Returns true if the object property is supported by the extension
+    virtual bool setObjPropValue(const QString &path, MTPObjPropertyCode code, const QVariant &val,
+                                 MTPResponseCode &respCode) = 0;
+
+    virtual ~MTPExtension() {}
 };
 }
 #endif //MTP_EXTENSION_H

@@ -40,8 +40,7 @@ class QSocketNotifier;
 
 /// FSInotify notifies the filesystem storage plug-in about changes in the file system
 /// so that the storage can take appropriate action.
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class FSInotify : public QObject
 {
     Q_OBJECT

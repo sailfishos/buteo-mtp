@@ -34,22 +34,21 @@
 
 #include "mtpcontainer.h"
 
-namespace meegomtp1dot0
+namespace meegomtp1dot0 {
+class MTPContainerWrapper : public MTPContainer
 {
-    class MTPContainerWrapper : public MTPContainer
-    {
-        public:
-        /// Constructor; Use this constructor for temporary access to container
-        /// parameters. Note that with this constructor, the class makes no copy
-        /// of the input buffer. There is also no check against the buffer
-        /// length. The caller has to ensure that the buffer is at least
-        /// MTP_HEADER_SIZE long
-        /// \param buffer [in] The data buffer
-        MTPContainerWrapper(quint8 *buffer);
+public:
+    /// Constructor; Use this constructor for temporary access to container
+    /// parameters. Note that with this constructor, the class makes no copy
+    /// of the input buffer. There is also no check against the buffer
+    /// length. The caller has to ensure that the buffer is at least
+    /// MTP_HEADER_SIZE long
+    /// \param buffer [in] The data buffer
+    MTPContainerWrapper(quint8 *buffer);
 
-        /// Destructor
-        ~MTPContainerWrapper();
-    };
+    /// Destructor
+    ~MTPContainerWrapper();
+};
 }
 #endif
 

@@ -48,12 +48,12 @@ void StorageFactory_test::initTestCase()
     // Remember filesystem root of the first storage.
     QVector<ObjHandle> handles;
     QCOMPARE(m_storageFactory->getObjectHandles(STORAGE_ID, 0, 0xFFFFFFFF,
-            handles), static_cast<MTPResponseCode>(MTP_RESP_OK));
+                                                handles), static_cast<MTPResponseCode>(MTP_RESP_OK));
 
     QVERIFY(!handles.isEmpty());
 
     QCOMPARE(m_storageFactory->getPath(handles.at(0), m_storageRoot),
-            static_cast<MTPResponseCode>(MTP_RESP_OK));
+             static_cast<MTPResponseCode>(MTP_RESP_OK));
     m_storageRoot.truncate(m_storageRoot.lastIndexOf("/") + 1);
 
     static MtpObjPropDesc desc;
@@ -68,7 +68,7 @@ void StorageFactory_test::testStorageIds()
     QVector<quint32> storageIds;
 
     QCOMPARE(m_storageFactory->storageIds(storageIds),
-            static_cast<MTPResponseCode>(MTP_RESP_OK));
+             static_cast<MTPResponseCode>(MTP_RESP_OK));
 
     QVERIFY(storageIds.size() > 0);
 
@@ -82,19 +82,19 @@ void StorageFactory_test::testGetObjectHandles()
 
     // Try invalid storage ID first.
     QCOMPARE(m_storageFactory->getObjectHandles(INVALID_STORAGE_ID,
-            static_cast<MTPObjFormatCode>(0x00000000), 0, handles),
-            static_cast<MTPResponseCode>(MTP_RESP_InvalidStorageID));
+                                                static_cast<MTPObjFormatCode>(0x00000000), 0, handles),
+             static_cast<MTPResponseCode>(MTP_RESP_InvalidStorageID));
 
     handles.clear();
 
     QCOMPARE(m_storageFactory->getObjectHandles(STORAGE_ID,
-            static_cast<MTPObjFormatCode>(0x00000000), 0, handles),
-            static_cast<MTPResponseCode>(MTP_RESP_OK));
+                                                static_cast<MTPObjFormatCode>(0x00000000), 0, handles),
+             static_cast<MTPResponseCode>(MTP_RESP_OK));
 
     foreach (ObjHandle handle, handles) {
         QString path;
         QCOMPARE(m_storageFactory->getPath(handle, path),
-                static_cast<MTPResponseCode>(MTP_RESP_OK));
+                 static_cast<MTPResponseCode>(MTP_RESP_OK));
     }
 }
 
@@ -119,17 +119,17 @@ void StorageFactory_test::testGetDevicePropValueAfterObjectInfoChanged()
     ObjHandle handle;
     ObjHandle parentHandle;
     QCOMPARE(m_storageFactory->addItem(storage, parentHandle, handle, &objInfo),
-            static_cast<MTPResponseCode>(MTP_RESP_OK));
+             static_cast<MTPResponseCode>(MTP_RESP_OK));
 
     QCOMPARE(m_storageFactory->getObjectPropertyValue(handle, m_queryForObjSize),
-            static_cast<MTPResponseCode>(MTP_RESP_OK));
+             static_cast<MTPResponseCode>(MTP_RESP_OK));
 
     QCOMPARE(m_queryForObjSize[0].propVal.value<quint64>(),
-            static_cast<quint64>(0));
+             static_cast<quint64>(0));
 
     QString filePathFromFactory;
     QCOMPARE(m_storageFactory->getPath(handle, filePathFromFactory),
-            static_cast<MTPResponseCode>(MTP_RESP_OK));
+             static_cast<MTPResponseCode>(MTP_RESP_OK));
     QCOMPARE(filePath, filePathFromFactory);
 
     const QString TEST_STRING("test_string");
@@ -141,10 +141,10 @@ void StorageFactory_test::testGetDevicePropValueAfterObjectInfoChanged()
     while (loop.processEvents());
 
     QCOMPARE(m_storageFactory->getObjectPropertyValue(handle, m_queryForObjSize),
-            static_cast<MTPResponseCode>(MTP_RESP_OK));
+             static_cast<MTPResponseCode>(MTP_RESP_OK));
 
     QCOMPARE(m_queryForObjSize[0].propVal.value<quint64>(),
-            static_cast<quint64>(TEST_STRING.size()));
+             static_cast<quint64>(TEST_STRING.size()));
 
     file.remove();
 }
@@ -172,7 +172,7 @@ void StorageFactory_test::testMassObjectPropertyQueryThrottle()
     QVERIFY(!m_storageFactory->m_massQueriedAssociations.contains(massDirHandle));
 
     QCOMPARE(m_storageFactory->getObjectPropertyValue(f1Handle, m_queryForObjSize),
-            static_cast<MTPResponseCode>(MTP_RESP_OK));
+             static_cast<MTPResponseCode>(MTP_RESP_OK));
 
     QVERIFY(m_storageFactory->m_massQueriedAssociations.contains(massDirHandle));
 

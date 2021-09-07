@@ -77,7 +77,7 @@ quint32 MTPContainer::transactionId() const
     return getl32(&m_container->transactionID);
 }
 
-quint8* MTPContainer::payload() const
+quint8 *MTPContainer::payload() const
 {
     return &m_container->payload[0];
 }
@@ -86,15 +86,12 @@ void MTPContainer::params(QVector<quint32> &params)
 {
     params.clear();
     params.fill(0, 5);
-    if(MTP_CONTAINER_TYPE_COMMAND == containerType())
-    {
+    if (MTP_CONTAINER_TYPE_COMMAND == containerType()) {
         // Determine the number of parameters
-        quint32 numParams = (m_bufferCapacity - MTP_HEADER_SIZE)/sizeof(quint32);
+        quint32 numParams = (m_bufferCapacity - MTP_HEADER_SIZE) / sizeof(quint32);
         quint8 *d = payload();
-        if(0 != d)
-        {
-            for(quint32 i = 0; i < numParams; i++)
-            {
+        if (0 != d) {
+            for (quint32 i = 0; i < numParams; i++) {
                 params[i] = getl32(d + (i * sizeof(quint32)));
             }
         }
@@ -103,12 +100,9 @@ void MTPContainer::params(QVector<quint32> &params)
 
 void MTPContainer::seek(qint32 pos)
 {
-    if((pos > 0) && (m_offset + pos <= m_bufferCapacity))
-    {
+    if ((pos > 0) && (m_offset + pos <= m_bufferCapacity)) {
         m_offset += pos;
-    }
-    else if((pos < 0) && (m_offset + pos > MTP_HEADER_SIZE))
-    {
+    } else if ((pos < 0) && (m_offset + pos > MTP_HEADER_SIZE)) {
         m_offset += pos;
     }
 }
@@ -120,68 +114,68 @@ void MTPContainer::setExtraLargeContainer(bool isExtraLargeContainer)
 
 quint8 MTPContainer::getl8(const void *d)
 {
-    return *(quint8*)d;
+    return *(quint8 *)d;
 }
 
 quint16 MTPContainer::getl16(const void *d)
 {
 #ifdef LITTLE_ENDIAN
-    return *(quint16*)d;
+    return *(quint16 *)d;
 #else
-    return ((quint16)(getl8((quint8*)d + 1)) << 8) | ((quint16)(getl8(d)));
+    return ((quint16)(getl8((quint8 *)d + 1)) << 8) | ((quint16)(getl8(d)));
 #endif
 }
 
 quint32 MTPContainer::getl32(const void *d)
 {
 #ifdef LITTLE_ENDIAN
-    return *(quint32*)d;
+    return *(quint32 *)d;
 #else
-    return ((quint32)(getl16((quint8*)d + 2)) << 16) | ((quint32)(getl16(d)));
+    return ((quint32)(getl16((quint8 *)d + 2)) << 16) | ((quint32)(getl16(d)));
 #endif
 }
 
 quint64 MTPContainer::getl64(const void *d)
 {
 #ifdef LITTLE_ENDIAN
-    return *(quint64*)d;
+    return *(quint64 *)d;
 #else
-    return ((quint64)(getl32((quint8*)d + 4)) << 32) | ((quint64)(getl32(d)));
+    return ((quint64)(getl32((quint8 *)d + 4)) << 32) | ((quint64)(getl32(d)));
 #endif
 }
 
 void MTPContainer::putl8(void *d, quint8 val)
 {
-    *(quint8*)d = val;
+    *(quint8 *)d = val;
 }
 
 void MTPContainer::putl16(void *d, quint16 val)
 {
 #ifdef LITTLE_ENDIAN
-    *(quint16*)d = val;
+    *(quint16 *)d = val;
 #else
     putl8(d, (quint8)val);
-    putl8(((quint8*)d + 1), (quint8)val >> 8);
+    putl8(((quint8 *)d + 1), (quint8)val >> 8);
 #endif
 }
 
 void MTPContainer::putl32(void *d, quint32 val)
 {
 #ifdef LITTLE_ENDIAN
-    *(quint32*)d = val;
+    *(quint32 *)d = val;
 #else
     putl16(d, (quint16)val);
-    putl16(((quint8*)d + 2), (quint8)val >> 16);
+    putl16(((quint8 *)d + 2), (quint8)val >> 16);
 #endif
 }
 
 void MTPContainer::putl64(void *d, quint64 val)
 {
 #ifdef LITTLE_ENDIAN
-    *(quint64*)d = val;
+    *(quint64 *)d = val;
 #else
     putl32(d, (quint32)val);
-    putl32(((quint8*)d + 4), (quint32)val >> 32);
+    putl32(((quint8 *)d + 4), (quint32)val >> 32);
 #endif
 }
 

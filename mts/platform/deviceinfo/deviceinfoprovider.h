@@ -43,13 +43,12 @@ class BatteryStatus;
 /// for properties that we don't get values from any system service, the default implementation falls back
 /// to DeviceInfo.
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class DeviceInfoProvider : public DeviceInfo
 {
     Q_OBJECT
 #ifdef UT_ON
-        friend class DeviceInfoProvider_Test;
+    friend class DeviceInfoProvider_Test;
 #endif
 public:
     /// Constructor.

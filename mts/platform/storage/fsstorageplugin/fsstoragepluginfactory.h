@@ -38,7 +38,8 @@ namespace meegomtp1dot0 {
 
 class StoragePlugin;
 
-class FSStoragePluginFactory {
+class FSStoragePluginFactory
+{
 public:
     static QList<StoragePlugin *> create(quint32 startingStorageId);
 
@@ -58,10 +59,10 @@ extern "C" {
 /// card. Each storage has its configuration stored in a separate XML file.
 /// This function returns a list of created instances, which have storage ids
 /// numbered sequentially from storageId.
-QList<meegomtp1dot0::StoragePlugin *> createStoragePlugins(quint32 storageId);
+    QList<meegomtp1dot0::StoragePlugin *> createStoragePlugins(quint32 storageId);
 
 /// The StorageFactory uses this interface to destroy loaded storage plug-ins.
-void destroyStoragePlugin(meegomtp1dot0::StoragePlugin *storagePlugin);
+    void destroyStoragePlugin(meegomtp1dot0::StoragePlugin *storagePlugin);
 
 } // extern "C"
 
