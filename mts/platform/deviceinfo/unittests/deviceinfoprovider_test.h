@@ -35,17 +35,15 @@
 #include <QtTest/QtTest>
 class QDomDocument;
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class DeviceInfoProvider;
 }
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class DeviceInfoProvider_Test : public QObject
 {
     Q_OBJECT
-    private Q_SLOTS:
+private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
     void testDeviceInfoProviderDefaultConstruction();
@@ -90,10 +88,10 @@ class DeviceInfoProvider_Test : public QObject
     void testGetSupportedAudioCodecs();
     void testGetDeviceInfoXmlPath();
     void testGetDeviceIcon();
-    private:
-    DeviceInfoProvider* m_Provider;
-    QDomDocument*       m_xmlDoc;
-    QFile*              m_xmlFile;
+private:
+    DeviceInfoProvider *m_Provider;
+    QDomDocument       *m_xmlDoc;
+    QFile              *m_xmlFile;
 };
 }
 #endif

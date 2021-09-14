@@ -50,17 +50,16 @@
 /// type of object. These can be found in appendix B of the spec.Apart from these, there are also
 /// MTP specific device properties like battery level for eg, these are outlined in Section 5.1.2 of the spec.
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class DeviceInfo : public QObject
 {
     Q_OBJECT
 
 #ifdef UT_ON
-        friend class DeviceInfoProvider_Test;
+    friend class DeviceInfoProvider_Test;
 #endif
 /// class XMLHandler sets default values for device properties by picking them from an xml file.
-friend class XMLHandler;
+    friend class XMLHandler;
 
 public:
     /// Gets MTP FORM (MTP 1.1 specification 5.1.2.1) of battery level property.
@@ -78,19 +77,19 @@ public:
     /// \param current [in] boolean which indicates whether to get the current
     /// value(the default behavior) or the default value.
     /// \return the sync partner's name.
-    virtual const QString& syncPartner( bool current = true ) const;
+    virtual const QString &syncPartner( bool current = true ) const;
 
     /// Gets copyright info for this device.
     /// \param current [in] boolean which indicates whether to get the current
     /// value(the default behavior) or the default value.
     /// \return the copyright info.
-    virtual const QString& copyrightInfo( bool current = true ) const;
+    virtual const QString &copyrightInfo( bool current = true ) const;
 
     /// Gets the friendly name of this device.
     /// \param current [in] boolean which indicates whether to get the current
     /// value(the default behavior) or the default value.
     /// \return the device friendly name.
-    virtual const QString& deviceFriendlyName( bool current = true );
+    virtual const QString &deviceFriendlyName( bool current = true );
 
     /// Gets the device icon for this device.
     /// \return the device icon data as a vector.
@@ -98,35 +97,35 @@ public:
 
     /// Gets the PTP version this device can support.
     /// \return the PTP version supported.
-    virtual const quint16& standardVersion() const;
+    virtual const quint16 &standardVersion() const;
 
     /// Gets the MTP vendor extension id.
     /// \return the MTP vendor extension id.
-    virtual const quint32& vendorExtension() const;
+    virtual const quint32 &vendorExtension() const;
 
     /// Gets the MTP version this device can support.
     /// \return the MTP version supported.
-    virtual const quint16& MTPVersion() const;
+    virtual const quint16 &MTPVersion() const;
 
     /// Gets the MTP extension sets.
     /// \return the list of strings representing MTP extensions.
-    virtual const QString& MTPExtension() const;
+    virtual const QString &MTPExtension() const;
 
     /// Gets the name of the device's manufacturer.
     /// \return the device manufacturer's name.
-    virtual const QString& manufacturer() const;
+    virtual const QString &manufacturer() const;
 
     /// Gets the device's model name.
     /// \return the device model's name.
-    virtual const QString& model() const;
+    virtual const QString &model() const;
 
     /// Gets the device's firmware version.
     /// \return the device firmware version.
-    virtual const QString& deviceVersion() const;
+    virtual const QString &deviceVersion() const;
 
     /// Gets the device's unique serial no.
-    /// \return the device serial no. 
-    virtual const QString& serialNo() const;
+    /// \return the device serial no.
+    virtual const QString &serialNo() const;
 
     /// Gets the device's type.
     /// \return The device's perceived type.
@@ -134,39 +133,39 @@ public:
 
     /// Gets the device's functional mode.
     /// \return the functional mode.
-    virtual const quint16& functionalMode() const;
+    virtual const quint16 &functionalMode() const;
 
     /// Sets the new sync partner for the device.
     /// \param syncPartner [in] the new sync partner.
-    virtual void setSyncPartner( const QString& syncPartner );
+    virtual void setSyncPartner( const QString &syncPartner );
 
     /// Set the new friendly name for the device.
     /// \param deviceFriendlyName [in] the new device friendly name.
-    virtual void setDeviceFriendlyName( const QString& deviceFriendlyName );
+    virtual void setDeviceFriendlyName( const QString &deviceFriendlyName );
 
     /// Gets the list of MTP operations supported by this device.
     /// \param [out] no no. of operations suppported.
     /// \param [out] len size of the array holding the list of operations.
     /// \return pointer to the array of operations.
-    const QVector<quint16>& MTPOperationsSupported() const;
+    const QVector<quint16> &MTPOperationsSupported() const;
 
     /// Gets the list of MTP events supported by this device.
     /// \param [out] no no. of events suppported.
     /// \param [out] len size of the array holding the list of events.
     /// \return pointer to the array of events.
-    const QVector<quint16>& MTPEventsSupported() const;
+    const QVector<quint16> &MTPEventsSupported() const;
 
     /// Gets the list of MTP device properties supported by this device.
     /// \param [out] no no. of device properties suppported.
     /// \param [out] len size of the array holding the list of device properties.
     /// \return pointer to the array of device properties.
-    const QVector<quint16>& MTPDevicePropertiesSupported() const;
+    const QVector<quint16> &MTPDevicePropertiesSupported() const;
 
     /// Gets the list of object formats supported by this device.
     /// \param [out] no no. of object formats suppported.
     /// \param [out] len size of the array holding the list of object formats.
     /// \return pointer to the array of object formats.
-    const QVector<quint16>& supportedFormats() const;
+    const QVector<quint16> &supportedFormats() const;
 
     /// Given an object format code, this method returns the category to which
     /// that formats belongs to - common, audio, video, image, undefined.
@@ -177,31 +176,31 @@ public:
     /// Gets the minimum image width supported by the device
     /// \return The minimum image width
     virtual quint32 imageMinWidth();
-    
+
     /// Gets the maximum image width supported by the device
     /// \return The maximum image width
     virtual quint32 imageMaxWidth();
-    
+
     /// Gets the minimum image height supported by the device
     /// \return The minimum image height
     virtual quint32 imageMinHeight();
-    
+
     /// Gets the maximum image height supported by the device
     /// \return The maximum image height
     virtual quint32 imageMaxHeight();
-    
+
     /// Gets the minimum video width supported by the device
     /// \return The minimum video width
     virtual quint32 videoMinWidth();
-    
+
     /// Gets the maximum video width supported by the device
     /// \return The maximum video width
     virtual quint32 videoMaxWidth();
-    
+
     /// Gets the minimum video height supported by the device
     /// \return The minimum video height
     virtual quint32 videoMinHeight();
-    
+
     /// Gets the maximum video height supported by the device
     /// \return The maximum video height
     virtual quint32 videoMaxHeight();
@@ -209,69 +208,69 @@ public:
     /// Gets the list of supported video channels.
     /// \param [out] no no. of video channels supported.
     /// \return array of supported video channel types.
-    virtual const QVector<quint16>& videoChannels() const;
+    virtual const QVector<quint16> &videoChannels() const;
 
     /// Gets the list of supported audio channels.
     /// \param [out] no no. of audio channels supported.
     /// \return array of supported audio channel types.
-    virtual const QVector<quint16>& audioChannels() const;
+    virtual const QVector<quint16> &audioChannels() const;
 
     /// Gets the minimum possible frames per second for videos.
     /// \return min FPS.
-    virtual const quint32& videoMinFPS() const;
+    virtual const quint32 &videoMinFPS() const;
 
     /// Gets the maximum possible frames per second for videos.
     /// \return max FPS.
-    virtual const quint32& videoMaxFPS() const;
+    virtual const quint32 &videoMaxFPS() const;
 
     /// Gets the supported video scan type.
     /// \return the video scan type.
-    virtual const quint16& videoScanType() const;
+    virtual const quint16 &videoScanType() const;
 
     /// Gets the default video sample rate.
     /// \return video sample rate.
-    virtual const quint32& videoSampleRate() const;
+    virtual const quint32 &videoSampleRate() const;
 
     /// Gets the default audio sample rate.
     /// \return audio sample rate.
-    virtual const quint32& audioSampleRate() const;
+    virtual const quint32 &audioSampleRate() const;
 
     /// Gets the minimum possible bit rate for videos.
     /// \return min video bit rate.
-    virtual const quint32& videoMinBitRate() const;
+    virtual const quint32 &videoMinBitRate() const;
 
     /// Gets the maximum possible bit rate for videos.
     /// \return max video bit rate.
-    virtual const quint32& videoMaxBitRate() const;
+    virtual const quint32 &videoMaxBitRate() const;
 
     /// Gets the minimum possible bit rate for audio.
     /// \return min audio bit rate.
-    virtual const quint32& audioMinBitRate() const;
+    virtual const quint32 &audioMinBitRate() const;
 
     /// Gets the maximum possible bit rate for audio.
     /// \return max audio bit rate.
-    virtual const quint32& audioMaxBitRate() const;
+    virtual const quint32 &audioMaxBitRate() const;
 
     /// Gets the minimum possible bit rate for audio in video.
     /// \return min audio bit rate contained in video.
-    virtual const quint32& videoAudioMinBitRate() const;
+    virtual const quint32 &videoAudioMinBitRate() const;
 
     /// Gets the maximum possible bit rate for audio in video.
     /// \return max audio bit rate contained in video.
-    virtual const quint32& videoAudioMaxBitRate() const;
+    virtual const quint32 &videoAudioMaxBitRate() const;
 
     /// Gets the minimum key frame distance possible for video.
     /// \return min KFD for video.
-    virtual const quint32& videoMinKFD() const;
+    virtual const quint32 &videoMinKFD() const;
 
     /// Gets the maximum key frame distance possible for video.
     /// \return max KFD for video.
-    virtual const quint32& videoMaxKFD() const;
+    virtual const quint32 &videoMaxKFD() const;
 
     /// Gets the list of supported audio codecs
     /// \param [out] no no. of audio codecs supported.
     /// \return array of supported audio codecs.
-    const QVector<quint32>& supportedAudioCodecs() const;
+    const QVector<quint32> &supportedAudioCodecs() const;
 
     /// Constructor.
     DeviceInfo( QObject *parent = 0 );
@@ -325,8 +324,7 @@ protected:
     quint32 m_audioSampleRate; ///< default audio sample rate.
 
     /// MTP form flags
-    enum m_formFlag
-    {
+    enum m_formFlag {
         FORM_NONE,
         FORM_RANGE,
         FORM_ENUM,
@@ -355,17 +353,16 @@ private:
     bool m_xmlOk; ///< indicates the device info xml file was parsed succesfully.
 
     ///< default values for supported audio codecs.
-    enum
-    {
-    MTP_WAVE_FORMAT_ALAW          = 0x00000006,
-    MTP_WAVE_FORMAT_MULAW         = 0x00000007,
-    MTP_WAVE_FORMAT_MPEGLAYER3    = 0x00000055,
-    MTP_WAVE_FORMAT_MSAUDIO1      = 0x00000160,
-    MTP_WAVE_FORMAT_MSAUDIO2      = 0x00000161,
-    MTP_WAVE_FORMAT_MSAUDIO3      = 0x00000162,
-    MTP_WAVE_FORMAT_NOKIA_AMR     = 0x00004201,
-    MTP_WAVE_FORMAT_AAC           = 0x0000A106,
-    MTP_WAVE_FORMAT_DSPGROUP_TRUESPEECH = 0x00000022
+    enum {
+        MTP_WAVE_FORMAT_ALAW          = 0x00000006,
+        MTP_WAVE_FORMAT_MULAW         = 0x00000007,
+        MTP_WAVE_FORMAT_MPEGLAYER3    = 0x00000055,
+        MTP_WAVE_FORMAT_MSAUDIO1      = 0x00000160,
+        MTP_WAVE_FORMAT_MSAUDIO2      = 0x00000161,
+        MTP_WAVE_FORMAT_MSAUDIO3      = 0x00000162,
+        MTP_WAVE_FORMAT_NOKIA_AMR     = 0x00004201,
+        MTP_WAVE_FORMAT_AAC           = 0x0000A106,
+        MTP_WAVE_FORMAT_DSPGROUP_TRUESPEECH = 0x00000022
     };
 
     ///< default values for supported MTP operations.

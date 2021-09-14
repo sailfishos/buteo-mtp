@@ -41,8 +41,7 @@ using namespace meegomtp1dot0;
 FSInotify::FSInotify( uint32_t mask) : m_mask(mask)
 {
     m_readSocket = new QSocketNotifier( inotify_init(), QSocketNotifier::Read );
-    if( m_readSocket )
-    {
+    if ( m_readSocket ) {
         QObject::connect( m_readSocket, SIGNAL(activated(int)), this, SLOT(inotifyEventSlot(int)) );
     }
 }
@@ -52,8 +51,7 @@ FSInotify::FSInotify( uint32_t mask) : m_mask(mask)
  *************************************************/
 FSInotify::~FSInotify()
 {
-    if( m_readSocket )
-    {
+    if ( m_readSocket ) {
         delete m_readSocket;
     }
 }
@@ -61,10 +59,9 @@ FSInotify::~FSInotify()
 /**************************************************
  * int FSInotify::addWatch
  *************************************************/
-int FSInotify::addWatch( const QString& pathName ) const
+int FSInotify::addWatch( const QString &pathName ) const
 {
-    if( !m_readSocket )
-    {
+    if ( !m_readSocket ) {
         return -1;
     }
     QByteArray ba = pathName.toUtf8();
@@ -74,10 +71,9 @@ int FSInotify::addWatch( const QString& pathName ) const
 /**************************************************
  * int FSInotify::removeWatch
  *************************************************/
-int FSInotify::removeWatch( const int& wd ) const
+int FSInotify::removeWatch( const int &wd ) const
 {
-    if( !m_readSocket )
-    {
+    if ( !m_readSocket ) {
         return -1;
     }
     return inotify_rm_watch( m_readSocket->socket(), wd );
@@ -93,9 +89,8 @@ void FSInotify::inotifyEventSlot(int)
 
     bytes_read = read( m_readSocket->socket(), tmp, sizeof(tmp) );
 
-    if(-1 == bytes_read)
-    {
-       return;
+    if (-1 == bytes_read) {
+        return;
     }
 
     ptr = tmp;
@@ -103,7 +98,7 @@ void FSInotify::inotifyEventSlot(int)
         struct inotify_event *event = (struct inotify_event *) ptr;
         // FIXME: would it be better to pass all events or one at a time?
         emit inotifyEventSignal( event );
-        ptr += sizeof *event + event->len;
+        ptr += sizeof * event + event->len;
     }
 }
 

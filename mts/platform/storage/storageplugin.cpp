@@ -41,19 +41,17 @@ using namespace meegomtp1dot0;
 const quint32 MAX_READ_LEN = 64 * 1024;
 
 MTPResponseCode StoragePlugin::copyData(StoragePlugin *sourceStorage,
-        ObjHandle source, StoragePlugin *destinationStorage,
-        ObjHandle destination)
+                                        ObjHandle source, StoragePlugin *destinationStorage,
+                                        ObjHandle destination)
 {
     if ( !sourceStorage->checkHandle(source) ||
-         !destinationStorage->checkHandle(destination) )
-    {
+            !destinationStorage->checkHandle(destination) ) {
         return MTP_RESP_InvalidObjectHandle;
     }
 
     const MTPObjectInfo *sourceInfo;
     MTPResponseCode result = sourceStorage->getObjectInfo( source, sourceInfo );
-    if (result != MTP_RESP_OK )
-    {
+    if (result != MTP_RESP_OK ) {
         return result;
     }
 
@@ -63,30 +61,26 @@ MTPResponseCode StoragePlugin::copyData(StoragePlugin *sourceStorage,
     char readBuffer[MAX_READ_LEN];
     bool txCancelled = false;
 
-    while( remainingLen && result == MTP_RESP_OK )
-    {
+    while ( remainingLen && result == MTP_RESP_OK ) {
         readLen = remainingLen >= MAX_READ_LEN ? MAX_READ_LEN : remainingLen;
         result = sourceStorage->readData( source, readBuffer, readLen, readOffset );
 
         emit sourceStorage->checkTransportEvents( txCancelled );
-        if( txCancelled )
-        {
+        if ( txCancelled ) {
             MTP_LOG_WARNING("CopyObject cancelled, aborting file copy...");
             result = destinationStorage->deleteItem( destination,
-                    MTP_OBF_FORMAT_Undefined );
+                                                     MTP_OBF_FORMAT_Undefined );
             return MTP_RESP_GeneralError;
         }
 
-        if( result == MTP_RESP_OK )
-        {
+        if ( result == MTP_RESP_OK ) {
             remainingLen -= readLen;
             result = destinationStorage->writeData( destination, readBuffer,
-                    readLen, readOffset == 0, false );
+                                                    readLen, readOffset == 0, false );
             readOffset += readLen;
-            if( !remainingLen )
-            {
+            if ( !remainingLen ) {
                 result = destinationStorage->writeData( destination, 0, 0,
-                        false, true );
+                                                        false, true );
             }
         }
     }

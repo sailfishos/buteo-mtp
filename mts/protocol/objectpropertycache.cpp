@@ -39,7 +39,7 @@ void ObjectPropertyCache::add( ObjHandle handle, MTPObjPropertyCode propertyCode
     MTP_FUNC_TRACE();
 
     //MTP_LOG_WARNING("Property code " << propertyCode << " with value " << value.toString() << " added/updated to cache for object handle " << handle);
-    m_propertyMap[handle].insert( propertyCode,value );
+    m_propertyMap[handle].insert( propertyCode, value );
 }
 
 void ObjectPropertyCache::add( ObjHandle handle, const MTPObjPropDescVal &propDescVal )
@@ -53,9 +53,8 @@ void ObjectPropertyCache::add( ObjHandle handle, QList<MTPObjPropDescVal> propDe
 {
     MTP_FUNC_TRACE();
 
-    for( QList<MTPObjPropDescVal>::const_iterator itr = propDescValList.constBegin();
-         itr != propDescValList.constEnd(); ++itr )
-    {
+    for ( QList<MTPObjPropDescVal>::const_iterator itr = propDescValList.constBegin();
+            itr != propDescValList.constEnd(); ++itr ) {
         add( handle, *itr );
     }
 }
@@ -66,8 +65,7 @@ void ObjectPropertyCache::remove( ObjHandle handle, MTPObjPropertyCode propertyC
 
     //MTP_LOG_WARNING("Property code " << propertyCode << " removed from cache for object handle " << handle);
     m_propertyMap[handle].remove( propertyCode );
-    if( m_propertyMap[handle].empty() || 0x0000 == propertyCode )
-    {
+    if ( m_propertyMap[handle].empty() || 0x0000 == propertyCode ) {
         m_propertyMap.remove( handle );
     }
 }
@@ -83,9 +81,8 @@ void ObjectPropertyCache::remove( ObjHandle handle, QList<MTPObjPropDescVal> pro
 {
     MTP_FUNC_TRACE();
 
-    for( QList<MTPObjPropDescVal>::const_iterator itr = propDescValList.constBegin();
-         itr != propDescValList.constEnd(); ++itr )
-    {
+    for ( QList<MTPObjPropDescVal>::const_iterator itr = propDescValList.constBegin();
+            itr != propDescValList.constEnd(); ++itr ) {
         remove( handle, *itr );
     }
 }
@@ -95,14 +92,11 @@ bool ObjectPropertyCache::get( ObjHandle handle, MTPObjPropertyCode propertyCode
     MTP_FUNC_TRACE();
 
     bool found = false;
-    if( m_propertyMap.contains( handle ) && m_propertyMap[handle].contains(propertyCode) )
-    {
+    if ( m_propertyMap.contains( handle ) && m_propertyMap[handle].contains(propertyCode) ) {
         value = m_propertyMap[handle].value( propertyCode );
         //MTP_LOG_WARNING("Property code " << propertyCode << " with value " << value.toString() << " fetched from cache for object handle " << handle);
         found = true;
-    }
-    else
-    {
+    } else {
         //MTP_LOG_WARNING("Property code " << propertyCode << " not found in cache " << " for object handle " << handle);
     }
     return found;
@@ -115,20 +109,17 @@ bool ObjectPropertyCache::get( ObjHandle handle, MTPObjPropDescVal &propDescVal 
     return get( handle, propDescVal.propDesc->uPropCode, propDescVal.propVal );
 }
 
-bool ObjectPropertyCache::get( ObjHandle handle, QList<MTPObjPropDescVal> &propDescValList,  QList<MTPObjPropDescVal> &notFoundList )
+bool ObjectPropertyCache::get( ObjHandle handle, QList<MTPObjPropDescVal> &propDescValList,
+                               QList<MTPObjPropDescVal> &notFoundList )
 {
     MTP_FUNC_TRACE();
 
-    for( QList<MTPObjPropDescVal>::iterator itr = propDescValList.begin();
-         itr != propDescValList.end(); )
-    {
-        if( !get( handle, *itr ) )
-        {
+    for ( QList<MTPObjPropDescVal>::iterator itr = propDescValList.begin();
+            itr != propDescValList.end(); ) {
+        if ( !get( handle, *itr ) ) {
             notFoundList.append( *itr );
             itr = propDescValList.erase( itr );
-        }
-        else
-        {
+        } else {
             ++itr;
         }
     }

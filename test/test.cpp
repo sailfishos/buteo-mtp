@@ -44,23 +44,20 @@ void sigUsr1Handler(int /*signum*/)
     Mts::getInstance()->toggleDebugLogs();
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
 
     signal(SIGINT, &signalHandler);
     signal(SIGALRM, &signalHandler);
     signal(SIGUSR1, &sigUsr1Handler);
-    QObject::connect(&app,SIGNAL(aboutToQuit()),Mts::getInstance(),SLOT(destroyInstance()));
+    QObject::connect(&app, SIGNAL(aboutToQuit()), Mts::getInstance(), SLOT(destroyInstance()));
 
     bool ok = Mts::getInstance()->activate();
-    if( ok )
-    {
+    if ( ok ) {
         QEventLoop eLoop;
         eLoop.exec();
-    }
-    else
-    {
+    } else {
         Mts::destroyInstance();
     }
     return 0;

@@ -15,7 +15,8 @@ enum mtpfs_status {
     MTPFS_STATUS_TXCANCEL
 };
 
-class IOThread : public QThread {
+class IOThread : public QThread
+{
 public:
     explicit IOThread(QObject *parent = 0);
     void setFd(int fd);
@@ -36,7 +37,8 @@ private:
     pthread_t m_handle;
 };
 
-class ControlReaderThread : public IOThread {
+class ControlReaderThread : public IOThread
+{
     Q_OBJECT
 public:
     explicit ControlReaderThread(QObject *parent = 0);
@@ -65,7 +67,8 @@ signals:
     void cancelTransaction();
 };
 
-class BulkReaderThread : public IOThread {
+class BulkReaderThread : public IOThread
+{
     Q_OBJECT
 public:
     explicit BulkReaderThread(QObject *parent = 0);
@@ -138,7 +141,8 @@ signals:
     void dataReady();
 };
 
-class BulkWriterThread : public IOThread {
+class BulkWriterThread : public IOThread
+{
     Q_OBJECT
 public:
     explicit BulkWriterThread(QObject *parent = 0);
@@ -168,16 +172,24 @@ enum InterruptWriterResult {
 static inline const char *InterruptWriterResultRepr(int result)
 {
     const char *repr = "INTERRUPT_WRITE_<UNKNOWN>";
-    switch( result ) {
-    case INTERRUPT_WRITE_SUCCESS: repr = "INTERRUPT_WRITE_SUCCESS"; break;
-    case INTERRUPT_WRITE_FAILURE: repr = "INTERRUPT_WRITE_FAILURE"; break;
-    case INTERRUPT_WRITE_RETRY:   repr = "INTERRUPT_WRITE_RETRY";   break;
-    default: break;
+    switch ( result ) {
+    case INTERRUPT_WRITE_SUCCESS:
+        repr = "INTERRUPT_WRITE_SUCCESS";
+        break;
+    case INTERRUPT_WRITE_FAILURE:
+        repr = "INTERRUPT_WRITE_FAILURE";
+        break;
+    case INTERRUPT_WRITE_RETRY:
+        repr = "INTERRUPT_WRITE_RETRY";
+        break;
+    default:
+        break;
     }
     return repr;
 }
 
-class InterruptWriterThread : public IOThread {
+class InterruptWriterThread : public IOThread
+{
     Q_OBJECT
 public:
     explicit InterruptWriterThread(QObject *parent = 0);
@@ -200,7 +212,7 @@ private:
     QMutex m_lock; // protects m_buffers and used with m_wait
     QWaitCondition m_wait;
 
-    QList<QPair<quint8 *,int> > m_buffers;
+    QList<QPair<quint8 *, int> > m_buffers;
     bool m_eventBufferFull;
 };
 

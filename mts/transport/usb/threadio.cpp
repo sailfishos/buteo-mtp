@@ -63,22 +63,28 @@ const int MAX_EVENTS_STORED = 512;
 const int READER_BUFFER_SIZE = MAX_DATA_IN_SIZE * 16;
 
 const struct ptp_device_status_data status_data[] = {
-/* OK     */ { htole16(0x0004),
-               htole16(PTP_RC_OK), 0, 0 },
-/* BUSY   */ { htole16(0x0004),
-               htole16(PTP_RC_DEVICE_BUSY), 0, 0 },
-/* CANCEL */ { htole16(0x0004),
-               htole16(PTP_RC_TRANSACTION_CANCELLED), 0, 0 }
+    /* OK     */ {
+        htole16(0x0004),
+        htole16(PTP_RC_OK), 0, 0
+    },
+    /* BUSY   */ {
+        htole16(0x0004),
+        htole16(PTP_RC_DEVICE_BUSY), 0, 0
+    },
+    /* CANCEL */ {
+        htole16(0x0004),
+        htole16(PTP_RC_TRANSACTION_CANCELLED), 0, 0
+    }
 };
 
 static const char *const event_names[] = {
-"BIND",
-"UNBIND",
-"ENABLE",
-"DISABLE",
-"SETUP",
-"SUSPEND",
-"RESUME"
+    "BIND",
+    "UNBIND",
+    "ENABLE",
+    "DISABLE",
+    "SETUP",
+    "SUSPEND",
+    "RESUME"
 };
 
 static void handleUSR1(int signum)
@@ -86,7 +92,7 @@ static void handleUSR1(int signum)
     Q_UNUSED(signum);
 
     static const char m[] = "***USR1***\n";
-    if( write(2, m, sizeof m - 1) == -1 ) {
+    if ( write(2, m, sizeof m - 1) == -1 ) {
         // dontcare
     }
 
@@ -119,7 +125,7 @@ void IOThread::interrupt()
 {
     QMutexLocker locker(&m_handleLock);
 
-    if(m_handle) {
+    if (m_handle) {
         MTP_LOG_INFO("Sending interrupt signal");
         pthread_kill(m_handle, SIGUSR1);
     }
@@ -149,11 +155,11 @@ bool IOThread::stall(bool dirIn)
      * read a response) we write instead.
      */
     int err;
-    if(dirIn) // &err is just a dummy value here, since length is 0 bytes
+    if (dirIn) // &err is just a dummy value here, since length is 0 bytes
         err = MTP_READ(m_fd, &err, 0, false);
     else
         err = MTP_WRITE(m_fd, &err, 0, false);
-    if(err == -1 && errno == EL2HLT) {
+    if (err == -1 && errno == EL2HLT) {
         return true;
     } else {
         MTP_LOG_CRITICAL("Unable to halt endpoint");
@@ -192,16 +198,16 @@ void ControlReaderThread::execute()
     struct usb_functionfs_event *event;
     int readSize, count;
 
-    while(!m_shouldExit) {
+    while (!m_shouldExit) {
         readSize = MTP_READ(m_fd, readBuffer, MAX_CONTROL_IN_SIZE, false);
         if (readSize <= 0) {
             if (errno != EINTR)
                 perror("ControlReaderThread");
             continue;
         }
-        count = readSize/(sizeof(struct usb_functionfs_event));
-        event = (struct usb_functionfs_event*)readBuffer;
-        for(int i = 0; i < count; i++ )
+        count = readSize / (sizeof(struct usb_functionfs_event));
+        event = (struct usb_functionfs_event *)readBuffer;
+        for (int i = 0; i < count; i++ )
             handleEvent(event + i);
     }
 
@@ -214,17 +220,16 @@ void ControlReaderThread::sendStatus()
 
     int bytesWritten = 0;
     int dataLen = 4; /* TODO: If status size is ever above 0x4 */
-    char *dataptr = (char*)&status_data[m_status];
+    char *dataptr = (char *)&status_data[m_status];
 
     do {
         bytesWritten = MTP_WRITE(m_fd, dataptr, dataLen, false);
-        if(bytesWritten == -1)
-        {
+        if (bytesWritten == -1) {
             return;
         }
         dataptr += bytesWritten;
         dataLen -= bytesWritten;
-    } while(dataLen);
+    } while (dataLen);
 }
 
 void ControlReaderThread::setStatus(enum mtpfs_status status)
@@ -242,26 +247,26 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
      * though receiving these is fine and fully expected. */
     MTP_LOG_WARNING("Event: " << event_names[event->type]);
 
-    switch(event->type) {
-        case FUNCTIONFS_ENABLE:
-        case FUNCTIONFS_RESUME:
-            emit startIO();
-            break;
-        case FUNCTIONFS_DISABLE:
-        case FUNCTIONFS_SUSPEND:
-            emit stopIO();
-            break;
-        case FUNCTIONFS_BIND:
-            emit bindUSB();
-            break;
-        case FUNCTIONFS_UNBIND:
-            emit unbindUSB();
-            break;
-        case FUNCTIONFS_SETUP:
-            setupRequest((void*)event);
-            break;
-        default:
-            break;
+    switch (event->type) {
+    case FUNCTIONFS_ENABLE:
+    case FUNCTIONFS_RESUME:
+        emit startIO();
+        break;
+    case FUNCTIONFS_DISABLE:
+    case FUNCTIONFS_SUSPEND:
+        emit stopIO();
+        break;
+    case FUNCTIONFS_BIND:
+        emit bindUSB();
+        break;
+    case FUNCTIONFS_UNBIND:
+        emit unbindUSB();
+        break;
+    case FUNCTIONFS_SETUP:
+        setupRequest((void *)event);
+        break;
+    default:
+        break;
     }
 }
 
@@ -278,23 +283,23 @@ void ControlReaderThread::setupRequest(void *data)
     //qDebug() << "wIndex:" << e->u.setup.wIndex;
     //qDebug() << "wLength:" << e->u.setup.wLength;
 
-    switch(e->u.setup.bRequest) {
-        case PTP_REQ_GET_DEVICE_STATUS:
-            if(e->u.setup.bRequestType == 0xa1)
-                sendStatus();
-            else
-                stall((e->u.setup.bRequestType & USB_DIR_IN)>0);
-            break;
-        case PTP_REQ_CANCEL:
-            emit cancelTransaction();
-            break;
-        case PTP_REQ_DEVICE_RESET:
-            emit deviceReset();
-            break;
-        //case PTP_REQ_GET_EXTENDED_EVENT_DATA:
-        default:
-            stall((e->u.setup.bRequestType & USB_DIR_IN)>0);
-            break;
+    switch (e->u.setup.bRequest) {
+    case PTP_REQ_GET_DEVICE_STATUS:
+        if (e->u.setup.bRequestType == 0xa1)
+            sendStatus();
+        else
+            stall((e->u.setup.bRequestType & USB_DIR_IN) > 0);
+        break;
+    case PTP_REQ_CANCEL:
+        emit cancelTransaction();
+        break;
+    case PTP_REQ_DEVICE_RESET:
+        emit deviceReset();
+        break;
+    //case PTP_REQ_GET_EXTENDED_EVENT_DATA:
+    default:
+        stall((e->u.setup.bRequestType & USB_DIR_IN) > 0);
+        break;
     }
 }
 
@@ -489,7 +494,7 @@ void BulkWriterThread::execute()
     // Call setData before starting the thread.
 
     int bytesWritten = 0;
-    char *dataptr = (char*)m_buffer;
+    char *dataptr = (char *)m_buffer;
     // PTP compatibility requires that a transfer is terminated by a
     // "short packet" (a packet of less than maximum length). This
     // happens naturally for most transfers, but if the transfer size
@@ -504,24 +509,20 @@ void BulkWriterThread::execute()
     while ((m_dataLen || zeropacket) && !m_shouldExit) {
         quint32 writeNow = (m_dataLen < writeMax) ? m_dataLen : writeMax;
         bytesWritten = MTP_WRITE(m_fd, dataptr, writeNow, false);
-        if(bytesWritten == -1)
-        {
-            if(errno == EIO && writeMax > PTP_HS_DATA_PKT_SIZE )
-            {
+        if (bytesWritten == -1) {
+            if (errno == EIO && writeMax > PTP_HS_DATA_PKT_SIZE ) {
                 writeMax >>= 1;
                 MTP_LOG_WARNING("BulkWriterThread limit writes to: " << writeMax);
                 continue;
             }
-            if(errno == EINTR)
+            if (errno == EINTR)
                 continue;
-            if(errno == EAGAIN)
-            {
+            if (errno == EAGAIN) {
                 MTP_LOG_WARNING("BulkWriterThread delaying: errno " << errno);
                 msleep(1);
                 continue;
             }
-            if(errno == ESHUTDOWN)
-            {
+            if (errno == ESHUTDOWN) {
                 // After a shutdown, the host won't expect this data anymore,
                 // so drop it and report failure.
                 MTP_LOG_WARNING("BulkWriterThread exiting (endpoint shutdown)");
@@ -579,8 +580,8 @@ void InterruptWriterThread::flushData()
 {
     QMutexLocker locker(&m_lock);
 
-    while(m_buffers.count() ) {
-        QPair<quint8*,int> pair = m_buffers.takeFirst();
+    while (m_buffers.count() ) {
+        QPair<quint8 *, int> pair = m_buffers.takeFirst();
         free(pair.first);
     }
 }
@@ -589,8 +590,8 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 {
     QMutexLocker locker(&m_lock);
 
-    quint8 *copy = (quint8*)malloc(dataLen);
-    if(copy == NULL) {
+    quint8 *copy = (quint8 *)malloc(dataLen);
+    if (copy == NULL) {
         MTP_LOG_CRITICAL("Couldn't allocate memory for events");
         return;
     }
@@ -598,19 +599,18 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 
     // This is here in case the interrupt writing thread cannot keep up
     // with the events. It removes the oldest events.
-    if(m_buffers.count() >= MAX_EVENTS_STORED) {
-        if( !m_eventBufferFull ) {
+    if (m_buffers.count() >= MAX_EVENTS_STORED) {
+        if ( !m_eventBufferFull ) {
             m_eventBufferFull = true;
             MTP_LOG_CRITICAL("event buffer full - events will be lost");
         }
 
         do {
-            QPair<quint8*,int> pair = m_buffers.takeFirst();
+            QPair<quint8 *, int> pair = m_buffers.takeFirst();
             free(pair.first);
-        } while(m_buffers.count() >= MAX_EVENTS_STORED);
-    }
-    else {
-        if( m_eventBufferFull ) {
+        } while (m_buffers.count() >= MAX_EVENTS_STORED);
+    } else {
+        if ( m_eventBufferFull ) {
             m_eventBufferFull = false;
             MTP_LOG_CRITICAL("event buffer no longer full");
         }
@@ -618,7 +618,7 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 
     /* Note that we just buffer the event data here, the
      * actual transfer is interleaved with bulk writes. */
-    m_buffers.append(QPair<quint8*,int>(copy, dataLen));
+    m_buffers.append(QPair<quint8 *, int>(copy, dataLen));
 }
 
 void InterruptWriterThread::execute()
@@ -629,7 +629,7 @@ void InterruptWriterThread::execute()
     /* Lock on entry */
     m_lock.lock();
 
-    while(!m_shouldExit) {
+    while (!m_shouldExit) {
 
         /* Waiting happens in locked state, but the lock is
          * released for the duration of the wait itself. */
@@ -642,7 +642,7 @@ void InterruptWriterThread::execute()
         }
 
         /* Make sure we have data to write */
-        if( !dataptr ) {
+        if ( !dataptr ) {
             if (m_buffers.isEmpty()) {
                 /* We should really not get here. Log it and emit
                  * failure in order not to block the upper layers. */
@@ -651,12 +651,12 @@ void InterruptWriterThread::execute()
                 continue;
             }
 
-            QPair<quint8*,int> pair = m_buffers.takeFirst();
+            QPair<quint8 *, int> pair = m_buffers.takeFirst();
             dataptr = pair.first;
             dataLen = pair.second;
         }
 
-        if( !dataptr || !dataLen ) {
+        if ( !dataptr || !dataLen ) {
             MTP_LOG_WARNING("empty event data packet; ignored");
             continue;
         }
@@ -670,28 +670,23 @@ void InterruptWriterThread::execute()
         InterruptWriterResult result = INTERRUPT_WRITE_RETRY;
 
         /* Handle IO results in locked state */
-        if(rc == -1)
-        {
+        if (rc == -1) {
             /* Note: The error has already been logged by MTP_WRITE(). */
 
             if (errno == EINTR) {
                 /* Assume this is caused by timeout at upper layers */
-            }
-            else if (errno == EAGAIN || errno == ESHUTDOWN) {
+            } else if (errno == EAGAIN || errno == ESHUTDOWN) {
                 msleep(1);
-            }
-            else {
+            } else {
                 MTP_LOG_CRITICAL("thread exit due to unhandled error");
                 goto EXIT;
             }
-        }
-        else {
-            if( rc != dataLen ) {
+        } else {
+            if ( rc != dataLen ) {
                 /* Assumption is that for interrupt endpoints the kernel
                  * should accept the whole packet or nothing at all. */
                 MTP_LOG_CRITICAL("partial write" << rc << "/" << dataLen << "bytes");
-            }
-            else {
+            } else {
                 MTP_LOG_TRACE("intr writer - event sent");
             }
 
@@ -715,8 +710,8 @@ void InterruptWriterThread::reset()
 {
     QMutexLocker locker(&m_lock);
 
-    QPair<quint8*,int> item;
-    foreach(item, m_buffers) {
+    QPair<quint8 *, int> item;
+    foreach (item, m_buffers) {
         delete item.first;
     }
     m_buffers.clear();

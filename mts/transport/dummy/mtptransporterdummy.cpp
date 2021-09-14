@@ -35,8 +35,8 @@
 using namespace meegomtp1dot0;
 
 MTPTransporterDummy::MTPTransporterDummy() :
-m_currentTransactionPhase(eMTP_CONTAINER_TYPE_UNDEFINED), m_isNextChunkData(false),
-m_noOfDataChunksExpected(0), m_noOfDataChunksReceived(0), m_noOfDataChunksToFollow(0), m_transactionId(0xFFFFFFFF)
+    m_currentTransactionPhase(eMTP_CONTAINER_TYPE_UNDEFINED), m_isNextChunkData(false),
+    m_noOfDataChunksExpected(0), m_noOfDataChunksReceived(0), m_noOfDataChunksToFollow(0), m_transactionId(0xFFFFFFFF)
 {
 }
 
@@ -44,32 +44,27 @@ MTPTransporterDummy::~MTPTransporterDummy()
 {
 }
 
-bool MTPTransporterDummy::sendData( const quint8* data, quint32 len, bool /*sendZeroPacket*/ )
+bool MTPTransporterDummy::sendData( const quint8 *data, quint32 len, bool /*sendZeroPacket*/ )
 {
-    MTPContainerWrapper mtpHeader(const_cast<quint8*>(data));
+    MTPContainerWrapper mtpHeader(const_cast<quint8 *>(data));
     // Determine the phase
-    if( !m_isNextChunkData )
-    {
+    if ( !m_isNextChunkData ) {
         m_currentTransactionPhase = static_cast<transactionPhase>(mtpHeader.containerType());
     }
 
     // If this is a response, we emit a signal dataReceived, this will be used by protocol's UT class to validate response.
-    if( eMTP_CONTAINER_TYPE_RESPONSE == m_currentTransactionPhase )
-    {
-        emit dataReceived( const_cast<quint8*>(data), len, true, true );
+    if ( eMTP_CONTAINER_TYPE_RESPONSE == m_currentTransactionPhase ) {
+        emit dataReceived( const_cast<quint8 *>(data), len, true, true );
     }
 
-    if( eMTP_CONTAINER_TYPE_DATA == m_currentTransactionPhase || m_isNextChunkData )
-    {
+    if ( eMTP_CONTAINER_TYPE_DATA == m_currentTransactionPhase || m_isNextChunkData ) {
         return checkData( data, len );
-    }
-    else
-    {
+    } else {
         return checkHeader( &mtpHeader, len );
     }
 }
 
-bool MTPTransporterDummy::sendEvent( const quint8* /*data*/, quint32 /*len*/, bool /*sendZeroPacket*/ )
+bool MTPTransporterDummy::sendEvent( const quint8 * /*data*/, quint32 /*len*/, bool /*sendZeroPacket*/ )
 {
     return true;
 }
@@ -78,15 +73,13 @@ bool MTPTransporterDummy::checkHeader( MTPContainerWrapper *mtpHeader, quint32 l
 {
     //Check length
     quint32 packetLength = mtpHeader->containerLength();
-    if( packetLength != len )
-    {
+    if ( packetLength != len ) {
         return false;
     }
 
     //Check transaction id
     quint32 transactionId = mtpHeader->transactionId();
-    if( 0xFFFFFFFF != m_transactionId && transactionId < m_transactionId )
-    {
+    if ( 0xFFFFFFFF != m_transactionId && transactionId < m_transactionId ) {
         return false;
     }
     m_transactionId = transactionId;
@@ -96,36 +89,30 @@ bool MTPTransporterDummy::checkHeader( MTPContainerWrapper *mtpHeader, quint32 l
 
 bool MTPTransporterDummy::checkData( const quint8 *data, quint32 len )
 {
-   // The first packet for data which also has header
-   if( eMTP_CONTAINER_TYPE_DATA == m_currentTransactionPhase && !m_isNextChunkData )
-   {
-       MTPContainerWrapper mtpHeader(const_cast<quint8*>(data));
-       // Determine total data length
-       quint32 dataLength = mtpHeader.containerLength() - MTP_HEADER_SIZE;
-       // Check how many bytes of data are present in the current packet
-       quint32 currLength = len - MTP_HEADER_SIZE;
-       // Determine how many chunks will follow; data may be segmented
-       m_noOfDataChunksToFollow = ( dataLength/currLength + dataLength%currLength ? 1 : 0 ) - 1;
-       m_noOfDataChunksExpected = m_noOfDataChunksToFollow;
-       m_isNextChunkData = m_noOfDataChunksExpected ? true : false;
-       return true;
-   }
-   else if( m_isNextChunkData )
-   {
-       if( m_noOfDataChunksToFollow )
-       {
-           --m_noOfDataChunksToFollow;
-           ++m_noOfDataChunksReceived;
-       }
-       if( !m_noOfDataChunksToFollow )
-       {
-           m_isNextChunkData = false;
-           if( m_noOfDataChunksReceived != m_noOfDataChunksExpected )
-           {
-               return false;
-           }
-       }
-       return true;
-   }
-   return false;
+    // The first packet for data which also has header
+    if ( eMTP_CONTAINER_TYPE_DATA == m_currentTransactionPhase && !m_isNextChunkData ) {
+        MTPContainerWrapper mtpHeader(const_cast<quint8 *>(data));
+        // Determine total data length
+        quint32 dataLength = mtpHeader.containerLength() - MTP_HEADER_SIZE;
+        // Check how many bytes of data are present in the current packet
+        quint32 currLength = len - MTP_HEADER_SIZE;
+        // Determine how many chunks will follow; data may be segmented
+        m_noOfDataChunksToFollow = ( dataLength / currLength + dataLength % currLength ? 1 : 0 ) - 1;
+        m_noOfDataChunksExpected = m_noOfDataChunksToFollow;
+        m_isNextChunkData = m_noOfDataChunksExpected ? true : false;
+        return true;
+    } else if ( m_isNextChunkData ) {
+        if ( m_noOfDataChunksToFollow ) {
+            --m_noOfDataChunksToFollow;
+            ++m_noOfDataChunksReceived;
+        }
+        if ( !m_noOfDataChunksToFollow ) {
+            m_isNextChunkData = false;
+            if ( m_noOfDataChunksReceived != m_noOfDataChunksExpected ) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
 }

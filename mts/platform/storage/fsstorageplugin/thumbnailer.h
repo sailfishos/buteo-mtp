@@ -46,73 +46,72 @@
 /// error (Error handling is not very important for the representative sample
 /// MTP property). Internally, the class uses the DBUS service exposed by
 /// tumbler (http://live.gnome.org/ThumbnailerSpec).
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class Thumbnailer : public ThumbnailerProxy
 {
     Q_OBJECT
-    public:
-        /// Constructor; Default and the only constructor.
-        Thumbnailer();
-        /// \brief Request a thumbnail.
-        /// Use this method to request a thumbnail for the file at the given
-        /// path. If the thumbnail for the given path is already present (in the
-        /// system thumbnailer's cache), the path to the thumbnail is returned.
-        /// If no thumbnail is found in the cache, this sends a DBUS request to
-        /// the thumbnailer and returns immediately (with an empty return
-        /// value). A signal is asynchronously emitted when the thumbnail is
-        /// available.
-        /// \param filePath [in] The absolute path of the file for which
-        /// thumbnail is required.
-        /// \param mimeType [in] The MIME type of the file specified in argument
-        /// 1.
-        /// \return Returns the absolute path of the thumbnail file, if
-        /// available, else returns an empty string.
-        QString requestThumbnail(const QString &filePath, const QString &mimeType);
-    Q_SIGNALS:
-        /// \brief Signal to indicate that thumbnail is now available.
-        /// Thumbnailer emits this signal when the thumbnail for the path
-        /// specified by the first argument is available.
-        /// \param path [out] The absolute path of the file for which the
-        /// thumbnail is available (The same path as requested in request).
-        /// \see requestThumbnail
-        void thumbnailReady(const QString &path);
-    public Q_SLOTS:
-        ///< This slot handles the Failed signal from the DBUS interface
-        void slotFailed(uint, const QStringList&);
-        ///< This slot handles the Ready signal from the DBUS interface
-        void slotReady(uint, ThumbnailPathList thumbnails);
-        ///< This slot handles the Finished signal from the DBUS interface
-        void slotFinished(uint);
-        ///< This slot handles async replies from thumbnailer
-        void requestThumbnailFinished(QDBusPendingCallWatcher *pcw);
-        ///< This slot handlers flushing of thumbnail request queue
-        void thumbnailDelayTimeout();
+public:
+    /// Constructor; Default and the only constructor.
+    Thumbnailer();
+    /// \brief Request a thumbnail.
+    /// Use this method to request a thumbnail for the file at the given
+    /// path. If the thumbnail for the given path is already present (in the
+    /// system thumbnailer's cache), the path to the thumbnail is returned.
+    /// If no thumbnail is found in the cache, this sends a DBUS request to
+    /// the thumbnailer and returns immediately (with an empty return
+    /// value). A signal is asynchronously emitted when the thumbnail is
+    /// available.
+    /// \param filePath [in] The absolute path of the file for which
+    /// thumbnail is required.
+    /// \param mimeType [in] The MIME type of the file specified in argument
+    /// 1.
+    /// \return Returns the absolute path of the thumbnail file, if
+    /// available, else returns an empty string.
+    QString requestThumbnail(const QString &filePath, const QString &mimeType);
+Q_SIGNALS:
+    /// \brief Signal to indicate that thumbnail is now available.
+    /// Thumbnailer emits this signal when the thumbnail for the path
+    /// specified by the first argument is available.
+    /// \param path [out] The absolute path of the file for which the
+    /// thumbnail is available (The same path as requested in request).
+    /// \see requestThumbnail
+    void thumbnailReady(const QString &path);
+public Q_SLOTS:
+    ///< This slot handles the Failed signal from the DBUS interface
+    void slotFailed(uint, const QStringList &);
+    ///< This slot handles the Ready signal from the DBUS interface
+    void slotReady(uint, ThumbnailPathList thumbnails);
+    ///< This slot handles the Finished signal from the DBUS interface
+    void slotFinished(uint);
+    ///< This slot handles async replies from thumbnailer
+    void requestThumbnailFinished(QDBusPendingCallWatcher *pcw);
+    ///< This slot handlers flushing of thumbnail request queue
+    void thumbnailDelayTimeout();
 
-        ///< Set-once master toggle for allowing thumbnail requests
-        void enableThumbnailing(void);
-        ///< Temporarily deny sending new thumbnail requests
-        void suspendThumbnailing(void);
-        ///< Allow sending queued thumbnail requests again
-        void resumeThumbnailing(void);
+    ///< Set-once master toggle for allowing thumbnail requests
+    void enableThumbnailing(void);
+    ///< Temporarily deny sending new thumbnail requests
+    void suspendThumbnailing(void);
+    ///< Allow sending queued thumbnail requests again
+    void resumeThumbnailing(void);
 
 
-    private:
-        void scheduleThumbnailing(void);
+private:
+    void scheduleThumbnailing(void);
 
-        ///< Queue of images that are missing thumbnails
-        QStringList m_uriRequestQueue;
-        ///< Internal map to keep track of pending thumbnail requests
-        QHash<QString, uint> m_uriAlreadyRequested;
-        ///< Resolved thumbnail paths
-        QHash<QString, QString> m_thumbnailPaths;
-        ///< Timer for combining multiple image sources to one thumbnail request
-        QTimer *m_thumbnailTimer;
+    ///< Queue of images that are missing thumbnails
+    QStringList m_uriRequestQueue;
+    ///< Internal map to keep track of pending thumbnail requests
+    QHash<QString, uint> m_uriAlreadyRequested;
+    ///< Resolved thumbnail paths
+    QHash<QString, QString> m_thumbnailPaths;
+    ///< Timer for combining multiple image sources to one thumbnail request
+    QTimer *m_thumbnailTimer;
 
-        ///< Thumbnailing is enabled (once) during daemon startup
-        bool m_thumbnailerEnabled;
-        ///< Thumbnailing can be temporarily suspended during runtime
-        bool m_thumbnailerSuspended;
+    ///< Thumbnailing is enabled (once) during daemon startup
+    bool m_thumbnailerEnabled;
+    ///< Thumbnailing can be temporarily suspended during runtime
+    bool m_thumbnailerSuspended;
 };
 }
 #endif // THUMBNAILER_H

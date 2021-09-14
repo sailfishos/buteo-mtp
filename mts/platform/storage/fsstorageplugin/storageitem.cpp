@@ -53,8 +53,7 @@ StorageItem::StorageItem() :
 // Destructor
 StorageItem::~StorageItem()
 {
-    if( m_objectInfo )
-    {
+    if ( m_objectInfo ) {
         delete m_objectInfo;
         m_objectInfo = 0;
     }
@@ -62,9 +61,9 @@ StorageItem::~StorageItem()
 
 void StorageItem::setEventsEnabled(bool enabled)
 {
-    if( m_eventsEnabled != enabled ) {
+    if ( m_eventsEnabled != enabled ) {
         m_eventsEnabled = enabled;
-        if( m_eventsEnabled )
+        if ( m_eventsEnabled )
             MTP_LOG_INFO("events enabled for:" << m_path);
         else
             MTP_LOG_INFO("events disabled for:" << m_path);

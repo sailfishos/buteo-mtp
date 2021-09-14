@@ -35,15 +35,13 @@
 #include "mtptransporter.h"
 #include "mtptypes.h"
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class MTPContainerWrapper;
 }
 
 /// This class implements interfacing with a dummy inititator : it does checks against
 /// malformed mtp packets, and reports failure if the packet is malformed.
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class MTPTransporterDummy : public MTPTransporter
 {
     Q_OBJECT
@@ -55,29 +53,37 @@ public:
     ~MTPTransporterDummy();
 
     /// Checks data, if data is good, returns true
-    bool sendData( const quint8* data, quint32 len, bool sendZeroPacket = true );
+    bool sendData( const quint8 *data, quint32 len, bool sendZeroPacket = true );
 
     /// Checks if event data is good, if so returns true
-    bool sendEvent( const quint8* data, quint32 len, bool sendZeroPacket = true ) ;
+    bool sendEvent( const quint8 *data, quint32 len, bool sendZeroPacket = true ) ;
 
-    bool activate(){ return true; }
-    bool deactivate(){ return true; }
-    bool flushData(){ return true; }
-    void reset(){}
-    void disableRW(){}
-    void enableRW(){}
-    void suspend(){}
-    void resume(){}
+    bool activate()
+    {
+        return true;
+    }
+    bool deactivate()
+    {
+        return true;
+    }
+    bool flushData()
+    {
+        return true;
+    }
+    void reset() {}
+    void disableRW() {}
+    void enableRW() {}
+    void suspend() {}
+    void resume() {}
 
 private:
     /// Checks if the mtp header received in sendData/Event is ok.
     bool checkHeader( MTPContainerWrapper *mtpHeader, quint32 len );
 
     /// Checks if data phases are ok.
-    bool checkData( const quint8* data, quint32 len );
+    bool checkData( const quint8 *data, quint32 len );
 
-    enum transactionPhase
-    {
+    enum transactionPhase {
         eMTP_CONTAINER_TYPE_UNDEFINED,
         eMTP_CONTAINER_TYPE_COMMAND,
         eMTP_CONTAINER_TYPE_DATA,
@@ -86,19 +92,19 @@ private:
     };
     transactionPhase m_currentTransactionPhase; ///< The MTP phase we are currently in ( when sendData/Event is called ).
     bool m_isNextChunkData; ///< When set to true, we expect raw data in sendEvent.
-    quint32 m_noOfDataChunksExpected; ///< The no. of data chunks that we expect to receive when a data phase begins. 
+    quint32 m_noOfDataChunksExpected; ///< The no. of data chunks that we expect to receive when a data phase begins.
     quint32 m_noOfDataChunksReceived; ///< The no. of data chunks that are finally received.
     quint32 m_noOfDataChunksToFollow; ///< The no. of data chunks that are yet to be received.
     quint32 m_transactionId; ///< The transaction id of the current MTP transaction ( read from the mtp packet revecied in sendData ).
 
 Q_SIGNALS:
-    void dummyDataReceived( quint8* data, quint32 len );
+    void dummyDataReceived( quint8 *data, quint32 len );
 
 public Q_SLOTS:
-    void sendDeviceOK(){}
-    void sendDeviceBusy(){}
-    void handleHighPriorityData(){}
-    void onStorageReady(){}
+    void sendDeviceOK() {}
+    void sendDeviceBusy() {}
+    void handleHighPriorityData() {}
+    void onStorageReady() {}
 };
 }
 

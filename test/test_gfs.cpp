@@ -33,13 +33,12 @@ void signalHandler(int /*signum*/)
     mts_stop(m);
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
     system("source /tmp/session_bus_address.user");
     m = mts_init();
-    if (!m)
-    {
+    if (!m) {
         return 1;
     }
 

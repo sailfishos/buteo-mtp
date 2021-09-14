@@ -43,8 +43,7 @@
 class QFile;
 class QDir;
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class FSInotify;
 class Thumbnailer;
 class StorageItem;
@@ -52,8 +51,7 @@ class StorageItem;
 
 /// FSStoragePlugin implements StoragePlugin for the case of a filesystem storage.
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class FSStoragePlugin : public StoragePlugin
 {
     Q_OBJECT
@@ -81,24 +79,27 @@ public:
 
     MTPResponseCode addItem( ObjHandle &parentHandle, ObjHandle &handle, MTPObjectInfo *info );
 
-    MTPResponseCode deleteItem( const ObjHandle& handle, const MTPObjFormatCode& formatCode );
+    MTPResponseCode deleteItem( const ObjHandle &handle, const MTPObjFormatCode &formatCode );
 
     MTPResponseCode copyHandle( StoragePlugin *sourceStorage, ObjHandle source,
-            ObjHandle parent );
+                                ObjHandle parent );
 
-    MTPResponseCode getObjectHandles( const MTPObjFormatCode& formatCode, const quint32& associationHandle, QVector<ObjHandle> &objectHandles ) const;
+    MTPResponseCode getObjectHandles( const MTPObjFormatCode &formatCode, const quint32 &associationHandle,
+                                      QVector<ObjHandle> &objectHandles ) const;
 
     bool checkHandle( const ObjHandle &handle ) const;
 
     MTPResponseCode storageInfo( MTPStorageInfo &info );
 
-    MTPResponseCode getReferences( const ObjHandle &handle , QVector<ObjHandle> &references );
+    MTPResponseCode getReferences( const ObjHandle &handle, QVector<ObjHandle> &references );
 
-    MTPResponseCode setReferences( const ObjHandle &handle , const QVector<ObjHandle> &references );
+    MTPResponseCode setReferences( const ObjHandle &handle, const QVector<ObjHandle> &references );
 
-    MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage, ObjHandle &copiedObjectHandle , quint32 recursionCounter = 0);
+    MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage,
+                                ObjHandle &copiedObjectHandle, quint32 recursionCounter = 0);
 
-    MTPResponseCode moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage, bool movePhysically = true );
+    MTPResponseCode moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage,
+                                bool movePhysically = true );
 
     MTPResponseCode getPath( const quint32 &handle, QString &path ) const;
 
@@ -108,32 +109,34 @@ public:
 
     MTPResponseCode getObjectInfo( const ObjHandle &handle, const MTPObjectInfo *&objectInfo );
 
-    MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment, bool isLastSegment );
+    MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment,
+                               bool isLastSegment );
 
-    MTPResponseCode writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent, quint32 dataLength, bool isFirstSegment, bool isLastSegment);
+    MTPResponseCode writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent, quint32 dataLength,
+                                     bool isFirstSegment, bool isLastSegment);
 
     MTPResponseCode readData( const ObjHandle &handle, char *readBuffer, quint32 readBufferLen, quint64 readOffset );
 
     MTPResponseCode truncateItem( const ObjHandle &handle, const quint64 &size );
 
     MTPResponseCode getObjectPropertyValue(const ObjHandle &handle,
-            QList<MTPObjPropDescVal> &propValList);
+                                           QList<MTPObjPropDescVal> &propValList);
 
     MTPResponseCode setObjectPropertyValue(const ObjHandle &handle,
-            QList<MTPObjPropDescVal> &propValList,
-            bool sendObjectPropList = false);
+                                           QList<MTPObjPropDescVal> &propValList,
+                                           bool sendObjectPropList = false);
 
     MTPResponseCode getChildPropertyValues(ObjHandle handle,
-            const QList<const MtpObjPropDesc *>& properties,
-            QMap<ObjHandle, QList<QVariant> > &values);
+                                           const QList<const MtpObjPropDesc *> &properties,
+                                           QMap<ObjHandle, QList<QVariant> > &values);
 
-    void excludePath( const QString & path );
+    void excludePath( const QString &path );
 
 public slots:
     /// This slot gets notified when an inotify event is received, and takes appropriate action.
-    void inotifyEventSlot( struct inotify_event* );
+    void inotifyEventSlot( struct inotify_event * );
     void receiveThumbnail(const QString &path);
-    void getLargestPuoid( MtpInt128& puoid );
+    void getLargestPuoid( MtpInt128 &puoid );
 
 private:
     /// Reads puoids from the puoids db, so that are preserved across MTP sessions.
@@ -160,7 +163,7 @@ private:
     /// Gets a new object handle that can be assigned to an item.
     /// \return the object handle
     quint32 requestNewObjectHandle();
-    void requestNewPuoid( MtpInt128& puoid );
+    void requestNewPuoid( MtpInt128 &puoid );
 
     // FIXME This should be in the protocol layer.
     /// Build a list of all the object formats that we support.
@@ -171,7 +174,8 @@ private:
     /// \eventCode [in]  the MTP event code.
     /// \eventParams [in]  the set of parameters for this event.
     /// \partOfTransaction [in]  bool which indicates if this event is associated with an MTP transaction.
-    void dispatchMTPEvent( const ObjHandle &handle, const MTPEventCode &eventCode, const QVector<quint32>& eventParams, const bool &partOfTransaction );
+    void dispatchMTPEvent( const ObjHandle &handle, const MTPEventCode &eventCode, const QVector<quint32> &eventParams,
+                           const bool &partOfTransaction );
 
     /// Links a child storage item to it's parent storage item
     /// \param childStorageItem [in] pointer to the child storage item.
@@ -185,7 +189,7 @@ private:
     /// Given a pathname, gives the corresponding storage item if the item exists in the filesystem.
     /// \param path [in] the pathname of the item.
     /// \return the storage item.
-    StorageItem* findStorageItemByPath( const QString &path );
+    StorageItem *findStorageItemByPath( const QString &path );
 
     /// Creates new StorageItem representing a file or directory at \c path
     /// and creates the file or directory if asked to do so.
@@ -207,9 +211,9 @@ private:
     /// This method will call processEvents() regularly when adding
     /// a whole directory tree, so that the event loop remains responsive.
     MTPResponseCode addToStorage( const QString &path,
-            StorageItem **storageItem = 0, MTPObjectInfo *info = 0,
-            bool sendEvent = false, bool createIfNotExist = false,
-            ObjHandle handle = 0 );
+                                  StorageItem **storageItem = 0, MTPObjectInfo *info = 0,
+                                  bool sendEvent = false, bool createIfNotExist = false,
+                                  ObjHandle handle = 0 );
 
     /// Inserts a storage item into internal data structures for faster search.
     ///
@@ -228,7 +232,7 @@ private:
     /// This method helps recursively modify the "path" field of a StorageItem ther has been moved.
     /// \param newAncestorPath [in] the new ancestor for the moved item and it's children.
     /// \movedItem [in] the moved item.
-    void adjustMovedItemsPath(QString newAncestorPath, StorageItem* movedItem);
+    void adjustMovedItemsPath(QString newAncestorPath, StorageItem *movedItem);
 
     /// Gets the object format of a storage item.
     /// \param storageItem [in] the storage item.
@@ -309,7 +313,7 @@ private:
     /// Gets key words for a storage item.
     /// \param storageItem [in] the storage item.
     /// \return keywords.
-    char* getKeywords( StorageItem *storageItem );
+    char *getKeywords( StorageItem *storageItem );
 
     /// Dump item info < node handle, node path, parent handle, parent path >, recursively if reqd.
     /// \param storageItem [in] the storage item.
@@ -326,27 +330,27 @@ private:
     void removeInvalidObjectReferences( const ObjHandle &handle );
 
     /// This handles IN_DELETE/IN_MOVED_FROM iNotify events
-    void handleFSDelete(const struct inotify_event *event, const char* name);
+    void handleFSDelete(const struct inotify_event *event, const char *name);
 
     /// This handles IN_CREATE/IN_MOVED_TO iNotify events
-    void handleFSCreate(const struct inotify_event *event, const char* name);
+    void handleFSCreate(const struct inotify_event *event, const char *name);
 
     /// This handles IN_MOVED_TO/IN_MOVED_FROM iNotify events
-    void handleFSMove(const struct inotify_event *fromEvent, const char* fromName,
-            const struct inotify_event *toEvent, const char* toName);
+    void handleFSMove(const struct inotify_event *fromEvent, const char *fromName,
+                      const struct inotify_event *toEvent, const char *toName);
 
     /// This handles IN_MODIFY iNotify events
-    void handleFSModify(const struct inotify_event *event, const char* name);
+    void handleFSModify(const struct inotify_event *event, const char *name);
 
     // Throttle sending of MTP_EV_StorageInfoChanged events
     void sendStorageInfoChanged(void);
-    
+
     /// Caches IN_MOVED_FROM events for future pairing
-    void cacheInotifyEvent(const struct inotify_event *event, const char* name);
-    
+    void cacheInotifyEvent(const struct inotify_event *event, const char *name);
+
     /// Retrieves the cached iNotify event
     void getCachedInotifyEvent(const struct inotify_event **event, QString &name);
-    
+
     /// Clears the internal iNotify event cache
     void clearCachedInotifyEvent();
 
@@ -355,45 +359,47 @@ private:
                                                        QVariant &value, MTPDataType type );
 
     /// Is storage item an image file that the thumbnailer can process
-    bool isThumbnailableImage(StorageItem*);
+    bool isThumbnailableImage(StorageItem *);
 
     /// Removes watch descriptors on a directory and it's sub directories if any.
-    void removeWatchDescriptorRecursively( StorageItem* item );
+    void removeWatchDescriptorRecursively( StorageItem *item );
 
     /// Adds inotify watch on a directory and sub dirs if any.
     void addWatchDescriptorRecursively( StorageItem *item );
 
     /// Removes watch descriptors on a directory.
-    void removeWatchDescriptor( StorageItem* item );
+    void removeWatchDescriptor( StorageItem *item );
 
     /// Adds inotify watch on a directory.
     void addWatchDescriptor( StorageItem *item );
 
 private slots:
     void enumerateStorage_worker();
-    
+
 private:
     MTPResponseCode deleteItemHelper( ObjHandle handle, bool removePhysically = true, bool sendEvent = false );
     bool isFileNameValid(const QString &fileName, const StorageItem *parent);
     QString filesystemUuid() const;
 
     QString m_storagePath;
-    QHash<int,ObjHandle> m_watchDescriptorMap; ///< map from an inotify watch on an object to it's object handle.
-    QHash<QString,ObjHandle> m_pathNamesMap;
-    QHash<QString,MtpInt128> m_puoidsMap;
+    QHash<int, ObjHandle> m_watchDescriptorMap; ///< map from an inotify watch on an object to it's object handle.
+    QHash<QString, ObjHandle> m_pathNamesMap;
+    QHash<QString, MtpInt128> m_puoidsMap;
     QHash<MtpInt128, ObjHandle> m_puoidToHandleMap; ///< Maps the PUOID to the corresponding object handle
     StorageItem *m_root; ///< the root folder
     QString m_puoidsDbPath; ///< path where puoids will be stored persistently.
     QString m_objectReferencesDbPath; ///< path where references will be stored persistently.
     ObjHandle m_writeObjectHandle; ///< The obj handle for which a write operation is currently is progress. 0 means invalid handle, NOT root node!!
-    Thumbnailer* m_thumbnailer; ///< pointer to the thumbnailer object
-    FSInotify* m_inotify; ///< pointer to the inotify wrapper
-    QHash<QString,quint16> m_formatByExtTable;
-    QHash<MTPObjFormatCode, QString> m_imageMimeTable; ///< Maps the MTP object format code (for image types only) to MIME type string
+    Thumbnailer *m_thumbnailer; ///< pointer to the thumbnailer object
+    FSInotify *m_inotify; ///< pointer to the inotify wrapper
+    QHash<QString, quint16> m_formatByExtTable;
+    QHash<MTPObjFormatCode, QString>
+    m_imageMimeTable; ///< Maps the MTP object format code (for image types only) to MIME type string
     QString m_mtpPersistentDBPath;
     MtpInt128 m_largestPuoid;
 
-    QHash<ObjHandle, StorageItem*> m_objectHandlesMap; ///< each storage has a map of all it's object's handles to corresponding storage item.
+    QHash<ObjHandle, StorageItem *>
+    m_objectHandlesMap; ///< each storage has a map of all it's object's handles to corresponding storage item.
     quint64 m_reportedFreeSpace;
     QFile *m_dataFile;
 
@@ -406,11 +412,10 @@ private:
 
     static SymLinkPolicy s_symLinkPolicy;
 
-    struct INotifyCache
-    {
+    struct INotifyCache {
         QString                 fromName;
         struct inotify_event    fromEvent;
-    }m_iNotifyCache; ///< A cache for iNotify events
+    } m_iNotifyCache; ///< A cache for iNotify events
 };
 }
 

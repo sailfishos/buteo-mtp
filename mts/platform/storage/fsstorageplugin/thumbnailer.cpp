@@ -1,5 +1,5 @@
 /*
- 
+
 * This file is part of libmeegomtp package
 *
 * Copyright (C) 2010 Nokia Corporation. All rights reserved.
@@ -74,7 +74,7 @@ Thumbnailer::Thumbnailer() :
     m_thumbnailTimer->setInterval(THUMBNAIL_DELAY_ON_STARTUP);
 
     /* Do not issue new thumbnail requests while handling mtp commands */
-    MTPResponder* responder = MTPResponder::instance();
+    MTPResponder *responder = MTPResponder::instance();
     QObject::connect(responder, &MTPResponder::commandPending,
                      this, &Thumbnailer::suspendThumbnailing);
     QObject::connect(responder, &MTPResponder::commandFinished,
@@ -99,7 +99,7 @@ void Thumbnailer::slotReady(uint handle, ThumbnailPathList thumbnails)
         /* Thumbnailer may use signals directed to us only
          * but could as well use regular broadcasts. Ignore
          * notifications that we are not interested in. */
-        if(!m_uriAlreadyRequested.contains(uri))
+        if (!m_uriAlreadyRequested.contains(uri))
             continue;
 
         m_uriAlreadyRequested.remove(uri);
@@ -118,7 +118,7 @@ void Thumbnailer::slotFinished(uint handle)
     // Nothing to do here right now
 }
 
-void Thumbnailer::slotFailed(uint handle, const QStringList& uris)
+void Thumbnailer::slotFailed(uint handle, const QStringList &uris)
 {
     Q_UNUSED(handle);
     Q_UNUSED(uris);
@@ -143,7 +143,7 @@ void Thumbnailer::requestThumbnailFinished(QDBusPendingCallWatcher *pcw)
 
 void Thumbnailer::thumbnailDelayTimeout()
 {
-    if(m_uriRequestQueue.isEmpty()) {
+    if (m_uriRequestQueue.isEmpty()) {
         MTP_LOG_INFO("Thumbnail queue is empty; stopping dequeue timer");
         m_thumbnailTimer->stop();
 
@@ -154,8 +154,8 @@ void Thumbnailer::thumbnailDelayTimeout()
 
     /* Dequeue image files to thumbnail */
     QStringList uris;
-    for(int i = 0; i < THUMBNAIL_MAX_IMAGES_PER_REQUEST; ++i) {
-        if(m_uriRequestQueue.isEmpty())
+    for (int i = 0; i < THUMBNAIL_MAX_IMAGES_PER_REQUEST; ++i) {
+        if (m_uriRequestQueue.isEmpty())
             break;
         uris  << m_uriRequestQueue.takeFirst();
     }
@@ -164,7 +164,7 @@ void Thumbnailer::thumbnailDelayTimeout()
     MTP_LOG_TRACE("Requesting" << uris.count() << "thumbnails");
     QDBusPendingCall pc = this->Fetch(uris, THUMB_SIZE, UNBOUNDED_SIZE, CROP_THUMBS);
     QDBusPendingCallWatcher *pcw = new QDBusPendingCallWatcher(pc, this);
-    connect(pcw, SIGNAL(finished(QDBusPendingCallWatcher*)), SLOT(requestThumbnailFinished(QDBusPendingCallWatcher*)));
+    connect(pcw, SIGNAL(finished(QDBusPendingCallWatcher *)), SLOT(requestThumbnailFinished(QDBusPendingCallWatcher *)));
 
     /* Continue flushing the queue when mainloop gets idle */
     m_thumbnailTimer->setInterval(0);
@@ -172,7 +172,7 @@ void Thumbnailer::thumbnailDelayTimeout()
 
 void Thumbnailer::enableThumbnailing(void)
 {
-    if(!m_thumbnailerEnabled) {
+    if (!m_thumbnailerEnabled) {
         MTP_LOG_INFO("thumbnailer enabled");
         m_thumbnailerEnabled = true;
         scheduleThumbnailing();
@@ -181,7 +181,7 @@ void Thumbnailer::enableThumbnailing(void)
 
 void Thumbnailer::suspendThumbnailing(void)
 {
-    if(!m_thumbnailerSuspended) {
+    if (!m_thumbnailerSuspended) {
         m_thumbnailerSuspended = true;
         scheduleThumbnailing();
     }
@@ -189,7 +189,7 @@ void Thumbnailer::suspendThumbnailing(void)
 
 void Thumbnailer::resumeThumbnailing(void)
 {
-    if(m_thumbnailerSuspended) {
+    if (m_thumbnailerSuspended) {
         m_thumbnailerSuspended = false;
         scheduleThumbnailing();
     }
@@ -202,14 +202,13 @@ void Thumbnailer::scheduleThumbnailing(void)
                      !m_uriRequestQueue.isEmpty());
 
 
-    if(activate) {
-        if(!m_thumbnailTimer->isActive()) {
+    if (activate) {
+        if (!m_thumbnailTimer->isActive()) {
             MTP_LOG_TRACE("thumbnailer dequeue timer started");
             m_thumbnailTimer->start();
         }
-    }
-    else {
-        if(m_thumbnailTimer->isActive()) {
+    } else {
+        if (m_thumbnailTimer->isActive()) {
             MTP_LOG_TRACE("thumbnailer dequeue timer stopped");
             m_thumbnailTimer->stop();
             m_thumbnailTimer->setInterval(THUMBNAIL_DELAY_IN_RUNTIME);
@@ -227,7 +226,7 @@ QString Thumbnailer::requestThumbnail(const QString &filePath, const QString &mi
         thumbPath = it.value();
     } else {
         QString fileIri = IRI_PREFIX + filePath;
-        if(!m_uriAlreadyRequested.contains(fileIri)) {
+        if (!m_uriAlreadyRequested.contains(fileIri)) {
             /* Add uri to queue, use dummy handle */
             m_uriAlreadyRequested.insert(fileIri, 0);
             m_uriRequestQueue.append(fileIri);

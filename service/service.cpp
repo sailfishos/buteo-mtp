@@ -61,7 +61,7 @@ static void setupSymLinkPolicy()
     qputenv("BUTEO_MTP_SYMLINK_POLICY", symLinkPolicy.toUtf8());
 }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
     QCommandLineParser parser;
@@ -85,17 +85,14 @@ int main(int argc, char** argv)
     if (sigaction(SIGUSR1, &action, NULL) < 0)
         return EXIT_FAILURE;
 
-    QObject::connect(&app,SIGNAL(aboutToQuit()),Mts::getInstance(),SLOT(destroyInstance()));
+    QObject::connect(&app, SIGNAL(aboutToQuit()), Mts::getInstance(), SLOT(destroyInstance()));
 
     bool ok = Mts::getInstance()->activate();
-    if( ok )
-    {
+    if ( ok ) {
         QLoggingCategory lcMtp("buteo.mtp");
         lcMtp.setEnabled(QtDebugMsg, Mts::getInstance()->debugLogsEnabled());
         app.exec();
-    }
-    else
-    {
+    } else {
         Mts::destroyInstance();
     }
     return EXIT_SUCCESS;

@@ -36,21 +36,19 @@
 #include <QObject>
 #include "mtptypes.h"
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class MTPResponder;
 class MTPTransporterDummy;
 class MTPTxContainer;
 }
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class MTPResponder_test : public QObject
 {
     Q_OBJECT
 
 public slots:
-    void processReceivedData( quint8* data, quint32 len, bool, bool );
+    void processReceivedData( quint8 *data, quint32 len, bool, bool );
 
 private slots:
     void initTestCase();

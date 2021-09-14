@@ -34,7 +34,7 @@ using namespace meegomtp1dot0;
 
 MTPContainerWrapper::MTPContainerWrapper(quint8 *buffer) : MTPContainer()
 {
-    m_container = reinterpret_cast<MTPUSBContainer*>(buffer);
+    m_container = reinterpret_cast<MTPUSBContainer *>(buffer);
 }
 
 MTPContainerWrapper::~MTPContainerWrapper()

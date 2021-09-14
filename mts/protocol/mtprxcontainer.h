@@ -34,123 +34,122 @@
 
 #include "mtpcontainer.h"
 
-namespace meegomtp1dot0
+namespace meegomtp1dot0 {
+class MTPRxContainer : public MTPContainer
 {
-    class MTPRxContainer : public MTPContainer
-    {
-        public:
+public:
 
-        /// Constructor; Use this constructor for de-serialization of data
-        /// incoming from the initiator.
-        /// \param buffer [in] The data buffer.
-        /// \param len [in] The length of the data buffer, in bytes.
-        MTPRxContainer(const quint8 *buffer, quint32 len);
+    /// Constructor; Use this constructor for de-serialization of data
+    /// incoming from the initiator.
+    /// \param buffer [in] The data buffer.
+    /// \param len [in] The length of the data buffer, in bytes.
+    MTPRxContainer(const quint8 *buffer, quint32 len);
 
-        /// Destructor.
-        ~MTPRxContainer();
+    /// Destructor.
+    ~MTPRxContainer();
 
-        /// Appends buffer to the container (Combines segmented container packets)
-        /// \param buffer [in] The new segment, to be appended to existing buffer
-        /// \param len [in] The length of the new segment
-        void append(const quint8 *buffer, quint32 len);
+    /// Appends buffer to the container (Combines segmented container packets)
+    /// \param buffer [in] The new segment, to be appended to existing buffer
+    /// \param len [in] The length of the new segment
+    void append(const quint8 *buffer, quint32 len);
 
-        //***************
-        // De-Serializers
-        //***************
-        /// Deserializes a 8-bit value as a boolean
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(bool &d);
-        /// Deserializes a 8-bit signed value
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(qint8 &d);
-        /// Deserializes a 16-bit signed value
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(qint16 &d);
-        /// Deserializes a 32-bit signed value
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(qint32 &d);
-        /// Deserializes a 64-bit signed value
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(qint64 &d);
-        /// Deserializes a 8-bit unsigned value
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(quint8 &d);
-        /// Deserializes a 16-bit unsigned value
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(quint16 &d);
-        /// Deserializes a 32-bit unsigned value
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(quint32 &d);
-        /// Deserializes a 64-bit unsigned value
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(quint64 &d);
-        /// Deserializes a 128-bit signed/unsigned value
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(MtpInt128 &d);
-        /// Deserializes an array of 8-bit signed values
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(QVector<qint8> &d);
-        /// Deserializes an array of 16-bit signed values
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(QVector<qint16> &d);
-        /// Deserializes an array of 32-bit signed values
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(QVector<qint32> &d);
-        /// Deserializes an array of 64-bit signed values
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(QVector<qint64> &d);
-        /// Deserializes an array of 8-bit unsigned values
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(QVector<quint8> &d);
-        /// Deserializes an array of 16-bit unsigned values
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(QVector<quint16> &d);
-        /// Deserializes an array of 32-bit unsigned values
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(QVector<quint32> &d);
-        /// Deserializes an array of 64-bit unsigned values
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(QVector<quint64> &d);
-        /// Deserializes an array of 128-bit signed/unsigned values
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(QVector<MtpInt128> &d);
-        /// Deserializes a string
-        /// \param d [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(QString &d);
-        /// Deserializes the MTP object info dataset
-        /// \param objInfo [out] The data is deserialized into this
-        /// \return Returns a self-reference
-        MTPRxContainer& operator>>(MTPObjectInfo &objInfo);
-        /// Deserializes a variant data by it's MTP type
-        /// \param type [in] The MTP type of the data to be deserialized
-        /// \param d [out] The data is deserialized into this
-        void deserializeVariantByType(MTPDataType type, QVariant &d);
-        
-        private:
-        ///< Deserializes from the internal buffer, elements of the given size and
-        /// number
-        void deserialize(void *target, quint32 elementSize, quint32 numberOfElements);
-    };
+    //***************
+    // De-Serializers
+    //***************
+    /// Deserializes a 8-bit value as a boolean
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(bool &d);
+    /// Deserializes a 8-bit signed value
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(qint8 &d);
+    /// Deserializes a 16-bit signed value
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(qint16 &d);
+    /// Deserializes a 32-bit signed value
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(qint32 &d);
+    /// Deserializes a 64-bit signed value
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(qint64 &d);
+    /// Deserializes a 8-bit unsigned value
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(quint8 &d);
+    /// Deserializes a 16-bit unsigned value
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(quint16 &d);
+    /// Deserializes a 32-bit unsigned value
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(quint32 &d);
+    /// Deserializes a 64-bit unsigned value
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(quint64 &d);
+    /// Deserializes a 128-bit signed/unsigned value
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(MtpInt128 &d);
+    /// Deserializes an array of 8-bit signed values
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(QVector<qint8> &d);
+    /// Deserializes an array of 16-bit signed values
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(QVector<qint16> &d);
+    /// Deserializes an array of 32-bit signed values
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(QVector<qint32> &d);
+    /// Deserializes an array of 64-bit signed values
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(QVector<qint64> &d);
+    /// Deserializes an array of 8-bit unsigned values
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(QVector<quint8> &d);
+    /// Deserializes an array of 16-bit unsigned values
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(QVector<quint16> &d);
+    /// Deserializes an array of 32-bit unsigned values
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(QVector<quint32> &d);
+    /// Deserializes an array of 64-bit unsigned values
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(QVector<quint64> &d);
+    /// Deserializes an array of 128-bit signed/unsigned values
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(QVector<MtpInt128> &d);
+    /// Deserializes a string
+    /// \param d [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(QString &d);
+    /// Deserializes the MTP object info dataset
+    /// \param objInfo [out] The data is deserialized into this
+    /// \return Returns a self-reference
+    MTPRxContainer &operator>>(MTPObjectInfo &objInfo);
+    /// Deserializes a variant data by it's MTP type
+    /// \param type [in] The MTP type of the data to be deserialized
+    /// \param d [out] The data is deserialized into this
+    void deserializeVariantByType(MTPDataType type, QVariant &d);
+
+private:
+    ///< Deserializes from the internal buffer, elements of the given size and
+    /// number
+    void deserialize(void *target, quint32 elementSize, quint32 numberOfElements);
+};
 }
 #endif
 

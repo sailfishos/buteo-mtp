@@ -44,8 +44,7 @@
 
 class QDir;
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class StoragePlugin;
 class ObjectPropertyCache;
 
@@ -53,7 +52,7 @@ const QString pluginLocation = MTP_PLUGINDIR;
 const QString CREATE_STORAGE_PLUGINS = "createStoragePlugins";
 const QString DESTROY_STORAGE_PLUGIN = "destroyStoragePlugin";
 
-typedef QList<StoragePlugin*> (*CREATE_STORAGE_PLUGINS_FPTR)( quint32 startingStorageId );
+typedef QList<StoragePlugin *> (*CREATE_STORAGE_PLUGINS_FPTR)( quint32 startingStorageId );
 typedef void (*DESTROY_STORAGE_PLUGIN_FPTR)( StoragePlugin *storagePlugin );
 }
 
@@ -66,8 +65,7 @@ typedef void (*DESTROY_STORAGE_PLUGIN_FPTR)( StoragePlugin *storagePlugin );
 /// external card. The user only provides a storage id for interfacing, this class assigns unique
 /// storage id's for the storages it creates and passes on the list of id's to the user.
 
-namespace meegomtp1dot0
-{
+namespace meegomtp1dot0 {
 class StorageFactory : public QObject
 {
     Q_OBJECT
@@ -83,7 +81,7 @@ public:
     /// This helps in quicker construction of the factory( above ) and catches errors during enumeration.
     /// Call this immediately after creating the factory.
     /// \return tru or false depending success or failure of enumeration respectively.
-    bool enumerateStorages( QVector<quint32>& failedStorageIds );
+    bool enumerateStorages( QVector<quint32> &failedStorageIds );
 
     /// Adds an item to the Storage Factory.
     /// \param storageId [in/out] which storage this item goes to.
@@ -93,13 +91,13 @@ public:
     /// for this item.
     /// \return MTP response.
     MTPResponseCode addItem( quint32 &storageId, ObjHandle &parentHandle,
-                              ObjHandle &handle, MTPObjectInfo *info ) const;
+                             ObjHandle &handle, MTPObjectInfo *info ) const;
 
     /// Deletes an item from the Storage Factory
     /// \param handle [in] the handle of the object that needs to be deleted.
     /// \param formatCode [in] this optional arg can be used to delete all objects of a certain format.
     /// \return MTP response.
-    MTPResponseCode deleteItem( const ObjHandle& handle, const MTPObjFormatCode& formatCode ) const;
+    MTPResponseCode deleteItem( const ObjHandle &handle, const MTPObjFormatCode &formatCode ) const;
 
     /// Returns the no. of items belonging to a certain format and/or contained in a certain folder.
     /// \return storageId [in] which storage to look for.
@@ -107,13 +105,13 @@ public:
     /// \param associationHandle [in] this optional argument can specify the containing folder.
     /// \param noOfObjects [out] no. of objects found.
     /// \return MTP response.
-    MTPResponseCode getObjectHandles( const quint32& storageId, const MTPObjFormatCode& formatCode,
-                                       const quint32& associationHandle, QVector<ObjHandle> &objectHandles ) const;
+    MTPResponseCode getObjectHandles( const quint32 &storageId, const MTPObjFormatCode &formatCode,
+                                      const quint32 &associationHandle, QVector<ObjHandle> &objectHandles ) const;
 
     /// Gets the id's of all the created storages.
     /// \param storageIds [out] A vector containing the storage id's.
     /// \return MTP response.
-    MTPResponseCode storageIds( QVector<quint32>& storageIds );
+    MTPResponseCode storageIds( QVector<quint32> &storageIds );
 
     /// Checks the availability and validity of a storage.
     /// \param storageId [in] storage id.
@@ -129,31 +127,33 @@ public:
     /// \param storageId [in] storage id.
     /// \param storageInfo [out] populated storageInfo structure
     /// \return MTP response.
-    MTPResponseCode storageInfo( const quint32& storageId, MTPStorageInfo &info );
+    MTPResponseCode storageInfo( const quint32 &storageId, MTPStorageInfo &info );
 
     /// Given an object handle, gets the objects referenced by this object in a storage.
     /// \param handle [in] object handle.
     /// \param references [out] list of object references.
     /// \return MTP response.
-    MTPResponseCode getReferences( const ObjHandle &handle , QVector<ObjHandle> &references ) const;
+    MTPResponseCode getReferences( const ObjHandle &handle, QVector<ObjHandle> &references ) const;
 
     /// For an object handle, sets objects references in a storage.
     /// \param handle [in] object handle.
     /// \param references [in] list of object references.
     /// \return MTP response.
-    MTPResponseCode setReferences( const ObjHandle &handle , const QVector<ObjHandle> &references ) const;
+    MTPResponseCode setReferences( const ObjHandle &handle, const QVector<ObjHandle> &references ) const;
 
     /// Copies an object within or across storages.
     /// \param handle [in] object to be copied.
     /// \param parentHandle [in] parent in destination location.
     /// \param storageId [in] destination storage.
-    MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId, ObjHandle &copiedObjectHandle ) const;
+    MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId,
+                                ObjHandle &copiedObjectHandle ) const;
 
     /// Moves an object within or across storages.
     /// \param handle [in] object to be moved.
     /// \param parentHandle [in] parent in destination location.
     /// \param storageId [in] destination storage.
-    MTPResponseCode moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId ) const;
+    MTPResponseCode moveObject( const ObjHandle &handle, const ObjHandle &parentHandle,
+                                const quint32 &destinationStorageId ) const;
 
     /// Given an object handle, provides it's absolute path in its storage.
     /// \param handle [in] object handle.
@@ -185,7 +185,8 @@ public:
     /// \bufferLen [in] the length of the data to be written.
     /// \param isFirstSegment [in] If true, this is the first segment in a multi segment write operation
     /// \param isLastSegment [in] If true, this is the final segment in a multi segment write operation
-    MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment, bool isLastSegment ) const;
+    MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment,
+                               bool isLastSegment ) const;
 
     /// Overwrites a block of data in a storage item.
     /// \param handle [in] the object handle.
@@ -195,7 +196,8 @@ public:
     /// \param isFirstSegment [in] If true, this is the first segment in a multi segment write operation
     /// \param isLastSegment [in] If true, this is the final segment in a multi segment write operation
     /// \return MTP response.
-    MTPResponseCode writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent, quint32 dataLength, bool isFirstSegment, bool isLastSegment) const;
+    MTPResponseCode writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent, quint32 dataLength,
+                                     bool isFirstSegment, bool isLastSegment) const;
 
     /// Reads data from a storage item.
     /// \param handle [in] the object handle.
@@ -210,9 +212,10 @@ public:
     MTPResponseCode truncateItem( const ObjHandle &handle, const quint64 &size ) const;
 
     MTPResponseCode getObjectPropertyValue(const ObjHandle &handle,
-            QList<MTPObjPropDescVal> &propValList);
+                                           QList<MTPObjPropDescVal> &propValList);
 
-    MTPResponseCode setObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool sendObjectPropList = false);
+    MTPResponseCode setObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList,
+                                            bool sendObjectPropList = false);
 
     /// Flush cached object property values to force re-evaluation on the next query
     /// \param handle [in] the object handle.
@@ -227,12 +230,12 @@ public Q_SLOTS:
     /// A storage plug-in will emit an objectCreated signal when it needs a handle.
     /// \param handle [out] the populated object handle
     /// this handle, this would be a case when handles are maintained across sessions.
-    void getObjectHandle( ObjHandle& );
+    void getObjectHandle( ObjHandle & );
 
     /// This slot will take care of providing a puoid which a storage plug-in can assign to an object.
     /// A storage plug-in will emit a puoid signal when it needs a handle.
     /// \param puoid [out] the puoid
-    void getPuoid( MtpInt128& puoid );
+    void getPuoid( MtpInt128 &puoid );
 
     /// Storage plugins are connected to this to announce that they're
     /// done enumerating their object handles.
@@ -246,7 +249,7 @@ Q_SIGNALS:
     /// a storage plug-in used for an object. This is so that for this session it can assign handles greater than the
     /// previous session's largest value, in case we are preserving puoids across sessions.
     /// \param handle [out] the populated puoid.
-    void largestPuoid( MtpInt128& puoid );
+    void largestPuoid( MtpInt128 &puoid );
 
     /// This signal is emitted for now to check if a transaction is cancelled.
     /// TODO If needed this can be generalized to receive other transport specific events
@@ -258,12 +261,11 @@ Q_SIGNALS:
 
 private:
     quint32 m_storageId; ///< unique id for each storage.
-    QHash<quint32,StoragePlugin*> m_allStorages; ///< all created storages, mapped by storage id.
+    QHash<quint32, StoragePlugin *> m_allStorages; ///< all created storages, mapped by storage id.
     QString m_storagePluginsPath; ///<the path where StorageFactory will look for storage plug-ins.
     /// This structure helps mapping a StoragePlugin poiner to the handle to the plug-in library
     /// that created this storage plug-in.
-    struct PluginHandlesInfo_
-    {
+    struct PluginHandlesInfo_ {
         StoragePlugin *storagePluginPtr;
         void *storagePluginHandle;
     };
