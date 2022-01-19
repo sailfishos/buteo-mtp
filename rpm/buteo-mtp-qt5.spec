@@ -33,8 +33,6 @@ Obsoletes: buteo-mtp < %{version}
 
 %files
 %defattr(-,root,root,-)
-%{_unitdir}/*.mount
-%{_unitdir}/local-fs.target.wants/*.mount
 %{_libexecdir}/mtp_service
 %{_libdir}/*.so.*
 %{_libdir}/mtp
@@ -98,8 +96,6 @@ make %{_smp_mflags}
 
 %install
 make INSTALL_ROOT=%{buildroot} install
-mkdir -p %{buildroot}/%{_unitdir}/local-fs.target.wants
-ln -s ../dev-mtp.mount %{buildroot}/%{_unitdir}/local-fs.target.wants/
 
 mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
 install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
