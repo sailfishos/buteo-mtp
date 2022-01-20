@@ -7,8 +7,6 @@ LIBS += -lssu
 
 CONFIG += link_pkgconfig debug
 
-PKGCONFIG += Qt5SystemInfo
-
 #QMAKE_CXXFLAGS += -O0 -Werror
 
 TEMPLATE = lib

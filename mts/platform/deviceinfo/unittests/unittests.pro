@@ -4,8 +4,6 @@ QT += dbus xml testlib
 QT -= gui
 CONFIG += warn_off debug_and_release
 
-PKGCONFIG += Qt5SystemInfo
-
 LIBS += -lssu
 
 TEMPLATE = app

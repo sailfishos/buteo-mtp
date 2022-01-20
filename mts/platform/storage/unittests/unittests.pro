@@ -4,7 +4,6 @@ TEMPLATE = app
 TARGET = storagefactory-test
 QT += testlib xml dbus
 QT -= gui
-PKGCONFIG += Qt5SystemInfo
 
 DEFINES += UT_ON
 
