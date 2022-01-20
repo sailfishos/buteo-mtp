@@ -2,7 +2,7 @@
 * This file is part of libmeegomtp package
 *
 * Copyright (c) 2010 Nokia Corporation. All rights reserved.
-* Copyright (c) 2013 - 2020 Jolla Ltd.
+* Copyright (c) 2013 - 2022 Jolla Ltd.
 * Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Santosh Puranik <santosh.puranik@nokia.com>
@@ -130,7 +130,7 @@ MTPResponder::MTPResponder(): m_storageServer(0),
 
     createCommandHandler();
 
-    connect(m_devInfoProvider, &DeviceInfo::devicePropertyChanged,
+    connect(m_devInfoProvider, &MtpDeviceInfo::devicePropertyChanged,
             this, &MTPResponder::onDevicePropertyChanged);
 }
 

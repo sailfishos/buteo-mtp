@@ -25,12 +25,12 @@ INCLUDEPATH += . \
 # Input
 HEADERS += deviceinfoprovider_test.h \
         ../deviceinfoprovider.h \
-        ../deviceinfo.h \
+        ../mtpdeviceinfo.h \
         ../xmlhandler.h
 
 SOURCES += deviceinfoprovider_test.cpp \
         ../deviceinfoprovider.cpp \
-        ../deviceinfo.cpp \
+        ../mtpdeviceinfo.cpp \
         ../xmlhandler.cpp
 
 target.path = /opt/tests/buteo-mtp/

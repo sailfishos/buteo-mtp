@@ -50,7 +50,7 @@ HEADERS += mts.h \
            protocol/mtprxcontainer.h \
            protocol/mtptxcontainer.h \
            protocol/extensions/mtpextension.h \
-           platform/deviceinfo/deviceinfo.h \
+           platform/deviceinfo/mtpdeviceinfo.h \
            platform/deviceinfo/deviceinfoprovider.h \
            platform/deviceinfo/xmlhandler.h \
            transport/mtptransporter.h \
@@ -71,7 +71,7 @@ SOURCES += mts.cpp \
            protocol/mtptxcontainer.cpp \
            transport/usb/mtptransporterusb.cpp \
            transport/dummy/mtptransporterdummy.cpp \
-           platform/deviceinfo/deviceinfo.cpp \
+           platform/deviceinfo/mtpdeviceinfo.cpp \
            platform/deviceinfo/deviceinfoprovider.cpp \
            platform/deviceinfo/xmlhandler.cpp \
            platform/storage/storagefactory.cpp \

@@ -59,7 +59,7 @@ HEADERS += fsstorageplugin_test.h \
            transport/dummy/mtptransporterdummy.h \
            platform/deviceinfo/xmlhandler.h \
            platform/deviceinfo/deviceinfoprovider.h \
-           platform/deviceinfo/deviceinfo.h
+           platform/deviceinfo/mtpdeviceinfo.h
 
 SOURCES += fsstorageplugin_test.cpp \
            ../fsstorageplugin.cpp \
@@ -84,7 +84,7 @@ SOURCES += fsstorageplugin_test.cpp \
            transport/dummy/mtptransporterdummy.cpp \
            platform/deviceinfo/xmlhandler.cpp \
            platform/deviceinfo/deviceinfoprovider.cpp \
-           platform/deviceinfo/deviceinfo.cpp
+           platform/deviceinfo/mtpdeviceinfo.cpp
 
 target.path = /opt/tests/buteo-mtp/
 INSTALLS += target

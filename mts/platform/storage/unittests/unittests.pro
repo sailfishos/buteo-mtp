@@ -26,7 +26,7 @@ HEADERS += \
 	storagefactory_test.h \
 	../storagefactory.h \
 	../storageplugin.h \
-	../../deviceinfo/deviceinfo.h \
+	../../deviceinfo/mtpdeviceinfo.h \
 	../../deviceinfo/deviceinfoprovider.h \
 	../../deviceinfo/xmlhandler.h \
 	../../../protocol/mtpresponder.h \
@@ -40,7 +40,7 @@ HEADERS += \
 SOURCES += \
 	storagefactory_test.cpp \
 	../storagefactory.cpp \
-	../../deviceinfo/deviceinfo.cpp \
+	../../deviceinfo/mtpdeviceinfo.cpp \
 	../../deviceinfo/deviceinfoprovider.cpp \
 	../../deviceinfo/xmlhandler.cpp \
 	../../../protocol/mtpcontainer.cpp \

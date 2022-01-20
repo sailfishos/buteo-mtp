@@ -1,7 +1,8 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2016 - 2022 Jolla Ltd.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
 *
@@ -32,19 +33,19 @@
 #ifndef DEVINFOPROVIDER_H
 #define DEVINFOPROVIDER_H
 
-#include "deviceinfo.h"
+#include "mtpdeviceinfo.h"
 
 class BatteryStatus;
 
-/// This class implements DeviceInfo for getting and setting device info and properties for an MTP session.
+/// This class implements MtpDeviceInfo for getting and setting device info and properties for an MTP session.
 
 /// This class uses services like context subscriber to get values for device
-/// properties ( the ones mentioned in MTP 1.0 spec ) dynamically. This extends DeviceInfo class,
+/// properties ( the ones mentioned in MTP 1.0 spec ) dynamically. This extends MtpDeviceInfo class,
 /// for properties that we don't get values from any system service, the default implementation falls back
-/// to DeviceInfo.
+/// to MtpDeviceInfo.
 
 namespace meegomtp1dot0 {
-class DeviceInfoProvider : public DeviceInfo
+class DeviceInfoProvider : public MtpDeviceInfo
 {
     Q_OBJECT
 #ifdef UT_ON

@@ -2,7 +2,7 @@
 * This file is part of libmeegomtp package
 *
 * Copyright (c) 2010 Nokia Corporation. All rights reserved.
-* Copyright (c) 2013 - 2020 Jolla Ltd.
+* Copyright (c) 2013 - 2022 Jolla Ltd.
 * Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
@@ -39,7 +39,7 @@
 #include <QDataStream>
 #include <QDir>
 #include "xmlhandler.h"
-#include "deviceinfo.h"
+#include "mtpdeviceinfo.h"
 #include "trace.h"
 
 using namespace meegomtp1dot0;
@@ -69,7 +69,7 @@ using namespace meegomtp1dot0;
 #define BATTERYLEVEL_DEFAULT 0
 
 
-quint16 DeviceInfo::m_operationsSupportedTable[] = {
+quint16 MtpDeviceInfo::m_operationsSupportedTable[] = {
     MTP_OP_GetDeviceInfo,
     MTP_OP_OpenSession,
     MTP_OP_CloseSession,
@@ -106,17 +106,17 @@ quint16 DeviceInfo::m_operationsSupportedTable[] = {
     MTP_OP_ANDROID_EndEditObject,
 };
 
-quint16 DeviceInfo::m_audChannelTable[] = {
+quint16 MtpDeviceInfo::m_audChannelTable[] = {
     MTP_CH_CONF_MONO,
     MTP_CH_CONF_STEREO
 };
 
-quint16 DeviceInfo::m_vidChannelTable[] = {
+quint16 MtpDeviceInfo::m_vidChannelTable[] = {
     MTP_CH_CONF_MONO,
     MTP_CH_CONF_STEREO
 };
 
-quint32 DeviceInfo::m_supportedCodecsTable[] = {
+quint32 MtpDeviceInfo::m_supportedCodecsTable[] = {
     0x00000000,
     MTP_WAVE_FORMAT_ALAW,
     MTP_WAVE_FORMAT_MULAW,
@@ -129,7 +129,7 @@ quint32 DeviceInfo::m_supportedCodecsTable[] = {
     MTP_WAVE_FORMAT_DSPGROUP_TRUESPEECH
 };
 
-quint16 DeviceInfo::m_commonFormatsTable[] = {
+quint16 MtpDeviceInfo::m_commonFormatsTable[] = {
     MTP_OBF_FORMAT_Undefined,
     MTP_OBF_FORMAT_Association,
     MTP_OBF_FORMAT_Text,
@@ -185,7 +185,7 @@ quint16 DeviceInfo::m_commonFormatsTable[] = {
     MTP_OBF_FORMAT_vCalendar_1_0,
 };
 
-quint16 DeviceInfo::m_imageFormatsTable[] = {
+quint16 MtpDeviceInfo::m_imageFormatsTable[] = {
     MTP_OBF_FORMAT_Unknown_Image_Object,
     MTP_OBF_FORMAT_EXIF_JPEG,
     MTP_OBF_FORMAT_GIF,
@@ -207,7 +207,7 @@ quint16 DeviceInfo::m_imageFormatsTable[] = {
     MTP_OBF_FORMAT_Windows_Image_Format,
 };
 
-quint16 DeviceInfo::m_audioFormatsTable[] = {
+quint16 MtpDeviceInfo::m_audioFormatsTable[] = {
     MTP_OBF_FORMAT_MP3,
     MTP_OBF_FORMAT_WMA,
     MTP_OBF_FORMAT_WAV,
@@ -222,7 +222,7 @@ quint16 DeviceInfo::m_audioFormatsTable[] = {
     MTP_OBF_FORMAT_Undefined_Audio,
 };
 
-quint16 DeviceInfo::m_videoFormatsTable[] = {
+quint16 MtpDeviceInfo::m_videoFormatsTable[] = {
     MTP_OBF_FORMAT_AVI,
     MTP_OBF_FORMAT_MPEG,
     MTP_OBF_FORMAT_3GP_Container,
@@ -235,7 +235,7 @@ quint16 DeviceInfo::m_videoFormatsTable[] = {
     MTP_OBF_FORMAT_Undefined_Video,
 };
 
-quint16 DeviceInfo::m_eventsSupportedTable[] = {
+quint16 MtpDeviceInfo::m_eventsSupportedTable[] = {
     MTP_EV_RequestObjectTransfer,
     MTP_EV_ObjectRemoved,
     MTP_EV_ObjectAdded,
@@ -249,21 +249,21 @@ quint16 DeviceInfo::m_eventsSupportedTable[] = {
     MTP_EV_ObjectPropChanged
 };
 
-quint16 DeviceInfo::m_devPropsSupportedTable[] = {
+quint16 MtpDeviceInfo::m_devPropsSupportedTable[] = {
     MTP_DEV_PROPERTY_Synchronization_Partner,
     MTP_DEV_PROPERTY_Device_Friendly_Name
 };
 
-QString DeviceInfo::m_deviceInfoXmlPath;
+QString MtpDeviceInfo::m_deviceInfoXmlPath;
 
 //Constructor, first store default values for device properties. Next,
 //fetch the same from an xml file. If xml parsing fails, the hardcoded
 //default values will be used.
 
 /*******************************************
- * DeviceInfo::DeviceInfo
+ * MtpDeviceInfo::MtpDeviceInfo
  ******************************************/
-DeviceInfo::DeviceInfo( QObject *parent ) :
+MtpDeviceInfo::MtpDeviceInfo( QObject *parent ) :
     QObject(parent),
     m_copyrightInfo(COPYRIGHTINFO_DEFAULT),
     m_syncPartner(SYNCPARTNER_DEFAULT),
@@ -369,40 +369,40 @@ DeviceInfo::DeviceInfo( QObject *parent ) :
 }
 
 /*******************************************
- * DeviceInfo::~DeviceInfo
+ * MtpDeviceInfo::~MtpDeviceInfo
  ******************************************/
-DeviceInfo::~DeviceInfo()
+MtpDeviceInfo::~MtpDeviceInfo()
 {
 }
 
 /*******************************************
- * const QString& DeviceInfo::syncPartner
+ * const QString& MtpDeviceInfo::syncPartner
  ******************************************/
-const QString &DeviceInfo::syncPartner( bool /*current*/ ) const
+const QString &MtpDeviceInfo::syncPartner( bool /*current*/ ) const
 {
     return m_syncPartner;
 }
 
 /*******************************************
- * QString& DeviceInfo::copyrightInfo
+ * QString& MtpDeviceInfo::copyrightInfo
  ******************************************/
-const QString &DeviceInfo::copyrightInfo( bool /*current*/ ) const
+const QString &MtpDeviceInfo::copyrightInfo( bool /*current*/ ) const
 {
     return m_copyrightInfo;
 }
 
 /*******************************************
- * const QString& DeviceInfo::deviceFriendlyName
+ * const QString& MtpDeviceInfo::deviceFriendlyName
  ******************************************/
-const QString &DeviceInfo::deviceFriendlyName( bool /*current*/ )
+const QString &MtpDeviceInfo::deviceFriendlyName( bool /*current*/ )
 {
     return m_deviceFriendlyName;
 }
 
 /*******************************************
- * const QVector<quint8> DeviceInfo::deviceIcon
+ * const QVector<quint8> MtpDeviceInfo::deviceIcon
  ******************************************/
-const QVector<quint8> DeviceInfo::deviceIcon()
+const QVector<quint8> MtpDeviceInfo::deviceIcon()
 {
     QFile file(m_deviceIconPath);
     QVector<quint8> icondata;
@@ -421,89 +421,89 @@ const QVector<quint8> DeviceInfo::deviceIcon()
 }
 
 /*******************************************
- * const quint16& DeviceInfo::standardVersion
+ * const quint16& MtpDeviceInfo::standardVersion
  ******************************************/
-const quint16 &DeviceInfo::standardVersion() const
+const quint16 &MtpDeviceInfo::standardVersion() const
 {
     return m_standardVersion;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::vendorExtension
+ * const quint32& MtpDeviceInfo::vendorExtension
  ******************************************/
-const quint32 &DeviceInfo::vendorExtension() const
+const quint32 &MtpDeviceInfo::vendorExtension() const
 {
     return m_vendorExtension;
 }
 
 /*******************************************
- * const quint16& DeviceInfo::MTPVersion
+ * const quint16& MtpDeviceInfo::MTPVersion
  ******************************************/
-const quint16 &DeviceInfo::MTPVersion() const
+const quint16 &MtpDeviceInfo::MTPVersion() const
 {
     return m_mtpVersion;
 }
 
 /*******************************************
- * const QString& DeviceInfo::MTPExtension
+ * const QString& MtpDeviceInfo::MTPExtension
  ******************************************/
-const QString &DeviceInfo::MTPExtension() const
+const QString &MtpDeviceInfo::MTPExtension() const
 {
     return m_mtpExtension;
 }
 
 /*******************************************
- * const QString& DeviceInfo::manufacturer
+ * const QString& MtpDeviceInfo::manufacturer
  ******************************************/
-const QString &DeviceInfo::manufacturer() const
+const QString &MtpDeviceInfo::manufacturer() const
 {
     return m_manufacturer;
 }
 
 /*******************************************
- * const QString& DeviceInfo::model
+ * const QString& MtpDeviceInfo::model
  ******************************************/
-const QString &DeviceInfo::model() const
+const QString &MtpDeviceInfo::model() const
 {
     return m_model;
 }
 
 /*******************************************
- * const QString& DeviceInfo::deviceVersion
+ * const QString& MtpDeviceInfo::deviceVersion
  ******************************************/
-const QString &DeviceInfo::deviceVersion() const
+const QString &MtpDeviceInfo::deviceVersion() const
 {
     return m_deviceVersion;
 }
 
 /*******************************************
- * const QString& DeviceInfo::serialNo
+ * const QString& MtpDeviceInfo::serialNo
  ******************************************/
-const QString &DeviceInfo::serialNo() const
+const QString &MtpDeviceInfo::serialNo() const
 {
     return m_serialNo;
 }
 
 /*******************************************
- * quint32 DeviceInfo::deviceType
+ * quint32 MtpDeviceInfo::deviceType
  ******************************************/
-quint32 DeviceInfo::deviceType() const
+quint32 MtpDeviceInfo::deviceType() const
 {
     return m_deviceType;
 }
 
 /*******************************************
- * const quint16& DeviceInfo::functionalMode
+ * const quint16& MtpDeviceInfo::functionalMode
  ******************************************/
-const quint16 &DeviceInfo::functionalMode() const
+const quint16 &MtpDeviceInfo::functionalMode() const
 {
     return m_functionalMode;
 }
 
 /*******************************************
- * void DeviceInfo::setSyncPartner
+ * void MtpDeviceInfo::setSyncPartner
  ******************************************/
-void DeviceInfo::setSyncPartner( const QString &syncPartner )
+void MtpDeviceInfo::setSyncPartner( const QString &syncPartner )
 {
     m_syncPartner = syncPartner;
 
@@ -512,9 +512,9 @@ void DeviceInfo::setSyncPartner( const QString &syncPartner )
 }
 
 /*******************************************
- * void DeviceInfo::setDeviceFriendlyName
+ * void MtpDeviceInfo::setDeviceFriendlyName
  ******************************************/
-void DeviceInfo::setDeviceFriendlyName( const QString &deviceFriendlyName )
+void MtpDeviceInfo::setDeviceFriendlyName( const QString &deviceFriendlyName )
 {
     m_deviceFriendlyName = deviceFriendlyName;
 
@@ -523,9 +523,9 @@ void DeviceInfo::setDeviceFriendlyName( const QString &deviceFriendlyName )
 }
 
 /*******************************************
- * void DeviceInfo::modifyDeviceInfoXml
+ * void MtpDeviceInfo::modifyDeviceInfoXml
  ******************************************/
-void DeviceInfo::modifyDeviceInfoXml( QString devPropName, QString value )
+void MtpDeviceInfo::modifyDeviceInfoXml( QString devPropName, QString value )
 {
     QDomDocument document;
     QDomElement element;
@@ -552,14 +552,14 @@ void DeviceInfo::modifyDeviceInfoXml( QString devPropName, QString value )
 }
 
 /*******************************************
- * QString DeviceInfo::getDeviceInfoXmlPath
+ * QString MtpDeviceInfo::getDeviceInfoXmlPath
  ******************************************/
-QString DeviceInfo::getDeviceInfoXmlPath()
+QString MtpDeviceInfo::getDeviceInfoXmlPath()
 {
     if (m_deviceInfoXmlPath.isEmpty()) {
         QString tmpPath = QDir::homePath();
         if (tmpPath.isEmpty()) {
-            qFatal("DeviceInfo: can't determine home directory");
+            qFatal("MtpDeviceInfo: can't determine home directory");
         }
 
         tmpPath = tmpPath + "/.cache/mtp";
@@ -574,24 +574,24 @@ QString DeviceInfo::getDeviceInfoXmlPath()
 }
 
 /*******************************************
- * void DeviceInfo::setDeviceInfoXmlPath
+ * void MtpDeviceInfo::setDeviceInfoXmlPath
  ******************************************/
-void DeviceInfo::setDeviceInfoXmlPath(const QString path)
+void MtpDeviceInfo::setDeviceInfoXmlPath(const QString path)
 {
     m_deviceInfoXmlPath = path;
 }
 
-QVariant DeviceInfo::batteryLevelForm() const
+QVariant MtpDeviceInfo::batteryLevelForm() const
 {
     return QVariant::fromValue(MtpRangeForm(0, 100, 10));
 }
 
-quint8 DeviceInfo::batteryLevel() const
+quint8 MtpDeviceInfo::batteryLevel() const
 {
     return m_batteryLevel;
 }
 
-void DeviceInfo::setBatteryLevel(quint8 level)
+void MtpDeviceInfo::setBatteryLevel(quint8 level)
 {
     if (m_batteryLevel != level) {
         m_batteryLevel = level;
@@ -600,41 +600,41 @@ void DeviceInfo::setBatteryLevel(quint8 level)
 }
 
 /*******************************************
- * m_formFlag DeviceInfo::getBatteryLevelForm
+ * m_formFlag MtpDeviceInfo::getBatteryLevelForm
  ******************************************/
-const QVector<quint16> &DeviceInfo::MTPOperationsSupported() const
+const QVector<quint16> &MtpDeviceInfo::MTPOperationsSupported() const
 {
     return m_mtpOperationsSupported;
 }
 
 /*******************************************
- * quint16* DeviceInfo::MTPEventsSupported
+ * quint16* MtpDeviceInfo::MTPEventsSupported
  ******************************************/
-const QVector<quint16> &DeviceInfo::MTPEventsSupported() const
+const QVector<quint16> &MtpDeviceInfo::MTPEventsSupported() const
 {
     return m_mtpEventsSupported;
 }
 
 /*******************************************
- * quint16* DeviceInfo::MTPDevicePropertiesSupported
+ * quint16* MtpDeviceInfo::MTPDevicePropertiesSupported
  ******************************************/
-const QVector<quint16> &DeviceInfo::MTPDevicePropertiesSupported() const
+const QVector<quint16> &MtpDeviceInfo::MTPDevicePropertiesSupported() const
 {
     return m_mtpDevicePropertiesSupported;
 }
 
 /*******************************************
- * quint16* DeviceInfo::supportedFormats
+ * quint16* MtpDeviceInfo::supportedFormats
  ******************************************/
-const QVector<quint16> &DeviceInfo::supportedFormats() const
+const QVector<quint16> &MtpDeviceInfo::supportedFormats() const
 {
     return m_supportedFormats;
 }
 
 /*******************************************
- * quint16 DeviceInfo::getFormatCodeCategory
+ * quint16 MtpDeviceInfo::getFormatCodeCategory
  ******************************************/
-quint16 DeviceInfo::getFormatCodeCategory(quint16 formatCode)
+quint16 MtpDeviceInfo::getFormatCodeCategory(quint16 formatCode)
 {
     quint16 formatCategory = MTP_UNSUPPORTED_FORMAT;
 
@@ -653,170 +653,170 @@ quint16 DeviceInfo::getFormatCodeCategory(quint16 formatCode)
     return formatCategory;
 }
 
-quint32 DeviceInfo::imageMinWidth()
+quint32 MtpDeviceInfo::imageMinWidth()
 {
     return m_imageMinWidth;
 }
 
-quint32 DeviceInfo::imageMaxWidth()
+quint32 MtpDeviceInfo::imageMaxWidth()
 {
     return m_imageMaxWidth;
 }
 
-quint32 DeviceInfo::imageMinHeight()
+quint32 MtpDeviceInfo::imageMinHeight()
 {
     return m_imageMinHeight;
 }
 
-quint32 DeviceInfo::imageMaxHeight()
+quint32 MtpDeviceInfo::imageMaxHeight()
 {
     return m_imageMaxHeight;
 }
 
-quint32 DeviceInfo::videoMinWidth()
+quint32 MtpDeviceInfo::videoMinWidth()
 {
     return m_videoMinWidth;
 }
 
-quint32 DeviceInfo::videoMaxWidth()
+quint32 MtpDeviceInfo::videoMaxWidth()
 {
     return m_videoMaxWidth;
 }
 
-quint32 DeviceInfo::videoMinHeight()
+quint32 MtpDeviceInfo::videoMinHeight()
 {
     return m_videoMinHeight;
 }
 
-quint32 DeviceInfo::videoMaxHeight()
+quint32 MtpDeviceInfo::videoMaxHeight()
 {
     return m_videoMaxHeight;
 }
 
 /*******************************************
- * quint16* DeviceInfo::videoChannels(quint32& no)
+ * quint16* MtpDeviceInfo::videoChannels(quint32& no)
  ******************************************/
-const QVector<quint16> &DeviceInfo::videoChannels() const
+const QVector<quint16> &MtpDeviceInfo::videoChannels() const
 {
     return m_videoChannels;
 }
 
 /*******************************************
- * quint16* DeviceInfo::audioChannels
+ * quint16* MtpDeviceInfo::audioChannels
  ******************************************/
-const QVector<quint16> &DeviceInfo::audioChannels() const
+const QVector<quint16> &MtpDeviceInfo::audioChannels() const
 {
     return m_audioChannels;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::videoMinFPS
+ * const quint32& MtpDeviceInfo::videoMinFPS
  ******************************************/
-const quint32 &DeviceInfo::videoMinFPS() const
+const quint32 &MtpDeviceInfo::videoMinFPS() const
 {
     return m_videoMinFPS;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::videoMaxFPS
+ * const quint32& MtpDeviceInfo::videoMaxFPS
  ******************************************/
-const quint32 &DeviceInfo::videoMaxFPS() const
+const quint32 &MtpDeviceInfo::videoMaxFPS() const
 {
     return m_videoMaxFPS;
 }
 
 /*******************************************
- * const quint16& DeviceInfo::videoScanType
+ * const quint16& MtpDeviceInfo::videoScanType
  ******************************************/
-const quint16 &DeviceInfo::videoScanType() const
+const quint16 &MtpDeviceInfo::videoScanType() const
 {
     return m_videoScanType;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::videoSampleRate
+ * const quint32& MtpDeviceInfo::videoSampleRate
  ******************************************/
-const quint32 &DeviceInfo::videoSampleRate() const
+const quint32 &MtpDeviceInfo::videoSampleRate() const
 {
     return m_videoSampleRate;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::audioSampleRate()
+ * const quint32& MtpDeviceInfo::audioSampleRate()
  ******************************************/
-const quint32 &DeviceInfo::audioSampleRate() const
+const quint32 &MtpDeviceInfo::audioSampleRate() const
 {
     return m_audioSampleRate;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::videoMinBitRate
+ * const quint32& MtpDeviceInfo::videoMinBitRate
  ******************************************/
-const quint32 &DeviceInfo::videoMinBitRate() const
+const quint32 &MtpDeviceInfo::videoMinBitRate() const
 {
     return m_videoMinBitRate;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::videoMaxBitRate
+ * const quint32& MtpDeviceInfo::videoMaxBitRate
  ******************************************/
-const quint32 &DeviceInfo::videoMaxBitRate() const
+const quint32 &MtpDeviceInfo::videoMaxBitRate() const
 {
     return m_videoMaxBitRate;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::audioMinBitRate
+ * const quint32& MtpDeviceInfo::audioMinBitRate
  ******************************************/
-const quint32 &DeviceInfo::audioMinBitRate() const
+const quint32 &MtpDeviceInfo::audioMinBitRate() const
 {
     return m_audioMinBitRate;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::audioMaxBitRate
+ * const quint32& MtpDeviceInfo::audioMaxBitRate
  ******************************************/
-const quint32 &DeviceInfo::audioMaxBitRate() const
+const quint32 &MtpDeviceInfo::audioMaxBitRate() const
 {
     return m_audioMaxBitRate;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::videoAudioMinBitRate
+ * const quint32& MtpDeviceInfo::videoAudioMinBitRate
  ******************************************/
-const quint32 &DeviceInfo::videoAudioMinBitRate() const
+const quint32 &MtpDeviceInfo::videoAudioMinBitRate() const
 {
     return m_videoAudioMinBitRate;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::videoAudioMaxBitRate
+ * const quint32& MtpDeviceInfo::videoAudioMaxBitRate
  ******************************************/
-const quint32 &DeviceInfo::videoAudioMaxBitRate() const
+const quint32 &MtpDeviceInfo::videoAudioMaxBitRate() const
 {
     return m_videoAudioMaxBitRate;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::videoMinKFD
+ * const quint32& MtpDeviceInfo::videoMinKFD
  ******************************************/
-const quint32 &DeviceInfo::videoMinKFD() const
+const quint32 &MtpDeviceInfo::videoMinKFD() const
 {
     return m_videoMinKFD;
 }
 
 /*******************************************
- * const quint32& DeviceInfo::videoMaxKFD
+ * const quint32& MtpDeviceInfo::videoMaxKFD
  ******************************************/
-const quint32 &DeviceInfo::videoMaxKFD() const
+const quint32 &MtpDeviceInfo::videoMaxKFD() const
 {
     return m_videoMaxKFD;
 }
 
 /*******************************************
- * quint32* DeviceInfo::supportedAudioCodecs
+ * quint32* MtpDeviceInfo::supportedAudioCodecs
  ******************************************/
-const QVector<quint32> &DeviceInfo::supportedAudioCodecs() const
+const QVector<quint32> &MtpDeviceInfo::supportedAudioCodecs() const
 {
     return m_supportedCodecs;
 }

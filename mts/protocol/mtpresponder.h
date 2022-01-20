@@ -2,7 +2,7 @@
 * This file is part of libmeegomtp package
 *
 * Copyright (c) 2010 Nokia Corporation. All rights reserved.
-* Copyright (c) 2013 - 2020 Jolla Ltd.
+* Copyright (c) 2013 - 2022 Jolla Ltd.
 * Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Santosh Puranik <santosh.puranik@nokia.com>
@@ -45,7 +45,7 @@ namespace meegomtp1dot0 {
 class StorageFactory;
 class MTPTransporter;
 class MTPResponder;
-class DeviceInfo;
+class MtpDeviceInfo;
 class PropertyPod;
 class ObjectPropertyCache;
 class MTPExtensionManager;
@@ -162,7 +162,7 @@ private:
     QHash<MTPOperationCode, MTPCommandHandler>      m_opCodeTable;      ///< Hash table storing command handler functions
     StorageFactory                                 *m_storageServer;    ///< Pointer to the object storage server
     MTPTransporter                                 *m_transporter;      ///< Pointer to the transport layer
-    DeviceInfo                                     *m_devInfoProvider;  ///< Pointer to the device info class
+    MtpDeviceInfo                                  *m_devInfoProvider;  ///< Pointer to the device info class
     PropertyPod                                    *m_propertyPod;      ///< Pointer to the MTP properties utility class
     MTPExtensionManager                            *m_extensionManager; ///< Pointer to the MTP extension manager class
     ObjHandle
