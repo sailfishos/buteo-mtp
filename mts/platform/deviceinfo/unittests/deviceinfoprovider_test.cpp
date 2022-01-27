@@ -1,7 +1,8 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2012 - 2022 Jolla Ltd.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
 *
@@ -49,7 +50,7 @@ void DeviceInfoProvider_Test::initTestCase()
 
     // Original deviceinfo.xml may be changed during the test execution, so
     // backup its current state.
-    QFile originalDeviceInfoXml(DeviceInfo::getDeviceInfoXmlPath());
+    QFile originalDeviceInfoXml(MtpDeviceInfo::getDeviceInfoXmlPath());
     if (originalDeviceInfoXml.exists()) {
         QCOMPARE(originalDeviceInfoXml.copy("/tmp/deviceinfo.xml.orig"), true);
     }
@@ -74,10 +75,10 @@ void DeviceInfoProvider_Test::cleanupTestCase()
     QFile::remove("/tmp/deviceinfo.xml");
 
     // Restore deviceinfo.xml to the state it had before the tests were run.
-    QFile::remove(DeviceInfo::getDeviceInfoXmlPath());
+    QFile::remove(MtpDeviceInfo::getDeviceInfoXmlPath());
     QFile originalDeviceInfoXml("/tmp/deviceinfo.xml.orig");
     if (originalDeviceInfoXml.exists()) {
-        originalDeviceInfoXml.copy(DeviceInfo::getDeviceInfoXmlPath());
+        originalDeviceInfoXml.copy(MtpDeviceInfo::getDeviceInfoXmlPath());
         originalDeviceInfoXml.remove();
     }
 }
@@ -85,7 +86,7 @@ void DeviceInfoProvider_Test::cleanupTestCase()
 
 void DeviceInfoProvider_Test::testDeviceInfoProviderDefaultConstruction()
 {
-    DeviceInfo::setDeviceInfoXmlPath("/tmp/m_deviceinfo.xml");
+    MtpDeviceInfo::setDeviceInfoXmlPath("/tmp/m_deviceinfo.xml");
     m_Provider = new DeviceInfoProvider();
     QCOMPARE(m_Provider->syncPartner(), QString("Nemo"));
     QCOMPARE(m_Provider->copyrightInfo(), QString("Do Not Copy"));
@@ -98,7 +99,7 @@ void DeviceInfoProvider_Test::testDeviceInfoProviderDefaultConstruction()
 
 void DeviceInfoProvider_Test::testDeviceInfoProviderConstruction()
 {
-    DeviceInfo::setDeviceInfoXmlPath("/tmp/deviceinfo.xml");
+    MtpDeviceInfo::setDeviceInfoXmlPath("/tmp/deviceinfo.xml");
     m_Provider = new DeviceInfoProvider();
     // Test some properties to verify that the construction succeeded
     QVERIFY(m_Provider->syncPartner().size() != 0);
@@ -423,8 +424,8 @@ void DeviceInfoProvider_Test::testGetSupportedAudioCodecs()
 
 void DeviceInfoProvider_Test::testGetDeviceInfoXmlPath()
 {
-    DeviceInfo::setDeviceInfoXmlPath("");
-    QString path = DeviceInfo::getDeviceInfoXmlPath();
+    MtpDeviceInfo::setDeviceInfoXmlPath("");
+    QString path = MtpDeviceInfo::getDeviceInfoXmlPath();
     QVERIFY(!path.isEmpty());
     QVERIFY(QDir(QDir::homePath()).exists());
 }

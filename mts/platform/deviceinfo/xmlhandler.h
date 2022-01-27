@@ -1,7 +1,8 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2021 - 2022 Jolla Ltd.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
 *
@@ -36,20 +37,20 @@
 #include <QVector>
 #include <QHash>
 #include <QString>
-#include "deviceinfo.h"
+#include "mtpdeviceinfo.h"
 
 
-/// This class parses the device info xml file and populates DeviceInfo class.
+/// This class parses the device info xml file and populates MtpDeviceInfo class.
 
-/// This class is a friend of DeviceInfo class. It parses deviceinfo.xml and populates the various
-/// device properties in DeviceInfo. This class uses Qt's SAX based parser.
+/// This class is a friend of MtpDeviceInfo class. It parses deviceinfo.xml and populates the various
+/// device properties in MtpDeviceInfo. This class uses Qt's SAX based parser.
 namespace meegomtp1dot0 {
 class XMLHandler : public QXmlDefaultHandler
 {
 public:
     /// Constructor.
-    /// \param d, pointer to DeviceInfo object.
-    XMLHandler(DeviceInfo *d = 0);
+    /// \param d, pointer to MtpDeviceInfo object.
+    XMLHandler(MtpDeviceInfo *d = 0);
 
     /// Destructor.
     ~XMLHandler();
@@ -77,7 +78,7 @@ public:
 
 private:
     quint8 m_state; ///< indicates the element that was just parsed in the xml file.
-    DeviceInfo *m_devInfo; ///< An object of DeviceInfo class, this object will be populated.
+    MtpDeviceInfo *m_devInfo; ///< An object of MtpDeviceInfo class, this object will be populated.
     quint16 m_devpropcode; ///< Stores the currently parsed device property's code.
     ///The member state will be one of these.
     enum m_element { DEFAULT, START, STDVERSION, MTPVNDEXTN, MTPVERSION, MTPEXTN, FNMODE, MANU,

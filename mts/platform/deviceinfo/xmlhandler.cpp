@@ -2,7 +2,7 @@
 * This file is part of libmeegomtp package
 *
 * Copyright (c) 2010 Nokia Corporation. All rights reserved.
-* Copyright (c) 2020 Jolla Ltd.
+* Copyright (c) 2020 - 2022 Jolla Ltd.
 * Copyright (c) 2020 Open Mobile Platform LLC.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
@@ -38,7 +38,7 @@ using namespace meegomtp1dot0;
 /******************************************
  * XMLHandler::XMLHandler
  *****************************************/
-XMLHandler::XMLHandler(DeviceInfo *d) : m_state(DEFAULT), m_devInfo(d), m_devpropcode(MTP_DEV_PROPERTY_Undefined)
+XMLHandler::XMLHandler(MtpDeviceInfo *d) : m_state(DEFAULT), m_devInfo(d), m_devpropcode(MTP_DEV_PROPERTY_Undefined)
 {
 }
 

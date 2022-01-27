@@ -1,7 +1,7 @@
 /*
  * This file is a part of buteo-mtp package.
  *
- * Copyright (c) 2014 - 2021 Jolla Ltd.
+ * Copyright (c) 2014 - 2022 Jolla Ltd.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -272,7 +272,6 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
             }
             globfree(&gl);
         } else {
-            // TODO: use QStorageInfo here once it provides enough information
             // to be useful.
             QString blockdev = storage.attribute("blockdev");
             FILE *mntf = setmntent(_PATH_MOUNTED, "r");

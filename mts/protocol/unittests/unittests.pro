@@ -2,8 +2,6 @@ include(../../common.pri)
 
 CONFIG += warn_off debug_and_release
 
-PKGCONFIG += Qt5SystemInfo
-
 LIBS += -ldl -lssu
 TEMPLATE = app
 TARGET = protocol-test
@@ -53,7 +51,7 @@ HEADERS += mtpresponder_test.h \
            ../../platform/storage/storageplugin.h \
            ../../platform/deviceinfo/xmlhandler.h \
            ../../platform/deviceinfo/deviceinfoprovider.h \
-           ../../platform/deviceinfo/deviceinfo.h \
+           ../../platform/deviceinfo/mtpdeviceinfo.h \
            ../../transport/mtptransporter.h \
            ../../transport/usb/mtptransporterusb.h \
            ../../transport/usb/threadio.h \
@@ -72,7 +70,7 @@ SOURCES += mtpresponder_test.cpp \
            ../../platform/storage/storagefactory.cpp \
            ../../platform/deviceinfo/xmlhandler.cpp \
            ../../platform/deviceinfo/deviceinfoprovider.cpp \
-           ../../platform/deviceinfo/deviceinfo.cpp \
+           ../../platform/deviceinfo/mtpdeviceinfo.cpp \
            ../../transport/usb/mtptransporterusb.cpp \
            ../../transport/usb/descriptor.c \
            ../../transport/usb/threadio.cpp \

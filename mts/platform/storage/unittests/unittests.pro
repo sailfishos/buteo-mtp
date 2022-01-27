@@ -4,7 +4,6 @@ TEMPLATE = app
 TARGET = storagefactory-test
 QT += testlib xml dbus
 QT -= gui
-PKGCONFIG += Qt5SystemInfo
 
 DEFINES += UT_ON
 
@@ -26,7 +25,7 @@ HEADERS += \
 	storagefactory_test.h \
 	../storagefactory.h \
 	../storageplugin.h \
-	../../deviceinfo/deviceinfo.h \
+	../../deviceinfo/mtpdeviceinfo.h \
 	../../deviceinfo/deviceinfoprovider.h \
 	../../deviceinfo/xmlhandler.h \
 	../../../protocol/mtpresponder.h \
@@ -40,7 +39,7 @@ HEADERS += \
 SOURCES += \
 	storagefactory_test.cpp \
 	../storagefactory.cpp \
-	../../deviceinfo/deviceinfo.cpp \
+	../../deviceinfo/mtpdeviceinfo.cpp \
 	../../deviceinfo/deviceinfoprovider.cpp \
 	../../deviceinfo/xmlhandler.cpp \
 	../../../protocol/mtpcontainer.cpp \

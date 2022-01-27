@@ -1,7 +1,8 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2021 - 2022 Jolla Ltd.
 *
 * Contact: Santosh Puranik <santosh.puranik@nokia.com>
 *
@@ -36,7 +37,7 @@
 #include "mtptypes.h"
 
 namespace meegomtp1dot0 {
-class DeviceInfo;
+class MtpDeviceInfo;
 class MTPExtensionManager;
 }
 
@@ -53,7 +54,7 @@ public:
     /// \param devInfoProvider [in] The pointer to the device info provider class. The PropertyPod class uses this to fetch some property descriptions
     /// \param extManager [in] Pointer to the extension manager class. PropertyPod uses this to fetch some extended device properties
     /// \return Returns a pointer to the instance of PropertyPod
-    static PropertyPod *instance(DeviceInfo *devInfoProvider, MTPExtensionManager *extManager);
+    static PropertyPod *instance(MtpDeviceInfo *devInfoProvider, MTPExtensionManager *extManager);
 
     /// Releases the instance of the class
     static void releaseInstance();
@@ -89,15 +90,15 @@ public:
     ~PropertyPod();
 
 private:
-    PropertyPod(DeviceInfo *devInfoProvider, MTPExtensionManager *extManager);  ///< Private ctor
+    PropertyPod(MtpDeviceInfo *devInfoProvider, MTPExtensionManager *extManager); ///< Private ctor
 
-    PropertyPod(const PropertyPod &) {}                                         ///< Disable copying
+    PropertyPod(const PropertyPod &) {}                                           ///< Disable copying
 
-    static PropertyPod *m_instance;                                             ///< Singleton instance
+    static PropertyPod *m_instance;                                               ///< Singleton instance
 
-    DeviceInfo *m_provider;                                                     ///< The device info provider
+    MtpDeviceInfo *m_provider;                                                    ///< The device info provider
 
-    MTPExtensionManager *m_extManager;                                          ///< Extensions manager class
+    MTPExtensionManager *m_extManager;                                            ///< Extensions manager class
 
     static MtpObjPropDesc
     m_commonPropDesc[];                                   ///< Array of property descriptors common to all categories

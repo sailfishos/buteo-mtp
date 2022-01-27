@@ -1,7 +1,8 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2016 - 2022 Jolla Ltd.
 *
 * Contact: Deepak Kodihalli <deepak.kodihalli@nokia.com>
 *
@@ -29,8 +30,8 @@
 *
 */
 
-#ifndef DEVINFO_H
-#define DEVINFO_H
+#ifndef MTPDEVICEINFO_H
+#define MTPDEVICEINFO_H
 
 #include <QVector>
 #include <QObject>
@@ -51,7 +52,7 @@
 /// MTP specific device properties like battery level for eg, these are outlined in Section 5.1.2 of the spec.
 
 namespace meegomtp1dot0 {
-class DeviceInfo : public QObject
+class MtpDeviceInfo : public QObject
 {
     Q_OBJECT
 
@@ -273,10 +274,10 @@ public:
     const QVector<quint32> &supportedAudioCodecs() const;
 
     /// Constructor.
-    DeviceInfo( QObject *parent = 0 );
+    MtpDeviceInfo( QObject *parent = 0 );
 
     /// Destructor.
-    virtual ~DeviceInfo();
+    virtual ~MtpDeviceInfo();
 
 signals:
     void devicePropertyChanged(MTPDevPropertyCode property, QVariant value) const;
@@ -395,4 +396,4 @@ private:
 };
 }
 
-#endif //#ifndef DEVINFO_H
+#endif //#ifndef MTPDEVICEINFO_H

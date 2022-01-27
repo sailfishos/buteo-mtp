@@ -1,7 +1,8 @@
 /*
 * This file is part of libmeegomtp package
 *
-* Copyright (C) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2010 Nokia Corporation. All rights reserved.
+* Copyright (c) 2018 - 2022 Jolla Ltd.
 *
 * Contact: Santosh Puranik <santosh.puranik@nokia.com>
 *
@@ -32,7 +33,7 @@
 #include <QVariant>
 #include "propertypod.h"
 #include "trace.h"
-#include "deviceinfo.h"
+#include "mtpdeviceinfo.h"
 #include "mtpextensionmanager.h"
 
 using namespace meegomtp1dot0;
@@ -455,7 +456,7 @@ MtpDevPropDesc PropertyPod::m_devicePropDesc[] = {
 #endif
 };
 
-PropertyPod::PropertyPod(DeviceInfo *devInfoProvider, MTPExtensionManager *extManager) : m_provider(devInfoProvider),
+PropertyPod::PropertyPod(MtpDeviceInfo *devInfoProvider, MTPExtensionManager *extManager) : m_provider(devInfoProvider),
     m_extManager(extManager)
 {
     MtpObjPropDesc *propDesc = 0;
@@ -528,7 +529,7 @@ PropertyPod::PropertyPod(DeviceInfo *devInfoProvider, MTPExtensionManager *extMa
     }
 }
 
-PropertyPod *PropertyPod::instance(DeviceInfo *devInfoProvider, MTPExtensionManager *extManager)
+PropertyPod *PropertyPod::instance(MtpDeviceInfo *devInfoProvider, MTPExtensionManager *extManager)
 {
     if (0 == m_instance) {
         m_instance = new PropertyPod(devInfoProvider, extManager);
