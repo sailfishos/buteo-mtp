@@ -1,13 +1,12 @@
 Name:     buteo-mtp-qt5
-Version:  0.9.5
+Version:  0.9.6
 Release:  1
 Summary:  MTP library
 License:  BSD and LGPLv2
-URL:      https://git.sailfishos.org/mer-core/buteo-mtp
+URL:      https://github.com/sailfishos/buteo-mtp
 Source0: %{name}-%{version}.tar.gz
 Source1: %{name}.privileges
 BuildRequires: pkgconfig(Qt5Core)
-BuildRequires: pkgconfig(Qt5Sparql)
 BuildRequires: pkgconfig(Qt5DBus)
 BuildRequires: pkgconfig(Qt5Xml)
 BuildRequires: pkgconfig(Qt5Qml)
@@ -24,8 +23,6 @@ Requires: mtp-vendor-configuration
 Requires: thumbnaild
 Requires(pre): shadow-utils
 Requires(pre): /usr/bin/groupadd-user
-Provides: buteo-mtp = %{version}
-Obsoletes: buteo-mtp < %{version}
 
 %description
 %{summary}.
