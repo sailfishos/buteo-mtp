@@ -238,31 +238,26 @@ void DeviceInfoProvider_Test::testGetMTPDevicePropertiesSupported()
 
 void DeviceInfoProvider_Test::testGetSupportedFormats()
 {
-    quint32 j = 0;
     QVector<quint16> devp = m_Provider->supportedFormats();
-    QCOMPARE((quint32)devp.size(), (quint32)m_xmlDoc->elementsByTagName("CommonFormat").length() +
-             m_xmlDoc->elementsByTagName("ImageFormat").length()
-             + m_xmlDoc->elementsByTagName("AudioFormat").length() + m_xmlDoc->elementsByTagName("VideoFormat").length());
-    // Dirty -- to disregard comments
 
     for (quint32 i = 0; i < m_xmlDoc->elementsByTagName("ImageFormat").length(); i++) {
-        QCOMPARE((quint32)devp[j], m_xmlDoc->elementsByTagName("ImageFormat").at(i).firstChild().nodeValue().toUInt(0, 16));
-        j++;
+        quint16 imageFormat(m_xmlDoc->elementsByTagName("ImageFormat").at(i).firstChild().nodeValue().toUInt(0, 16));
+        QVERIFY(devp.contains(imageFormat));
     }
 
     for (quint32 i = 0; i < m_xmlDoc->elementsByTagName("AudioFormat").length(); i++) {
-        QCOMPARE((quint32)devp[j], m_xmlDoc->elementsByTagName("AudioFormat").at(i).firstChild().nodeValue().toUInt(0, 16));
-        j++;
+        quint16 audioFormat(m_xmlDoc->elementsByTagName("AudioFormat").at(i).firstChild().nodeValue().toUInt(0, 16));
+        QVERIFY(devp.contains(audioFormat));
     }
 
     for (quint32 i = 0; i < m_xmlDoc->elementsByTagName("VideoFormat").length(); i++) {
-        QCOMPARE((quint32)devp[j], m_xmlDoc->elementsByTagName("VideoFormat").at(i).firstChild().nodeValue().toUInt(0, 16));
-        j++;
+        quint16 videoFormat(m_xmlDoc->elementsByTagName("VideoFormat").at(i).firstChild().nodeValue().toUInt(0, 16));
+        QVERIFY(devp.contains(videoFormat));
     }
 
     for (quint32 i = 0; i < m_xmlDoc->elementsByTagName("CommonFormat").length(); i++) {
-        QCOMPARE((quint32)devp[j], m_xmlDoc->elementsByTagName("CommonFormat").at(i).firstChild().nodeValue().toUInt(0, 16));
-        j++;
+        quint16 commonFormat(m_xmlDoc->elementsByTagName("CommonFormat").at(i).firstChild().nodeValue().toUInt(0, 16));
+        QVERIFY(devp.contains(commonFormat));
     }
 }
 

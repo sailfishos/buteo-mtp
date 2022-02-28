@@ -34,7 +34,7 @@
                 <StdVersion>100</StdVersion><!--Standard Version-->
                 <MTPVendorExtn>0x00000006</MTPVendorExtn><!--MTP Vendor Extension ID-->
                 <MTPVersion>100</MTPVersion><!--MTP Version-->
-                <MTPExtn>microsoft.com:1.0; microsoft.com/WMPPD:11.0; android.com: 1.0;</MTPExtn> <!--MTP Extensions-->
+                <MTPExtn>microsoft.com: 1.0; microsoft.com/WMPPD: 11.0; android.com: 1.0;</MTPExtn> <!--MTP Extensions-->
                 <FnMode>0x8000</FnMode><!--Functional Mode-->
                 <Manufacturer>Nemo</Manufacturer><!--Manufacturer-->
                 <Model>Unconfigured Device</Model><!--Model-->
