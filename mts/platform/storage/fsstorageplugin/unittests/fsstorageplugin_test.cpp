@@ -38,149 +38,89 @@
 #include <QRadialGradient>
 #include <QSignalSpy>
 
+/* Path to root of primary test storage area */
+#define STORAGE1 "/tmp/mtptests/storage1"
+
+/* Path to root of secondary test storage area */
+#define STORAGE2 "/tmp/mtptests/storage2"
 
 using namespace meegomtp1dot0;
 
 int totalCount = 17;
 
-static const int THUMBNAIL_WIDTH = 100;
-static const int THUMBNAIL_HEIGHT = 100;
+/* These need to match THUMB_SIZE in thumbnailer.cpp */
+static const int THUMBNAIL_WIDTH = 128;
+static const int THUMBNAIL_HEIGHT = 128;
+
+/* Data for initializing test data files */
+static const char content_size_1[1 + 1] = "a";
+static const char content_size_6[6 + 1] = "aaaaaa";
+static const char content_size_100[100 + 1] =
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+static const char content_dummy_mp3[4 + 1] = "\xff\xfa\x10\xc4";
+
+static bool makeTestFile_(const char *path, const char *data, size_t size)
+{
+    QFile file(path);
+    file.open(QIODevice::WriteOnly);
+    file.write(data, size);
+    file.close();
+    return file.size() == qint64(size);
+}
+#define makeTestFile(path, data) makeTestFile_(path, data, sizeof data - 1)
+
+void FSStoragePlugin_test::setupTestData()
+{
+    // 1 root dir, 2 sub dirs, 1 nested, each dir has 3 files.
+    // create dirs.
+
+    QDir dir;
+    QVERIFY( dir.mkpath(STORAGE1 "/subdir1/subdir3") );
+    QVERIFY( dir.mkpath(STORAGE1 "/subdir2") );
+    QVERIFY( dir.mkpath(STORAGE1 "/Music") );
+
+    // create files
+    QVERIFY( makeTestFile(STORAGE1 "/file1", content_size_1) );
+    QVERIFY( makeTestFile(STORAGE1 "/file2", content_size_6) );
+    QVERIFY( makeTestFile(STORAGE1 "/file3", content_size_100) );
+
+    QVERIFY( makeTestFile(STORAGE1 "/subdir1/file1", content_size_1) );
+    QVERIFY( makeTestFile(STORAGE1 "/subdir1/file2", content_size_6) );
+    QVERIFY( makeTestFile(STORAGE1 "/subdir1/file3", content_size_100) );
+
+    QVERIFY( makeTestFile(STORAGE1 "/subdir2/fileA", content_size_1) );
+    QVERIFY( makeTestFile(STORAGE1 "/subdir2/fileB", content_size_6) );
+    QVERIFY( makeTestFile(STORAGE1 "/subdir2/fileC", content_size_100) );
+
+    QVERIFY( makeTestFile(STORAGE1 "/subdir1/subdir3/file1", content_size_1) );
+    QVERIFY( makeTestFile(STORAGE1 "/subdir1/subdir3/file2", content_size_6) );
+    QVERIFY( makeTestFile(STORAGE1 "/subdir1/subdir3/file3", content_size_100) );
+
+    QVERIFY( makeTestFile(STORAGE1 "/Music/song1.mp3", content_dummy_mp3) );
+    QVERIFY( makeTestFile(STORAGE1 "/Music/song2.mp3", content_dummy_mp3) );
+    QVERIFY( makeTestFile(STORAGE1 "/Music/song3.mp3", content_dummy_mp3) );
+    QVERIFY( makeTestFile(STORAGE1 "/Music/song4.mp3", content_dummy_mp3) );
+}
+
+void FSStoragePlugin_test::removeTestData()
+{
+    system("rm -rf ~/.local/mtp");
+    QVERIFY( QDir(STORAGE1).removeRecursively() );
+    QVERIFY( QDir(STORAGE2).removeRecursively() );
+}
 
 void FSStoragePlugin_test::initTestCase()
 {
-    QDir dir;
-    QFile file( QDir::homePath() + "/.local/mtp/mtphandles");
-    if ( file.open( QIODevice::ReadOnly ) ) {
-        m_storage = new FSStoragePlugin( 1, MTP_STORAGE_TYPE_FixedRAM, "/tmp/mtptests", "media", "Phone Memory");
-        dir = QDir( m_storage->m_storagePath );
-        setupPlugin(m_storage);
-        QVERIFY( m_storage->m_root != 0 );
-        QCOMPARE( m_storage->m_root->m_handle, static_cast<unsigned int>(0) );
-        QCOMPARE( m_storage->m_objectHandlesMap.size(), m_storage->m_pathNamesMap.size() );
-        QCOMPARE( m_storage->m_objectHandlesMap.size(), 12 );
+    // Remove possible left over test data content
+    removeTestData();
 
-        QVector<ObjHandle> references;
-        MTPResponseCode response;
-        quint32 handle = m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/fileA"];
-        response = m_storage->getReferences( handle, references );
-        QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-        QCOMPARE( references.size(), 2 );
-        QCOMPARE( references[0], static_cast<unsigned int>(15) );
-        QCOMPARE( references[1], static_cast<unsigned int>(16) );
-
-        delete m_storage;
-
-        QDir dir("/tmp/mtptests");
-        dir.remove("mtphandles");
-        dir.remove("subdir2/fileA");
-        dir.remove("subdir2/fileB");
-        dir.remove("subdir2/fileC");
-        dir.remove("subdir2/file1");
-        dir.remove("subdir2/file2");
-        dir.remove("subdir2/file3");
-        dir.remove("subdir2/D1/D2/f1");
-        dir.rmdir("subdir2/D1/D2");
-        dir.rmdir("subdir2/D1");
-        dir.rmdir("subdir2");
-        dir = QDir("/tmp/Music");
-        dir.remove("song1");
-        dir.remove("song2");
-        dir.remove("song3");
-        dir.remove("song4");
-        dir = QDir("/tmp");
-        dir.rmdir("Music");
-        dir.rmdir("mtptests");
-    }
-    // 1 root dir, 2 sub dirs, 1 nested, each dir has 3 files.
-    // create dirs.
-    dir = QDir("/tmp");
-    dir.mkdir("mtptests");
-    dir = QDir("/tmp/mtptests");
-    dir.mkdir("subdir1");
-    dir.mkdir("subdir2");
-    dir.mkdir("Music");
-    dir = QDir("/tmp/mtptests/subdir1");
-    dir.mkdir("subdir3");
-
-    // create files
-    QFile file1("/tmp/mtptests/file1");
-    file1.open(QIODevice::WriteOnly);
-    file1.write("a", 1);
-    file1.close();
-    QFile file2("/tmp/mtptests/file2");
-    file2.open(QIODevice::WriteOnly);
-    file2.write("aaaaaa", 6);
-    file2.close();
-    QFile file3("/tmp/mtptests/file3");
-    file3.open(QIODevice::WriteOnly);
-    file3.write("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                100);
-    file3.close();
-
-    QFile file4("/tmp/mtptests/subdir1/file1");
-    file4.open(QIODevice::WriteOnly);
-    file4.write("a", 1);
-    file4.close();
-    QFile file5("/tmp/mtptests/subdir1/file2");
-    file5.open(QIODevice::WriteOnly);
-    file5.write("aaaaaa", 6);
-    file5.close();
-    QFile file6("/tmp/mtptests/subdir1/file3");
-    file6.open(QIODevice::WriteOnly);
-    file6.write("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                100);
-    file6.close();
-
-    QFile file7("/tmp/mtptests/subdir2/fileA");
-    file7.open(QIODevice::WriteOnly);
-    file7.write("a", 1);
-    file7.close();
-    QFile file8("/tmp/mtptests/subdir2/fileB");
-    file8.open(QIODevice::WriteOnly);
-    file8.write("aaaaaa", 6);
-    file8.close();
-    QFile file9("/tmp/mtptests/subdir2/fileC");
-    file9.open(QIODevice::WriteOnly);
-    file9.write("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                100);
-    file9.close();
-
-    QFile file10("/tmp/mtptests/subdir1/subdir3/file1");
-    file10.open(QIODevice::WriteOnly);
-    file10.write("a", 1);
-    file10.close();
-    QFile file11("/tmp/mtptests/subdir1/subdir3/file2");
-    file11.open(QIODevice::WriteOnly);
-    file11.write("aaaaaa", 6);
-    file11.close();
-    QFile file12("/tmp/mtptests/subdir1/subdir3/file3");
-    file12.open(QIODevice::WriteOnly);
-    file12.write("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                 100);
-    file12.close();
-
-    QFile song1("/tmp/mtptests/Music/song1.mp3");
-    song1.open(QIODevice::WriteOnly);
-    song1.close();
-
-    QFile song2("/tmp/mtptests/Music/song2.mp3");
-    song2.open(QIODevice::WriteOnly);
-    song2.close();
-
-    QFile song3("/tmp/mtptests/Music/song3.mp3");
-    song3.open(QIODevice::WriteOnly);
-    song3.close();
-
-    QFile song4("/tmp/mtptests/Music/song4.mp3");
-    song4.open(QIODevice::WriteOnly);
-    song4.close();
-
-    sleep(5);
+    setupTestData();
 }
 
 void FSStoragePlugin_test::testStorageCreation()
 {
-    m_storage = new FSStoragePlugin( 1, MTP_STORAGE_TYPE_FixedRAM, "/tmp/mtptests", "media", "Phone Memory" );
+    m_storage = new FSStoragePlugin( 1, MTP_STORAGE_TYPE_FixedRAM, STORAGE1, "media", "Phone Memory" );
     QDir dir( m_storage->m_storagePath );
 
     setupPlugin(m_storage);
@@ -189,13 +129,13 @@ void FSStoragePlugin_test::testStorageCreation()
     QVERIFY( m_storage->m_root->m_parent == 0 );
     QVERIFY( m_storage->m_root->m_firstChild != 0 );
     QVERIFY( m_storage->m_root->m_nextSibling == 0 );
-    QCOMPARE( m_storage->m_root->m_path, QString("/tmp/mtptests") );
+    QCOMPARE( m_storage->m_root->m_path, QString(STORAGE1) );
 
     // Check whether child items are correctly linked to their parents.
     StorageItem *parentItem =
-        m_storage->findStorageItemByPath("/tmp/mtptests/subdir1");
+        m_storage->findStorageItemByPath(STORAGE1 "/subdir1");
     StorageItem *childItem =
-        m_storage->findStorageItemByPath("/tmp/mtptests/subdir1/file1");
+        m_storage->findStorageItemByPath(STORAGE1 "/subdir1/file1");
     QVERIFY( parentItem && childItem );
     QCOMPARE( childItem->m_objectInfo->mtpParentObject, parentItem->m_handle );
 }
@@ -213,17 +153,21 @@ void FSStoragePlugin_test::testDeleteAll()
     QCOMPARE( m_storage->m_objectHandlesMap.size(), m_storage->m_pathNamesMap.size() );
 
     delete m_storage;
-    system("rm -rf ~/.local/mtp");
-    system("rm -rf /tmp/mtptests");
-    initTestCase();
-    testStorageCreation();
+    m_storage = nullptr;
+
+    // Recreate test data
+    setupTestData();
+
+    m_storage = new FSStoragePlugin( 1, MTP_STORAGE_TYPE_FixedRAM, STORAGE1, "media", "Phone Memory" );
+    setupPlugin(m_storage);
+
 }
+
 void FSStoragePlugin_test::testObjectHandlesCountAfterCreation()
 {
     QCOMPARE( m_storage->m_objectHandlesMap.size(), m_storage->m_pathNamesMap.size() );
     //QCOMPARE( m_storage->m_objectHandlesMap.size(), totalCount );
     totalCount = m_storage->m_objectHandlesMap.size();
-    quint32 noOfObjects;
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 0x00000000, objectHandles );
@@ -233,22 +177,30 @@ void FSStoragePlugin_test::testObjectHandlesCountAfterCreation()
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, 0xFFFFFFFF, objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( objectHandles.size(), static_cast<qint32>(7) );
+    /* Expected STORAGE1 content is 6 files/dirs:
+     * 1. file1
+     * 2. file2
+     * 3. file3
+     * 4. Music/
+     * 5. subdir1/
+     * 6. subdir2/
+     */
+    QCOMPARE( objectHandles.size(), 6);
 
     objectHandles.clear();
-    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1")],
+    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1")],
                                             objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(4) );
 
     objectHandles.clear();
-    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir2")],
+    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir2")],
                                             objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(3) );
 
     objectHandles.clear();
-    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/subdir3")],
+    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1/subdir3")],
                                             objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(3) );
@@ -256,7 +208,6 @@ void FSStoragePlugin_test::testObjectHandlesCountAfterCreation()
 
 void FSStoragePlugin_test::testObjectHandlesAfterCreation()
 {
-    quint32 noOfObjects;
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 0x00000000, objectHandles );
@@ -267,13 +218,13 @@ void FSStoragePlugin_test::testObjectHandlesAfterCreation()
     QCOMPARE( objectHandles.contains(totalCount - 1), static_cast<bool>(true) );
 
     objectHandles.clear();
-    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/subdir3")],
+    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1/subdir3")],
                                             objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), 3 );
 
     objectHandles.clear();
-    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1")],
+    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1")],
                                             objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), 4 );
@@ -294,7 +245,7 @@ void FSStoragePlugin_test::testInvalidGetObjectHandle()
 
     //test getObjectHandles with association param that's a valid handle but not an association.
     objectHandles.clear();
-    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/file1")],
+    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1/file1")],
                                             objectHandles );
     QCOMPARE( response, (MTPResponseCode) MTP_RESP_InvalidParentObject);
     QCOMPARE( objectHandles.size(), static_cast<qint32>(0) );
@@ -302,44 +253,50 @@ void FSStoragePlugin_test::testInvalidGetObjectHandle()
 
 void FSStoragePlugin_test::testGetObjectHandleByFormat()
 {
+    /* Expected 4 "Associations" = dirs are:
+     * 1. STORAGE1/Music/
+     * 2. STORAGE1/subdir1/
+     * 3. STORAGE1/subdir1/subdir3/
+     * 4. STORAGE1/subdir2/
+     */
     QVector<ObjHandle> objectHandles;
     MTPResponseCode response = m_storage->getObjectHandles( MTP_OBF_FORMAT_Association, 0x00000000, objectHandles );
     QCOMPARE( response, (MTPResponseCode) MTP_RESP_OK);
-    QCOMPARE( objectHandles.size(), static_cast<qint32>(5) );
+    QCOMPARE( objectHandles.size(), 4);
 }
 
 void FSStoragePlugin_test::testObjectInfoAfterCreation()
 {
     const MTPObjectInfo *objectInfo = 0;
 
-    MTPResponseCode response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests")], objectInfo );
+    MTPResponseCode response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString(STORAGE1)], objectInfo );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( objectInfo->mtpFileName, QString("mtptests") );
+    QCOMPARE( objectInfo->mtpFileName, QString("storage1") );
 
-    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1")], objectInfo );
+    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1")], objectInfo );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("subdir1") );
 
-    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir2")], objectInfo );
+    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir2")], objectInfo );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("subdir2") );
 
-    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/file1")], objectInfo );
+    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1/file1")], objectInfo );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("file1") );
     QCOMPARE( objectInfo->mtpObjectCompressedSize, static_cast<quint64>(1));
 
-    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir2/fileB")], objectInfo );
+    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir2/fileB")], objectInfo );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("fileB") );
     QCOMPARE( objectInfo->mtpObjectCompressedSize, static_cast<quint64>(6));
 
-    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/subdir3")], objectInfo );
+    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1/subdir3")], objectInfo );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("subdir3") );
     QCOMPARE( objectInfo->mtpObjectCompressedSize, static_cast<quint64>(0));
 
-    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/subdir3/file3")],
+    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1/subdir3/file3")],
                                          objectInfo );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("file3") );
@@ -353,18 +310,18 @@ void FSStoragePlugin_test::testFindByPath()
 {
     StorageItem *storageItem;
 
-    storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( "/tmp/mtptests" ) );
+    storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( STORAGE1 ) );
     QCOMPARE( storageItem != 0, true );
-    QCOMPARE( storageItem->m_path, QString("/tmp/mtptests") );
+    QCOMPARE( storageItem->m_path, QString(STORAGE1) );
     QCOMPARE( storageItem->m_handle, static_cast<quint32>(0) );
 
-    storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( "/tmp/mtptests/subdir1/subdir3" ) );
+    storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( STORAGE1 "/subdir1/subdir3" ) );
     QCOMPARE( storageItem != 0, true );
-    QCOMPARE( storageItem->m_path, QString("/tmp/mtptests/subdir1/subdir3") );
+    QCOMPARE( storageItem->m_path, QString(STORAGE1 "/subdir1/subdir3") );
 
-    storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( "/tmp/mtptests/subdir2/fileC" ) );
+    storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( STORAGE1 "/subdir2/fileC" ) );
     QCOMPARE( storageItem != 0, true );
-    QCOMPARE( storageItem->m_path, QString("/tmp/mtptests/subdir2/fileC") );
+    QCOMPARE( storageItem->m_path, QString(STORAGE1 "/subdir2/fileC") );
 
     storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( "/tmp/NOmtptests/subdir2/fileC" ) );
     QCOMPARE( storageItem == 0, true );
@@ -398,12 +355,12 @@ void FSStoragePlugin_test::testWriteData()
 {
     MTPResponseCode response;
 
-    response = m_storage->writeData( m_storage->m_pathNamesMap["/tmp/mtptests/file2"], "bbb", 3, true, false );
+    response = m_storage->writeData( m_storage->m_pathNamesMap[STORAGE1 "/file2"], "bbb", 3, true, false );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
-    response = m_storage->writeData( m_storage->m_pathNamesMap["/tmp/mtptests/file2"], "bbb", 3, false, true );
-    m_storage->writeData(m_storage->m_pathNamesMap["/tmp/mtptests/file2"], 0, 0, false, true);
-    QFile file("/tmp/mtptests/file2");
+    response = m_storage->writeData( m_storage->m_pathNamesMap[STORAGE1 "/file2"], "bbb", 3, false, true );
+    m_storage->writeData(m_storage->m_pathNamesMap[STORAGE1 "/file2"], 0, 0, false, true);
+    QFile file(STORAGE1 "/file2");
     file.open( QIODevice::ReadOnly);
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     char readBuf2[13];
@@ -427,7 +384,7 @@ void FSStoragePlugin_test::testReadData()
     MTPResponseCode response;
 
     readBuf = (char *)malloc(readBufLen);
-    response = m_storage->readData( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/subdir3/file1"], readBuf, readBufLen,
+    response = m_storage->readData( m_storage->m_pathNamesMap[STORAGE1 "/subdir1/subdir3/file1"], readBuf, readBufLen,
                                     0 );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( readBuf != 0, static_cast<bool>(true) );
@@ -438,18 +395,20 @@ void FSStoragePlugin_test::testReadData()
 
     readBufLen = 100;
     readBuf = (char *)malloc(readBufLen);
-    response = m_storage->readData( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/subdir3/file3"], readBuf, readBufLen,
+    response = m_storage->readData( m_storage->m_pathNamesMap[STORAGE1 "/subdir1/subdir3/file3"], readBuf, readBufLen,
                                     0 );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( readBuf != 0, static_cast<bool>(true) );
     QCOMPARE( readBufLen, 100 );
     QCOMPARE( readBuf[0], 'a' );
     QCOMPARE( readBuf[99], 'a' );
+
+    quint32 invalidHandle = 0xdeadbeef;
+    response = m_storage->readData( invalidHandle, readBuf, readBufLen, 0 );
+    QCOMPARE( response, (MTPResponseCode) MTP_RESP_InvalidObjectHandle);
+
     free(readBuf);
     readBuf = 0;
-
-    response = m_storage->readData( 100, readBuf, readBufLen, 0 );
-    QCOMPARE( response, (MTPResponseCode) MTP_RESP_InvalidObjectHandle);
 }
 
 void FSStoragePlugin_test::testAddFile()
@@ -478,13 +437,13 @@ void FSStoragePlugin_test::testAddFile()
         QCOMPARE( parentHandle, static_cast<quint32>(0) );
         QCOMPARE( objectInfo.mtpParentObject, static_cast<quint32>(0) );
         QCOMPARE( objectInfo.mtpFileName, QString("addfile" ) );
-        QCOMPARE( m_storage->m_pathNamesMap["/tmp/mtptests/addfile"], static_cast<quint32>(handle) );
+        QCOMPARE( m_storage->m_pathNamesMap[STORAGE1 "/addfile"], static_cast<quint32>(handle) );
         QCOMPARE( m_storage->m_objectHandlesMap[handle] != 0, true );
         QCOMPARE( m_storage->m_objectHandlesMap[handle]->m_parent->m_handle, static_cast<quint32>(0) );
         response = m_storage->writeData( handle, "xxx", 3, true, true );
         m_storage->writeData(handle, 0, 0, false, true);
         QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-        QFile file("/tmp/mtptests/addfile");
+        QFile file(STORAGE1 "/addfile");
         file.open( QIODevice::ReadOnly);
         char readBuf[4];
         readBuf[3] = '\0';
@@ -505,13 +464,13 @@ void FSStoragePlugin_test::testAddFile()
         QCOMPARE( parentHandle, static_cast<quint32>(0) );
         QCOMPARE( objectInfo.mtpParentObject, static_cast<quint32>(0) );
         QCOMPARE( objectInfo.mtpFileName, QString("addfile2" ) );
-        QCOMPARE( m_storage->m_pathNamesMap["/tmp/mtptests/addfile2"], static_cast<quint32>(handle) );
+        QCOMPARE( m_storage->m_pathNamesMap[STORAGE1 "/addfile2"], static_cast<quint32>(handle) );
         QCOMPARE( m_storage->m_objectHandlesMap[handle] != 0, true );
         QCOMPARE( m_storage->m_objectHandlesMap[handle]->m_parent->m_handle, static_cast<quint32>(0) );
         response = m_storage->writeData( handle, "xxx", 3, true, true );
         m_storage->writeData(handle, 0, 0, false, true);
         QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-        QFile file("/tmp/mtptests/addfile2");
+        QFile file(STORAGE1 "/addfile2");
         file.open( QIODevice::ReadOnly);
         char readBuf[4];
         readBuf[3] = '\0';
@@ -524,22 +483,22 @@ void FSStoragePlugin_test::testAddFile()
 
     {
         // Add a file to subdir1
-        objectInfo.mtpParentObject = m_storage->m_pathNamesMap["/tmp/mtptests/subdir1"];
+        objectInfo.mtpParentObject = m_storage->m_pathNamesMap[STORAGE1 "/subdir1"];
         objectInfo.mtpFileName = "addfile";
         objectInfo.mtpObjectCompressedSize = 3;
         response = m_storage->addItem( parentHandle, handle, &objectInfo );
         QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
         QCOMPARE( handle, static_cast<quint32>(++totalCount) );
-        QCOMPARE( parentHandle, static_cast<quint32>(m_storage->m_pathNamesMap["/tmp/mtptests/subdir1"]) );
+        QCOMPARE( parentHandle, static_cast<quint32>(m_storage->m_pathNamesMap[STORAGE1 "/subdir1"]) );
         QCOMPARE( objectInfo.mtpFileName, QString("addfile" ) );
-        QCOMPARE( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/addfile"], static_cast<quint32>(handle) );
+        QCOMPARE( m_storage->m_pathNamesMap[STORAGE1 "/subdir1/addfile"], static_cast<quint32>(handle) );
         QCOMPARE( m_storage->m_objectHandlesMap[handle] != 0, true );
         QCOMPARE( m_storage->m_objectHandlesMap[handle]->m_parent->m_handle,
-                  m_storage->m_pathNamesMap["/tmp/mtptests/subdir1"]);
+                  m_storage->m_pathNamesMap[STORAGE1 "/subdir1"]);
         response = m_storage->writeData( handle, "xxx", 3, true, true );
         m_storage->writeData(handle, 0, 0, false, true);
         QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-        QFile file("/tmp/mtptests/subdir1/addfile");
+        QFile file(STORAGE1 "/subdir1/addfile");
         file.open( QIODevice::ReadOnly);
         char readBuf[4];
         readBuf[3] = '\0';
@@ -552,20 +511,20 @@ void FSStoragePlugin_test::testAddFile()
 
     {
         // Add a file to subdir3
-        objectInfo.mtpParentObject = m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/subdir3"];
+        objectInfo.mtpParentObject = m_storage->m_pathNamesMap[STORAGE1 "/subdir1/subdir3"];
         response = m_storage->addItem( parentHandle, handle, &objectInfo );
         QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
         QCOMPARE( handle, static_cast<quint32>(++totalCount) );
-        QCOMPARE( parentHandle, static_cast<quint32>(m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/subdir3"]) );
+        QCOMPARE( parentHandle, static_cast<quint32>(m_storage->m_pathNamesMap[STORAGE1 "/subdir1/subdir3"]) );
         QCOMPARE( objectInfo.mtpFileName, QString("addfile" ) );
-        QCOMPARE( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/subdir3/addfile"], static_cast<quint32>(handle) );
+        QCOMPARE( m_storage->m_pathNamesMap[STORAGE1 "/subdir1/subdir3/addfile"], static_cast<quint32>(handle) );
         QCOMPARE( m_storage->m_objectHandlesMap[handle] != 0, true );
         QCOMPARE( m_storage->m_objectHandlesMap[handle]->m_parent->m_handle,
-                  m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/subdir3"] );
+                  m_storage->m_pathNamesMap[STORAGE1 "/subdir1/subdir3"] );
         response = m_storage->writeData( handle, "xxx", 3, true, true );
         m_storage->writeData(handle, 0, 0, false, true);
         QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-        QFile file("/tmp/mtptests/subdir1/subdir3/addfile");
+        QFile file(STORAGE1 "/subdir1/subdir3/addfile");
         file.open( QIODevice::ReadOnly);
         char readBuf[4];
         readBuf[3] = '\0';
@@ -588,19 +547,19 @@ void FSStoragePlugin_test::testAddDir()
     //memset(&objectInfo, 0 , sizeof(MTPObjectInfo));
 
     //add a nested dir to subdir2 : D1, D1->D2, D1->D2->f
-    objectInfo.mtpParentObject = m_storage->m_pathNamesMap["/tmp/mtptests/subdir2"];
+    objectInfo.mtpParentObject = m_storage->m_pathNamesMap[STORAGE1 "/subdir2"];
     objectInfo.mtpFileName = "D1";
     objectInfo.mtpObjectCompressedSize = 0;
     objectInfo.mtpObjectFormat = MTP_OBF_FORMAT_Association;
     response = m_storage->addItem( parentHandle, handle, &objectInfo );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( handle, static_cast<quint32>(++totalCount) );
-    QCOMPARE( parentHandle, static_cast<quint32>(m_storage->m_pathNamesMap["/tmp/mtptests/subdir2"]) );
+    QCOMPARE( parentHandle, static_cast<quint32>(m_storage->m_pathNamesMap[STORAGE1 "/subdir2"]) );
     QCOMPARE( objectInfo.mtpFileName, QString("D1" ) );
-    QCOMPARE( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/D1"], static_cast<quint32>(handle) );
+    QCOMPARE( m_storage->m_pathNamesMap[STORAGE1 "/subdir2/D1"], static_cast<quint32>(handle) );
     QCOMPARE( m_storage->m_objectHandlesMap[handle] != 0, true );
     QCOMPARE( m_storage->m_objectHandlesMap[handle]->m_parent->m_handle,
-              static_cast<quint32>(m_storage->m_pathNamesMap["/tmp/mtptests/subdir2"]) );
+              static_cast<quint32>(m_storage->m_pathNamesMap[STORAGE1 "/subdir2"]) );
 
     objectInfo.mtpParentObject = handle;
     objectInfo.mtpFileName = "D2";
@@ -609,7 +568,7 @@ void FSStoragePlugin_test::testAddDir()
     QCOMPARE( handle, static_cast<quint32>(++totalCount) );
     QCOMPARE( objectInfo.mtpParentObject, static_cast<quint32>(parentHandle) );
     QCOMPARE( objectInfo.mtpFileName, QString("D2" ) );
-    QCOMPARE( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/D1/D2"], static_cast<quint32>(handle) );
+    QCOMPARE( m_storage->m_pathNamesMap[STORAGE1 "/subdir2/D1/D2"], static_cast<quint32>(handle) );
     QCOMPARE( m_storage->m_objectHandlesMap[handle] != 0, true );
     QCOMPARE( m_storage->m_objectHandlesMap[handle]->m_parent->m_handle, static_cast<quint32>(parentHandle) );
     QCOMPARE( m_storage->m_objectHandlesMap[parentHandle]->m_firstChild->m_handle, static_cast<quint32>(handle) );
@@ -622,14 +581,14 @@ void FSStoragePlugin_test::testAddDir()
     QCOMPARE( handle, static_cast<quint32>(++totalCount) );
     QCOMPARE( objectInfo.mtpParentObject, static_cast<quint32>(parentHandle) );
     QCOMPARE( objectInfo.mtpFileName, QString("f1" ) );
-    QCOMPARE( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/D1/D2/f1"], static_cast<quint32>(handle) );
+    QCOMPARE( m_storage->m_pathNamesMap[STORAGE1 "/subdir2/D1/D2/f1"], static_cast<quint32>(handle) );
     QCOMPARE( m_storage->m_objectHandlesMap[handle] != 0, true );
     QCOMPARE( m_storage->m_objectHandlesMap[handle]->m_parent->m_handle, static_cast<quint32>(parentHandle) );
     QCOMPARE( m_storage->m_objectHandlesMap[parentHandle]->m_firstChild->m_handle, static_cast<quint32>(handle) );
     response = m_storage->writeData( handle, "xxx", 3, true, true );
     m_storage->writeData(handle, 0, 0, false, true);
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QFile file("/tmp/mtptests/subdir2/D1/D2/f1");
+    QFile file(STORAGE1 "/subdir2/D1/D2/f1");
     file.open( QIODevice::ReadOnly);
     char readBuf[4];
     readBuf[3] = '\0';
@@ -644,7 +603,6 @@ void FSStoragePlugin_test::testObjectHandlesCountAfterAddition()
 {
     QCOMPARE( m_storage->m_objectHandlesMap.size(), m_storage->m_pathNamesMap.size() );
     QCOMPARE( m_storage->m_objectHandlesMap.size(), totalCount + 1 );
-    quint32 noOfObjects;
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 0x00000000, objectHandles );
@@ -654,22 +612,32 @@ void FSStoragePlugin_test::testObjectHandlesCountAfterAddition()
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, 0xFFFFFFFF, objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( objectHandles.size(), static_cast<qint32>(9) );
+    /* Expected: 8 matches
+     * 1. STORAGE1/addfile
+     * 2. STORAGE1/addfile2
+     * 3. STORAGE1/file1
+     * 4. STORAGE1/file2
+     * 5. STORAGE1/file3
+     * 6. STORAGE1/Music/
+     * 7. STORAGE1/subdir1/
+     * 8. STORAGE1/subdir2/
+     */
+    QCOMPARE( objectHandles.size(), 8 );
 
     objectHandles.clear();
-    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1")],
+    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1")],
                                             objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(5) );
 
     objectHandles.clear();
-    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir2")],
+    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir2")],
                                             objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(4) );
 
     objectHandles.clear();
-    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/subdir3")],
+    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1/subdir3")],
                                             objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(4) );
@@ -682,7 +650,6 @@ void FSStoragePlugin_test::testObjectHandlesCountAfterAddition()
 
 void FSStoragePlugin_test::testObjectHandlesAfterAddition()
 {
-    quint32 noOfObjects;
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 0x00000000, objectHandles );
@@ -693,13 +660,13 @@ void FSStoragePlugin_test::testObjectHandlesAfterAddition()
     QCOMPARE( objectHandles.contains(totalCount), static_cast<bool>(true) );
 
     objectHandles.clear();
-    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/subdir3")],
+    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1/subdir3")],
                                             objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), 4 );
 
     objectHandles.clear();
-    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1")],
+    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1")],
                                             objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), 5 );
@@ -714,27 +681,27 @@ void FSStoragePlugin_test::testObjectInfoAfterAddition()
 {
     const MTPObjectInfo *objectInfo;
 
-    MTPResponseCode response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests")], objectInfo );
+    MTPResponseCode response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString(STORAGE1)], objectInfo );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( objectInfo->mtpFileName, QString("mtptests") );
+    QCOMPARE( objectInfo->mtpFileName, QString("storage1") );
 
-    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1")], objectInfo );
+    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1")], objectInfo );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("subdir1") );
 
-    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir1/addfile")], objectInfo );
+    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir1/addfile")], objectInfo );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("addfile") );
 
-    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir2/D1/D2/f1")], objectInfo );
+    response = m_storage->getObjectInfo( m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir2/D1/D2/f1")], objectInfo );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectInfo->mtpFileName, QString("f1") );
 
     StorageItem *storageItem;
 
-    storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( "/tmp/mtptests/subdir2/D1/D2/f1" ) );
+    storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( STORAGE1 "/subdir2/D1/D2/f1" ) );
     QCOMPARE( storageItem != 0, true );
-    QCOMPARE( storageItem->m_path, QString("/tmp/mtptests/subdir2/D1/D2/f1") );
+    QCOMPARE( storageItem->m_path, QString(STORAGE1 "/subdir2/D1/D2/f1") );
 
     response = m_storage->getObjectInfo( 100, objectInfo );
     QCOMPARE( response, (MTPResponseCode) MTP_RESP_InvalidObjectHandle);
@@ -844,7 +811,6 @@ void FSStoragePlugin_test::testGetChildPropertyValues()
     QVERIFY(!values[file2Handle][0].isValid());
     QCOMPARE(values[file2Handle][1].toString(), QString("filename2"));
 
-
     m_storage->deleteItem(directoryHandle, MTP_OBF_FORMAT_Undefined);
 }
 
@@ -860,7 +826,7 @@ void FSStoragePlugin_test::testSetReferences()
     response = m_storage->setReferences( 100, references );
     QCOMPARE( response, (MTPResponseCode) MTP_RESP_InvalidObjectHandle);
 
-    response = m_storage->setReferences( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/fileA"], references );
+    response = m_storage->setReferences( m_storage->m_pathNamesMap[STORAGE1 "/subdir2/fileA"], references );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
 
@@ -872,7 +838,7 @@ void FSStoragePlugin_test::testGetReferences()
     response = m_storage->getReferences( 100, references );
     QCOMPARE( response, (MTPResponseCode) MTP_RESP_InvalidObjectHandle);
 
-    response = m_storage->getReferences( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/fileA"], references );
+    response = m_storage->getReferences( m_storage->m_pathNamesMap[STORAGE1 "/subdir2/fileA"], references );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( references.size(), 3 );
     QCOMPARE( references[0], static_cast<unsigned int>(1) );
@@ -884,13 +850,13 @@ void FSStoragePlugin_test::testDeleteFile()
 {
     MTPResponseCode response;
 
-    response = m_storage->deleteItem( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/file1"],  MTP_OBF_FORMAT_Undefined );
+    response = m_storage->deleteItem( m_storage->m_pathNamesMap[STORAGE1 "/subdir1/file1"],  MTP_OBF_FORMAT_Undefined );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
-    response = m_storage->deleteItem( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/file2"],  MTP_OBF_FORMAT_Undefined );
+    response = m_storage->deleteItem( m_storage->m_pathNamesMap[STORAGE1 "/subdir1/file2"],  MTP_OBF_FORMAT_Undefined );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
-    response = m_storage->deleteItem( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/file3"],  MTP_OBF_FORMAT_Undefined );
+    response = m_storage->deleteItem( m_storage->m_pathNamesMap[STORAGE1 "/subdir1/file3"],  MTP_OBF_FORMAT_Undefined );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
 }
@@ -899,11 +865,11 @@ void FSStoragePlugin_test::testDeleteDir()
 {
     MTPResponseCode response;
 
-    response = m_storage->deleteItem( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1/subdir3"],
+    response = m_storage->deleteItem( m_storage->m_pathNamesMap[STORAGE1 "/subdir1/subdir3"],
                                       MTP_OBF_FORMAT_Undefined );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
-    response = m_storage->deleteItem( m_storage->m_pathNamesMap["/tmp/mtptests/subdir1"],  MTP_OBF_FORMAT_Undefined );
+    response = m_storage->deleteItem( m_storage->m_pathNamesMap[STORAGE1 "/subdir1"],  MTP_OBF_FORMAT_Undefined );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     totalCount -= 9;
@@ -913,7 +879,6 @@ void FSStoragePlugin_test::testObjectHandlesCountAfterDeletion()
 {
     QCOMPARE( m_storage->m_objectHandlesMap.size(), m_storage->m_pathNamesMap.size() );
     QCOMPARE( m_storage->m_objectHandlesMap.size(), totalCount );
-    quint32 noOfObjects;
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 0x00000000, objectHandles );
@@ -922,11 +887,20 @@ void FSStoragePlugin_test::testObjectHandlesCountAfterDeletion()
 
     objectHandles.clear();
     response = m_storage->getObjectHandles( 0x0000, 0xFFFFFFFF, objectHandles );
+    /* Expected: 7 matches:
+     * 1. STORAGE1/addfile
+     * 2. STORAGE1/addfile2
+     * 3. STORAGE1/file1
+     * 4. STORAGE1/file2
+     * 5. STORAGE1/file3
+     * 6. STORAGE1/Music/
+     * 7. STORAGE1/subdir2/
+     */
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( objectHandles.size(), static_cast<qint32>(8) );
+    QCOMPARE( objectHandles.size(), 7 );
 
     objectHandles.clear();
-    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString("/tmp/mtptests/subdir2")],
+    response = m_storage->getObjectHandles( 0x0000, m_storage->m_pathNamesMap[QString(STORAGE1 "/subdir2")],
                                             objectHandles );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
     QCOMPARE( objectHandles.size(), static_cast<qint32>(4) );
@@ -939,7 +913,6 @@ void FSStoragePlugin_test::testObjectHandlesCountAfterDeletion()
 
 void FSStoragePlugin_test::testObjectHandlesAfterDeletion()
 {
-    quint32 noOfObjects;
     QVector<ObjHandle> objectHandles;
 
     MTPResponseCode response = m_storage->getObjectHandles( 0x0000, 0x00000000, objectHandles );
@@ -955,10 +928,10 @@ void FSStoragePlugin_test::testFileCopy()
     ObjHandle newHandle;
     QVector<ObjHandle> objectHandles;
 
-    response = m_storage->copyObject( 1, m_storage->m_pathNamesMap["/tmp/mtptests/subdir2"], 0, newHandle );
+    response = m_storage->copyObject( 1, m_storage->m_pathNamesMap[STORAGE1 "/subdir2"], 0, newHandle );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
-    response = m_storage->copyObject( 3, m_storage->m_pathNamesMap["/tmp/mtptests/subdir2"], 0, newHandle );
+    response = m_storage->copyObject( 3, m_storage->m_pathNamesMap[STORAGE1 "/subdir2"], 0, newHandle );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
 
@@ -973,7 +946,7 @@ void FSStoragePlugin_test::testDirCopy()
     //memset(&objectInfo, 0 , sizeof(MTPObjectInfo));
 
     //add a nested dir to subdir2 : D1, D1->D2, D1->D2->f
-    objectInfo.mtpParentObject = m_storage->m_pathNamesMap["/tmp/mtptests/subdir2"];
+    objectInfo.mtpParentObject = m_storage->m_pathNamesMap[STORAGE1 "/subdir2"];
     objectInfo.mtpFileName = "D1";
     objectInfo.mtpObjectCompressedSize = 0;
     objectInfo.mtpObjectFormat = MTP_OBF_FORMAT_Association;
@@ -994,8 +967,8 @@ void FSStoragePlugin_test::testDirCopy()
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 
     // Copy dir D1 from subdir2 to mtptests
-    response = m_storage->copyObject( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/D1"],
-                                      m_storage->m_pathNamesMap["/tmp/mtptests"], 0, newHandle );
+    response = m_storage->copyObject( m_storage->m_pathNamesMap[STORAGE1 "/subdir2/D1"],
+                                      m_storage->m_pathNamesMap[STORAGE1], 0, newHandle );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
 
@@ -1003,8 +976,8 @@ void FSStoragePlugin_test::testFileMove()
 {
     MTPResponseCode response;
 
-    response = m_storage->moveObject( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/fileA"],
-                                      m_storage->m_pathNamesMap["/tmp/mtptests"], m_storage );
+    response = m_storage->moveObject( m_storage->m_pathNamesMap[STORAGE1 "/subdir2/fileA"],
+                                      m_storage->m_pathNamesMap[STORAGE1], m_storage );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
 
@@ -1015,13 +988,13 @@ void FSStoragePlugin_test::testFileMoveAcrossStorage()
 
     const QByteArray TEXT( "some text for comparison" );
 
-    QDir dir( "/tmp/mtptests-second" );
+    QDir dir( STORAGE2 );
     dir.removeRecursively();
 
-    dir.mkpath("/tmp/mtptests-second");
+    dir.mkpath(STORAGE2);
     dir.mkdir( "dir1" );
 
-    QFile file( "/tmp/mtptests/fileToMove" );
+    QFile file( STORAGE1 "/fileToMove" );
     file.remove();
     file.open(QFile::WriteOnly);
     file.write(TEXT);
@@ -1031,24 +1004,24 @@ void FSStoragePlugin_test::testFileMoveAcrossStorage()
     while ( loop.processEvents() );
 
     FSStoragePlugin secondStorage( 2, MTP_STORAGE_TYPE_FixedRAM,
-                                   "/tmp/mtptests-second", "second", "Second Storage" );
+                                   STORAGE2, "second", "Second Storage" );
     setupPlugin(&secondStorage);
 
-    StorageItem *item = m_storage->findStorageItemByPath( "/tmp/mtptests/fileToMove" );
+    StorageItem *item = m_storage->findStorageItemByPath( STORAGE1 "/fileToMove" );
 
     ObjHandle originalHandle = item->m_handle;
     MTPObjectInfo originalInfo = *item->m_objectInfo;
 
     QCOMPARE( m_storage->moveObject( originalHandle,
-                                     secondStorage.m_pathNamesMap["/tmp/mtptests-second/dir1"], &secondStorage ),
+                                     secondStorage.m_pathNamesMap[STORAGE2 "/dir1"], &secondStorage ),
               (MTPResponseCode)MTP_RESP_OK);
 
     QVERIFY( !m_storage->checkHandle( originalHandle ) );
 
     StorageItem *movedItem =
-        secondStorage.findStorageItemByPath( "/tmp/mtptests-second/dir1/fileToMove" );
+        secondStorage.findStorageItemByPath( STORAGE2 "/dir1/fileToMove" );
     StorageItem *parentItem =
-        secondStorage.findStorageItemByPath( "/tmp/mtptests-second/dir1" );
+        secondStorage.findStorageItemByPath( STORAGE2 "/dir1" );
 
     QVERIFY( movedItem );
     QVERIFY( parentItem );
@@ -1059,7 +1032,7 @@ void FSStoragePlugin_test::testFileMoveAcrossStorage()
     QCOMPARE ( movedInfo->mtpParentObject, parentItem->m_handle );
     QCOMPARE ( movedInfo->mtpFileName, originalInfo.mtpFileName );
 
-    QFile copiedFile( "/tmp/mtptests-second/dir1/fileToMove" );
+    QFile copiedFile( STORAGE2 "/dir1/fileToMove" );
     copiedFile.open( QFile::ReadOnly );
     QByteArray text( copiedFile.readAll() );
     QVERIFY( text == TEXT );
@@ -1069,49 +1042,48 @@ void FSStoragePlugin_test::testDirMove()
 {
     MTPResponseCode response;
 
-    response = m_storage->moveObject( m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/D1"],
-                                      m_storage->m_pathNamesMap["/tmp/mtptests/D1"], m_storage );
+    response = m_storage->moveObject( m_storage->m_pathNamesMap[STORAGE1 "/subdir2/D1"],
+                                      m_storage->m_pathNamesMap[STORAGE1 "/D1"], m_storage );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
 }
 
 void FSStoragePlugin_test::testDirMoveAcrossStorage()
 {
-    QEventLoop loop;
+    QVERIFY( QDir(STORAGE2).removeRecursively() );
+    QVERIFY( QDir(STORAGE1 "/d1").removeRecursively() );
 
-    QDir dir( "/tmp/mtptests-second" );
-    dir.removeRecursively();
-    dir.mkpath( "/tmp/mtptests-second" );
-    dir.mkdir( "dir" );
+    QDir dir;
+    QVERIFY( dir.mkpath(STORAGE2 "/dir") );
+    QVERIFY( dir.mkpath(STORAGE1 "/d1/d2") );
 
-    dir.cd( "/tmp/mtptests/d1" );
-    dir.removeRecursively();
-    dir.mkpath( "/tmp/mtptests/d1/d2" );
-    QFile file( "/tmp/mtptests/d1/d2/f1" );
+    QFile file(STORAGE1 "/d1/d2/f1");
     file.open( QFile::WriteOnly );
     file.close();
-
-    loop.processEvents();
+    QVERIFY( file.exists() );
 
     FSStoragePlugin secondStorage( 2, MTP_STORAGE_TYPE_FixedRAM,
-                                   "/tmp/mtptests-second", "second", "Second Storage" );
+                                   STORAGE2, "second", "Second Storage" );
     setupPlugin(&secondStorage);
+    QEventLoop().processEvents();
 
     StorageItem *item;
 
-    item = m_storage->findStorageItemByPath( "/tmp/mtptests/d1" );
+    item = m_storage->findStorageItemByPath( STORAGE1 "/d1" );
     ObjHandle hOrigD1 = item->m_handle;
     MTPObjectInfo iOrigD1 = *item->m_objectInfo;
 
-    item = m_storage->findStorageItemByPath( "/tmp/mtptests/d1/d2" );
+    item = m_storage->findStorageItemByPath( STORAGE1 "/d1/d2" );
     ObjHandle hOrigD2 = item->m_handle;
     MTPObjectInfo iOrigD2 = *item->m_objectInfo;
 
-    item = m_storage->findStorageItemByPath( "/tmp/mtptests/d1/d2/f1" );
+    item = m_storage->findStorageItemByPath( STORAGE1 "/d1/d2/f1" );
     ObjHandle hOrigF1 = item->m_handle;
     MTPObjectInfo iOrigF1 = *item->m_objectInfo;
 
-    QCOMPARE( m_storage->moveObject( hOrigD1,
-                                     secondStorage.m_pathNamesMap["/tmp/mtptests-second/dir"], &secondStorage ),
+    quint32 parentHandle = secondStorage.m_pathNamesMap[STORAGE2 "/dir"];
+    QVERIFY( parentHandle != 0 );
+
+    QCOMPARE( m_storage->moveObject( hOrigD1, parentHandle, &secondStorage ),
               (MTPResponseCode)MTP_RESP_OK);
 
     QVERIFY( !m_storage->checkHandle( hOrigD1 ) &&
@@ -1119,7 +1091,7 @@ void FSStoragePlugin_test::testDirMoveAcrossStorage()
              !m_storage->checkHandle( hOrigF1 ) );
 
     StorageItem *parentItem =
-        secondStorage.findStorageItemByPath( "/tmp/mtptests-second/dir" );
+        secondStorage.findStorageItemByPath( STORAGE2 "/dir" );
 
     StorageItem *movedD1 = secondStorage.m_objectHandlesMap[ hOrigD1 ];
     QCOMPARE ( movedD1->m_objectInfo->mtpParentObject, parentItem->m_handle );
@@ -1145,9 +1117,9 @@ void FSStoragePlugin_test::testGetLargestPuoid()
 void FSStoragePlugin_test::testTruncateItem()
 {
     MTPResponseCode response;
-    response = m_storage->truncateItem( m_storage->m_pathNamesMap["/tmp/mtptests/file3"], 0 );
+    response = m_storage->truncateItem( m_storage->m_pathNamesMap[STORAGE1 "/file3"], 0 );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QFile file("/tmp/mtptests/file3");
+    QFile file(STORAGE1 "/file3");
     QCOMPARE( file.size(), static_cast<qint64>(0));
 }
 
@@ -1155,16 +1127,16 @@ void FSStoragePlugin_test::testGetPath()
 {
     MTPResponseCode response;
     QString path;
-    response = m_storage->getPath( m_storage->m_pathNamesMap["/tmp/mtptests/file3"], path );
+    response = m_storage->getPath( m_storage->m_pathNamesMap[STORAGE1 "/file3"], path );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( path, QString("/tmp/mtptests/file3") );
+    QCOMPARE( path, QString(STORAGE1 "/file3") );
 }
 
 void FSStoragePlugin_test::testGetObjectPropertyValueFromStorage()
 {
     MTPResponseCode response;
     QVariant v;
-    ObjHandle handle = m_storage->m_pathNamesMap["/tmp/mtptests/file3"];
+    ObjHandle handle = m_storage->m_pathNamesMap[STORAGE1 "/file3"];
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Association_Desc, v, MTP_DATA_TYPE_UNDEF );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
@@ -1178,7 +1150,7 @@ void FSStoragePlugin_test::testGetObjectPropertyValueFromStorage()
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Parent_Obj, v, MTP_DATA_TYPE_UNDEF );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( v.toUInt(), m_storage->m_pathNamesMap["/tmp/mtptests"] );
+    QCOMPARE( v.toUInt(), m_storage->m_pathNamesMap[STORAGE1] );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Obj_Size, v, MTP_DATA_TYPE_UNDEF );
@@ -1239,12 +1211,14 @@ void FSStoragePlugin_test::testGetObjectPropertyValueFromStorage()
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Rep_Sample_Height, v, MTP_DATA_TYPE_UNDEF );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( v.toInt(), THUMBNAIL_HEIGHT );
+    QVERIFY( v.toInt() <= THUMBNAIL_HEIGHT );
+    QVERIFY( v.toInt() > 0 );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Rep_Sample_Width, v, MTP_DATA_TYPE_UNDEF );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_OK );
-    QCOMPARE( v.toInt(), THUMBNAIL_WIDTH );
+    QVERIFY( v.toInt() <= THUMBNAIL_WIDTH );
+    QVERIFY( v.toInt() > 0 );
 
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Video_FourCC_Codec, v, MTP_DATA_TYPE_UNDEF );
@@ -1272,7 +1246,7 @@ void FSStoragePlugin_test::testGetInvalidObjectPropertyValueFromStorage()
 {
     MTPResponseCode response;
     QVariant v;
-    ObjHandle handle = m_storage->m_pathNamesMap["/tmp/mtptests/file3"];
+    ObjHandle handle = m_storage->m_pathNamesMap[STORAGE1 "/file3"];
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              0x0000, v, MTP_DATA_TYPE_UNDEF );
     QCOMPARE( response, (MTPResponseCode)MTP_RESP_ObjectProp_Not_Supported );
@@ -1283,17 +1257,17 @@ void FSStoragePlugin_test::testInotifyCreate()
     QEventLoop loop;
 
     QDir dir;
-    dir.mkpath( "/tmp/mtptests/inotifydir" );
+    dir.mkpath( STORAGE1 "/inotifydir" );
 
     while ( loop.processEvents() );
 
-    QFile file( "/tmp/mtptests/inotifydir/tmpfile" );
+    QFile file( STORAGE1 "/inotifydir/tmpfile" );
     file.open( QFile::ReadWrite );
     file.close();
 
     while ( loop.processEvents() );
 
-    QVERIFY( m_storage->m_pathNamesMap.contains("/tmp/mtptests/inotifydir/tmpfile") );
+    QVERIFY( m_storage->m_pathNamesMap.contains(STORAGE1 "/inotifydir/tmpfile") );
 }
 
 void FSStoragePlugin_test::testInotifyModify()
@@ -1301,14 +1275,14 @@ void FSStoragePlugin_test::testInotifyModify()
     QEventLoop loop;
     loop.processEvents();
 
-    QFile file( "/tmp/mtptests/tmpfile" );
+    QFile file( STORAGE1 "/tmpfile" );
     file.open( QFile::ReadWrite );
     file.close();
 
     loop.processEvents();
 
     StorageItem *item =
-        m_storage->findStorageItemByPath("/tmp/mtptests/tmpfile");
+        m_storage->findStorageItemByPath(STORAGE1 "/tmpfile");
     QVERIFY( item );
     QCOMPARE( item->m_objectInfo->mtpObjectCompressedSize,
               static_cast<quint64>(0) );
@@ -1329,22 +1303,20 @@ void FSStoragePlugin_test::testInotifyMove()
     QEventLoop loop;
     quint32 getOutOfHere = 0;
     loop.processEvents();
-    //system("mkdir /tmp/mtptests/tmpdir");
-    //system("mv /tmp/mtptests/tmpfile /tmp/mtptests/tmpdir");
-    system("mv /tmp/mtptests/tmpfile /tmp/mtptests/subdir2");
+    system("mv " STORAGE1 "/tmpfile " STORAGE1 "/subdir2");
     StorageItem *storageItem = 0;
     while ( !storageItem && getOutOfHere < 20 ) {
-        //storageItem = static_cast<StorageItem*>( m_storage->findStorageItemByPath( "/tmp/mtptests/tmpdir/tmpfile" ) );
-        storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( "/tmp/mtptests/subdir2/tmpfile" ) );
+        //storageItem = static_cast<StorageItem*>( m_storage->findStorageItemByPath( STORAGE1 "/tmpdir/tmpfile" ) );
+        storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( STORAGE1 "/subdir2/tmpfile" ) );
         loop.processEvents();
         ++getOutOfHere;
     }
     QCOMPARE( storageItem != 0, true );
-    //QCOMPARE( storageItem->m_parent->m_handle, m_storage->m_pathNamesMap["/tmp/mtptests/tmpdir"] );
-    QCOMPARE( storageItem->m_parent->m_handle, m_storage->m_pathNamesMap["/tmp/mtptests/subdir2"] );
+    //QCOMPARE( storageItem->m_parent->m_handle, m_storage->m_pathNamesMap[STORAGE1 "/tmpdir"] );
+    QCOMPARE( storageItem->m_parent->m_handle, m_storage->m_pathNamesMap[STORAGE1 "/subdir2"] );
     // Fetch the object info once
     const MTPObjectInfo *objInfo;
-    m_storage->getObjectInfo(m_storage->m_pathNamesMap["/tmp/mtptests/subdir2/tmpfile"], objInfo);
+    m_storage->getObjectInfo(m_storage->m_pathNamesMap[STORAGE1 "/subdir2/tmpfile"], objInfo);
 }
 
 void FSStoragePlugin_test::testInotifyDelete()
@@ -1352,14 +1324,13 @@ void FSStoragePlugin_test::testInotifyDelete()
     QEventLoop loop;
     quint32 getOutOfHere = 0;
     loop.processEvents();
-    //StorageItem *storageItem = static_cast<StorageItem*>( m_storage->findStorageItemByPath( "/tmp/mtptests/tmpdir/tmpfile" ) );
+    //StorageItem *storageItem = static_cast<StorageItem*>( m_storage->findStorageItemByPath( STORAGE1 "/tmpdir/tmpfile" ) );
     StorageItem *storageItem = static_cast<StorageItem *>
-                               ( m_storage->findStorageItemByPath( "/tmp/mtptests/subdir2/tmpfile" ) );
-    //system("rm /tmp/mtptests/tmpdir/tmpfile");
-    system("rm /tmp/mtptests/subdir2/tmpfile");
+                               ( m_storage->findStorageItemByPath( STORAGE1 "/subdir2/tmpfile" ) );
+    system("rm " STORAGE1 "/subdir2/tmpfile");
     while ( storageItem && getOutOfHere < 20 ) {
-        //storageItem = static_cast<StorageItem*>( m_storage->findStorageItemByPath( "/tmp/mtptests/tmpdir/tmpfile" ) );
-        storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( "/tmp/mtptests/subdir2/tmpfile" ) );
+        //storageItem = static_cast<StorageItem*>( m_storage->findStorageItemByPath( STORAGE1 "/tmpdir/tmpfile" ) );
+        storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( STORAGE1 "/subdir2/tmpfile" ) );
         loop.processEvents();
         ++getOutOfHere;
     }
@@ -1378,7 +1349,7 @@ void FSStoragePlugin_test::testThumbnailer()
     painter.setPen(Qt::NoPen);
     painter.drawRect(testpic.rect());
     QVERIFY2(!testpic.isNull(), "testpic not valid");
-    bool success = testpic.save("/tmp/mtptests/testpic.png");
+    bool success = testpic.save(STORAGE1 "/testpic.png");
     QVERIFY2(success, "testpic not saved");
 
     // Wait for the inotify handler to process it
@@ -1387,7 +1358,7 @@ void FSStoragePlugin_test::testThumbnailer()
     int maxtries = 20;
     while (!handle && maxtries > 0) {
         loop.processEvents();
-        handle = m_storage->m_pathNamesMap["/tmp/mtptests/testpic.png"];
+        handle = m_storage->m_pathNamesMap[STORAGE1 "/testpic.png"];
         --maxtries;
     }
     QVERIFY2(handle != 0, "testpic not registered in storage");
@@ -1410,8 +1381,7 @@ void FSStoragePlugin_test::testThumbnailer()
         int maxsignals = 20; // prevent infinite loop if signals keep coming
         bool got_signal = false;
         while (!got_signal && maxsignals > 0) {
-            bool emitted = spy.wait(1000); // wait 1 second for new signals
-            QVERIFY2(emitted, "thumbnail-ready signal not received");
+            spy.wait(1000); // wait 1 second for new signals
             while ( spy.count() > 0 ) {
                 arguments = spy.takeFirst();
                 if (arguments.at(0).value<MTPEventCode>() == MTP_EV_ObjectPropChanged) {
@@ -1453,9 +1423,9 @@ void FSStoragePlugin_test::setupPlugin(StoragePlugin *plugin)
 void FSStoragePlugin_test::cleanupTestCase()
 {
     delete m_storage;
-    system("rm -rf ~/.local/mtp");
-    system("rm -rf /tmp/mtptests");
-    QDir( "/tmp/mtptests-second" ).removeRecursively();
+    m_storage = nullptr;
+
+    removeTestData();
 }
 
 QTEST_MAIN(FSStoragePlugin_test);

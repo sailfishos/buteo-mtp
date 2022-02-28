@@ -95,6 +95,8 @@ private:
     FSStoragePlugin *m_storage;
 
     void setupPlugin(StoragePlugin *plugin);
+    void setupTestData();
+    void removeTestData();
 };
 }
 #endif
