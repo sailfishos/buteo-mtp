@@ -45,6 +45,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QFile>
 #include <QDir>
@@ -426,9 +427,6 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
 
     // Populate puoids stored persistently and store them in the puoids map.
     populatePuoids();
-
-    // Register this type before creating the Thumbnailer
-    qDBusRegisterMetaType<ThumbnailPathList>();
 
     m_thumbnailer = new Thumbnailer();
     QObject::connect( m_thumbnailer, SIGNAL( thumbnailReady( const QString & ) ), this,

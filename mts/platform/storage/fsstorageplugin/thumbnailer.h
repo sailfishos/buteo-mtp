@@ -34,8 +34,11 @@
 #include <QObject>
 #include <QString>
 #include <QHash>
-#include "thumbnailerproxy.h"
 #include "thumbnailpathlist.h"
+
+#include <QDBusConnection>
+class QDBusPendingCallWatcher;
+class QTimer;
 
 /// \brief The Thumbnailer class provides methods to generate representative
 /// samples
@@ -47,7 +50,7 @@
 /// MTP property). Internally, the class uses the DBUS service exposed by
 /// tumbler (http://live.gnome.org/ThumbnailerSpec).
 namespace meegomtp1dot0 {
-class Thumbnailer : public ThumbnailerProxy
+class Thumbnailer : public QObject
 {
     Q_OBJECT
 public:
@@ -68,6 +71,7 @@ public:
     /// \return Returns the absolute path of the thumbnail file, if
     /// available, else returns an empty string.
     QString requestThumbnail(const QString &filePath, const QString &mimeType);
+
 Q_SIGNALS:
     /// \brief Signal to indicate that thumbnail is now available.
     /// Thumbnailer emits this signal when the thumbnail for the path
@@ -97,6 +101,7 @@ public Q_SLOTS:
 
 
 private:
+    static void registerTypes();
     void scheduleThumbnailing(void);
 
     ///< Queue of images that are missing thumbnails
@@ -112,6 +117,9 @@ private:
     bool m_thumbnailerEnabled;
     ///< Thumbnailing can be temporarily suspended during runtime
     bool m_thumbnailerSuspended;
+
+    ///< Thumbnailer daemon is on D-Bus SessionBus
+    QDBusConnection m_sessionBus;
 };
 }
 #endif // THUMBNAILER_H

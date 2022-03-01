@@ -38,7 +38,6 @@ HEADERS += fsstorageplugin_test.h \
            ../fsstorageplugin.h \
            ../fsinotify.h \
            ../thumbnailer.h \
-           ../thumbnailerproxy.h \
            ../../storagefactory.h \
            ../storageitem.h \
            mts.h \
@@ -64,7 +63,6 @@ SOURCES += fsstorageplugin_test.cpp \
            ../fsinotify.cpp \
            ../storageitem.cpp \
            ../thumbnailer.cpp \
-           ../thumbnailerproxy.cpp \
            ../../storagefactory.cpp \
            ../../storageplugin.cpp \
            mts.cpp \
