@@ -812,8 +812,14 @@ MTPResponseCode FSStoragePlugin::createFile( const QString &path, MTPObjectInfo 
     /* Resize to expected content length */
     quint64 size = info ? info->mtpObjectCompressedSize : 0;
 
-    if ( fallocate(file.handle(), 0, 0, size) ) {
-        MTP_LOG_WARNING("failed to set file:" << path << " to size:" << size);
+    if ( size > 0 ) {
+        if ( fallocate(file.handle(), 0, 0, size) == -1 ) {
+            MTP_LOG_WARNING("failed to set file:" << path << " to size:" << size << " err:" << strerror(errno));
+        }
+    } else {
+        if ( ftruncate(file.handle(), 0) == -1 ) {
+            MTP_LOG_WARNING("failed to truncate file:" << path <<  " err:" << strerror(errno));
+        }
     }
 
     file.close();
