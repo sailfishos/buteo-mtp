@@ -3059,8 +3059,11 @@ void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &par
     bool EventsEnabled(true);
     QString ObjectPath("n/a");
     if ( ObjectHandle != 0x00000000 && ObjectHandle != 0xffffffff ) {
-        m_storageServer->getPath(ObjectHandle, ObjectPath);
-        m_storageServer->getEventsEnabled(ObjectHandle, EventsEnabled);
+        /* NB: Unit tests can be executed in abnormal setup without storage server */
+        if (m_storageServer) {
+            m_storageServer->getPath(ObjectHandle, ObjectPath);
+            m_storageServer->getEventsEnabled(ObjectHandle, EventsEnabled);
+        }
     }
 
     if ( filteringAllowed && !EventsEnabled ) {
