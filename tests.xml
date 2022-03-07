@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <testdefinition version="0.1">
-  <suite name="libmeegomtp-tests" domain="synchronization"> 
-    <set name="libmeegomtp-tests-set1" description="libmeegomtp-tests" feature="libmeegomtp unit tests">   
+  <suite name="buteo-mtp-tests" domain="synchronization">
+    <set name="buteo-mtp-tests-set1" description="buteo-mtp-tests" feature="buteo-mtp unit tests">
       <case name="deviceinfo-test" type="Functional" description="Testing Device Info"  timeout="30" subfeature="">
         <step expected_result="0">/opt/tests/buteo-mtp/deviceinfo-test</step>
       </case>
