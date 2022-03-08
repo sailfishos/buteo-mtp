@@ -185,7 +185,7 @@ public:
     /// \bufferLen [in] the length of the data to be written.
     /// \param isFirstSegment [in] If true, this is the first segment in a multi segment write operation
     /// \param isLastSegment [in] If true, this is the final segment in a multi segment write operation
-    MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment,
+    MTPResponseCode writeData( const ObjHandle &handle, const char *writeBuffer, quint32 bufferLen, bool isFirstSegment,
                                bool isLastSegment ) const;
 
     /// Overwrites a block of data in a storage item.

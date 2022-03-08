@@ -99,8 +99,7 @@ void MTPResponder_test::initTestCase()
     //       also in the unit test setup.
     m_responder = MTPResponder::instance();
 
-    bool ok;
-    ok = m_responder->initTransport(DUMMY);
+    QVERIFY( m_responder->initTransport(DUMMY) );
     QObject::connect( m_responder->m_transporter, SIGNAL(dataReceived(quint8 *, quint32, bool, bool)), this,
                       SLOT(processReceivedData(quint8 *, quint32, bool, bool)) );
 
@@ -117,7 +116,6 @@ void MTPResponder_test::cleanupTestCase()
     // m_responder is instance object -> must not be deleted
     m_responder = 0;
 
-    system("rm -rf /tmp/mtptests");
     cleanDirs();
 }
 
@@ -129,6 +127,9 @@ quint32 MTPResponder_test::nextTransactionId()
 void MTPResponder_test::processReceivedData( quint8 *data, quint32 len, bool isFirstPacket,
                                              bool isLastPacket )
 {
+    Q_UNUSED(isFirstPacket);
+    Q_UNUSED(isLastPacket);
+
     MTPRxContainer container(data, len);
 
     // Store response code.
@@ -223,8 +224,6 @@ void MTPResponder_test::testSendObjectPropList()
                   (quint32)0x00000005;
     copyAndSendContainer(reqContainer);
 
-    quint8 *objPropListData = 0;
-    quint32 offset = 0;
     quint32 noOfElements = 1;
     ObjHandle handle = 0x00000000;
     quint16 propCode = MTP_OBJ_PROP_Obj_File_Name;
@@ -741,7 +740,6 @@ void MTPResponder_test::testSetObjectPropValue()
     *reqContainer << (quint32)m_objectHandle << (quint32)MTP_OBJ_PROP_Obj_File_Name;
     copyAndSendContainer(reqContainer);
 
-    quint32 offset = 0;
     QString value = TESTFILE_RENAMED1;
     quint32 payloadLength = ((value.length() + 1) * sizeof(quint16)) + sizeof(quint8);
     MTPTxContainer *dataContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_DATA, MTP_OP_SetObjectPropValue, m_transactionId,

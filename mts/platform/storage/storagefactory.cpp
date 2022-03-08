@@ -493,7 +493,7 @@ MTPResponseCode StorageFactory::getObjectInfo( const ObjHandle &handle, const MT
 /*******************************************************
  * MTPResponseCode StorageFactory::writeData
  ******************************************************/
-MTPResponseCode StorageFactory::writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen,
+MTPResponseCode StorageFactory::writeData( const ObjHandle &handle, const char *writeBuffer, quint32 bufferLen,
                                            bool isFirstSegment, bool isLastSegment ) const
 {
     StoragePlugin *storage = storageOfHandle(handle);

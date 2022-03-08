@@ -2026,7 +2026,7 @@ MTPResponseCode FSStoragePlugin::truncateItem( const ObjHandle &handle, const qu
 /************************************************************
  * MTPResponseCode FSStoragePlugin::writeData
  ***********************************************************/
-MTPResponseCode FSStoragePlugin::writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen,
+MTPResponseCode FSStoragePlugin::writeData( const ObjHandle &handle, const char *writeBuffer, quint32 bufferLen,
                                             bool isFirstSegment, bool isLastSegment )
 {
     if ( !checkHandle( handle ) ) {

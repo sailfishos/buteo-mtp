@@ -70,6 +70,20 @@ static bool makeTestFile_(const char *path, const char *data, size_t size)
 }
 #define makeTestFile(path, data) makeTestFile_(path, data, sizeof data - 1)
 
+static bool runCommand(const char *command)
+{
+    int status = system(command);
+    if (status != -1) {
+        if (WIFSIGNALED(status))
+            qWarning("Command \"%s\" terminated by %s", command, strsignal(WTERMSIG(status)));
+        else if (WIFEXITED(status))
+            status = WEXITSTATUS(status);
+    }
+    if (status != 0)
+        qWarning("Command \"%s\" failed with exit code %d", command, status);
+    return status == 0;
+}
+
 void FSStoragePlugin_test::setupTestData()
 {
     // 1 root dir, 2 sub dirs, 1 nested, each dir has 3 files.
@@ -105,7 +119,7 @@ void FSStoragePlugin_test::setupTestData()
 
 void FSStoragePlugin_test::removeTestData()
 {
-    system("rm -rf ~/.local/mtp");
+    QVERIFY( QDir(QDir::homePath() + "/.local/mtp").removeRecursively() );
     QVERIFY( QDir(STORAGE1).removeRecursively() );
     QVERIFY( QDir(STORAGE2).removeRecursively() );
 }
@@ -121,9 +135,8 @@ void FSStoragePlugin_test::initTestCase()
 void FSStoragePlugin_test::testStorageCreation()
 {
     m_storage = new FSStoragePlugin( 1, MTP_STORAGE_TYPE_FixedRAM, STORAGE1, "media", "Phone Memory" );
-    QDir dir( m_storage->m_storagePath );
-
     setupPlugin(m_storage);
+
     QVERIFY( m_storage->m_root != 0 );
     QCOMPARE( m_storage->m_root->m_handle, static_cast<unsigned int>(0) );
     QVERIFY( m_storage->m_root->m_parent == 0 );
@@ -542,7 +555,6 @@ void FSStoragePlugin_test::testAddDir()
     MTPResponseCode response;
     ObjHandle parentHandle;
     ObjHandle handle;
-    quint32 storageId;
     MTPObjectInfo objectInfo;
     //memset(&objectInfo, 0 , sizeof(MTPObjectInfo));
 
@@ -941,7 +953,6 @@ void FSStoragePlugin_test::testDirCopy()
     ObjHandle parentHandle;
     ObjHandle handle;
     ObjHandle newHandle;
-    quint32 storageId;
     MTPObjectInfo objectInfo;
     //memset(&objectInfo, 0 , sizeof(MTPObjectInfo));
 
@@ -1303,7 +1314,7 @@ void FSStoragePlugin_test::testInotifyMove()
     QEventLoop loop;
     quint32 getOutOfHere = 0;
     loop.processEvents();
-    system("mv " STORAGE1 "/tmpfile " STORAGE1 "/subdir2");
+    QVERIFY( runCommand("mv " STORAGE1 "/tmpfile " STORAGE1 "/subdir2") );
     StorageItem *storageItem = 0;
     while ( !storageItem && getOutOfHere < 20 ) {
         //storageItem = static_cast<StorageItem*>( m_storage->findStorageItemByPath( STORAGE1 "/tmpdir/tmpfile" ) );
@@ -1327,7 +1338,7 @@ void FSStoragePlugin_test::testInotifyDelete()
     //StorageItem *storageItem = static_cast<StorageItem*>( m_storage->findStorageItemByPath( STORAGE1 "/tmpdir/tmpfile" ) );
     StorageItem *storageItem = static_cast<StorageItem *>
                                ( m_storage->findStorageItemByPath( STORAGE1 "/subdir2/tmpfile" ) );
-    system("rm " STORAGE1 "/subdir2/tmpfile");
+    QVERIFY( runCommand("rm " STORAGE1 "/subdir2/tmpfile") );
     while ( storageItem && getOutOfHere < 20 ) {
         //storageItem = static_cast<StorageItem*>( m_storage->findStorageItemByPath( STORAGE1 "/tmpdir/tmpfile" ) );
         storageItem = static_cast<StorageItem *>( m_storage->findStorageItemByPath( STORAGE1 "/subdir2/tmpfile" ) );
@@ -1368,6 +1379,7 @@ void FSStoragePlugin_test::testThumbnailer()
     QVariant value;
     response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                              MTP_OBJ_PROP_Rep_Sample_Data, value, MTP_DATA_TYPE_UNDEF);
+    QVERIFY(response == MTP_RESP_OK);
     QVERIFY(!value.isNull());
     QVector<quint8> data = value.value<QVector<quint8> >(); // sigh, why is this not a QByteArray
 
@@ -1398,6 +1410,7 @@ void FSStoragePlugin_test::testThumbnailer()
         QVERIFY2(got_signal, "thumbnail-ready signal not received");
         response = m_storage->getObjectPropertyValueFromStorage( handle,
                                                                  MTP_OBJ_PROP_Rep_Sample_Data, value, MTP_DATA_TYPE_UNDEF);
+        QVERIFY(response == MTP_RESP_OK);
         QVERIFY(!value.isNull());
         data = value.value<QVector<quint8> >();
         // After getting the event, there must be a thumbnail
