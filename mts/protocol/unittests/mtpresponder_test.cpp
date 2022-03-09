@@ -37,11 +37,42 @@
 #include "mtprxcontainer.h"
 #include <limits>
 
+// Note: Files are created/deleted in $HOME and thus must have names
+//       that are unlikely to conflict with already existing content.
+
+// Names used when creating files
+#define TESTFILE_CREATED1 "buteo_mtp_tests_created1"
+#define TESTFILE_CREATED2 "buteo_mtp_tests_created2"
+
+// Names used when renaming files
+#define TESTFILE_RENAMED1 "buteo_mtp_tests_renamed1"
+#define TESTFILE_RENAMED2 "buteo_mtp_tests_renamed2"
+
 using namespace meegomtp1dot0;
+
+QString readFile(const QString &path)
+{
+    QFile file(path);
+    if (file.open(QIODevice::ReadOnly))
+        return QString::fromLocal8Bit(file.readAll().data());
+    return QString();
+}
+
+static bool removeFile(const char *path)
+{
+    QFile file(path);
+    return !file.exists() || file.remove();
+}
 
 static void cleanDirs()
 {
-    QDir(QDir::homePath() + "/.local/mtp").removeRecursively();
+    QVERIFY( removeFile(TESTFILE_CREATED1) );
+    QVERIFY( removeFile(TESTFILE_CREATED2) );
+
+    QVERIFY( removeFile(TESTFILE_RENAMED1) );
+    QVERIFY( removeFile(TESTFILE_RENAMED2) );
+
+    QVERIFY( QDir(QDir::homePath() + "/.local/mtp").removeRecursively() );
 }
 
 void MTPResponder_test::copyAndSendContainer(MTPTxContainer *container)
@@ -198,7 +229,7 @@ void MTPResponder_test::testSendObjectPropList()
     ObjHandle handle = 0x00000000;
     quint16 propCode = MTP_OBJ_PROP_Obj_File_Name;
     quint16 datatype = MTP_DATA_TYPE_STR;
-    QString value = "tmpfile";
+    QString value = TESTFILE_CREATED1;
 
     quint32 payloadLength = sizeof(quint32) + sizeof(ObjHandle) + ( 2 * sizeof(quint16) ) +
                             ( ( value.size() + 1 ) * 2 );
@@ -206,8 +237,11 @@ void MTPResponder_test::testSendObjectPropList()
                                                        payloadLength);
     *dataContainer << noOfElements << handle << propCode << datatype << value;
     m_opcode = MTP_OP_SendObjectPropList;
+    QVERIFY( !QFile::exists(TESTFILE_CREATED1) );
     copyAndSendContainer(dataContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
+    QVERIFY( QFile::exists(TESTFILE_CREATED1) );
+    QVERIFY( QFile(TESTFILE_CREATED1).size() == 5 );
 }
 
 void MTPResponder_test::testSendObject()
@@ -220,8 +254,10 @@ void MTPResponder_test::testSendObject()
     MTPTxContainer *dataContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_DATA, MTP_OP_SendObject, m_transactionId, 5);
     memcpy( dataContainer->payload(), tmp, 5 );
     dataContainer->seek(5);
+    QVERIFY( readFile(TESTFILE_CREATED1) != tmp );
     copyAndSendContainer(dataContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
+    QVERIFY( readFile(TESTFILE_CREATED1) == tmp );
 }
 
 
@@ -247,7 +283,7 @@ void MTPResponder_test::testSendObjectInfo()
     objInfo.mtpProtectionStatus = 0;
     objInfo.mtpThumbFormat = 0;
     objInfo.mtpAssociationType = 0;
-    objInfo.mtpFileName = "tmpfile1";
+    objInfo.mtpFileName = TESTFILE_CREATED2;
     objInfo.mtpCaptureDate = "20090101T230000";
     objInfo.mtpModificationDate = "20090101T230000";
 
@@ -257,8 +293,11 @@ void MTPResponder_test::testSendObjectInfo()
                                                        payloadLength);
     *dataContainer << objInfo;
     m_opcode = MTP_OP_SendObjectInfo;
+    QVERIFY( !QFile::exists(TESTFILE_CREATED2) );
     copyAndSendContainer(dataContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
+    QVERIFY( QFile::exists(TESTFILE_CREATED2) );
+    QVERIFY( QFile(TESTFILE_CREATED2).size() == 5 );
 }
 
 void MTPResponder_test::testSendObject2()
@@ -271,8 +310,10 @@ void MTPResponder_test::testSendObject2()
     MTPTxContainer *dataContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_DATA, MTP_OP_SendObject, m_transactionId, 5);
     memcpy( dataContainer->payload(), tmp, 5 );
     dataContainer->seek(5);
+    QVERIFY( readFile(TESTFILE_CREATED2) != tmp );
     copyAndSendContainer(dataContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
+    QVERIFY( readFile(TESTFILE_CREATED2) == tmp );
 }
 
 void MTPResponder_test::testGetObjectInfo()
@@ -701,13 +742,15 @@ void MTPResponder_test::testSetObjectPropValue()
     copyAndSendContainer(reqContainer);
 
     quint32 offset = 0;
-    QString value = "newname";
+    QString value = TESTFILE_RENAMED1;
     quint32 payloadLength = ((value.length() + 1) * sizeof(quint16)) + sizeof(quint8);
     MTPTxContainer *dataContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_DATA, MTP_OP_SetObjectPropValue, m_transactionId,
                                                        payloadLength);
     *dataContainer << value;
+    QVERIFY( !QFile::exists(TESTFILE_RENAMED1) );
     copyAndSendContainer(dataContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
+    QVERIFY( QFile::exists(TESTFILE_RENAMED1) );
 }
 
 void MTPResponder_test::testSetObjectPropList()
@@ -720,7 +763,7 @@ void MTPResponder_test::testSetObjectPropList()
     ObjHandle handle = m_objectHandle;
     quint16 propCode = MTP_OBJ_PROP_Obj_File_Name;
     quint16 datatype = MTP_DATA_TYPE_STR;
-    QString value = "newname2";
+    QString value = TESTFILE_RENAMED2;
 
     quint32 payloadLength = sizeof(quint32) + sizeof(ObjHandle) + ( 2 * sizeof(quint16) ) +
                             ( ( value.size() + 1 ) * 2 ) + sizeof(quint8);
@@ -729,8 +772,10 @@ void MTPResponder_test::testSetObjectPropList()
     MTPTxContainer *dataContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_DATA, MTP_OP_SetObjectPropList, m_transactionId,
                                                        payloadLength);
     *dataContainer << noOfElements << handle << propCode << datatype << value;
+    QVERIFY( !QFile::exists(TESTFILE_RENAMED2) );
     copyAndSendContainer(dataContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
+    QVERIFY( QFile::exists(TESTFILE_RENAMED2) );
 }
 
 void MTPResponder_test::testGetObjectReferences()
