@@ -109,7 +109,7 @@ public:
 
     MTPResponseCode getObjectInfo( const ObjHandle &handle, const MTPObjectInfo *&objectInfo );
 
-    MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment,
+    MTPResponseCode writeData( const ObjHandle &handle, const char *writeBuffer, quint32 bufferLen, bool isFirstSegment,
                                bool isLastSegment );
 
     MTPResponseCode writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent, quint32 dataLength,

@@ -1,6 +1,6 @@
 include(../../common.pri)
 
-CONFIG += warn_off debug_and_release
+CONFIG += debug_and_release
 
 LIBS += -ldl -lssu
 TEMPLATE = app

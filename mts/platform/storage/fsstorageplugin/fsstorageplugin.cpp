@@ -45,6 +45,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <QCoreApplication>
 #include <QDebug>
 #include <QFile>
 #include <QDir>
@@ -426,9 +427,6 @@ FSStoragePlugin::FSStoragePlugin( quint32 storageId, MTPStorageType storageType,
 
     // Populate puoids stored persistently and store them in the puoids map.
     populatePuoids();
-
-    // Register this type before creating the Thumbnailer
-    qDBusRegisterMetaType<ThumbnailPathList>();
 
     m_thumbnailer = new Thumbnailer();
     QObject::connect( m_thumbnailer, SIGNAL( thumbnailReady( const QString & ) ), this,
@@ -814,8 +812,14 @@ MTPResponseCode FSStoragePlugin::createFile( const QString &path, MTPObjectInfo 
     /* Resize to expected content length */
     quint64 size = info ? info->mtpObjectCompressedSize : 0;
 
-    if ( fallocate(file.handle(), 0, 0, size) ) {
-        MTP_LOG_WARNING("failed to set file:" << path << " to size:" << size);
+    if ( size > 0 ) {
+        if ( fallocate(file.handle(), 0, 0, size) == -1 ) {
+            MTP_LOG_WARNING("failed to set file:" << path << " to size:" << size << " err:" << strerror(errno));
+        }
+    } else {
+        if ( ftruncate(file.handle(), 0) == -1 ) {
+            MTP_LOG_WARNING("failed to truncate file:" << path <<  " err:" << strerror(errno));
+        }
     }
 
     file.close();
@@ -2022,7 +2026,7 @@ MTPResponseCode FSStoragePlugin::truncateItem( const ObjHandle &handle, const qu
 /************************************************************
  * MTPResponseCode FSStoragePlugin::writeData
  ***********************************************************/
-MTPResponseCode FSStoragePlugin::writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen,
+MTPResponseCode FSStoragePlugin::writeData( const ObjHandle &handle, const char *writeBuffer, quint32 bufferLen,
                                             bool isFirstSegment, bool isLastSegment )
 {
     if ( !checkHandle( handle ) ) {

@@ -2,7 +2,7 @@ include(../../../common.pri)
 
 QT += dbus xml testlib
 QT -= gui
-CONFIG += warn_off debug_and_release
+CONFIG += debug_and_release
 
 LIBS += -lssu
 

@@ -26,8 +26,13 @@
 #include <QMap>
 #include <QString>
 
-typedef QMap<QString, QString> ThumbnailPathList;
+struct ThumbnailPath
+{
+    QString filePath;
+    QString thumbnailPath;
+};
+Q_DECLARE_METATYPE(ThumbnailPath)
 
+typedef QList<ThumbnailPath> ThumbnailPathList;
 Q_DECLARE_METATYPE(ThumbnailPathList)
-
 #endif

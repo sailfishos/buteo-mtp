@@ -182,7 +182,7 @@ public:
     ///                       a multi-segment write operation
     /// \param isLastSegment [in] If true, this is the final segment in
     ///                      a multi-segment write operation
-    virtual MTPResponseCode writeData( const ObjHandle &handle, char *writeBuffer, quint32 bufferLen, bool isFirstSegment,
+    virtual MTPResponseCode writeData( const ObjHandle &handle, const char *writeBuffer, quint32 bufferLen, bool isFirstSegment,
                                        bool isLastSegment ) = 0;
     virtual MTPResponseCode writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent,
                                              quint32 dataLength, bool isFirstSegment, bool isLastSegment) = 0;

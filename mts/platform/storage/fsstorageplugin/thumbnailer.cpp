@@ -42,9 +42,16 @@ static const unsigned THUMB_SIZE = 128;
 static const bool UNBOUNDED_SIZE = true;
 static const bool CROP_THUMBS = false;
 
+const auto DBUS_ERROR_NAME_HAS_NO_OWNER = QStringLiteral("org.freedesktop.DBus.Error.NameHasNoOwner");
+const auto THUMBNAILER_SERVICE = QStringLiteral("org.nemomobile.Thumbnailer");
+const auto THUMBNAILER_OBJECT = QStringLiteral("/");
+const auto THUMBNAILER_INTERFACE = QStringLiteral("org.nemomobile.Thumbnailer");
+const auto THUMBNAILER_FETCH = QStringLiteral("Fetch");
+const auto THUMBNAILER_FAILED = QStringLiteral("Failed");
+const auto THUMBNAILER_FINISHED = QStringLiteral("Finished");
+const auto THUMBNAILER_READY = QStringLiteral("Ready");
+
 static const QString IRI_PREFIX = "file://";
-static const QString THUMBNAILER_SERVICE = "org.nemomobile.Thumbnailer";
-static const QString THUMBNAILER_GENERIC_PATH = "/";
 
 /* How long to wait on startup before starting to generate
  * missing thumbnails [ms] */
@@ -57,11 +64,42 @@ static const QString THUMBNAILER_GENERIC_PATH = "/";
 /* Maximum number of images to pass in one thumbnail request */
 #define THUMBNAIL_MAX_IMAGES_PER_REQUEST 128
 
-Thumbnailer::Thumbnailer() :
-    ThumbnailerProxy(THUMBNAILER_SERVICE, THUMBNAILER_GENERIC_PATH, QDBusConnection::sessionBus()),
-    m_thumbnailerEnabled(false),
-    m_thumbnailerSuspended(false)
+QDBusArgument &operator<<(QDBusArgument &argument, const ThumbnailPath &item)
 {
+    argument.beginStructure();
+    argument << item.filePath;
+    argument << item.thumbnailPath;
+    argument.endStructure();
+    return argument;
+}
+const QDBusArgument &operator>>(const QDBusArgument &argument, ThumbnailPath &item)
+{
+    argument.beginStructure();
+    argument >> item.filePath;
+    argument >> item.thumbnailPath;
+    argument.endStructure();
+    return argument;
+}
+
+void Thumbnailer::registerTypes()
+{
+    static bool done = false;
+    if( !done ) {
+        done = true;
+        qRegisterMetaType<ThumbnailPath>("ThumbnailPath");
+        qDBusRegisterMetaType<ThumbnailPath>();
+        qRegisterMetaType<ThumbnailPathList>("ThumbnailPathList");
+        qDBusRegisterMetaType<ThumbnailPathList>();
+    }
+}
+
+Thumbnailer::Thumbnailer()
+    : m_thumbnailerEnabled(false)
+    , m_thumbnailerSuspended(false)
+    , m_sessionBus(QDBusConnection::sessionBus())
+{
+    registerTypes();
+
     /* Setup interval timer for combining multiple thumbnail
      * requests into one D-Bus method call. The first batch
      * of thumbnails that need to be generated will be delayed
@@ -80,21 +118,22 @@ Thumbnailer::Thumbnailer() :
     QObject::connect(responder, &MTPResponder::commandFinished,
                      this, &Thumbnailer::resumeThumbnailing);
 
-    QObject::connect(this, &Thumbnailer::Finished,
-                     this, &Thumbnailer::slotFinished);
-    QObject::connect(this, &Thumbnailer::Failed,
-                     this, &Thumbnailer::slotFailed);
-    QObject::connect(this, &Thumbnailer::Ready,
-                     this, &Thumbnailer::slotReady);
+    m_sessionBus.connect(THUMBNAILER_SERVICE, THUMBNAILER_OBJECT, THUMBNAILER_INTERFACE, THUMBNAILER_FINISHED,
+                        this, SLOT(slotFinished(quint32)));
+    m_sessionBus.connect(THUMBNAILER_SERVICE, THUMBNAILER_OBJECT, THUMBNAILER_INTERFACE, THUMBNAILER_FAILED,
+                        this, SLOT(slotFailed(quint32, QStringList)));
+    m_sessionBus.connect(THUMBNAILER_SERVICE, QString(), THUMBNAILER_INTERFACE, THUMBNAILER_READY,
+                        this, SLOT(slotReady(quint32, ThumbnailPathList)));
+
 }
 
 void Thumbnailer::slotReady(uint handle, ThumbnailPathList thumbnails)
 {
     Q_UNUSED(handle);
 
-    for (ThumbnailPathList::const_iterator it = thumbnails.cbegin(), end = thumbnails.cend(); it != end; ++it) {
-        const QString &uri(it.key());
-        const QString &thumbnailPath(it.value());
+    for (auto it = thumbnails.cbegin(), end = thumbnails.cend(); it != end; ++it) {
+        const QString &uri((*it).filePath);
+        const QString &thumbnailPath((*it).thumbnailPath);
 
         /* Thumbnailer may use signals directed to us only
          * but could as well use regular broadcasts. Ignore
@@ -162,9 +201,14 @@ void Thumbnailer::thumbnailDelayTimeout()
 
     /* Make an asynchronous thumbnail request via D-Bus */
     MTP_LOG_TRACE("Requesting" << uris.count() << "thumbnails");
-    QDBusPendingCall pc = this->Fetch(uris, THUMB_SIZE, UNBOUNDED_SIZE, CROP_THUMBS);
+    QDBusMessage request(QDBusMessage::createMethodCall(THUMBNAILER_SERVICE, THUMBNAILER_OBJECT, THUMBNAILER_INTERFACE, THUMBNAILER_FETCH));
+    request << uris;
+    request << quint32(THUMB_SIZE);
+    request << bool(UNBOUNDED_SIZE);
+    request << bool(CROP_THUMBS);
+    QDBusPendingReply<quint32> pc(m_sessionBus.asyncCall(request));
     QDBusPendingCallWatcher *pcw = new QDBusPendingCallWatcher(pc, this);
-    connect(pcw, SIGNAL(finished(QDBusPendingCallWatcher *)), SLOT(requestThumbnailFinished(QDBusPendingCallWatcher *)));
+    connect(pcw, &QDBusPendingCallWatcher::finished, this, &Thumbnailer::requestThumbnailFinished);
 
     /* Continue flushing the queue when mainloop gets idle */
     m_thumbnailTimer->setInterval(0);
