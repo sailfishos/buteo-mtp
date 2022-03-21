@@ -46,7 +46,7 @@ mts_protocol_tests.depends = sub-mts
 SUBDIRS += \
     mts \
     test \
-    mts_storage_tests \
+#    mts_storage_tests \
     mts_fsstorage_plugin \
     mts_fsstorage_tests \
     mts_deviceinfo_tests \
