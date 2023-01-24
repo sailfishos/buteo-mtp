@@ -72,7 +72,7 @@ void StorageFactory_test::testStorageIds()
 
     QVERIFY(storageIds.size() > 0);
 
-    qSort(storageIds);
+    std::sort(storageIds.begin(), storageIds.end());
     QCOMPARE(storageIds.at(0), STORAGE_ID);
 }
 
