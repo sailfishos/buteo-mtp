@@ -1135,7 +1135,7 @@ void MTPResponder::getObjectHandlesReq()
         // At least one PTP client (iPhoto) only shows all pictures if
         // the handles are sorted. It's probably related to having parent
         // folders listed before the objects they contain.
-        qSort(handles);
+        std::sort(handles.begin(), handles.end());
         MTP_LOG_INFO("handle count:" << handles.size());
         // DATA PHASE
         payloadLength = ( handles.size() + 1 ) * sizeof(quint32);
