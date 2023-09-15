@@ -1,6 +1,6 @@
 include(../../../common.pri)
 
-QT += dbus xml testlib
+QT += dbus xml testlib core5compat
 QT -= gui
 CONFIG += debug_and_release
 

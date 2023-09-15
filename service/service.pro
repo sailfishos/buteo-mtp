@@ -10,7 +10,7 @@ LIBS += -L../mts -lmeegomtp
 
 QT -= gui
 CONFIG += link_pkgconfig
-PKGCONFIG += mlite5
+PKGCONFIG += mlite$${QT_MAJOR_VERSION}
 
 SOURCES += service.cpp
 

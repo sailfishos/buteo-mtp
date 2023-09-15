@@ -46,7 +46,7 @@ void DeviceInfoProvider_Test::initTestCase()
     QCOMPARE(QFile::copy("/opt/tests/buteo-mtp/data/deviceinfo.xml", "/tmp/deviceinfo.xml"), true);
     m_xmlDoc = new QDomDocument();
     m_xmlFile = new QFile("/tmp/deviceinfo.xml");
-    QCOMPARE(m_xmlDoc->setContent(m_xmlFile), true);
+    QCOMPARE(m_xmlDoc->setContent(m_xmlFile).errorMessage.isEmpty(), true);
 
     // Original deviceinfo.xml may be changed during the test execution, so
     // backup its current state.

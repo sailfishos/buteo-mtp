@@ -483,7 +483,7 @@ void BulkWriterThread::setData(const quint8 *buffer, quint32 dataLen, bool termi
     m_dataLen = dataLen;
     m_terminateTransfer = terminateTransfer;
     m_result = false;
-    m_result_ready.store(0);
+    m_result_ready.storeRelaxed(0);
 }
 
 void BulkWriterThread::execute()
@@ -543,7 +543,7 @@ void BulkWriterThread::execute()
 
 bool BulkWriterThread::resultReady()
 {
-    return m_result_ready.load() != 0;
+    return m_result_ready.loadRelaxed() != 0;
 }
 
 bool BulkWriterThread::getResult()
