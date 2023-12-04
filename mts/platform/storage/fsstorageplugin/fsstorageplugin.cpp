@@ -54,6 +54,7 @@
 #include <QDateTime>
 #include <QMetaObject>
 #include <QLocale>
+#include <QRegularExpression>
 
 #ifndef UT_ON
 #include <blkid.h>
@@ -3147,8 +3148,9 @@ bool FSStoragePlugin::isFileNameValid(const QString &fileName, const StorageItem
 {
     // Check if the file name contains illegal characters, or if the file with
     // the same name is already present under the parent
-    if (fileName.contains(QRegExp(FILENAMES_FILTER_REGEX)) ||
-            QRegExp("[\\.]+").exactMatch(fileName)) {
+    QRegularExpression filterRegex(FILENAMES_FILTER_REGEX);
+    if (filterRegex.match(fileName).hasMatch() ||
+            QRegularExpression("^[\\.]+$").match(fileName).hasMatch()) {
         // Illegal characters, or all .'s
         return false;
     }

@@ -1,6 +1,6 @@
 include(common.pri)
 
-QT += xml dbus
+QT += xml dbus core5compat
 QT -= gui
 
 LIBS += -lssu
