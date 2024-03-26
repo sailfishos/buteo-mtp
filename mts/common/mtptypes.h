@@ -218,7 +218,7 @@ Q_DECLARE_METATYPE(MTPEventCode);
 typedef quint16 MTPContainerType;
 
 
-#define MTP_HEADER_SIZE  (2*sizeof(quint32) + 2*sizeof(quint16) )
+#define MTP_HEADER_SIZE  (2*sizeof(quint32) + 2*sizeof(quint16))
 #define MTP_STORAGE_INFO_SIZE ((2 * sizeof(quint64)) +\
                                (1 * sizeof(quint32)) +\
                                (2 * sizeof(quint8)) +\
@@ -709,7 +709,7 @@ struct MtpInt128 {
     }
 
     // Constructor taking upper and lower 8 bytes.
-    MtpInt128( quint64 lower, quint64 upper = 0 )
+    MtpInt128(quint64 lower, quint64 upper = 0)
     {
         for (qint32 i = 0; i < 8; i++) {
             val[i] = lower & 0xFF;
@@ -718,6 +718,14 @@ struct MtpInt128 {
         for (qint32 i = 8; i < 16; i++) {
             val[i] = upper & 0xFF;
             upper >>= 8;
+        }
+    }
+
+    // copy constructor
+    MtpInt128(const MtpInt128 &other)
+    {
+        for (qint32 i = 0; i < 16; i++) {
+            val[i] = other.val[i];
         }
     }
 
@@ -731,7 +739,7 @@ struct MtpInt128 {
 
         // If the lower 8 bytes overflowed
         // due to this increment, increment the upper 8 bytes.
-        if ( !*lower ) {
+        if (!*lower) {
             ++*upper;
         }
 
@@ -739,7 +747,7 @@ struct MtpInt128 {
     }
 
     // Compares two MtpInt128's
-    int compare( const MtpInt128 &rhs ) const
+    int compare(const MtpInt128 &rhs) const
     {
         int diff = 0;
         for (qint32 i = 15; ((i >= 0) && (0 == diff)) ; i--) {
@@ -748,9 +756,9 @@ struct MtpInt128 {
         return diff;
     }
 
-    bool operator==( const MtpInt128 &rhs ) const
+    bool operator==(const MtpInt128 &rhs) const
     {
-        return (0 == compare(rhs)) ? true : false;
+        return 0 == compare(rhs);
     }
 
     bool operator<(const MtpInt128 &rhs) const
@@ -764,7 +772,7 @@ struct MtpInt128 {
     }
 
     // Assignment operator
-    MtpInt128 &operator=( const MtpInt128 &rhs )
+    MtpInt128 &operator=(const MtpInt128 &rhs)
     {
         for (qint32 i = 0; i < 16; i++) {
             val[i] = rhs.val[i];
@@ -874,7 +882,7 @@ struct MTPObjectInfo {
     {
         bool differs = false;
 #define CMP(memb) do {\
-    if( this->memb != that->memb ) { \
+    if (this->memb != that->memb) { \
         MTP_LOG_TRACE(#memb":" << this->memb << "->" << that->memb);\
         differs = true;\
     }\
