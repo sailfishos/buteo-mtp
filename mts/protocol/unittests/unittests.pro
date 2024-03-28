@@ -2,7 +2,7 @@ include(../../common.pri)
 
 CONFIG += debug_and_release
 
-LIBS += -ldl -lssu
+LIBS += -ldl
 TEMPLATE = app
 TARGET = protocol-test
 QT += dbus xml testlib
