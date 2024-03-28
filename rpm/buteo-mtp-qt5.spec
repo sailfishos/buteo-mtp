@@ -16,7 +16,6 @@ BuildRequires: pkgconfig(mount)
 BuildRequires: pkgconfig(mlite5)
 # for the thumbnailer unit test
 BuildRequires: pkgconfig(Qt5Gui)
-BuildRequires: ssu-devel >= 0.37.9
 BuildRequires: pkgconfig(systemsettings) >= 0.6.0
 BuildRequires: pkgconfig(nemodbus) >= 2.1.16
 Requires: mtp-vendor-configuration

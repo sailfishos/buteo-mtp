@@ -30,25 +30,21 @@
 *
 */
 
-#include "deviceinfoprovider.h"
 #include <QTimer>
-#include <ssudeviceinfo.h>
 #include <batterystatus.h>
 #include <deviceinfo.h>
+
 #include "trace.h"
+#include "deviceinfoprovider.h"
 
 using namespace meegomtp1dot0;
 
-/**********************************************
- * DeviceInfoProvider::DeviceInfoProvider
- *********************************************/
 DeviceInfoProvider::DeviceInfoProvider()
     : m_batteryStatus(new BatteryStatus(this))
 {
-    DeviceInfo deviceInfo;
-    SsuDeviceInfo ssuDeviceInfo;
+    DeviceInfo deviceInfo(true);
 
-    m_serialNo = ssuDeviceInfo.deviceUid();
+    m_serialNo = deviceInfo.deviceUid();
     m_deviceVersion = deviceInfo.osVersion();
     m_manufacturer = deviceInfo.manufacturer();
     m_model = deviceInfo.prettyName();
@@ -63,9 +59,6 @@ DeviceInfoProvider::DeviceInfoProvider()
     }
 }
 
-/**********************************************
- * DeviceInfoProvider::~DeviceInfoProvider
- *********************************************/
 DeviceInfoProvider::~DeviceInfoProvider()
 {
 }

@@ -52,10 +52,7 @@ class DeviceInfoProvider : public MtpDeviceInfo
     friend class DeviceInfoProvider_Test;
 #endif
 public:
-    /// Constructor.
     DeviceInfoProvider();
-
-    /// Destructor.
     ~DeviceInfoProvider();
 
 private:
