@@ -3,8 +3,6 @@ include(common.pri)
 QT += xml dbus
 QT -= gui
 
-LIBS += -lssu
-
 CONFIG += link_pkgconfig debug
 
 #QMAKE_CXXFLAGS += -O0 -Werror

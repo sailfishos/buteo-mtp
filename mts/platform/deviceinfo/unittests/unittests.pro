@@ -4,8 +4,6 @@ QT += dbus xml testlib
 QT -= gui
 CONFIG += debug_and_release
 
-LIBS += -lssu
-
 TEMPLATE = app
 TARGET = deviceinfo-test
 DEFINES += UT_ON
