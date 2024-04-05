@@ -5,7 +5,7 @@ TARGET = fsstorage
 
 CONFIG += plugin debug
 
-QT += dbus xml
+QT += dbus xml core5compat
 QT -= gui
 
 PKGCONFIG += blkid mount

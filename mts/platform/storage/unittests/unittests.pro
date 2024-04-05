@@ -2,7 +2,7 @@ include(../../../common.pri)
 
 TEMPLATE = app
 TARGET = storagefactory-test
-QT += testlib xml dbus
+QT += testlib xml dbus core5compat
 QT -= gui
 
 DEFINES += UT_ON
