@@ -100,8 +100,8 @@ void MTPResponder_test::initTestCase()
     m_responder = MTPResponder::instance();
 
     QVERIFY( m_responder->initTransport(DUMMY) );
-    QObject::connect( m_responder->m_transporter, SIGNAL(dataReceived(quint8 *, quint32, bool, bool)), this,
-                      SLOT(processReceivedData(quint8 *, quint32, bool, bool)) );
+    QObject::connect( m_responder->m_transporter, SIGNAL(dataReceived(quint8 *, quint32, bool, bool)),
+                      this, SLOT(processReceivedData(quint8 *, quint32, bool, bool)) );
 
     /* Process events until storages are initialized. */
     m_responder->initStorages();
@@ -258,7 +258,6 @@ void MTPResponder_test::testSendObject()
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
     QVERIFY( readFile(TESTFILE_CREATED1) == tmp );
 }
-
 
 void MTPResponder_test::testSendObjectInfo()
 {

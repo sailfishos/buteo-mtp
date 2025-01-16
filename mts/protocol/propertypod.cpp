@@ -539,10 +539,8 @@ PropertyPod *PropertyPod::instance(MtpDeviceInfo *devInfoProvider, MTPExtensionM
 
 void PropertyPod::releaseInstance()
 {
-    if (m_instance) {
-        delete m_instance;
-        m_instance = 0;
-    }
+    delete m_instance;
+    m_instance = nullptr;
 }
 
 PropertyPod::~PropertyPod()

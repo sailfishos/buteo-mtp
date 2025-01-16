@@ -186,7 +186,7 @@ private:
     } m_state_accessor_only;                                            ///< Responder state
 
     const char *responderStateName(MTPResponder::ResponderState state);
-    ResponderState getResponderState(void);
+    ResponderState getResponderState();
     void setResponderState(ResponderState state);
 
 

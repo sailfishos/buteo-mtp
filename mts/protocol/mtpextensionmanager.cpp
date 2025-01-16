@@ -41,9 +41,7 @@ MTPExtensionManager::MTPExtensionManager()
 
 MTPExtensionManager::~MTPExtensionManager()
 {
-    foreach (MTPExtension *extension, m_extensionList) {
-        delete extension;
-    }
+    qDeleteAll(m_extensionList);
     m_extensionList.clear();
 }
 

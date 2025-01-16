@@ -39,7 +39,6 @@ MTPContainer::MTPContainer() : m_expectedLength(0), m_accumulatedLength(0),
     m_buffer(0), m_offset(MTP_HEADER_SIZE), m_bufferCapacity(0), m_extraLargeContainer(false),
     m_container(0)
 {
-
 }
 
 MTPContainer::~MTPContainer()

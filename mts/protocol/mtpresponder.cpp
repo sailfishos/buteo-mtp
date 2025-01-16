@@ -207,48 +207,35 @@ MTPResponder::~MTPResponder()
 {
     MTP_FUNC_TRACE();
 
-    if (m_storageServer) {
-        delete m_storageServer;
-        m_storageServer = 0;
-    }
+    delete m_storageServer;
+    m_storageServer = nullptr;
 
-    if (m_transporter) {
-        delete m_transporter;
-        m_transporter = 0;
-    }
+    delete m_transporter;
+    m_transporter = nullptr;
 
-    if (m_propertyPod) {
-        PropertyPod::releaseInstance();
-        m_propertyPod = 0;
-    }
+    PropertyPod::releaseInstance();
+    m_propertyPod = nullptr;
 
-    if (m_devInfoProvider) {
-        delete m_devInfoProvider;
-        m_devInfoProvider = 0;
-    }
+    delete m_devInfoProvider;
+    m_devInfoProvider = nullptr;
 
-    if ( m_transactionSequence ) {
-        deleteStoredRequest();
-        delete m_transactionSequence;
-        m_transactionSequence = 0;
-    }
+    deleteStoredRequest();
 
-    if (m_extensionManager) {
-        delete m_extensionManager;
-        m_extensionManager = 0;
-    }
+    delete m_transactionSequence;
+    m_transactionSequence = nullptr;
 
-    if ( m_sendObjectSequencePtr ) {
-        delete m_sendObjectSequencePtr;
-        m_sendObjectSequencePtr = 0;
-    }
+    delete m_extensionManager;
+    m_extensionManager = nullptr;
+
+    delete m_sendObjectSequencePtr;
+    m_sendObjectSequencePtr = nullptr;
 
     delete m_editObjectSequencePtr;
     m_editObjectSequencePtr = nullptr;
 
     freeObjproplistInfo();
 
-    m_instance = 0;
+    m_instance = nullptr;
 }
 
 void MTPResponder::createCommandHandler()
@@ -314,8 +301,9 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
         return false;
     }
 
-    if (MTP_CONTAINER_TYPE_RESPONSE == container.containerType() || MTP_CONTAINER_TYPE_DATA == container.containerType() ||
-            MTP_CONTAINER_TYPE_EVENT == container.containerType() ) {
+    if (MTP_CONTAINER_TYPE_RESPONSE == container.containerType()
+            || MTP_CONTAINER_TYPE_DATA == container.containerType()
+            || MTP_CONTAINER_TYPE_EVENT == container.containerType() ) {
         //m_transporter->disableRW();
         //QCoreApplication::processEvents();
         //m_transporter->enableRW();
@@ -401,10 +389,9 @@ void MTPResponder::receiveContainer(quint8 *data, quint32 dataLen, bool isFirstP
     case RESPONDER_SUSPEND: {
         setResponderState(RESPONDER_IDLE);
         // Delete any old request, just in case
-        if (0 != m_transactionSequence->reqContainer) {
-            delete m_transactionSequence->reqContainer;
-            m_transactionSequence->reqContainer = 0;
-        }
+        delete m_transactionSequence->reqContainer;
+        m_transactionSequence->reqContainer = nullptr;
+
         // This must be a request container, request containers cannot
         // be segmented!
         if (isFirstPacket && isLastPacket) {
@@ -949,10 +936,8 @@ void MTPResponder::closeSessionReq()
     } else {
         m_transactionSequence->mtpSessionId = MTP_INITIAL_SESSION_ID;
 
-        if ( m_sendObjectSequencePtr ) {
-            delete m_sendObjectSequencePtr;
-            m_sendObjectSequencePtr = 0;
-        }
+        delete m_sendObjectSequencePtr;
+        m_sendObjectSequencePtr = nullptr;
 
         freeObjproplistInfo();
 
@@ -2325,12 +2310,11 @@ void MTPResponder::sendObjectData(quint8 *data, quint32 dataLen, bool isFirstPac
     if ( MTP_RESP_Undefined != code ) {
         // Delete the stored sendObjectInfo information
         if ( m_sendObjectSequencePtr ) {
-            if ( m_sendObjectSequencePtr->objInfo ) {
-                delete m_sendObjectSequencePtr->objInfo;
-                m_sendObjectSequencePtr->objInfo = 0;
-            }
+            delete m_sendObjectSequencePtr->objInfo;
+            m_sendObjectSequencePtr->objInfo = nullptr;
+
             delete m_sendObjectSequencePtr;
-            m_sendObjectSequencePtr = 0;
+            m_sendObjectSequencePtr = nullptr;
         }
         // Apply object prop list if one was sent thru SendObjectPropList
         if (MTP_RESP_OK == code && m_objPropListInfo) {
@@ -2656,15 +2640,16 @@ void MTPResponder::setObjReferencesData()
 void MTPResponder::deleteStoredRequest()
 {
     MTP_FUNC_TRACE();
+    if (!m_transactionSequence) {
+        return;
+    }
+
     // deallocate memory of stored old request if still existing
-    if (0 != m_transactionSequence->dataContainer) {
-        delete m_transactionSequence->dataContainer;
-        m_transactionSequence->dataContainer = 0;
-    }
-    if (0 != m_transactionSequence->reqContainer) {
-        delete m_transactionSequence->reqContainer;
-        m_transactionSequence->reqContainer = 0;
-    }
+    delete m_transactionSequence->dataContainer;
+    m_transactionSequence->dataContainer = nullptr;
+
+    delete m_transactionSequence->reqContainer;
+    m_transactionSequence->reqContainer = nullptr;
 }
 
 MTPResponseCode MTPResponder::preCheck(quint32 sessionID, quint32 transactionID)
@@ -2683,15 +2668,14 @@ void MTPResponder::freeObjproplistInfo()
     MTP_FUNC_TRACE();
     if (m_objPropListInfo) {
         for (quint32 i = 0; i < m_objPropListInfo->noOfElements; i++) {
-            if ( m_objPropListInfo->objPropList[i].value ) {
-                delete m_objPropListInfo->objPropList[i].value;
-            }
+            delete m_objPropListInfo->objPropList[i].value;
         }
         if (m_objPropListInfo->objPropList) {
             delete[] m_objPropListInfo->objPropList;
         }
+
         delete m_objPropListInfo;
-        m_objPropListInfo = 0;
+        m_objPropListInfo = nullptr;
     }
 }
 
@@ -2747,10 +2731,9 @@ void MTPResponder::closeSession()
     m_transactionSequence->mtpSessionId = MTP_INITIAL_SESSION_ID;
     deleteStoredRequest();
     setResponderState(RESPONDER_IDLE);
-    if ( m_sendObjectSequencePtr ) {
-        delete m_sendObjectSequencePtr;
-        m_sendObjectSequencePtr = 0;
-    }
+
+    delete m_sendObjectSequencePtr;
+    m_sendObjectSequencePtr = nullptr;
     freeObjproplistInfo();
 }
 
