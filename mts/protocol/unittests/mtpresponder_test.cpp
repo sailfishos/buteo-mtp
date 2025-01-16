@@ -78,6 +78,7 @@ static void cleanDirs()
 void MTPResponder_test::copyAndSendContainer(MTPTxContainer *container)
 {
     quint8 *buffer = new quint8[container->bufferSize()];
+    m_tempBuffers.append(buffer);
     memcpy(buffer, container->buffer(), container->bufferSize());
     m_responder->receiveContainer(buffer, container->bufferSize(), true, true);
     delete container;
@@ -115,6 +116,10 @@ void MTPResponder_test::cleanupTestCase()
 {
     // m_responder is instance object -> must not be deleted
     m_responder = 0;
+
+    for (quint8 *ptr : m_tempBuffers) {
+        delete[] ptr;
+    }
 
     cleanDirs();
 }

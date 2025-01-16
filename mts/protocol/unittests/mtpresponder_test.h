@@ -96,6 +96,7 @@ private:
     quint32 m_storageId;
     ObjHandle m_parentHandle, m_objectHandle;
     quint32 m_opcode;
+    QList<quint8 *> m_tempBuffers;
 };
 }
 
