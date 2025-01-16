@@ -455,10 +455,9 @@ void MTPResponder::receiveContainer(quint8 *data, quint32 dataLen, bool isFirstP
     }
 }
 
-void MTPResponder::onStorageReady(void)
+void MTPResponder::onStorageReady()
 {
     MTP_FUNC_TRACE();
-
     MTP_LOG_INFO("Storage ready");
 
 #if DEFER_TRANSPORTER_ACTIVATION
@@ -3153,7 +3152,7 @@ const char *MTPResponder::responderStateName(MTPResponder::ResponderState state)
     return name;
 }
 
-MTPResponder::ResponderState MTPResponder::getResponderState(void)
+MTPResponder::ResponderState MTPResponder::getResponderState()
 {
     return m_state_accessor_only;
 }

@@ -3022,7 +3022,7 @@ static QString inotifyEventMaskRepr(int mask)
     return res;
 }
 
-void FSStoragePlugin::sendStorageInfoChanged(void)
+void FSStoragePlugin::sendStorageInfoChanged()
 {
     MTPStorageInfo info;
     storageInfo( info );

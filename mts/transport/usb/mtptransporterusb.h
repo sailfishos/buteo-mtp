@@ -163,7 +163,7 @@ public Q_SLOTS:
 
 public Q_SLOTS:
     /// Propagate storage is ready state
-    void onStorageReady(void);
+    void onStorageReady();
 
 private Q_SLOTS:
     void onCommandFinished();

@@ -668,7 +668,7 @@ void MTPTransporterUSB::stopRead()
     m_resetCount++;
 }
 
-void MTPTransporterUSB::onStorageReady(void)
+void MTPTransporterUSB::onStorageReady()
 {
     MTP_LOG_TRACE("Storage ready");
     m_storageReady = true;

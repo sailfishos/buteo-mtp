@@ -214,7 +214,7 @@ void Thumbnailer::thumbnailDelayTimeout()
     m_thumbnailTimer->setInterval(0);
 }
 
-void Thumbnailer::enableThumbnailing(void)
+void Thumbnailer::enableThumbnailing()
 {
     if (!m_thumbnailerEnabled) {
         MTP_LOG_INFO("thumbnailer enabled");
@@ -223,7 +223,7 @@ void Thumbnailer::enableThumbnailing(void)
     }
 }
 
-void Thumbnailer::suspendThumbnailing(void)
+void Thumbnailer::suspendThumbnailing()
 {
     if (!m_thumbnailerSuspended) {
         m_thumbnailerSuspended = true;
@@ -231,7 +231,7 @@ void Thumbnailer::suspendThumbnailing(void)
     }
 }
 
-void Thumbnailer::resumeThumbnailing(void)
+void Thumbnailer::resumeThumbnailing()
 {
     if (m_thumbnailerSuspended) {
         m_thumbnailerSuspended = false;
@@ -239,12 +239,11 @@ void Thumbnailer::resumeThumbnailing(void)
     }
 }
 
-void Thumbnailer::scheduleThumbnailing(void)
+void Thumbnailer::scheduleThumbnailing()
 {
-    bool activate = (m_thumbnailerEnabled &&
-                     !m_thumbnailerSuspended &&
-                     !m_uriRequestQueue.isEmpty());
-
+    bool activate = m_thumbnailerEnabled
+            && !m_thumbnailerSuspended
+            && !m_uriRequestQueue.isEmpty();
 
     if (activate) {
         if (!m_thumbnailTimer->isActive()) {
@@ -282,4 +281,3 @@ QString Thumbnailer::requestThumbnail(const QString &filePath, const QString &mi
     }
     return thumbPath;
 }
-

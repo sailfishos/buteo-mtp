@@ -66,7 +66,7 @@ void StorageItem::setEventsEnabled(bool enabled)
     }
 }
 
-bool StorageItem::eventsAreEnabled(void) const
+bool StorageItem::eventsAreEnabled() const
 {
     return m_eventsEnabled;
 }

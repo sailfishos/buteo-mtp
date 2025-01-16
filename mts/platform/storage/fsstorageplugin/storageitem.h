@@ -54,10 +54,10 @@ public:
     void setEventsEnabled(bool enabled);
 
     /// Is sending of object changed notifications allowed
-    bool eventsAreEnabled(void) const;
+    bool eventsAreEnabled() const;
 
     // Allow read access to item path
-    const QString &path(void) const
+    const QString &path() const
     {
         return m_path;
     }
