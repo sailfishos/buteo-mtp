@@ -37,6 +37,7 @@ INCLUDEPATH += . \
 headers.files += mts.h common/trace.h common/mtptypes.h
 HEADERS += mts.h \
            common/trace.h \
+           common/mtptypes.h \
            protocol/mtpresponder.h \
            protocol/propertypod.h \
            protocol/objectpropertycache.h \
