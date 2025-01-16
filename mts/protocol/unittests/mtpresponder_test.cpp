@@ -37,6 +37,8 @@
 #include "mtprxcontainer.h"
 #include <limits>
 
+#include <QDir>
+
 // Note: Files are created/deleted in $HOME and thus must have names
 //       that are unlikely to conflict with already existing content.
 
@@ -50,17 +52,17 @@
 
 using namespace meegomtp1dot0;
 
-QString readFile(const QString &path)
+static QString readFile(const QString &name)
 {
-    QFile file(path);
+    QFile file(QDir::homePath() + '/' + name);
     if (file.open(QIODevice::ReadOnly))
         return QString::fromLocal8Bit(file.readAll().data());
     return QString();
 }
 
-static bool removeFile(const char *path)
+static bool removeFile(const QString &name)
 {
-    QFile file(path);
+    QFile file(QDir::homePath() + '/' + name);
     return !file.exists() || file.remove();
 }
 
@@ -241,11 +243,11 @@ void MTPResponder_test::testSendObjectPropList()
                                                        payloadLength);
     *dataContainer << noOfElements << handle << propCode << datatype << value;
     m_opcode = MTP_OP_SendObjectPropList;
-    QVERIFY( !QFile::exists(TESTFILE_CREATED1) );
+    QVERIFY( !QFile::exists(QDir::homePath() + '/' + TESTFILE_CREATED1) );
     copyAndSendContainer(dataContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
-    QVERIFY( QFile::exists(TESTFILE_CREATED1) );
-    QVERIFY( QFile(TESTFILE_CREATED1).size() == 5 );
+    QVERIFY( QFile::exists(QDir::homePath() + '/' + TESTFILE_CREATED1) );
+    QVERIFY( QFile(QDir::homePath() + '/' + TESTFILE_CREATED1).size() == 5 );
 }
 
 void MTPResponder_test::testSendObject()
@@ -296,11 +298,11 @@ void MTPResponder_test::testSendObjectInfo()
                                                        payloadLength);
     *dataContainer << objInfo;
     m_opcode = MTP_OP_SendObjectInfo;
-    QVERIFY( !QFile::exists(TESTFILE_CREATED2) );
+    QVERIFY( !QFile::exists(QDir::homePath() + '/' + TESTFILE_CREATED2) );
     copyAndSendContainer(dataContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
-    QVERIFY( QFile::exists(TESTFILE_CREATED2) );
-    QVERIFY( QFile(TESTFILE_CREATED2).size() == 5 );
+    QVERIFY( QFile::exists(QDir::homePath() + '/' + TESTFILE_CREATED2) );
+    QVERIFY( QFile(QDir::homePath() + '/' + TESTFILE_CREATED2).size() == 5 );
 }
 
 void MTPResponder_test::testSendObject2()
@@ -749,10 +751,10 @@ void MTPResponder_test::testSetObjectPropValue()
     MTPTxContainer *dataContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_DATA, MTP_OP_SetObjectPropValue, m_transactionId,
                                                        payloadLength);
     *dataContainer << value;
-    QVERIFY( !QFile::exists(TESTFILE_RENAMED1) );
+    QVERIFY( !QFile::exists(QDir::homePath() + '/' + TESTFILE_RENAMED1) );
     copyAndSendContainer(dataContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
-    QVERIFY( QFile::exists(TESTFILE_RENAMED1) );
+    QVERIFY( QFile::exists(QDir::homePath() + '/' + TESTFILE_RENAMED1) );
 }
 
 void MTPResponder_test::testSetObjectPropList()
@@ -774,10 +776,10 @@ void MTPResponder_test::testSetObjectPropList()
     MTPTxContainer *dataContainer = new MTPTxContainer(MTP_CONTAINER_TYPE_DATA, MTP_OP_SetObjectPropList, m_transactionId,
                                                        payloadLength);
     *dataContainer << noOfElements << handle << propCode << datatype << value;
-    QVERIFY( !QFile::exists(TESTFILE_RENAMED2) );
+    QVERIFY( !QFile::exists(QDir::homePath() + '/' + TESTFILE_RENAMED2) );
     copyAndSendContainer(dataContainer);
     QCOMPARE( m_responseCode, (MTPResponseCode)MTP_RESP_OK );
-    QVERIFY( QFile::exists(TESTFILE_RENAMED2) );
+    QVERIFY( QFile::exists(QDir::homePath() + '/' + TESTFILE_RENAMED2) );
 }
 
 void MTPResponder_test::testGetObjectReferences()
