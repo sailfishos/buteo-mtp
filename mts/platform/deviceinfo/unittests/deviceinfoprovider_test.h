@@ -46,6 +46,7 @@ class DeviceInfoProvider_Test : public QObject
 private Q_SLOTS:
     void initTestCase();
     void cleanupTestCase();
+
     void testDeviceInfoProviderDefaultConstruction();
     void testDeviceInfoProviderConstruction();
     void testGetSyncPartner();
@@ -88,6 +89,7 @@ private Q_SLOTS:
     void testGetSupportedAudioCodecs();
     void testGetDeviceInfoXmlPath();
     void testGetDeviceIcon();
+
 private:
     DeviceInfoProvider *m_Provider;
     QDomDocument       *m_xmlDoc;
