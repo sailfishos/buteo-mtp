@@ -72,10 +72,8 @@ Mts::~Mts()
 
 void Mts::destroyInstance()
 {
-    if (mts_instance) {
-        delete mts_instance;
-        mts_instance = 0;
-    }
+    delete mts_instance;
+    mts_instance = nullptr;
 }
 
 void Mts::toggleDebugLogs()

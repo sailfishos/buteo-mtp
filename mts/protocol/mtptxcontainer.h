@@ -38,7 +38,6 @@ namespace meegomtp1dot0 {
 class MTPTxContainer : public MTPContainer
 {
 public:
-
     /// Constructor; Constructs a container for serialization. Use this constructor when sending data to the initiator
     /// \param type [in] The type of the container to create
     /// \param code [in] The code portion of the container (For request and
@@ -163,7 +162,6 @@ public:
     void resetContainerLength();
 
 private:
-
     ///< Serializes into the internal buffer, elements of the given size and
     /// number
     void serialize(const void *source, quint32 elementSize, quint32 numberOfElements);

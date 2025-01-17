@@ -1,13 +1,15 @@
-#include "threadio.h"
 #include <linux/usb/functionfs.h>
+
 #include <QMutex>
 #include <QMutexLocker>
+
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
 #include <endian.h>
 #include <unistd.h>
 
+#include "threadio.h"
 #include "trace.h"
 
 #define MTP_READ(fd,buf,len,log_success) ({\

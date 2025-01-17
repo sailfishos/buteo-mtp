@@ -207,48 +207,35 @@ MTPResponder::~MTPResponder()
 {
     MTP_FUNC_TRACE();
 
-    if (m_storageServer) {
-        delete m_storageServer;
-        m_storageServer = 0;
-    }
+    delete m_storageServer;
+    m_storageServer = nullptr;
 
-    if (m_transporter) {
-        delete m_transporter;
-        m_transporter = 0;
-    }
+    delete m_transporter;
+    m_transporter = nullptr;
 
-    if (m_propertyPod) {
-        PropertyPod::releaseInstance();
-        m_propertyPod = 0;
-    }
+    PropertyPod::releaseInstance();
+    m_propertyPod = nullptr;
 
-    if (m_devInfoProvider) {
-        delete m_devInfoProvider;
-        m_devInfoProvider = 0;
-    }
+    delete m_devInfoProvider;
+    m_devInfoProvider = nullptr;
 
-    if ( m_transactionSequence ) {
-        deleteStoredRequest();
-        delete m_transactionSequence;
-        m_transactionSequence = 0;
-    }
+    deleteStoredRequest();
 
-    if (m_extensionManager) {
-        delete m_extensionManager;
-        m_extensionManager = 0;
-    }
+    delete m_transactionSequence;
+    m_transactionSequence = nullptr;
 
-    if ( m_sendObjectSequencePtr ) {
-        delete m_sendObjectSequencePtr;
-        m_sendObjectSequencePtr = 0;
-    }
+    delete m_extensionManager;
+    m_extensionManager = nullptr;
+
+    delete m_sendObjectSequencePtr;
+    m_sendObjectSequencePtr = nullptr;
 
     delete m_editObjectSequencePtr;
     m_editObjectSequencePtr = nullptr;
 
     freeObjproplistInfo();
 
-    m_instance = 0;
+    m_instance = nullptr;
 }
 
 void MTPResponder::createCommandHandler()
@@ -314,8 +301,9 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
         return false;
     }
 
-    if (MTP_CONTAINER_TYPE_RESPONSE == container.containerType() || MTP_CONTAINER_TYPE_DATA == container.containerType() ||
-            MTP_CONTAINER_TYPE_EVENT == container.containerType() ) {
+    if (MTP_CONTAINER_TYPE_RESPONSE == container.containerType()
+            || MTP_CONTAINER_TYPE_DATA == container.containerType()
+            || MTP_CONTAINER_TYPE_EVENT == container.containerType() ) {
         //m_transporter->disableRW();
         //QCoreApplication::processEvents();
         //m_transporter->enableRW();
@@ -370,7 +358,7 @@ bool MTPResponder::sendResponse(MTPResponseCode code)
     quint16 transactionId = m_transactionSequence->reqContainer->transactionId();
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, transactionId);
     bool sent = sendContainer(respContainer);
-    if ( false == sent ) {
+    if (!sent) {
         MTP_LOG_CRITICAL("Could not send response");
     }
     return sent;
@@ -384,7 +372,7 @@ bool MTPResponder::sendResponse(MTPResponseCode code, quint32 param1)
     MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, code, transactionId, sizeof(param1));
     respContainer << param1;
     bool sent = sendContainer(respContainer);
-    if ( false == sent ) {
+    if (!sent) {
         MTP_LOG_CRITICAL("Could not send response");
     }
     return sent;
@@ -401,10 +389,9 @@ void MTPResponder::receiveContainer(quint8 *data, quint32 dataLen, bool isFirstP
     case RESPONDER_SUSPEND: {
         setResponderState(RESPONDER_IDLE);
         // Delete any old request, just in case
-        if (0 != m_transactionSequence->reqContainer) {
-            delete m_transactionSequence->reqContainer;
-            m_transactionSequence->reqContainer = 0;
-        }
+        delete m_transactionSequence->reqContainer;
+        m_transactionSequence->reqContainer = nullptr;
+
         // This must be a request container, request containers cannot
         // be segmented!
         if (isFirstPacket && isLastPacket) {
@@ -468,10 +455,9 @@ void MTPResponder::receiveContainer(quint8 *data, quint32 dataLen, bool isFirstP
     }
 }
 
-void MTPResponder::onStorageReady(void)
+void MTPResponder::onStorageReady()
 {
     MTP_FUNC_TRACE();
-
     MTP_LOG_INFO("Storage ready");
 
 #if DEFER_TRANSPORTER_ACTIVATION
@@ -786,7 +772,7 @@ bool MTPResponder::handleExtendedOperation()
                 memcpy(dataContainer.payload(), resp.data, resp.dataLen);
                 dataContainer.seek(resp.dataLen);
                 bool sent = sendContainer(dataContainer);
-                if ( false == sent ) {
+                if (!sent) {
                     MTP_LOG_CRITICAL("Could not send data");
                 }
                 delete[] resp.data;
@@ -798,7 +784,7 @@ bool MTPResponder::handleExtendedOperation()
                 respContainer << resp.params[i];
             }
             bool sent = sendContainer(respContainer);
-            if ( false == sent ) {
+            if (!sent) {
                 MTP_LOG_CRITICAL("Could not send response");
             }
         }
@@ -907,11 +893,11 @@ void MTPResponder::getDeviceInfoReq()
                   << serialNbr;
 
     bool sent = sendContainer(dataContainer);
-    if ( false == sent ) {
+    if (!sent) {
         MTP_LOG_CRITICAL("Could not send data");
     }
 
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(MTP_RESP_OK);
     }
 }
@@ -949,10 +935,8 @@ void MTPResponder::closeSessionReq()
     } else {
         m_transactionSequence->mtpSessionId = MTP_INITIAL_SESSION_ID;
 
-        if ( m_sendObjectSequencePtr ) {
-            delete m_sendObjectSequencePtr;
-            m_sendObjectSequencePtr = 0;
-        }
+        delete m_sendObjectSequencePtr;
+        m_sendObjectSequencePtr = nullptr;
 
         freeObjproplistInfo();
 
@@ -988,12 +972,12 @@ void MTPResponder::getStorageIDReq()
                                      payloadLength);
         dataContainer << storageIds;
         sent = sendContainer(dataContainer);
-        if ( false == sent ) {
+        if (!sent) {
             MTP_LOG_CRITICAL("Could not send data");
         }
     }
     // RESPONSE PHASE
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(code);
     }
 }
@@ -1037,7 +1021,7 @@ void MTPResponder::getStorageInfoReq()
                 code = m_storageServer->checkStorage( storageId );
                 if ( MTP_RESP_OK == code ) {
                     sent = sendContainer(dataContainer);
-                    if ( false == sent ) {
+                    if (!sent) {
                         MTP_LOG_CRITICAL("Could not send data");
                     }
                 }
@@ -1045,7 +1029,7 @@ void MTPResponder::getStorageInfoReq()
         }
     }
 
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(code);
     }
 }
@@ -1143,12 +1127,12 @@ void MTPResponder::getObjectHandlesReq()
                                      payloadLength);
         dataContainer << handles;
         sent = sendContainer(dataContainer);
-        if ( false == sent ) {
+        if (!sent) {
             MTP_LOG_CRITICAL("Could not send data");
         }
     }
 
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(code);
     }
 }
@@ -1180,12 +1164,12 @@ void MTPResponder::getObjectInfoReq()
         dataContainer << *objectInfo;
 
         sent = sendContainer(dataContainer);
-        if ( false == sent ) {
+        if (!sent) {
             MTP_LOG_CRITICAL("Could not send data");
         }
     }
 
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(code);
     }
 }
@@ -1292,13 +1276,13 @@ void MTPResponder::getThumbReq()
 
             dataContainer.seek( payloadLength );
             sent = sendContainer( dataContainer );
-            if ( false == sent ) {
+            if (!sent) {
                 MTP_LOG_CRITICAL("Could not send thumbnail data");
             }
         }
     }
 
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(code);
     }
 }
@@ -1396,13 +1380,13 @@ void MTPResponder::getDevicePropDescReq()
                                          payloadLength);
             dataContainer << *propDesc;
             sent = sendContainer(dataContainer);
-            if ( false == sent ) {
+            if (!sent) {
                 MTP_LOG_CRITICAL("Could not send data");
             }
         }
     }
 
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(code);
     }
 }
@@ -1429,13 +1413,13 @@ void MTPResponder::getDevicePropValueReq()
                                          payloadLength);
             dataContainer.serializeVariantByType(propDesc->uDataType, propDesc->currentValue);
             sent = sendContainer(dataContainer);
-            if ( false == sent ) {
+            if (!sent) {
                 MTP_LOG_CRITICAL("Could not send data");
             }
         }
     }
 
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(code);
     }
 }
@@ -1789,13 +1773,13 @@ void MTPResponder::getObjPropsSupportedReq()
                                          payloadLength);
             dataContainer << propsSupported;
             sent = sendContainer(dataContainer);
-            if ( false == sent ) {
+            if (!sent) {
                 MTP_LOG_CRITICAL("Could not send data");
             }
         }
     }
 
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(code);
     }
 }
@@ -1832,14 +1816,14 @@ void MTPResponder::getObjPropDescReq()
                                              payloadLength);
                 dataContainer << *propDesc;
                 sent = sendContainer(dataContainer);
-                if ( false == sent ) {
+                if (!sent) {
                     MTP_LOG_CRITICAL("Could not send data");
                 }
             }
         }
     }
 
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(code);
     }
 }
@@ -1893,14 +1877,14 @@ void MTPResponder::getObjPropValueReq()
                     dataContainer.serializeVariantByType(propDesc->uDataType, QVariant());
                 }
                 sent = sendContainer(dataContainer);
-                if ( false == sent ) {
+                if (!sent) {
                     MTP_LOG_CRITICAL("Could not send data");
                 }
             }
         }
     }
 
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(code);
     }
 }
@@ -1963,7 +1947,7 @@ void MTPResponder::getObjectPropListReq()
                                          sizeof(quint32));
             dataContainer << (quint32)0;
             sent = sendContainer(dataContainer);
-            if ( false == sent ) {
+            if (!sent) {
                 MTP_LOG_CRITICAL("Could not send data");
             }
         } else if ( (1 < depth) && (0xFFFFFFFF > depth) ) {
@@ -2058,7 +2042,7 @@ void MTPResponder::getObjectPropListReq()
                     // the start of the container payload. Is there a better way?
                     dataContainer.putl32(dataContainer.payload(), numElements);
                     sent = sendContainer(dataContainer);
-                    if ( false == sent ) {
+                    if (!sent) {
                         MTP_LOG_CRITICAL("Could not send data");
                     }
                 }
@@ -2068,7 +2052,7 @@ void MTPResponder::getObjectPropListReq()
                                              sizeof(quint32));
                 dataContainer << (quint32)0;
                 sent = sendContainer(dataContainer);
-                if ( false == sent ) {
+                if (!sent) {
                     MTP_LOG_CRITICAL("Could not send data");
                 }
             }
@@ -2078,7 +2062,7 @@ void MTPResponder::getObjectPropListReq()
         }
     }
 
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(resp);
     }
 }
@@ -2180,13 +2164,13 @@ void MTPResponder::getObjReferencesReq()
                                          payloadLength);
             dataContainer << objReferences;
             sent = sendContainer(dataContainer);
-            if ( false == sent ) {
+            if (!sent) {
                 MTP_LOG_CRITICAL("Could not send data");
             }
         }
     }
 
-    if ( true == sent ) {
+    if (sent) {
         sendResponse(respCode);
     }
 }
@@ -2275,7 +2259,7 @@ void MTPResponder::sendObjectInfoData()
         respContainer << responseParams[0] << responseParams[1] << responseParams[2];
     }
     bool sent = sendContainer(respContainer);
-    if ( false == sent ) {
+    if (!sent) {
         MTP_LOG_CRITICAL("Could not send response");
     }
 }
@@ -2325,12 +2309,11 @@ void MTPResponder::sendObjectData(quint8 *data, quint32 dataLen, bool isFirstPac
     if ( MTP_RESP_Undefined != code ) {
         // Delete the stored sendObjectInfo information
         if ( m_sendObjectSequencePtr ) {
-            if ( m_sendObjectSequencePtr->objInfo ) {
-                delete m_sendObjectSequencePtr->objInfo;
-                m_sendObjectSequencePtr->objInfo = 0;
-            }
+            delete m_sendObjectSequencePtr->objInfo;
+            m_sendObjectSequencePtr->objInfo = nullptr;
+
             delete m_sendObjectSequencePtr;
-            m_sendObjectSequencePtr = 0;
+            m_sendObjectSequencePtr = nullptr;
         }
         // Apply object prop list if one was sent thru SendObjectPropList
         if (MTP_RESP_OK == code && m_objPropListInfo) {
@@ -2550,7 +2533,7 @@ void MTPResponder::sendObjectPropListData()
         respContainer << respParam[i];
     }
     sent = sendContainer(respContainer);
-    if ( false == sent ) {
+    if (!sent) {
         MTP_LOG_CRITICAL("Could not send response");
     }
 }
@@ -2656,15 +2639,16 @@ void MTPResponder::setObjReferencesData()
 void MTPResponder::deleteStoredRequest()
 {
     MTP_FUNC_TRACE();
+    if (!m_transactionSequence) {
+        return;
+    }
+
     // deallocate memory of stored old request if still existing
-    if (0 != m_transactionSequence->dataContainer) {
-        delete m_transactionSequence->dataContainer;
-        m_transactionSequence->dataContainer = 0;
-    }
-    if (0 != m_transactionSequence->reqContainer) {
-        delete m_transactionSequence->reqContainer;
-        m_transactionSequence->reqContainer = 0;
-    }
+    delete m_transactionSequence->dataContainer;
+    m_transactionSequence->dataContainer = nullptr;
+
+    delete m_transactionSequence->reqContainer;
+    m_transactionSequence->reqContainer = nullptr;
 }
 
 MTPResponseCode MTPResponder::preCheck(quint32 sessionID, quint32 transactionID)
@@ -2683,15 +2667,14 @@ void MTPResponder::freeObjproplistInfo()
     MTP_FUNC_TRACE();
     if (m_objPropListInfo) {
         for (quint32 i = 0; i < m_objPropListInfo->noOfElements; i++) {
-            if ( m_objPropListInfo->objPropList[i].value ) {
-                delete m_objPropListInfo->objPropList[i].value;
-            }
+            delete m_objPropListInfo->objPropList[i].value;
         }
         if (m_objPropListInfo->objPropList) {
             delete[] m_objPropListInfo->objPropList;
         }
+
         delete m_objPropListInfo;
-        m_objPropListInfo = 0;
+        m_objPropListInfo = nullptr;
     }
 }
 
@@ -2747,10 +2730,9 @@ void MTPResponder::closeSession()
     m_transactionSequence->mtpSessionId = MTP_INITIAL_SESSION_ID;
     deleteStoredRequest();
     setResponderState(RESPONDER_IDLE);
-    if ( m_sendObjectSequencePtr ) {
-        delete m_sendObjectSequencePtr;
-        m_sendObjectSequencePtr = 0;
-    }
+
+    delete m_sendObjectSequencePtr;
+    m_sendObjectSequencePtr = nullptr;
     freeObjproplistInfo();
 }
 
@@ -3170,7 +3152,7 @@ const char *MTPResponder::responderStateName(MTPResponder::ResponderState state)
     return name;
 }
 
-MTPResponder::ResponderState MTPResponder::getResponderState(void)
+MTPResponder::ResponderState MTPResponder::getResponderState()
 {
     return m_state_accessor_only;
 }

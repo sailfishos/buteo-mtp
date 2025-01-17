@@ -36,15 +36,17 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <linux/usb/functionfs.h>
+
+#include <QMutex>
+#include <QCoreApplication>
+
 #include "mtptransporterusb.h"
 #include "mtpresponder.h"
 #include "mtpcontainer.h"
-#include <linux/usb/functionfs.h>
 #include "trace.h"
 #include "threadio.h"
 #include "mtp1descriptors.h"
-#include <QMutex>
-#include <QCoreApplication>
 
 using namespace meegomtp1dot0;
 
@@ -666,7 +668,7 @@ void MTPTransporterUSB::stopRead()
     m_resetCount++;
 }
 
-void MTPTransporterUSB::onStorageReady(void)
+void MTPTransporterUSB::onStorageReady()
 {
     MTP_LOG_TRACE("Storage ready");
     m_storageReady = true;

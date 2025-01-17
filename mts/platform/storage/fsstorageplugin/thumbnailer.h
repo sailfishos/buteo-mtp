@@ -93,16 +93,16 @@ public Q_SLOTS:
     void thumbnailDelayTimeout();
 
     ///< Set-once master toggle for allowing thumbnail requests
-    void enableThumbnailing(void);
+    void enableThumbnailing();
     ///< Temporarily deny sending new thumbnail requests
-    void suspendThumbnailing(void);
+    void suspendThumbnailing();
     ///< Allow sending queued thumbnail requests again
-    void resumeThumbnailing(void);
+    void resumeThumbnailing();
 
 
 private:
     static void registerTypes();
-    void scheduleThumbnailing(void);
+    void scheduleThumbnailing();
 
     ///< Queue of images that are missing thumbnails
     QStringList m_uriRequestQueue;

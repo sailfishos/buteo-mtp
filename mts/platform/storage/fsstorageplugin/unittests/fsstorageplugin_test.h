@@ -47,6 +47,8 @@ class FSStoragePlugin_test : public QObject
 
 private slots:
     void initTestCase();
+    void cleanupTestCase();
+
     void testStorageCreation();
     void testDeleteAll();
     void testObjectHandlesCountAfterCreation();
@@ -89,7 +91,6 @@ private slots:
     void testInotifyMove();
     void testInotifyDelete();
     void testThumbnailer();
-    void cleanupTestCase();
 
 private:
     FSStoragePlugin *m_storage;

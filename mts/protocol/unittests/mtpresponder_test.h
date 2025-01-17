@@ -52,6 +52,8 @@ public slots:
 
 private slots:
     void initTestCase();
+    void cleanupTestCase();
+
     void testCloseSessionBeforeOpen();
     void testOpenSession();
     void testOpenSessionAgain();
@@ -83,7 +85,6 @@ private slots:
     //void testGetPartialObject();
     void testDeleteObject();
     void testCloseSession();
-    void cleanupTestCase();
 
 private:
     quint32 nextTransactionId();
@@ -96,6 +97,7 @@ private:
     quint32 m_storageId;
     ObjHandle m_parentHandle, m_objectHandle;
     quint32 m_opcode;
+    QList<quint8 *> m_tempBuffers;
 };
 }
 

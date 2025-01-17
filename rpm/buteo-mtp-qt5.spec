@@ -1,5 +1,5 @@
 Name:     buteo-mtp-qt5
-Version:  0.9.6
+Version:  0.9.11
 Release:  1
 Summary:  MTP library
 License:  BSD and LGPLv2
@@ -26,18 +26,6 @@ Requires(pre): /usr/bin/groupadd-user
 %description
 %{summary}.
 
-%files
-%defattr(-,root,root,-)
-%{_libexecdir}/mtp_service
-%{_libdir}/*.so.*
-%{_libdir}/mtp
-%{_userunitdir}/buteo-mtp.service
-%{_datadir}/mapplauncherd/privileges.d/*
-# Own the fstorage.d and mtp data directories.
-%dir %{_sysconfdir}/fsstorage.d
-%dir %{_datadir}/mtp
-%license COPYING
-
 %package sample-vendor-configuration
 Summary: Vendor configuration example for MTP
 Provides: mtp-vendor-configuration
@@ -45,27 +33,12 @@ Provides: mtp-vendor-configuration
 %description sample-vendor-configuration
 %{summary}.
 
-# TODO: the deviceinfo xml here should only contain things like model,
-#       vendor, ... -- the supported datatypes are tied in tighly with
-#       the mtp daemon currently, and therefore can't be changed that
-#       easily
-%files sample-vendor-configuration
-%defattr(-,root,root,-)
-%{_datadir}/mtp/*.xml
-%{_datadir}/mtp/*.ico
-%config %{_sysconfdir}/fsstorage.d/*
-
 %package devel
 Summary: Development files for %{name}
 Requires: %{name} = %{version}-%{release}
 
 %description devel
 %{summary}.
-
-%files devel
-%defattr(-,root,root,-)
-%{_includedir}/*
-%{_libdir}/*.so
 
 %package tests
 Summary: Tests for %{name}
@@ -75,22 +48,15 @@ Conflicts: buteo-mtp-tests
 %description tests
 %{summary}.
 
-%files tests
-%defattr(-,root,root,-)
-/opt/tests/buteo-mtp
-
-
 %prep
 %setup -q
 
-
 %build
 %qmake5
-make %{_smp_mflags}
-
+%make_build
 
 %install
-make INSTALL_ROOT=%{buildroot} install
+%qmake5_install
 
 mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
 install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
@@ -101,6 +67,32 @@ install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
 groupadd -f -g 1024 mtp
 groupadd-user mtp
 
-
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
+
+%files
+%{_libexecdir}/mtp_service
+%{_libdir}/*.so.*
+%{_libdir}/mtp
+%{_userunitdir}/buteo-mtp.service
+%{_datadir}/mapplauncherd/privileges.d/*
+# Own the fstorage.d and mtp data directories.
+%dir %{_sysconfdir}/fsstorage.d
+%dir %{_datadir}/mtp
+%license COPYING
+
+# TODO: the deviceinfo xml here should only contain things like model,
+#       vendor, ... -- the supported datatypes are tied in tighly with
+#       the mtp daemon currently, and therefore can't be changed that
+#       easily
+%files sample-vendor-configuration
+%{_datadir}/mtp/*.xml
+%{_datadir}/mtp/*.ico
+%config %{_sysconfdir}/fsstorage.d/*
+
+%files devel
+%{_includedir}/*
+%{_libdir}/*.so
+
+%files tests
+/opt/tests/buteo-mtp

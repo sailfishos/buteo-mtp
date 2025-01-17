@@ -55,6 +55,7 @@ protected:
 
     /// Destructor
     virtual ~MTPContainer();
+
 public:
     /// Returns the size (used number of bytes) of the buffer
     /// \return Returns the number of used bytes in the buffer (Inclusive of
@@ -138,6 +139,7 @@ protected:
     } __attribute__((packed));
 
     MTPUSBContainer *m_container; ///< This internal container structure is populated for every received MTP container
+
 private:
     MTPContainer(const MTPContainer &) {} ///< Private copy-constructor to disable copying
     ///< Private assignment operator to prevent duplication

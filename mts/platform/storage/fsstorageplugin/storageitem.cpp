@@ -36,7 +36,6 @@
 
 using namespace meegomtp1dot0;
 
-// Constructor.
 StorageItem::StorageItem() :
     m_handle(0),
     m_path(""),
@@ -50,13 +49,10 @@ StorageItem::StorageItem() :
 {
 }
 
-// Destructor
 StorageItem::~StorageItem()
 {
-    if ( m_objectInfo ) {
-        delete m_objectInfo;
-        m_objectInfo = 0;
-    }
+    delete m_objectInfo;
+    m_objectInfo = nullptr;
 }
 
 void StorageItem::setEventsEnabled(bool enabled)
@@ -70,7 +66,7 @@ void StorageItem::setEventsEnabled(bool enabled)
     }
 }
 
-bool StorageItem::eventsAreEnabled(void) const
+bool StorageItem::eventsAreEnabled() const
 {
     return m_eventsEnabled;
 }

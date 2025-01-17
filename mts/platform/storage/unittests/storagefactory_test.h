@@ -36,11 +36,12 @@ class StorageFactory_test : public QObject
 
 private slots:
     void initTestCase();
+    void cleanupTestCase();
+
     void testStorageIds();
     void testGetObjectHandles();
     void testGetDevicePropValueAfterObjectInfoChanged();
     void testMassObjectPropertyQueryThrottle();
-    void cleanupTestCase();
 
 private:
     ObjHandle handleForFilename(ObjHandle parent, const QString &name) const;

@@ -343,7 +343,7 @@ private:
     void handleFSModify(const struct inotify_event *event, const char *name);
 
     // Throttle sending of MTP_EV_StorageInfoChanged events
-    void sendStorageInfoChanged(void);
+    void sendStorageInfoChanged();
 
     /// Caches IN_MOVED_FROM events for future pairing
     void cacheInotifyEvent(const struct inotify_event *event, const char *name);
