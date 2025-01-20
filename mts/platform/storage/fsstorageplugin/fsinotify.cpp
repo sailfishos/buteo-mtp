@@ -51,9 +51,7 @@ FSInotify::FSInotify( uint32_t mask) : m_mask(mask)
  *************************************************/
 FSInotify::~FSInotify()
 {
-    if ( m_readSocket ) {
-        delete m_readSocket;
-    }
+    delete m_readSocket;
 }
 
 /**************************************************
