@@ -52,7 +52,6 @@ namespace meegomtp1dot0 {
 class MTPExtensionManager
 {
 public:
-
     /// Constructor: Loads all available extensions
     MTPExtensionManager();
 

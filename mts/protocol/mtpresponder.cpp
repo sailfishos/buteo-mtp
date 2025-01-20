@@ -101,22 +101,23 @@ MTPResponder *MTPResponder::instance()
     return m_instance;
 }
 
-MTPResponder::MTPResponder(): m_storageServer(0),
-    m_transporter(0),
-    m_devInfoProvider(new DeviceInfoProvider),
-    m_propertyPod(PropertyPod::instance(m_devInfoProvider, m_extensionManager)),
-    m_extensionManager(new MTPExtensionManager),
-    m_copiedObjHandle(0),
-    m_containerToBeResent(false),
-    m_isLastPacket(false),
-    m_storageWaitDataComplete(false),
-    m_state_accessor_only(RESPONDER_IDLE),
-    m_prevState(RESPONDER_IDLE),
-    m_handler_idle_timer(0),
-    m_objPropListInfo(0),
-    m_sendObjectSequencePtr(0),
-    m_editObjectSequencePtr(nullptr),
-    m_transactionSequence(new MTPTransactionSequence)
+MTPResponder::MTPResponder()
+    : m_storageServer(0)
+    , m_transporter(0)
+    , m_devInfoProvider(new DeviceInfoProvider)
+    , m_propertyPod(PropertyPod::instance(m_devInfoProvider, m_extensionManager))
+    , m_extensionManager(new MTPExtensionManager)
+    , m_copiedObjHandle(0)
+    , m_containerToBeResent(false)
+    , m_isLastPacket(false)
+    , m_storageWaitDataComplete(false)
+    , m_state_accessor_only(RESPONDER_IDLE)
+    , m_prevState(RESPONDER_IDLE)
+    , m_handler_idle_timer(0)
+    , m_objPropListInfo(0)
+    , m_sendObjectSequencePtr(0)
+    , m_editObjectSequencePtr(nullptr)
+    , m_transactionSequence(new MTPTransactionSequence)
 {
     MTP_FUNC_TRACE();
 

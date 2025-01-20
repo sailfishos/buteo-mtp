@@ -38,7 +38,8 @@ void ObjectPropertyCache::add( ObjHandle handle, MTPObjPropertyCode propertyCode
 {
     MTP_FUNC_TRACE();
 
-    //MTP_LOG_WARNING("Property code " << propertyCode << " with value " << value.toString() << " added/updated to cache for object handle " << handle);
+    //MTP_LOG_WARNING("Property code " << propertyCode << " with value " << value.toString()
+    // << " added/updated to cache for object handle " << handle);
     m_propertyMap[handle].insert( propertyCode, value );
 }
 
@@ -94,7 +95,8 @@ bool ObjectPropertyCache::get( ObjHandle handle, MTPObjPropertyCode propertyCode
     bool found = false;
     if ( m_propertyMap.contains( handle ) && m_propertyMap[handle].contains(propertyCode) ) {
         value = m_propertyMap[handle].value( propertyCode );
-        //MTP_LOG_WARNING("Property code " << propertyCode << " with value " << value.toString() << " fetched from cache for object handle " << handle);
+        //MTP_LOG_WARNING("Property code " << propertyCode << " with value " << value.toString()
+        // << " fetched from cache for object handle " << handle);
         found = true;
     } else {
         //MTP_LOG_WARNING("Property code " << propertyCode << " not found in cache " << " for object handle " << handle);

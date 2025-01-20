@@ -187,7 +187,6 @@ void IOThread::run()
 ControlReaderThread::ControlReaderThread(QObject *parent)
     : IOThread(parent),  m_state(0)
 {
-
 }
 
 ControlReaderThread::~ControlReaderThread()

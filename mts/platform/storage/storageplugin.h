@@ -38,6 +38,7 @@
 #include <QHash>
 #include <QVector>
 #include <QList>
+
 #include "mtptypes.h"
 
 /// StoragePlugin is a base class for MTP storage plug-ins.

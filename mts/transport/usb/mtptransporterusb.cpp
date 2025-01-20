@@ -50,13 +50,14 @@
 
 using namespace meegomtp1dot0;
 
-MTPTransporterUSB::MTPTransporterUSB() : m_ioState(SUSPENDED), m_containerReadLen(0),
-    m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1),
-    m_reader_busy(READER_FREE), m_writer_busy(false), m_events_busy(INTERRUPT_WRITER_IDLE),
-    m_events_failed(0), m_inSession(false),
-    m_storageReady(false),
-    m_readerEnabled(false),
-    m_responderBusy(true)
+MTPTransporterUSB::MTPTransporterUSB()
+    : m_ioState(SUSPENDED), m_containerReadLen(0)
+    , m_ctrlFd(-1), m_intrFd(-1), m_inFd(-1), m_outFd(-1)
+    , m_reader_busy(READER_FREE), m_writer_busy(false), m_events_busy(INTERRUPT_WRITER_IDLE)
+    , m_events_failed(0), m_inSession(false)
+    , m_storageReady(false)
+    , m_readerEnabled(false)
+    , m_responderBusy(true)
 {
     // event write cancelation
     m_event_cancel = new QTimer(this);
@@ -410,6 +411,7 @@ bool MTPTransporterUSB::sendEvent(const quint8 *data, quint32 dataLen, bool isLa
 
     return true;
 }
+
 void MTPTransporterUSB::eventTimeout()
 {
     if ( m_writer_busy ) {

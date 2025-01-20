@@ -5,8 +5,6 @@ QT -= gui
 
 CONFIG += link_pkgconfig debug
 
-#QMAKE_CXXFLAGS += -O0 -Werror
-
 TEMPLATE = lib
 TARGET = meegomtp
 DEPENDPATH += . \
@@ -31,8 +29,6 @@ INCLUDEPATH += . \
                transport/dummy \
                transport/usb \
                ../include
-
-# Input
 
 headers.files += mts.h common/trace.h common/mtptypes.h
 HEADERS += mts.h \
@@ -87,6 +83,3 @@ data.path = /usr/share/mtp
 data.files = deviceInfo.xml device.ico
 
 INSTALLS += data
-
-#clean
-QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)

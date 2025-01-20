@@ -74,62 +74,40 @@ public:
     ~FSStoragePlugin();
 
     void disableObjectEvents();
-
     bool enumerateStorage();
 
     MTPResponseCode addItem( ObjHandle &parentHandle, ObjHandle &handle, MTPObjectInfo *info );
-
     MTPResponseCode deleteItem( const ObjHandle &handle, const MTPObjFormatCode &formatCode );
-
     MTPResponseCode copyHandle( StoragePlugin *sourceStorage, ObjHandle source,
                                 ObjHandle parent );
-
     MTPResponseCode getObjectHandles( const MTPObjFormatCode &formatCode, const quint32 &associationHandle,
                                       QVector<ObjHandle> &objectHandles ) const;
-
     bool checkHandle( const ObjHandle &handle ) const;
-
     MTPResponseCode storageInfo( MTPStorageInfo &info );
-
     MTPResponseCode getReferences( const ObjHandle &handle, QVector<ObjHandle> &references );
-
     MTPResponseCode setReferences( const ObjHandle &handle, const QVector<ObjHandle> &references );
-
     MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage,
                                 ObjHandle &copiedObjectHandle, quint32 recursionCounter = 0);
-
     MTPResponseCode moveObject( const ObjHandle &handle, const ObjHandle &parentHandle, StoragePlugin *destinationStorage,
                                 bool movePhysically = true );
-
     MTPResponseCode getPath( const quint32 &handle, QString &path ) const;
-
     MTPResponseCode getEventsEnabled( const quint32 &handle, bool &eventsEnabled ) const;
-
     MTPResponseCode setEventsEnabled( const quint32 &handle, bool eventsEnabled ) const;
-
     MTPResponseCode getObjectInfo( const ObjHandle &handle, const MTPObjectInfo *&objectInfo );
-
     MTPResponseCode writeData( const ObjHandle &handle, const char *writeBuffer, quint32 bufferLen, bool isFirstSegment,
                                bool isLastSegment );
-
     MTPResponseCode writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent, quint32 dataLength,
                                      bool isFirstSegment, bool isLastSegment);
-
     MTPResponseCode readData( const ObjHandle &handle, char *readBuffer, quint32 readBufferLen, quint64 readOffset );
-
     MTPResponseCode truncateItem( const ObjHandle &handle, const quint64 &size );
-
     MTPResponseCode getObjectPropertyValue(const ObjHandle &handle,
                                            QList<MTPObjPropDescVal> &propValList);
-
     MTPResponseCode setObjectPropertyValue(const ObjHandle &handle,
                                            QList<MTPObjPropDescVal> &propValList,
                                            bool sendObjectPropList = false);
-
     MTPResponseCode getChildPropertyValues(ObjHandle handle,
                                            const QList<const MtpObjPropDesc *> &properties,
                                            QMap<ObjHandle, QList<QVariant> > &values);
-
     void excludePath( const QString &path );
 
 public slots:

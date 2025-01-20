@@ -42,8 +42,6 @@
 
 #include "mtptypes.h"
 
-class QDir;
-
 namespace meegomtp1dot0 {
 class StoragePlugin;
 class ObjectPropertyCache;
