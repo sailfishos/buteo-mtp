@@ -6,7 +6,7 @@ QT -= gui
 CONFIG += link_pkgconfig debug
 
 TEMPLATE = lib
-TARGET = meegomtp
+TARGET = buteomtp
 DEPENDPATH += . \
               common \
               protocol \

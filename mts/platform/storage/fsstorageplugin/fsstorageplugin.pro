@@ -39,7 +39,7 @@ SOURCES += fsstorageplugin.cpp \
            storageitem.cpp
 
 LIBPATH += ../../..
-LIBS    += -lmeegomtp
+LIBS    += -lbuteomtp
 
 #install
 target.path = $$[QT_INSTALL_LIBS]/mtp
