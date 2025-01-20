@@ -30,7 +30,6 @@ INCLUDEPATH += . \
                transport/usb \
                ../include
 
-headers.files += mts.h common/trace.h common/mtptypes.h
 HEADERS += mts.h \
            common/trace.h \
            common/mtptypes.h \
@@ -74,10 +73,6 @@ SOURCES += mts.cpp \
 
 target.path = $$[QT_INSTALL_LIBS]/
 INSTALLS += target
-
-headers.path = /usr/include/libmeegomtp
-
-INSTALLS += headers
 
 data.path = /usr/share/mtp
 data.files = deviceInfo.xml device.ico
