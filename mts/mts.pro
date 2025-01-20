@@ -88,9 +88,5 @@ data.files = deviceInfo.xml device.ico
 
 INSTALLS += data
 
-tmp.path = /usr/bin
-tmp.files = mtpfs
-INSTALLS += tmp
-
 #clean
 QMAKE_CLEAN += $(TARGET) $(TARGET0) $(TARGET1) $(TARGET2)
