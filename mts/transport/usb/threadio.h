@@ -162,7 +162,6 @@ private:
     bool m_terminateTransfer;
 };
 
-
 enum InterruptWriterResult {
     INTERRUPT_WRITE_SUCCESS,
     INTERRUPT_WRITE_FAILURE,
@@ -172,7 +171,7 @@ enum InterruptWriterResult {
 static inline const char *InterruptWriterResultRepr(int result)
 {
     const char *repr = "INTERRUPT_WRITE_<UNKNOWN>";
-    switch ( result ) {
+    switch (result) {
     case INTERRUPT_WRITE_SUCCESS:
         repr = "INTERRUPT_WRITE_SUCCESS";
         break;
@@ -212,7 +211,7 @@ private:
     QMutex m_lock; // protects m_buffers and used with m_wait
     QWaitCondition m_wait;
 
-    QList<QPair<quint8 *, int> > m_buffers;
+    QList<QPair<quint8 *, int>> m_buffers;
     bool m_eventBufferFull;
 };
 

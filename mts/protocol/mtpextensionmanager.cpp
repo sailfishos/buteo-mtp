@@ -75,8 +75,8 @@ bool MTPExtensionManager::getDevPropValue(MTPDevPropertyCode propCode, QVariant 
     return false;
 }
 
-bool MTPExtensionManager::setDevPropValue(MTPDevPropertyCode propCode, const QVariant &val,
-                                          MTPResponseCode &respCode) const
+bool MTPExtensionManager::setDevPropValue(
+    MTPDevPropertyCode propCode, const QVariant &val, MTPResponseCode &respCode) const
 {
     foreach (MTPExtension *extension, m_extensionList) {
         if (extension->setDevPropValue(propCode, val, respCode)) {
@@ -86,8 +86,8 @@ bool MTPExtensionManager::setDevPropValue(MTPDevPropertyCode propCode, const QVa
     return false;
 }
 
-bool MTPExtensionManager::getObjPropValue(const QString &path, MTPObjPropertyCode propCode, QVariant &val,
-                                          MTPResponseCode &respCode) const
+bool MTPExtensionManager::getObjPropValue(
+    const QString &path, MTPObjPropertyCode propCode, QVariant &val, MTPResponseCode &respCode) const
 {
     foreach (MTPExtension *extension, m_extensionList) {
         if (extension->getObjPropValue(path, propCode, val, respCode)) {
@@ -97,8 +97,8 @@ bool MTPExtensionManager::getObjPropValue(const QString &path, MTPObjPropertyCod
     return false;
 }
 
-bool MTPExtensionManager::setObjPropValue(const QString &path, MTPObjPropertyCode propCode, const QVariant &val,
-                                          MTPResponseCode &respCode) const
+bool MTPExtensionManager::setObjPropValue(
+    const QString &path, MTPObjPropertyCode propCode, const QVariant &val, MTPResponseCode &respCode) const
 {
     foreach (MTPExtension *extension, m_extensionList) {
         if (extension->setObjPropValue(path, propCode, val, respCode)) {
@@ -107,4 +107,3 @@ bool MTPExtensionManager::setObjPropValue(const QString &path, MTPObjPropertyCod
     }
     return false;
 }
-

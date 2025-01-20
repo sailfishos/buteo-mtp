@@ -81,7 +81,7 @@ MTPRxContainer &MTPRxContainer::operator>>(bool &d)
 
 MTPRxContainer &MTPRxContainer::operator>>(qint8 &d)
 {
-    return operator>>((quint8 &)d);
+    return operator>>((quint8 &) d);
 }
 
 MTPRxContainer &MTPRxContainer::operator>>(QVector<qint8> &d)
@@ -95,7 +95,7 @@ MTPRxContainer &MTPRxContainer::operator>>(QVector<qint8> &d)
 
 MTPRxContainer &MTPRxContainer::operator>>(qint16 &d)
 {
-    return operator>>((quint16 &)d);
+    return operator>>((quint16 &) d);
 }
 
 MTPRxContainer &MTPRxContainer::operator>>(QVector<qint16> &d)
@@ -109,7 +109,7 @@ MTPRxContainer &MTPRxContainer::operator>>(QVector<qint16> &d)
 
 MTPRxContainer &MTPRxContainer::operator>>(qint32 &d)
 {
-    return operator>>((quint32 &)d);
+    return operator>>((quint32 &) d);
 }
 
 MTPRxContainer &MTPRxContainer::operator>>(QVector<qint32> &d)
@@ -123,7 +123,7 @@ MTPRxContainer &MTPRxContainer::operator>>(QVector<qint32> &d)
 
 MTPRxContainer &MTPRxContainer::operator>>(qint64 &d)
 {
-    return operator>>((quint64 &)d);
+    return operator>>((quint64 &) d);
 }
 
 MTPRxContainer &MTPRxContainer::operator>>(QVector<qint64> &d)
@@ -220,7 +220,7 @@ MTPRxContainer &MTPRxContainer::operator>>(QString &d)
     deserialize(&numChars, sizeof numChars, 1);
     if (numChars > 0) {
         quint16 utf16[numChars];
-        deserialize(utf16, sizeof * utf16, numChars);
+        deserialize(utf16, sizeof *utf16, numChars);
         d = QString::fromUtf16(utf16, numChars - 1);
     } else {
         d.truncate(0);
@@ -377,4 +377,3 @@ void MTPRxContainer::deserialize(void *target, quint32 elementSize, quint32 numb
     }
 #endif
 }
-

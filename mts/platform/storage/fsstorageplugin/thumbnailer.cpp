@@ -84,7 +84,7 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, ThumbnailPath &it
 void Thumbnailer::registerTypes()
 {
     static bool done = false;
-    if( !done ) {
+    if (!done) {
         done = true;
         qRegisterMetaType<ThumbnailPath>("ThumbnailPath");
         qDBusRegisterMetaType<ThumbnailPath>();
@@ -196,12 +196,13 @@ void Thumbnailer::thumbnailDelayTimeout()
     for (int i = 0; i < THUMBNAIL_MAX_IMAGES_PER_REQUEST; ++i) {
         if (m_uriRequestQueue.isEmpty())
             break;
-        uris  << m_uriRequestQueue.takeFirst();
+        uris << m_uriRequestQueue.takeFirst();
     }
 
     /* Make an asynchronous thumbnail request via D-Bus */
     MTP_LOG_TRACE("Requesting" << uris.count() << "thumbnails");
-    QDBusMessage request(QDBusMessage::createMethodCall(THUMBNAILER_SERVICE, THUMBNAILER_OBJECT, THUMBNAILER_INTERFACE, THUMBNAILER_FETCH));
+    QDBusMessage request(
+        QDBusMessage::createMethodCall(THUMBNAILER_SERVICE, THUMBNAILER_OBJECT, THUMBNAILER_INTERFACE, THUMBNAILER_FETCH));
     request << uris;
     request << quint32(THUMB_SIZE);
     request << bool(UNBOUNDED_SIZE);
@@ -241,9 +242,7 @@ void Thumbnailer::resumeThumbnailing()
 
 void Thumbnailer::scheduleThumbnailing()
 {
-    bool activate = m_thumbnailerEnabled
-            && !m_thumbnailerSuspended
-            && !m_uriRequestQueue.isEmpty();
+    bool activate = m_thumbnailerEnabled && !m_thumbnailerSuspended && !m_uriRequestQueue.isEmpty();
 
     if (activate) {
         if (!m_thumbnailTimer->isActive()) {

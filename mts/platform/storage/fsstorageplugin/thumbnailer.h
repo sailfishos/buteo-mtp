@@ -99,7 +99,6 @@ public Q_SLOTS:
     ///< Allow sending queued thumbnail requests again
     void resumeThumbnailing();
 
-
 private:
     static void registerTypes();
     void scheduleThumbnailing();
@@ -123,4 +122,3 @@ private:
 };
 }
 #endif // THUMBNAILER_H
-

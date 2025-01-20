@@ -32,7 +32,8 @@
 #include "mtpcontainerwrapper.h"
 using namespace meegomtp1dot0;
 
-MTPContainerWrapper::MTPContainerWrapper(quint8 *buffer) : MTPContainer()
+MTPContainerWrapper::MTPContainerWrapper(quint8 *buffer)
+    : MTPContainer()
 {
     m_container = reinterpret_cast<MTPUSBContainer *>(buffer);
 }
@@ -41,4 +42,3 @@ MTPContainerWrapper::~MTPContainerWrapper()
 {
     // No cleanup required as of now
 }
-

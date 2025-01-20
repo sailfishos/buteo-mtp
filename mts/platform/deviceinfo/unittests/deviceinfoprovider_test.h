@@ -92,9 +92,8 @@ private Q_SLOTS:
 
 private:
     DeviceInfoProvider *m_Provider;
-    QDomDocument       *m_xmlDoc;
-    QFile              *m_xmlFile;
+    QDomDocument *m_xmlDoc;
+    QFile *m_xmlFile;
 };
 }
 #endif
-

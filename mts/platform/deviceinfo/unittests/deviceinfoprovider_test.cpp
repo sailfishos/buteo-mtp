@@ -83,7 +83,6 @@ void DeviceInfoProvider_Test::cleanupTestCase()
     }
 }
 
-
 void DeviceInfoProvider_Test::testDeviceInfoProviderDefaultConstruction()
 {
     MtpDeviceInfo::setDeviceInfoXmlPath("/tmp/m_deviceinfo.xml");
@@ -128,20 +127,23 @@ void DeviceInfoProvider_Test::testGetDeviceFriendlyName()
 
 void DeviceInfoProvider_Test::testGetStandardVesrion()
 {
-    QCOMPARE((quint32)m_Provider->standardVersion(),
-             m_xmlDoc->elementsByTagName("StdVersion").at(0).firstChild().nodeValue().toUInt());
+    QCOMPARE(
+        (quint32) m_Provider->standardVersion(),
+        m_xmlDoc->elementsByTagName("StdVersion").at(0).firstChild().nodeValue().toUInt());
 }
 
 void DeviceInfoProvider_Test::testGetVendorExtension()
 {
-    QCOMPARE((quint32)m_Provider->vendorExtension(),
-             m_xmlDoc->elementsByTagName("MTPVendorExtn").at(0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        (quint32) m_Provider->vendorExtension(),
+        m_xmlDoc->elementsByTagName("MTPVendorExtn").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testGetMTPVersion()
 {
-    QCOMPARE((quint32)m_Provider->MTPVersion(),
-             m_xmlDoc->elementsByTagName("MTPVersion").at(0).firstChild().nodeValue().toUInt(0, 10));
+    QCOMPARE(
+        (quint32) m_Provider->MTPVersion(),
+        m_xmlDoc->elementsByTagName("MTPVersion").at(0).firstChild().nodeValue().toUInt(0, 10));
 }
 
 void DeviceInfoProvider_Test::testGetMTPExtension()
@@ -175,8 +177,9 @@ void DeviceInfoProvider_Test::testGetSerialNumber()
 
 void DeviceInfoProvider_Test::testGetFunctionalMode()
 {
-    QCOMPARE((quint32)m_Provider->functionalMode(),
-             m_xmlDoc->elementsByTagName("FnMode").at(0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        (quint32) m_Provider->functionalMode(),
+        m_xmlDoc->elementsByTagName("FnMode").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testSetSyncPartner()
@@ -209,30 +212,30 @@ void DeviceInfoProvider_Test::testGetBatteryLevelForm()
 void DeviceInfoProvider_Test::testGetMTPOperationsSupported()
 {
     QVector<quint16> ops = m_Provider->MTPOperationsSupported();
-    QCOMPARE((quint32)ops.size(), (quint32)
-             m_xmlDoc->elementsByTagName("OpCode").length()); // Dirty -- to disregard comments
+    QCOMPARE((quint32) ops.size(), (quint32) m_xmlDoc->elementsByTagName("OpCode").length()); // Dirty -- to disregard comments
     for (int i = 0; i < ops.size(); i++) {
-        QCOMPARE((quint32)ops[i], m_xmlDoc->elementsByTagName("OpCode").at(i).firstChild().nodeValue().toUInt(0, 16));
+        QCOMPARE((quint32) ops[i], m_xmlDoc->elementsByTagName("OpCode").at(i).firstChild().nodeValue().toUInt(0, 16));
     }
 }
 
 void DeviceInfoProvider_Test::testGetMTPEventsSupported()
 {
     QVector<quint16> evts = m_Provider->MTPEventsSupported();
-    QCOMPARE((quint32)evts.size(), (quint32)
-             m_xmlDoc->elementsByTagName("EvCode").length()); // Dirty -- to disregard comments
+    QCOMPARE((quint32) evts.size(), (quint32) m_xmlDoc->elementsByTagName("EvCode").length()); // Dirty -- to disregard comments
     for (int i = 0; i < evts.size(); i++) {
-        QCOMPARE((quint32)evts[i], m_xmlDoc->elementsByTagName("EvCode").at(i).firstChild().nodeValue().toUInt(0, 16));
+        QCOMPARE((quint32) evts[i], m_xmlDoc->elementsByTagName("EvCode").at(i).firstChild().nodeValue().toUInt(0, 16));
     }
 }
 
 void DeviceInfoProvider_Test::testGetMTPDevicePropertiesSupported()
 {
     QVector<quint16> devp = m_Provider->MTPDevicePropertiesSupported();
-    QCOMPARE((quint32)devp.size(), (quint32)
-             m_xmlDoc->elementsByTagName("DevPropCode").length()); // Dirty -- to disregard comments
+    QCOMPARE(
+        (quint32) devp.size(),
+        (quint32) m_xmlDoc->elementsByTagName("DevPropCode").length()); // Dirty -- to disregard comments
     for (int i = 0; i < devp.size(); i++) {
-        QCOMPARE((quint32)devp[i], m_xmlDoc->elementsByTagName("DevPropCode").at(i).firstChild().nodeValue().toUInt(0, 16));
+        QCOMPARE(
+            (quint32) devp[i], m_xmlDoc->elementsByTagName("DevPropCode").at(i).firstChild().nodeValue().toUInt(0, 16));
     }
 }
 
@@ -264,49 +267,60 @@ void DeviceInfoProvider_Test::testGetSupportedFormats()
 void DeviceInfoProvider_Test::testGetFormatCodeCategory()
 {
     for (int i = 0; i < m_xmlDoc->elementsByTagName("CommonFormat").length(); i++) {
-        QCOMPARE((quint32)m_Provider->getFormatCodeCategory(m_xmlDoc->elementsByTagName("CommonFormat").at(
-                                                                i).firstChild().nodeValue().toUInt(0, 16)), (quint32)MTP_COMMON_FORMAT);
+        QCOMPARE(
+            (quint32) m_Provider->getFormatCodeCategory(
+                m_xmlDoc->elementsByTagName("CommonFormat").at(i).firstChild().nodeValue().toUInt(0, 16)),
+            (quint32) MTP_COMMON_FORMAT);
     }
 
     for (int i = 0; i < m_xmlDoc->elementsByTagName("ImageFormat").length(); i++) {
-        QCOMPARE((quint32)m_Provider->getFormatCodeCategory(m_xmlDoc->elementsByTagName("ImageFormat").at(
-                                                                i).firstChild().nodeValue().toUInt(0, 16)), (quint32)MTP_IMAGE_FORMAT);
+        QCOMPARE(
+            (quint32) m_Provider->getFormatCodeCategory(
+                m_xmlDoc->elementsByTagName("ImageFormat").at(i).firstChild().nodeValue().toUInt(0, 16)),
+            (quint32) MTP_IMAGE_FORMAT);
     }
 
     for (int i = 0; i < m_xmlDoc->elementsByTagName("AudioFormat").length(); i++) {
-        QCOMPARE((quint32)m_Provider->getFormatCodeCategory(m_xmlDoc->elementsByTagName("AudioFormat").at(
-                                                                i).firstChild().nodeValue().toUInt(0, 16)), (quint32)MTP_AUDIO_FORMAT);
+        QCOMPARE(
+            (quint32) m_Provider->getFormatCodeCategory(
+                m_xmlDoc->elementsByTagName("AudioFormat").at(i).firstChild().nodeValue().toUInt(0, 16)),
+            (quint32) MTP_AUDIO_FORMAT);
     }
 
     for (int i = 0; i < m_xmlDoc->elementsByTagName("VideoFormat").length(); i++) {
-        QCOMPARE((quint32)m_Provider->getFormatCodeCategory(m_xmlDoc->elementsByTagName("VideoFormat").at(
-                                                                i).firstChild().nodeValue().toUInt(0, 16)), (quint32)MTP_VIDEO_FORMAT);
+        QCOMPARE(
+            (quint32) m_Provider->getFormatCodeCategory(
+                m_xmlDoc->elementsByTagName("VideoFormat").at(i).firstChild().nodeValue().toUInt(0, 16)),
+            (quint32) MTP_VIDEO_FORMAT);
     }
 }
 
 void DeviceInfoProvider_Test::testGetVideoChannels()
 {
     const QVector<quint16> devp = m_Provider->videoChannels();
-    QCOMPARE((quint32)devp.size(), (quint32)
-             m_xmlDoc->elementsByTagName("VideoChannel").length()); // Dirty -- to disregard comments
+    QCOMPARE(
+        (quint32) devp.size(),
+        (quint32) m_xmlDoc->elementsByTagName("VideoChannel").length()); // Dirty -- to disregard comments
     for (int i = 0; i < devp.size(); i++) {
-        QCOMPARE((quint32)devp[i], m_xmlDoc->elementsByTagName("VideoChannel").at(i).firstChild().nodeValue().toUInt(0, 16));
+        QCOMPARE(
+            (quint32) devp[i], m_xmlDoc->elementsByTagName("VideoChannel").at(i).firstChild().nodeValue().toUInt(0, 16));
     }
 }
 
 void DeviceInfoProvider_Test::testGetAudioChannels()
 {
     const QVector<quint16> devp = m_Provider->audioChannels();
-    QCOMPARE((quint32)devp.size(), (quint32)
-             m_xmlDoc->elementsByTagName("AudioChannel").length()); // Dirty -- to disregard comments
+    QCOMPARE(
+        (quint32) devp.size(),
+        (quint32) m_xmlDoc->elementsByTagName("AudioChannel").length()); // Dirty -- to disregard comments
     for (int i = 0; i < devp.size(); i++) {
-        QCOMPARE((quint32)devp[i], m_xmlDoc->elementsByTagName("AudioChannel").at(i).firstChild().nodeValue().toUInt(0, 16));
+        QCOMPARE(
+            (quint32) devp[i], m_xmlDoc->elementsByTagName("AudioChannel").at(i).firstChild().nodeValue().toUInt(0, 16));
     }
 }
 
 void DeviceInfoProvider_Test::testGetVideoDimesions()
 {
-
     QCOMPARE(m_Provider->videoMinWidth(),
              m_xmlDoc->elementsByTagName("VideoMinWidth").at(0).firstChild().nodeValue().toUInt(0, 10));
     QCOMPARE(m_Provider->videoMaxWidth(),
@@ -331,89 +345,101 @@ void DeviceInfoProvider_Test::testGetImageDimesions()
 
 void DeviceInfoProvider_Test::testGetVideoMinFPS()
 {
-    QCOMPARE(m_Provider->videoMinFPS(), m_xmlDoc->elementsByTagName("VideoMinFPS").at(0).firstChild().nodeValue().toUInt(0,
-                                                                                                                         10));
+    QCOMPARE(
+        m_Provider->videoMinFPS(),
+        m_xmlDoc->elementsByTagName("VideoMinFPS").at(0).firstChild().nodeValue().toUInt(0, 10));
 }
 
 void DeviceInfoProvider_Test::testGetVideoMaxFPS()
 {
-    QCOMPARE(m_Provider->videoMaxFPS(), m_xmlDoc->elementsByTagName("VideoMaxFPS").at(0).firstChild().nodeValue().toUInt(0,
-                                                                                                                         10));
+    QCOMPARE(
+        m_Provider->videoMaxFPS(),
+        m_xmlDoc->elementsByTagName("VideoMaxFPS").at(0).firstChild().nodeValue().toUInt(0, 10));
 }
 
 void DeviceInfoProvider_Test::testGetVideoScanType()
 {
-    QCOMPARE((quint32)m_Provider->videoScanType(),
-             m_xmlDoc->elementsByTagName("VideoScanType").at(0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        (quint32) m_Provider->videoScanType(),
+        m_xmlDoc->elementsByTagName("VideoScanType").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testGetVideoSampleRate()
 {
-    QCOMPARE(m_Provider->videoSampleRate(),
-             m_xmlDoc->elementsByTagName("VideoSampleRate").at(0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        m_Provider->videoSampleRate(),
+        m_xmlDoc->elementsByTagName("VideoSampleRate").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testGetAudioSampleRate()
 {
-    QCOMPARE(m_Provider->audioSampleRate(),
-             m_xmlDoc->elementsByTagName("AudioSampleRate").at(0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        m_Provider->audioSampleRate(),
+        m_xmlDoc->elementsByTagName("AudioSampleRate").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testGetVideoMinBitrate()
 {
-    QCOMPARE(m_Provider->videoMinBitRate(),
-             m_xmlDoc->elementsByTagName("VideoMinBitRate").at(0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        m_Provider->videoMinBitRate(),
+        m_xmlDoc->elementsByTagName("VideoMinBitRate").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testGetVideoMaxBitrate()
 {
-    QCOMPARE(m_Provider->videoMaxBitRate(),
-             m_xmlDoc->elementsByTagName("VideoMaxBitRate").at(0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        m_Provider->videoMaxBitRate(),
+        m_xmlDoc->elementsByTagName("VideoMaxBitRate").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testGetAudioMinBitrate()
 {
-    QCOMPARE(m_Provider->audioMinBitRate(),
-             m_xmlDoc->elementsByTagName("AudioMinBitRate").at(0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        m_Provider->audioMinBitRate(),
+        m_xmlDoc->elementsByTagName("AudioMinBitRate").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testGetAudioMaxBitrate()
 {
-    QCOMPARE(m_Provider->audioMaxBitRate(),
-             m_xmlDoc->elementsByTagName("AudioMaxBitRate").at(0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        m_Provider->audioMaxBitRate(),
+        m_xmlDoc->elementsByTagName("AudioMaxBitRate").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testGetVideoAudioMinBitrate()
 {
-    QCOMPARE(m_Provider->videoAudioMinBitRate(),
-             m_xmlDoc->elementsByTagName("VideoAudioMinBitRate").at(0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        m_Provider->videoAudioMinBitRate(),
+        m_xmlDoc->elementsByTagName("VideoAudioMinBitRate").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testGetVideoAudioMaxBitrate()
 {
-    QCOMPARE(m_Provider->videoAudioMaxBitRate(),
-             m_xmlDoc->elementsByTagName("VideoAudioMaxBitRate").at(0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        m_Provider->videoAudioMaxBitRate(),
+        m_xmlDoc->elementsByTagName("VideoAudioMaxBitRate").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testGetVideoMinKFD()
 {
-    QCOMPARE(m_Provider->videoMinKFD(), m_xmlDoc->elementsByTagName("VideoMinKeyFrameDist").at(
-                 0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        m_Provider->videoMinKFD(),
+        m_xmlDoc->elementsByTagName("VideoMinKeyFrameDist").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testGetVideoMaxKFD()
 {
-    QCOMPARE(m_Provider->videoMaxKFD(), m_xmlDoc->elementsByTagName("VideoMaxKeyFrameDist").at(
-                 0).firstChild().nodeValue().toUInt(0, 16));
+    QCOMPARE(
+        m_Provider->videoMaxKFD(),
+        m_xmlDoc->elementsByTagName("VideoMaxKeyFrameDist").at(0).firstChild().nodeValue().toUInt(0, 16));
 }
 
 void DeviceInfoProvider_Test::testGetSupportedAudioCodecs()
 {
     const QVector<quint32> devp = m_Provider->supportedAudioCodecs();
-    QCOMPARE((quint32)devp.size(), (quint32)
-             m_xmlDoc->elementsByTagName("Codec").length()); // Dirty -- to disregard comments
+    QCOMPARE((quint32) devp.size(), (quint32) m_xmlDoc->elementsByTagName("Codec").length()); // Dirty -- to disregard comments
     for (int i = 0; i < devp.size(); i++) {
-        QCOMPARE((quint32)devp[i], m_xmlDoc->elementsByTagName("Codec").at(i).firstChild().nodeValue().toUInt(0, 16));
+        QCOMPARE((quint32) devp[i], m_xmlDoc->elementsByTagName("Codec").at(i).firstChild().nodeValue().toUInt(0, 16));
     }
 }
 

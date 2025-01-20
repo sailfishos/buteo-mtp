@@ -36,18 +36,17 @@
 
 using namespace meegomtp1dot0;
 
-StorageItem::StorageItem() :
-    m_handle(0),
-    m_path(""),
-    m_wd(-1),
-    m_objectInfo(0),
-    m_parent(0),
-    m_firstChild(0),
-    m_nextSibling(0),
-    m_puoid(MtpInt128(0)),
-    m_eventsEnabled(false)
-{
-}
+StorageItem::StorageItem()
+    : m_handle(0)
+    , m_path("")
+    , m_wd(-1)
+    , m_objectInfo(0)
+    , m_parent(0)
+    , m_firstChild(0)
+    , m_nextSibling(0)
+    , m_puoid(MtpInt128(0))
+    , m_eventsEnabled(false)
+{}
 
 StorageItem::~StorageItem()
 {
@@ -57,9 +56,9 @@ StorageItem::~StorageItem()
 
 void StorageItem::setEventsEnabled(bool enabled)
 {
-    if ( m_eventsEnabled != enabled ) {
+    if (m_eventsEnabled != enabled) {
         m_eventsEnabled = enabled;
-        if ( m_eventsEnabled )
+        if (m_eventsEnabled)
             MTP_LOG_INFO("events enabled for:" << m_path);
         else
             MTP_LOG_INFO("events disabled for:" << m_path);

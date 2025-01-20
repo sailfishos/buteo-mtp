@@ -59,7 +59,7 @@ class MtpDeviceInfo : public QObject
 #ifdef UT_ON
     friend class DeviceInfoProvider_Test;
 #endif
-/// class XMLHandler sets default values for device properties by picking them from an xml file.
+    /// class XMLHandler sets default values for device properties by picking them from an xml file.
     friend class XMLHandler;
 
 public:
@@ -78,19 +78,19 @@ public:
     /// \param current [in] boolean which indicates whether to get the current
     /// value(the default behavior) or the default value.
     /// \return the sync partner's name.
-    virtual const QString &syncPartner( bool current = true ) const;
+    virtual const QString &syncPartner(bool current = true) const;
 
     /// Gets copyright info for this device.
     /// \param current [in] boolean which indicates whether to get the current
     /// value(the default behavior) or the default value.
     /// \return the copyright info.
-    virtual const QString &copyrightInfo( bool current = true ) const;
+    virtual const QString &copyrightInfo(bool current = true) const;
 
     /// Gets the friendly name of this device.
     /// \param current [in] boolean which indicates whether to get the current
     /// value(the default behavior) or the default value.
     /// \return the device friendly name.
-    virtual const QString &deviceFriendlyName( bool current = true );
+    virtual const QString &deviceFriendlyName(bool current = true);
 
     /// Gets the device icon for this device.
     /// \return the device icon data as a vector.
@@ -138,11 +138,11 @@ public:
 
     /// Sets the new sync partner for the device.
     /// \param syncPartner [in] the new sync partner.
-    virtual void setSyncPartner( const QString &syncPartner );
+    virtual void setSyncPartner(const QString &syncPartner);
 
     /// Set the new friendly name for the device.
     /// \param deviceFriendlyName [in] the new device friendly name.
-    virtual void setDeviceFriendlyName( const QString &deviceFriendlyName );
+    virtual void setDeviceFriendlyName(const QString &deviceFriendlyName);
 
     /// Gets the list of MTP operations supported by this device.
     /// \param [out] no no. of operations suppported.
@@ -274,7 +274,7 @@ public:
     const QVector<quint32> &supportedAudioCodecs() const;
 
     /// Constructor.
-    MtpDeviceInfo( QObject *parent = 0 );
+    MtpDeviceInfo(QObject *parent = 0);
 
     /// Destructor.
     virtual ~MtpDeviceInfo();
@@ -285,44 +285,44 @@ signals:
 protected:
     void setBatteryLevel(quint8 level);
 
-    QString m_copyrightInfo; ///< Device copyright info.
-    QString m_syncPartner; ///< This device's sync partner.
+    QString m_copyrightInfo;      ///< Device copyright info.
+    QString m_syncPartner;        ///< This device's sync partner.
     QString m_deviceFriendlyName; ///< The device's friendly name.
-    QString m_deviceIconPath; ///< The device's icon path.
-    quint16 m_standardVersion; ///< The PTP version supported.
-    quint32 m_vendorExtension; ///< MTP vendor extension id.
-    quint16 m_mtpVersion; ///< The MTP version supported.
-    QString m_mtpExtension; ///< MTP vendor extension sets.
-    quint16 m_functionalMode; ///< The device's functional mode.
-    QString m_manufacturer; ///< The devie manufacturer.
-    QString m_model; ///< The device model.
-    QString m_serialNo; ///< The device's unique serial no.
-    QString m_deviceVersion; ///< The device's firmware version.
-    quint32 m_deviceType; ///< The perceived device type.
+    QString m_deviceIconPath;     ///< The device's icon path.
+    quint16 m_standardVersion;    ///< The PTP version supported.
+    quint32 m_vendorExtension;    ///< MTP vendor extension id.
+    quint16 m_mtpVersion;         ///< The MTP version supported.
+    QString m_mtpExtension;       ///< MTP vendor extension sets.
+    quint16 m_functionalMode;     ///< The device's functional mode.
+    QString m_manufacturer;       ///< The devie manufacturer.
+    QString m_model;              ///< The device model.
+    QString m_serialNo;           ///< The device's unique serial no.
+    QString m_deviceVersion;      ///< The device's firmware version.
+    quint32 m_deviceType;         ///< The perceived device type.
 
-    quint32 m_imageMinWidth; ///< Minimum image width
-    quint32 m_imageMaxWidth; ///< Minimum image width
-    quint32 m_imageMinHeight; ///< Minimum image width
-    quint32 m_imageMaxHeight; ///< Minimum image width
-    quint32 m_videoMinWidth; ///< Minimum image width
-    quint32 m_videoMaxWidth; ///< Minimum image width
-    quint32 m_videoMinHeight; ///< Minimum image width
-    quint32 m_videoMaxHeight; ///< Minimum image width
+    quint32 m_imageMinWidth;          ///< Minimum image width
+    quint32 m_imageMaxWidth;          ///< Minimum image width
+    quint32 m_imageMinHeight;         ///< Minimum image width
+    quint32 m_imageMaxHeight;         ///< Minimum image width
+    quint32 m_videoMinWidth;          ///< Minimum image width
+    quint32 m_videoMaxWidth;          ///< Minimum image width
+    quint32 m_videoMinHeight;         ///< Minimum image width
+    quint32 m_videoMaxHeight;         ///< Minimum image width
     QVector<quint16> m_videoChannels; ///< supported video channels.
-    quint32 m_videoMinFPS; ///< minimum video frames per second.
-    quint32 m_videoMaxFPS; ///< maximum video frames per second.
-    quint16 m_videoScanType; ///< default video scan type.
-    quint32 m_videoSampleRate; ///< default video sample rate.
-    quint32 m_videoMinBitRate; ///< min video bit rate.
-    quint32 m_videoMaxBitRate; ///< max video bit rate.
-    quint32 m_audioMinBitRate; ///< min audio bit rate.
-    quint32 m_audioMaxBitRate; ///< max audio bit rate.
-    quint32 m_videoAudioMinBitRate; ///< min audio bit rate contained in video.
-    quint32 m_videoAudioMaxBitRate; ///< max audio bit rate contained in video.
-    quint32 m_videoMinKFD; ///< min video key frame distance.
-    quint32 m_videoMaxKFD; ///< max video key frame distance.
+    quint32 m_videoMinFPS;            ///< minimum video frames per second.
+    quint32 m_videoMaxFPS;            ///< maximum video frames per second.
+    quint16 m_videoScanType;          ///< default video scan type.
+    quint32 m_videoSampleRate;        ///< default video sample rate.
+    quint32 m_videoMinBitRate;        ///< min video bit rate.
+    quint32 m_videoMaxBitRate;        ///< max video bit rate.
+    quint32 m_audioMinBitRate;        ///< min audio bit rate.
+    quint32 m_audioMaxBitRate;        ///< max audio bit rate.
+    quint32 m_videoAudioMinBitRate;   ///< min audio bit rate contained in video.
+    quint32 m_videoAudioMaxBitRate;   ///< max audio bit rate contained in video.
+    quint32 m_videoMinKFD;            ///< min video key frame distance.
+    quint32 m_videoMaxKFD;            ///< max video key frame distance.
     QVector<quint16> m_audioChannels; ///< supported audio channels.
-    quint32 m_audioSampleRate; ///< default audio sample rate.
+    quint32 m_audioSampleRate;        ///< default audio sample rate.
 
     /// MTP form flags
     enum m_formFlag {
@@ -338,16 +338,16 @@ protected:
     bool m_newConfigFileWasCreated; ///< Whether a new copy of global configuration file was taken in use
 
 private:
-    static QString m_devinceInfoXmlPath; ///< The xml file that stores default values for device properties.
-    QVector<quint16> m_mtpOperationsSupported; ///< supported MTP operations.
-    QVector<quint16> m_mtpEventsSupported; ///< supported MTP events.
+    static QString m_devinceInfoXmlPath;             ///< The xml file that stores default values for device properties.
+    QVector<quint16> m_mtpOperationsSupported;       ///< supported MTP operations.
+    QVector<quint16> m_mtpEventsSupported;           ///< supported MTP events.
     QVector<quint16> m_mtpDevicePropertiesSupported; ///< supported MTP device properties.
-    QVector<quint32> m_supportedCodecs; ///< list of supported audio codecs.
-    QVector<quint16> m_commonFormats; ///< supported common formats.
-    QVector<quint16> m_imageFormats; ///< supported image formats.
-    QVector<quint16> m_audioFormats; ///< supported audio formats.
-    QVector <quint16> m_videoFormats; ///< supported video formats.
-    QVector<quint16> m_supportedFormats; ///< supported object formats.
+    QVector<quint32> m_supportedCodecs;              ///< list of supported audio codecs.
+    QVector<quint16> m_commonFormats;                ///< supported common formats.
+    QVector<quint16> m_imageFormats;                 ///< supported image formats.
+    QVector<quint16> m_audioFormats;                 ///< supported audio formats.
+    QVector<quint16> m_videoFormats;                 ///< supported video formats.
+    QVector<quint16> m_supportedFormats;             ///< supported object formats.
 
     quint8 m_batteryLevel;
 
@@ -392,7 +392,7 @@ private:
     static QString getDeviceInfoXmlPath();
     ///< Setter for m_deviceInfoXmlFile.
     static void setDeviceInfoXmlPath(const QString path);
-    void modifyDeviceInfoXml( QString devPropName, QString value );
+    void modifyDeviceInfoXml(QString devPropName, QString value);
 };
 }
 

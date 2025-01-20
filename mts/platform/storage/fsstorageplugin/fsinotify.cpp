@@ -38,11 +38,12 @@ using namespace meegomtp1dot0;
 /**************************************************
  * FSInotify::FSInotify
  *************************************************/
-FSInotify::FSInotify( uint32_t mask) : m_mask(mask)
+FSInotify::FSInotify(uint32_t mask)
+    : m_mask(mask)
 {
-    m_readSocket = new QSocketNotifier( inotify_init(), QSocketNotifier::Read );
-    if ( m_readSocket ) {
-        QObject::connect( m_readSocket, SIGNAL(activated(int)), this, SLOT(inotifyEventSlot(int)) );
+    m_readSocket = new QSocketNotifier(inotify_init(), QSocketNotifier::Read);
+    if (m_readSocket) {
+        QObject::connect(m_readSocket, SIGNAL(activated(int)), this, SLOT(inotifyEventSlot(int)));
     }
 }
 
@@ -57,24 +58,24 @@ FSInotify::~FSInotify()
 /**************************************************
  * int FSInotify::addWatch
  *************************************************/
-int FSInotify::addWatch( const QString &pathName ) const
+int FSInotify::addWatch(const QString &pathName) const
 {
-    if ( !m_readSocket ) {
+    if (!m_readSocket) {
         return -1;
     }
     QByteArray ba = pathName.toUtf8();
-    return inotify_add_watch( m_readSocket->socket(), ba.constData(), m_mask );
+    return inotify_add_watch(m_readSocket->socket(), ba.constData(), m_mask);
 }
 
 /**************************************************
  * int FSInotify::removeWatch
  *************************************************/
-int FSInotify::removeWatch( const int &wd ) const
+int FSInotify::removeWatch(const int &wd) const
 {
-    if ( !m_readSocket ) {
+    if (!m_readSocket) {
         return -1;
     }
-    return inotify_rm_watch( m_readSocket->socket(), wd );
+    return inotify_rm_watch(m_readSocket->socket(), wd);
 }
 
 /**************************************************
@@ -85,7 +86,7 @@ void FSInotify::inotifyEventSlot(int)
     char tmp[512], *ptr;
     int bytes_read = -1;
 
-    bytes_read = read( m_readSocket->socket(), tmp, sizeof(tmp) );
+    bytes_read = read(m_readSocket->socket(), tmp, sizeof(tmp));
 
     if (-1 == bytes_read) {
         return;
@@ -95,8 +96,7 @@ void FSInotify::inotifyEventSlot(int)
     while (ptr < tmp + bytes_read) {
         struct inotify_event *event = (struct inotify_event *) ptr;
         // FIXME: would it be better to pass all events or one at a time?
-        emit inotifyEventSignal( event );
-        ptr += sizeof * event + event->len;
+        emit inotifyEventSignal(event);
+        ptr += sizeof *event + event->len;
     }
 }
-

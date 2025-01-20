@@ -456,42 +456,43 @@ MtpDevPropDesc PropertyPod::m_devicePropDesc[] = {
 #endif
 };
 
-PropertyPod::PropertyPod(MtpDeviceInfo *devInfoProvider, MTPExtensionManager *extManager) : m_provider(devInfoProvider),
-    m_extManager(extManager)
+PropertyPod::PropertyPod(MtpDeviceInfo *devInfoProvider, MTPExtensionManager *extManager)
+    : m_provider(devInfoProvider)
+    , m_extManager(extManager)
 {
     MtpObjPropDesc *propDesc = 0;
     // Populate the mapping from object property to descriptions
     for (quint32 i = 0; i < sizeof(m_commonPropDesc) / sizeof(MtpObjPropDesc); i++) {
         propDesc = &m_commonPropDesc[i];
-        m_objPropMapCommon.insert((MTPObjPropertyCode)propDesc->uPropCode, propDesc);
+        m_objPropMapCommon.insert((MTPObjPropertyCode) propDesc->uPropCode, propDesc);
         if (MTP_FORM_FLAG_ENUM == propDesc->formFlag) {
             populateEnumDesc(propDesc, MTP_COMMON_FORMAT);
         }
     }
     for (quint32 i = 0; i < sizeof(m_imagePropDesc) / sizeof(MtpObjPropDesc); i++) {
         propDesc = &m_imagePropDesc[i];
-        m_objPropMapImage.insert((MTPObjPropertyCode)propDesc->uPropCode, propDesc);
+        m_objPropMapImage.insert((MTPObjPropertyCode) propDesc->uPropCode, propDesc);
         if (MTP_FORM_FLAG_ENUM == propDesc->formFlag) {
             populateEnumDesc(propDesc, MTP_IMAGE_FORMAT);
-        } else if (isTechObjProp((MTPObjPropertyCode)propDesc->uPropCode)) {
+        } else if (isTechObjProp((MTPObjPropertyCode) propDesc->uPropCode)) {
             populateTechObjPropDesc(propDesc, MTP_IMAGE_FORMAT);
         }
     }
     for (quint32 i = 0; i < sizeof(m_audioPropDesc) / sizeof(MtpObjPropDesc); i++) {
         propDesc = &m_audioPropDesc[i];
-        m_objPropMapAudio.insert((MTPObjPropertyCode)propDesc->uPropCode, propDesc);
+        m_objPropMapAudio.insert((MTPObjPropertyCode) propDesc->uPropCode, propDesc);
         if (MTP_FORM_FLAG_ENUM == propDesc->formFlag) {
             populateEnumDesc(propDesc, MTP_AUDIO_FORMAT);
-        } else if (isTechObjProp((MTPObjPropertyCode)propDesc->uPropCode)) {
+        } else if (isTechObjProp((MTPObjPropertyCode) propDesc->uPropCode)) {
             populateTechObjPropDesc(propDesc, MTP_AUDIO_FORMAT);
         }
     }
     for (quint32 i = 0; i < sizeof(m_videoPropDesc) / sizeof(MtpObjPropDesc); i++) {
         propDesc = &m_videoPropDesc[i];
-        m_objPropMapVideo.insert((MTPObjPropertyCode)propDesc->uPropCode, propDesc);
+        m_objPropMapVideo.insert((MTPObjPropertyCode) propDesc->uPropCode, propDesc);
         if (MTP_FORM_FLAG_ENUM == propDesc->formFlag) {
             populateEnumDesc(propDesc, MTP_VIDEO_FORMAT);
-        } else if (isTechObjProp((MTPObjPropertyCode)propDesc->uPropCode)) {
+        } else if (isTechObjProp((MTPObjPropertyCode) propDesc->uPropCode)) {
             populateTechObjPropDesc(propDesc, MTP_AUDIO_FORMAT);
         }
     }
@@ -519,8 +520,7 @@ PropertyPod::PropertyPod(MtpDeviceInfo *devInfoProvider, MTPExtensionManager *ex
             propDescDev->defValue = m_provider->deviceFriendlyName();
             break;
         case MTP_DEV_PROPERTY_Volume:
-            propDescDev->defValue =
-                QVariant::fromValue(MtpRangeForm(0, 100, 1));
+            propDescDev->defValue = QVariant::fromValue(MtpRangeForm(0, 100, 1));
             break;
         case MTP_DEV_PROPERTY_Perceived_Device_Type:
             propDescDev->defValue = m_provider->deviceType();
@@ -612,8 +612,7 @@ MTPResponseCode PropertyPod::getDevicePropDesc(MTPDevPropertyCode propCode,
         // Do nothing.
         break;
     case MTP_DEV_PROPERTY_DeviceIcon:
-        (*propDesc)->currentValue =
-            QVariant::fromValue(m_provider->deviceIcon());
+        (*propDesc)->currentValue = QVariant::fromValue(m_provider->deviceIcon());
         break;
     case MTP_DEV_PROPERTY_Perceived_Device_Type:
         (*propDesc)->currentValue = m_provider->deviceType();
@@ -828,4 +827,3 @@ bool PropertyPod::isTechObjProp(MTPObjPropertyCode code)
     }
     return ret;
 }
-

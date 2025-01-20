@@ -40,7 +40,7 @@ bool Mts::m_debugLogsEnabled = true;
 Mts *Mts::getInstance()
 {
     if (!mts_instance) {
-        mts_instance =  new Mts;
+        mts_instance = new Mts;
     }
     return mts_instance;
 }

@@ -42,7 +42,6 @@ namespace meegomtp1dot0 {
 class MTPExtension
 {
 public:
-
     /// Use to determine if the MTP operation has a data phase
     /// \param opCode [in] The MTP operation code
     /// \param hasDataPhase [out] true is returned here if the operation has data phase, false otherwise
@@ -88,4 +87,3 @@ public:
 };
 }
 #endif //MTP_EXTENSION_H
-

@@ -148,7 +148,7 @@ private Q_SLOTS:
     void handleDeviceReset();
 
     /// This slot provides information about transport events ( cancel as of now ) to interested parties.
-    void processTransportEvents( bool &txCancelled );
+    void processTransportEvents(bool &txCancelled);
 
     void handleSuspend();
     void handleResume();
@@ -158,100 +158,114 @@ private Q_SLOTS:
 
 private:
     Q_DISABLE_COPY(MTPResponder)
-    static MTPResponder                            *m_instance;         ///< Instance pointer
-    QHash<MTPOperationCode, MTPCommandHandler>      m_opCodeTable;      ///< Hash table storing command handler functions
-    StorageFactory                                 *m_storageServer;    ///< Pointer to the object storage server
-    MTPTransporter                                 *m_transporter;      ///< Pointer to the transport layer
-    MtpDeviceInfo                                  *m_devInfoProvider;  ///< Pointer to the device info class
-    PropertyPod                                    *m_propertyPod;      ///< Pointer to the MTP properties utility class
-    MTPExtensionManager                            *m_extensionManager; ///< Pointer to the MTP extension manager class
-    ObjHandle
-    m_copiedObjHandle;  ///< Stored in case the copied object needs to be deleted due to cancel tx
-    bool                                            m_containerToBeResent;
-    bool                                            m_isLastPacket;
-    quint8                                          *m_resendBuffer;
-    quint32                                         m_resendBufferSize;
-    QByteArray
-    m_storageWaitData;  ///< holding area for data arriving during WAIT_STORAGE
-    bool
-    m_storageWaitDataComplete;  ///< m_storageWaitData holds a whole container
+    static MTPResponder *m_instance;                          ///< Instance pointer
+    QHash<MTPOperationCode, MTPCommandHandler> m_opCodeTable; ///< Hash table storing command handler functions
+    StorageFactory *m_storageServer;                          ///< Pointer to the object storage server
+    MTPTransporter *m_transporter;                            ///< Pointer to the transport layer
+    MtpDeviceInfo *m_devInfoProvider;                         ///< Pointer to the device info class
+    PropertyPod *m_propertyPod;                               ///< Pointer to the MTP properties utility class
+    MTPExtensionManager *m_extensionManager;                  ///< Pointer to the MTP extension manager class
+    ObjHandle m_copiedObjHandle; ///< Stored in case the copied object needs to be deleted due to cancel tx
+    bool m_containerToBeResent;
+    bool m_isLastPacket;
+    quint8 *m_resendBuffer;
+    quint32 m_resendBufferSize;
+    QByteArray m_storageWaitData;   ///< holding area for data arriving during WAIT_STORAGE
+    bool m_storageWaitDataComplete; ///< m_storageWaitData holds a whole container
 
     enum ResponderState {
-        RESPONDER_IDLE = 0,                                             ///< Responder is idle, meaning it is ready to receive a new request
-        RESPONDER_WAIT_DATA = 1,                                        ///< Responder has received a request, and is now waiting for the data phase
-        RESPONDER_WAIT_RESP = 2,                                        ///< Responder is waiting for the response phase
-        RESPONDER_TX_CANCEL = 3,                                        ///< A transaction got cancelled
-        RESPONDER_SUSPEND = 4,                                          ///< A suspended session
-        RESPONDER_WAIT_STORAGE = 5,                                     ///< Responder has received a request, but cannot handle it before storage is ready
-    } m_state_accessor_only;                                            ///< Responder state
+        RESPONDER_IDLE = 0,         ///< Responder is idle, meaning it is ready to receive a new request
+        RESPONDER_WAIT_DATA = 1,    ///< Responder has received a request, and is now waiting for the data phase
+        RESPONDER_WAIT_RESP = 2,    ///< Responder is waiting for the response phase
+        RESPONDER_TX_CANCEL = 3,    ///< A transaction got cancelled
+        RESPONDER_SUSPEND = 4,      ///< A suspended session
+        RESPONDER_WAIT_STORAGE = 5, ///< Responder has received a request, but cannot handle it before storage is ready
+    } m_state_accessor_only;        ///< Responder state
 
     const char *responderStateName(MTPResponder::ResponderState state);
     ResponderState getResponderState();
     void setResponderState(ResponderState state);
 
+    ResponderState m_prevState;
+    QTimer *m_handler_idle_timer;
 
-    ResponderState                                  m_prevState;
-    QTimer                                         *m_handler_idle_timer;
-
-    struct ObjPropListInfo {
-        quint32 noOfElements;                                           ///< Number of "elements" in the property list
-        quint32 storageId;                                              ///< The storage ID sent in the sendObjectPropList operation
-        quint64 objectSize;                                             ///< The object size, in bytes.
-        quint64 objectCurrSize;                                         ///< The incremental current size, in bytes, of the object (for segmented sendObject)
-        ObjHandle objectHandle;                                         ///< The handle of the object.
-        ObjHandle parentHandle;                                         ///< The handle of the object's parent.
-        MTPObjFormatCode objectFormatCode;                              ///< The object's MTP format code.
-        struct ObjectPropList {
-            ObjHandle objectHandle;                                     ///< The object handle for individual "elements"
-            MTPObjPropertyCode objectPropCode;                          ///< The property code in the "element"
-            MTPDataType datatype;                                       ///< The MTP datatype corresponding to the property code
-            QVariant *value;                                            ///< The value of the property.
-
-            ObjectPropList() : objectHandle(0), objectPropCode(0), datatype(0), value(0)
-            {
-            }
-        } *objPropList;                                                 ///< An array of "elements" contained within a SendObjectPropList request
-
-        ObjPropListInfo() : noOfElements(0), storageId(0), objectSize(0), objectCurrSize(0),
-            objectHandle(0), parentHandle(0), objectFormatCode(MTP_OBF_FORMAT_Undefined), objPropList(0)
+    struct ObjPropListInfo
+    {
+        quint32 noOfElements;   ///< Number of "elements" in the property list
+        quint32 storageId;      ///< The storage ID sent in the sendObjectPropList operation
+        quint64 objectSize;     ///< The object size, in bytes.
+        quint64 objectCurrSize; ///< The incremental current size, in bytes, of the object (for segmented sendObject)
+        ObjHandle objectHandle; ///< The handle of the object.
+        ObjHandle parentHandle; ///< The handle of the object's parent.
+        MTPObjFormatCode objectFormatCode; ///< The object's MTP format code.
+        struct ObjectPropList
         {
-        }
-    } *m_objPropListInfo;                                               ///< This structure stores the information from SendObjectPropList for a future SendObject operation
+            ObjHandle objectHandle;            ///< The object handle for individual "elements"
+            MTPObjPropertyCode objectPropCode; ///< The property code in the "element"
+            MTPDataType datatype;              ///< The MTP datatype corresponding to the property code
+            QVariant *value;                   ///< The value of the property.
 
-    struct MTPSendObjectSequence {
-        MTPObjectInfo
-        *objInfo;                                         ///< Stores the object info (only valid for SendObjectInfo operation)
-        ObjHandle objHandle;                                            ///< Stores the ObjectHandle associated to a SendObject operation
-        quint32 sendObjBytesWritten;                                    ///< Bytes written to storage during SendObject data phase
+            ObjectPropList()
+                : objectHandle(0)
+                , objectPropCode(0)
+                , datatype(0)
+                , value(0)
+            {}
+        } *objPropList; ///< An array of "elements" contained within a SendObjectPropList request
 
-        MTPSendObjectSequence(): objInfo(0), objHandle(0), sendObjBytesWritten(0)
-        {
-        }
-    } *m_sendObjectSequencePtr;                                         ///< This structure stores information from a SendObjectInfo operation for a future SendObject operation
+        ObjPropListInfo()
+            : noOfElements(0)
+            , storageId(0)
+            , objectSize(0)
+            , objectCurrSize(0)
+            , objectHandle(0)
+            , parentHandle(0)
+            , objectFormatCode(MTP_OBF_FORMAT_Undefined)
+            , objPropList(0)
+        {}
+    } *m_objPropListInfo; ///< This structure stores the information from SendObjectPropList for a future SendObject operation
 
-    struct MTPEditObjectSequence {
-        ObjHandle objHandle = 0;                                        ///< Handle of object being edited
-        quint64 writeOffset = 0;                                        ///< Write offset for incoming data packets
-    } *m_editObjectSequencePtr;                                         ///< This structure stores information from a EditObjectInfo operation for a future SendPartialObject64 operation
+    struct MTPSendObjectSequence
+    {
+        MTPObjectInfo *objInfo;      ///< Stores the object info (only valid for SendObjectInfo operation)
+        ObjHandle objHandle;         ///< Stores the ObjectHandle associated to a SendObject operation
+        quint32 sendObjBytesWritten; ///< Bytes written to storage during SendObject data phase
 
-    struct MTPTransactionSequence {
-        quint32                             mtpSessionId;               ///< Current MTP session ID
-        MTPResponseCode                     mtpResp;                    ///< MTP response code for the current operation
-        MTPRxContainer                        *reqContainer;              ///< The container that holds the request phase
-        MTPRxContainer                        *dataContainer;             ///< The container that holds the data phase (I->R)
+        MTPSendObjectSequence()
+            : objInfo(0)
+            , objHandle(0)
+            , sendObjBytesWritten(0)
+        {}
+    } *m_sendObjectSequencePtr; ///< This structure stores information from a SendObjectInfo operation for a future SendObject operation
 
-        MTPTransactionSequence() : mtpSessionId(0),
-            mtpResp(MTP_RESP_OK), reqContainer(0), dataContainer(0)
-        {
-        }
-    } *m_transactionSequence;                                           ///< Stores information related to the currently ongoing transaction
+    struct MTPEditObjectSequence
+    {
+        ObjHandle objHandle = 0; ///< Handle of object being edited
+        quint64 writeOffset = 0; ///< Write offset for incoming data packets
+    } *m_editObjectSequencePtr; ///< This structure stores information from a EditObjectInfo operation for a future SendPartialObject64 operation
 
-    struct SendObjectSegment {
-        ObjHandle objHandle = 0;                                       ///< The object handle
-        quint64 offsetNow = 0;                                         ///< Offset into the object (current segment)
-        quint64 offsetEnd = 0;                                         ///< End of transfer offset
-        quint64 bytesSent = 0;                                         ///< Bytes of the object transferred so far
-    } m_segmentedSender;                                               ///< This structure holds data for segmented getObject operations
+    struct MTPTransactionSequence
+    {
+        quint32 mtpSessionId;          ///< Current MTP session ID
+        MTPResponseCode mtpResp;       ///< MTP response code for the current operation
+        MTPRxContainer *reqContainer;  ///< The container that holds the request phase
+        MTPRxContainer *dataContainer; ///< The container that holds the data phase (I->R)
+
+        MTPTransactionSequence()
+            : mtpSessionId(0)
+            , mtpResp(MTP_RESP_OK)
+            , reqContainer(0)
+            , dataContainer(0)
+        {}
+    } *m_transactionSequence; ///< Stores information related to the currently ongoing transaction
+
+    struct SendObjectSegment
+    {
+        ObjHandle objHandle = 0; ///< The object handle
+        quint64 offsetNow = 0;   ///< Offset into the object (current segment)
+        quint64 offsetEnd = 0;   ///< End of transfer offset
+        quint64 bytesSent = 0;   ///< Bytes of the object transferred so far
+    } m_segmentedSender;         ///< This structure holds data for segmented getObject operations
 
     /// Constructor for MTPResponder
     /// \param transport [in] The transport type to be used by the responder
@@ -457,8 +471,7 @@ private:
     ///
     /// \return the number of serialized properties, i.e. excluding invalid
     /// QVariants.
-    quint32 serializePropList(ObjHandle handle,
-                              QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer);
+    quint32 serializePropList(ObjHandle handle, QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer);
 
     /// Sends a large data packet in segments of max data packet size
     void sendObjectSegmented();
@@ -488,21 +501,19 @@ private:
 }
 
 /* Helper functions for making human readable diagnostic logging */
-extern "C"
-{
-    const char *mtp_format_category_repr(int val);
-    const char *mtp_file_system_type_repr(int val);
-    const char *mtp_association_type_repr(int val);
-    const char *mtp_storage_access_repr(int val);
-    const char *mtp_container_type_repr(int val);
-    const char *mtp_obj_prop_form_repr(int val);
-    const char *mtp_storage_type_repr(int val);
-    const char *mtp_bitrate_type_repr(int val);
-    const char *mtp_protection_repr(int val);
-    const char *mtp_form_flag_repr(int val);
-    const char *mtp_data_type_repr(int val);
-    const char *mtp_ch_conf_repr(int val);
-    const char *mtp_code_repr(int val);
+extern "C" {
+const char *mtp_format_category_repr(int val);
+const char *mtp_file_system_type_repr(int val);
+const char *mtp_association_type_repr(int val);
+const char *mtp_storage_access_repr(int val);
+const char *mtp_container_type_repr(int val);
+const char *mtp_obj_prop_form_repr(int val);
+const char *mtp_storage_type_repr(int val);
+const char *mtp_bitrate_type_repr(int val);
+const char *mtp_protection_repr(int val);
+const char *mtp_form_flag_repr(int val);
+const char *mtp_data_type_repr(int val);
+const char *mtp_ch_conf_repr(int val);
+const char *mtp_code_repr(int val);
 };
 #endif
-

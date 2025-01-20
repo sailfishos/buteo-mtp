@@ -53,10 +53,10 @@ public:
     ~MTPTransporterDummy();
 
     /// Checks data, if data is good, returns true
-    bool sendData( const quint8 *data, quint32 len, bool sendZeroPacket = true );
+    bool sendData(const quint8 *data, quint32 len, bool sendZeroPacket = true);
 
     /// Checks if event data is good, if so returns true
-    bool sendEvent( const quint8 *data, quint32 len, bool sendZeroPacket = true ) ;
+    bool sendEvent(const quint8 *data, quint32 len, bool sendZeroPacket = true);
 
     bool activate()
     {
@@ -78,10 +78,10 @@ public:
 
 private:
     /// Checks if the mtp header received in sendData/Event is ok.
-    bool checkHeader( MTPContainerWrapper *mtpHeader, quint32 len );
+    bool checkHeader(MTPContainerWrapper *mtpHeader, quint32 len);
 
     /// Checks if data phases are ok.
-    bool checkData( const quint8 *data, quint32 len );
+    bool checkData(const quint8 *data, quint32 len);
 
     enum transactionPhase {
         eMTP_CONTAINER_TYPE_UNDEFINED,
@@ -98,7 +98,7 @@ private:
     quint32 m_transactionId; ///< The transaction id of the current MTP transaction ( read from the mtp packet revecied in sendData ).
 
 Q_SIGNALS:
-    void dummyDataReceived( quint8 *data, quint32 len );
+    void dummyDataReceived(quint8 *data, quint32 len);
 
 public Q_SLOTS:
     void sendDeviceOK() {}

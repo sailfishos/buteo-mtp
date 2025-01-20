@@ -48,7 +48,7 @@ class FSInotify : public QObject
 public:
     /// Constructor.
     /// \param mask [in] indicates what to watch for.
-    FSInotify( uint32_t theMask = IN_MOVE | IN_CREATE | IN_DELETE | IN_CLOSE_WRITE );
+    FSInotify(uint32_t theMask = IN_MOVE | IN_CREATE | IN_DELETE | IN_CLOSE_WRITE);
 
     /// Desctructor.
     ~FSInotify();
@@ -56,12 +56,12 @@ public:
     /// Adds a new watch to the file whose pathname is provided.
     /// \param pathName [in] the file's pathname.
     /// \return watch descriptor on success, -1 on failure.
-    int addWatch( const QString &pathName ) const;
+    int addWatch(const QString &pathName) const;
 
     /// Removes an added watch.
     /// \param wd [in] the watch to be removed.
     /// \return 0 on success -1 on failure.
-    int removeWatch( const int &wd ) const;
+    int removeWatch(const int &wd) const;
 
 public slots:
     /// This slot is for reading the inotify event, when one is generated.
@@ -70,7 +70,7 @@ public slots:
 signals:
     /// This signal is emitted corresponding to an inotify event.
     /// \param event [in] the structure holding inotify event details.
-    void inotifyEventSignal( struct inotify_event *event );
+    void inotifyEventSignal(struct inotify_event *event);
 
 private:
     uint32_t m_mask; ///< indicates what to watch for on a file.

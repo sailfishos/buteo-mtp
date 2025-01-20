@@ -32,8 +32,8 @@
 #include "mtptxcontainer.h"
 using namespace meegomtp1dot0;
 
-MTPTxContainer::MTPTxContainer(MTPContainerType type, quint16 code, quint32 transactionID,
-                               quint32 bufferEstimate /*= 0*/) : MTPContainer()
+MTPTxContainer::MTPTxContainer(MTPContainerType type, quint16 code, quint32 transactionID, quint32 bufferEstimate /*= 0*/)
+    : MTPContainer()
 {
     // Allocate buffer for header + playload estimate
     // Have to use malloc here, as we need to be able to realloc the buffer
@@ -73,7 +73,7 @@ void MTPTxContainer::resetContainerLength()
 const quint8 *MTPTxContainer::buffer()
 {
     // Populate the container length
-    if ( m_computeContainerLength ) {
+    if (m_computeContainerLength) {
         if (m_extraLargeContainer) {
             putl32(&m_container->containerLength, 0XFFFFFFFF);
         } else {
@@ -91,7 +91,7 @@ MTPTxContainer &MTPTxContainer::operator<<(bool d)
 
 MTPTxContainer &MTPTxContainer::operator<<(qint8 d)
 {
-    return operator<<((quint8)d);
+    return operator<<((quint8) d);
 }
 
 MTPTxContainer &MTPTxContainer::operator<<(const QVector<qint8> &d)
@@ -104,7 +104,7 @@ MTPTxContainer &MTPTxContainer::operator<<(const QVector<qint8> &d)
 
 MTPTxContainer &MTPTxContainer::operator<<(qint16 d)
 {
-    return operator<<((quint16)d);
+    return operator<<((quint16) d);
 }
 
 MTPTxContainer &MTPTxContainer::operator<<(const QVector<qint16> &d)
@@ -117,7 +117,7 @@ MTPTxContainer &MTPTxContainer::operator<<(const QVector<qint16> &d)
 
 MTPTxContainer &MTPTxContainer::operator<<(qint32 d)
 {
-    return operator<<((quint32)d);
+    return operator<<((quint32) d);
 }
 
 MTPTxContainer &MTPTxContainer::operator<<(const QVector<qint32> &d)
@@ -130,7 +130,7 @@ MTPTxContainer &MTPTxContainer::operator<<(const QVector<qint32> &d)
 
 MTPTxContainer &MTPTxContainer::operator<<(qint64 d)
 {
-    return operator<<((quint64)d);
+    return operator<<((quint64) d);
 }
 
 MTPTxContainer &MTPTxContainer::operator<<(const QVector<qint64> &d)
@@ -228,13 +228,14 @@ MTPTxContainer &MTPTxContainer::operator<<(const QString &d)
     // Maximum possible string length is 255 (one character for the NULL terminator)
     // Due to UTF16 encoding, content size can be greater than string length
     // -> Shorten the string until encoded length does not exceed the limit.
-    for ( int cutoff = 254; ; --cutoff ) {
+    for (int cutoff = 254;; --cutoff) {
         str = d;
         str.truncate(cutoff);
         end = dta = str.utf16();
-        while ( *end ) ++end;
-        len = (int)(end - dta);
-        if ( len <= 254 )
+        while (*end)
+            ++end;
+        len = (int) (end - dta);
+        if (len <= 254)
             break;
     }
 
@@ -242,8 +243,8 @@ MTPTxContainer &MTPTxContainer::operator<<(const QString &d)
 
     quint8 stringChars = (len > 0) ? (len + 1) : 0;
     serialize(&stringChars, sizeof(quint8), 1);
-    if ( stringChars )
-        serialize(dta, sizeof * dta, stringChars);
+    if (stringChars)
+        serialize(dta, sizeof *dta, stringChars);
 
     return *this;
 }
@@ -455,4 +456,3 @@ void MTPTxContainer::expandBuffer(quint32 requiredSpace)
     m_bufferCapacity += requiredSpace;
     m_container = reinterpret_cast<MTPUSBContainer *>(m_buffer);
 }
-

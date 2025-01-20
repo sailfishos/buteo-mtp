@@ -61,31 +61,40 @@ static QHash<QString, QString> *generateDeviceLabelHash()
     QDBusConnection systemBus(QDBusConnection::connectToBus(QDBusConnection::SystemBus, connectionName));
     QDBusInterface managerInterface(UDISKS2_SERVICE, UDISKS2_MANAGER_PATH, UDISKS2_MANAGER_INTERFACE, systemBus);
     QVariantMap defaultOptions({{QLatin1String("auth.no_user_interaction"), QVariant(true)}});
-    QDBusReply<QList<QDBusObjectPath> > blockDevicesReply(managerInterface.call(UDISKS2_MANAGER_METHOD_GETBLOCKDEVICES,
-                                                                                defaultOptions));
+    QDBusReply<QList<QDBusObjectPath>> blockDevicesReply(
+        managerInterface.call(UDISKS2_MANAGER_METHOD_GETBLOCKDEVICES, defaultOptions));
     if (!blockDevicesReply.isValid()) {
         QDBusError err(blockDevicesReply.error());
-        MTP_LOG_WARNING(QString("failed to get block device list from udisks: %1: %2").arg(err.name()).arg(err.message()));
+        MTP_LOG_WARNING(
+            QString("failed to get block device list from udisks: %1: %2").arg(err.name()).arg(err.message()));
     } else {
         for (const QDBusObjectPath &object : blockDevicesReply.value()) {
-            QDBusInterface propertiesInterface(UDISKS2_SERVICE, object.path(), DBUS_OBJECT_PROPERTIES_INTERFACE, systemBus);
-            QDBusReply<QVariant> deviceLabelReply(propertiesInterface.call(DBUS_OBJECT_PROPERTIES_METHOD_GET,
-                                                                           UDISKS2_BLOCK_INTERFACE, UDISKS2_BLOCK_PROPERTY_IDLABEL));
+            QDBusInterface
+                propertiesInterface(UDISKS2_SERVICE, object.path(), DBUS_OBJECT_PROPERTIES_INTERFACE, systemBus);
+            QDBusReply<QVariant> deviceLabelReply(
+                propertiesInterface
+                    .call(DBUS_OBJECT_PROPERTIES_METHOD_GET, UDISKS2_BLOCK_INTERFACE, UDISKS2_BLOCK_PROPERTY_IDLABEL));
             if (!deviceLabelReply.isValid()) {
                 QDBusError err(deviceLabelReply.error());
-                MTP_LOG_WARNING(QString("failed to get disk label for %1: %2: %3").arg(object.path()).arg(err.name()).arg(
-                                    err.message()));
+                MTP_LOG_WARNING(QString("failed to get disk label for %1: %2: %3")
+                                    .arg(object.path())
+                                    .arg(err.name())
+                                    .arg(err.message()));
                 continue;
             }
             QString deviceLabel(deviceLabelReply.value().toString());
             if (deviceLabel.isEmpty())
                 continue;
-            QDBusReply<QVariant> mountPointsReply(propertiesInterface.call(DBUS_OBJECT_PROPERTIES_METHOD_GET,
-                                                                           UDISKS2_FILESYSTEM_INTERFACE, UDISKS2_FILESYSTEM_PROPERTY_MOUNTPOINTS));
+            QDBusReply<QVariant> mountPointsReply(propertiesInterface.call(
+                DBUS_OBJECT_PROPERTIES_METHOD_GET,
+                UDISKS2_FILESYSTEM_INTERFACE,
+                UDISKS2_FILESYSTEM_PROPERTY_MOUNTPOINTS));
             if (!mountPointsReply.isValid()) {
                 QDBusError err(mountPointsReply.error());
-                MTP_LOG_WARNING(QString("failed to get mountpoints for %1: %2: %3").arg(object.path()).arg(err.name()).arg(
-                                    err.message()));
+                MTP_LOG_WARNING(QString("failed to get mountpoints for %1: %2: %3")
+                                    .arg(object.path())
+                                    .arg(err.name())
+                                    .arg(err.message()));
                 continue;
             }
             QByteArrayList mountPointsList(NemoDBus::demarshallArgument<QByteArrayList>(mountPointsReply.value()));
@@ -154,7 +163,7 @@ static void makeLabelsUnique(QMap<QString, QString> &pathLabels, QSet<QString> &
     }
 }
 
-QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
+QList<StoragePlugin *> FSStoragePluginFactory::create(quint32 storageId)
 {
     QSet<QString> alreadyExported;
     QSet<QString> reservedLabels;
@@ -183,29 +192,31 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
             continue;
         }
 
-        if (!storage.hasAttribute("path")
-                && !storage.hasAttribute("blockdev")) {
-            MTP_LOG_WARNING("Storage" << fileName << "has neither 'path' nor"
-                            " 'blockdev' attributes.");
+        if (!storage.hasAttribute("path") && !storage.hasAttribute("blockdev")) {
+            MTP_LOG_WARNING(
+                "Storage" << fileName
+                          << "has neither 'path' nor"
+                             " 'blockdev' attributes.");
             continue;
         }
 
-        if (storage.hasAttribute("path")
-                && storage.hasAttribute("blockdev")) {
-            MTP_LOG_WARNING("Storage" << fileName << "has mutually exclusive"
-                            " 'path' and 'blockdev' attributes.");
+        if (storage.hasAttribute("path") && storage.hasAttribute("blockdev")) {
+            MTP_LOG_WARNING(
+                "Storage" << fileName
+                          << "has mutually exclusive"
+                             " 'path' and 'blockdev' attributes.");
             continue;
         }
 
-        if (!storage.hasAttribute("name") ||
-                !storage.hasAttribute("description")) {
-            MTP_LOG_WARNING("Storage" << fileName << "is missing some of "
-                            "mandatory attributes 'name' and 'description'");
+        if (!storage.hasAttribute("name") || !storage.hasAttribute("description")) {
+            MTP_LOG_WARNING(
+                "Storage" << fileName
+                          << "is missing some of "
+                             "mandatory attributes 'name' and 'description'");
             continue;
         }
 
-        bool removable =
-            !storage.attribute("removable").compare("true", Qt::CaseInsensitive);
+        bool removable = !storage.attribute("removable").compare("true", Qt::CaseInsensitive);
 
         QStringList blacklistPaths;
         const QDomNodeList &blacklist = storage.elementsByTagName("blacklist");
@@ -217,8 +228,7 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
 
             QFile blacklistFile(blacklistFileName);
             if (!blacklistFile.open(QFile::ReadOnly)) {
-                MTP_LOG_WARNING(blacklistFile.fileName()
-                                << "couldn't be opened for reading.");
+                MTP_LOG_WARNING(blacklistFile.fileName() << "couldn't be opened for reading.");
                 continue;
             }
 
@@ -303,7 +313,7 @@ QList<StoragePlugin *>FSStoragePluginFactory::create(quint32 storageId)
         for (const QString &path : pathLabels.keys()) {
             /* Make sure a directory gets exported only once even if
              * it would match multiple configuration files. */
-            if ( alreadyExported.contains(path) )
+            if (alreadyExported.contains(path))
                 continue;
             const QString desc = pathLabels[path];
             if (reservedLabels.contains(desc))

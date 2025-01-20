@@ -97,7 +97,8 @@ public:
     /// \param respCode [out] The MTP response code is returned here. If
     /// there is no plugin to handle this, the code will remain unaltered.
     /// \return Returns true in case of success, else false
-    bool getObjPropValue(const QString &path, MTPObjPropertyCode propCode, QVariant &val, MTPResponseCode &respCode) const;
+    bool getObjPropValue(
+        const QString &path, MTPObjPropertyCode propCode, QVariant &val, MTPResponseCode &respCode) const;
 
     /// Uses one of the extension classes to set the value of an object property
     /// \param path [in] The full path to the object
@@ -106,11 +107,11 @@ public:
     /// \param respCode [out] The MTP response code is returned here. If
     /// there is no plugin to handle this, the code will remain unaltered.
     /// \return Returns true in case of success, else false
-    bool setObjPropValue(const QString &path, MTPObjPropertyCode propCode, const QVariant &val,
-                         MTPResponseCode &respCode) const;
+    bool setObjPropValue(
+        const QString &path, MTPObjPropertyCode propCode, const QVariant &val, MTPResponseCode &respCode) const;
+
 private:
-    QList<MTPExtension *>  m_extensionList; ///< An internal list of MTPExtension classes
+    QList<MTPExtension *> m_extensionList; ///< An internal list of MTPExtension classes
 };
 }
 #endif //MTP_EXTENSION_MANAGER_H
-

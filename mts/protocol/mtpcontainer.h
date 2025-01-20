@@ -106,31 +106,32 @@ public:
     void setExtraLargeContainer(bool isExtraLargeContainer);
 
     /// Some static functions to get/set data in little-endian
-    static quint8 getl8(const void *d); ///< Reads a byte at d in LE
+    static quint8 getl8(const void *d);   ///< Reads a byte at d in LE
     static quint16 getl16(const void *d); ///< Reads a 16 bit value at d in LE
     static quint32 getl32(const void *d); ///< Reads a 32 bit value at d in LE
     static quint64 getl64(const void *d); ///< Reads a 64 bit value at d in LE
 
-    static void putl8(void *d, quint8 val); ///< Writes val at d in LE
+    static void putl8(void *d, quint8 val);   ///< Writes val at d in LE
     static void putl16(void *d, quint16 val); ///< Writes 2 byte val at d in LE
     static void putl32(void *d, quint32 val); ///< Writes 4 bytes val at d in LE
     static void putl64(void *d, quint64 val); ///< Writes 8 bytes val at d in LE
 
 protected:
-    quint32 m_expectedLength; ///< from containerLength
+    quint32 m_expectedLength;    ///< from containerLength
     quint32 m_accumulatedLength; ///< length of payload received so far.
-    quint8  *m_buffer; ///< This byte array holds the buffer for serialization/deserialization
+    quint8 *m_buffer;            ///< This byte array holds the buffer for serialization/deserialization
     quint32 m_offset; ///< Offset into the internal buffer. The next serialization/deserialization will happen from this position
-    quint32 m_bufferCapacity; ///< The total size of the internal buffer
+    quint32 m_bufferCapacity;                       ///< The total size of the internal buffer
     static const quint32 EXPANSION_STEP_SIZE = 512; ///< The expansion step size, in bytes, for the buffer
-    bool m_extraLargeContainer; ///< Boolean to indicate if the container size is > 4GB
+    bool m_extraLargeContainer;                     ///< Boolean to indicate if the container size is > 4GB
 
     /// Structure of the USB generic container.
     /// The structure conveniently maps an MTP container to
     /// a buffer in memory. The members of this structure represent
     /// a buffer in memory in LE. Hence you will note that the getl* and
     /// putl* functions are always used to access the members!
-    struct MTPUSBContainer {
+    struct MTPUSBContainer
+    {
         quint32 containerLength;
         MTPContainerType containerType;
         quint16 code;
@@ -150,4 +151,3 @@ private:
 };
 }
 #endif
-

@@ -34,7 +34,6 @@
 
 #include <QObject>
 
-
 namespace meegomtp1dot0 {
 class MTPResponder;
 }
@@ -143,4 +142,3 @@ public Q_SLOTS:
 }
 
 #endif
-
