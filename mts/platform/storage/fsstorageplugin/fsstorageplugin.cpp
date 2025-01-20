@@ -1420,7 +1420,7 @@ MTPResponseCode FSStoragePlugin::getObjectHandles( const MTPObjFormatCode &forma
  ***********************************************************/
 bool FSStoragePlugin::checkHandle( const ObjHandle &handle ) const
 {
-    return m_objectHandlesMap.contains( handle ) ? true : false;
+    return m_objectHandlesMap.contains(handle);
 }
 
 /************************************************************
@@ -2039,7 +2039,7 @@ MTPResponseCode FSStoragePlugin::writeData( const ObjHandle &handle, const char 
         return MTP_RESP_GeneralError;
     }
 
-    if ( ( true == isLastSegment ) && ( 0 == writeBuffer ) ) {
+    if (isLastSegment && (0 == writeBuffer)) {
         m_writeObjectHandle = 0;
         if ( m_dataFile ) {
             /* Truncate at current write offset */
@@ -2408,7 +2408,7 @@ MTPResponseCode FSStoragePlugin::setReferences( const ObjHandle &handle, const Q
         if ( 0 == reference || 0 == reference->m_objectInfo ) {
             return MTP_RESP_Invalid_ObjectReference;
         }
-        if (true == savePlaylist) {
+        if (savePlaylist) {
             // Append the path to the entries list
             entries.append(reference->m_path);
         }
@@ -2517,7 +2517,7 @@ void FSStoragePlugin::storeObjectReferences()
         // Backup current position
         qint64 curPos = file.pos();
         // Seek back to write the number of references
-        if (false == file.seek(posNoOfReferences)) {
+        if (!file.seek(posNoOfReferences)) {
             MTP_LOG_WARNING("File seek failed!!");
             file.resize(0);
             return;
@@ -2529,7 +2529,7 @@ void FSStoragePlugin::storeObjectReferences()
             return;
         }
         // Seek forward again
-        if (false == file.seek(curPos)) {
+        if (!file.seek(curPos)) {
             MTP_LOG_WARNING("File seek failed!!");
             file.resize(0);
             return;
@@ -2537,7 +2537,7 @@ void FSStoragePlugin::storeObjectReferences()
 
     }
     // Seek backwards to write the number of object handles
-    if (false == file.seek(posNoOfHandles)) {
+    if (!file.seek(posNoOfHandles)) {
         MTP_LOG_WARNING("File seek failed!!");
         file.resize(0);
         return;
@@ -2832,7 +2832,7 @@ MTPResponseCode FSStoragePlugin::setObjectPropertyValue( const ObjHandle &handle
             path.truncate( path.lastIndexOf("/") + 1 );
             QString newName = QString( value.value<QString>() );
             // Check if the file name is valid
-            if (false == isFileNameValid(newName, storageItem->m_parent)) {
+            if (!isFileNameValid(newName, storageItem->m_parent)) {
                 // Bad file name
                 MTP_LOG_WARNING("Bad file name in setObjectProperty!" << newName);
                 return MTP_RESP_Invalid_ObjectProp_Value;

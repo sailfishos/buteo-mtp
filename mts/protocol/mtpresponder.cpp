@@ -565,9 +565,9 @@ void MTPResponder::commandHandler()
 
     if (m_opCodeTable.contains(reqContainer->code())) {
         (this->*(m_opCodeTable[reqContainer->code()]))();
-    } else if (true == m_extensionManager->operationHasDataPhase(reqContainer->code(), waitForDataPhase)) {
+    } else if (m_extensionManager->operationHasDataPhase(reqContainer->code(), waitForDataPhase)) {
         // Operation handled by an extension
-        if (false == waitForDataPhase) {
+        if (!waitForDataPhase) {
             // TODO: Check the return below? Can we assume that this will succeed as operationHasDataPhase has succeeded?
             //handleExtendedOperation();
             sendResponse(MTP_RESP_OperationNotSupported);
@@ -726,7 +726,7 @@ void MTPResponder::dataHandler(quint8 *data, quint32 dataLen, bool isFirstPacket
         }
         default: {
             respCode = MTP_RESP_OperationNotSupported;
-            /*if(true == handleExtendedOperation())
+            /*if(handleExtendedOperation())
             {
                 // Response has been sent from the extended operation handler
                 return;
@@ -764,7 +764,8 @@ bool MTPResponder::handleExtendedOperation()
             req.data = dataContainer->payload();
             req.dataLen = (dataContainer->containerLength() - MTP_HEADER_SIZE);
         }
-        if (true == (ret = m_extensionManager->handleOperation(req, resp))) {
+        if (m_extensionManager->handleOperation(req, resp)) {
+            ret = true;
             // Extension handled this operation successfully, send the data (if present)
             // and the response
             if (0 != resp.data && 0 < resp.dataLen) {
@@ -1914,7 +1915,7 @@ void MTPResponder::setObjPropValueReq()
         const MtpObjPropDesc *propDesc = 0;
 
         if (MTP_RESP_OK == (m_transactionSequence->mtpResp = m_propertyPod->getObjectPropDesc(category, propCode, propDesc))) {
-            if (false == propDesc->bGetSet) {
+            if (!propDesc->bGetSet) {
                 m_transactionSequence->mtpResp = MTP_RESP_AccessDenied;
             }
         }

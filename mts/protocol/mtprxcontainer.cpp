@@ -75,7 +75,7 @@ MTPRxContainer &MTPRxContainer::operator>>(bool &d)
 {
     quint8 i = 0;
     operator>>(i);
-    d = (0 == i) ? false : true;
+    d = (0 != i);
     return *this;
 }
 

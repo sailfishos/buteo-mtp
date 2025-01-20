@@ -47,70 +47,64 @@ MTPExtensionManager::~MTPExtensionManager()
 
 bool MTPExtensionManager::operationHasDataPhase(MTPOperationCode opCode, bool &hasDataPhase) const
 {
-    bool ret = false;
     foreach (MTPExtension *extension, m_extensionList) {
-        if (true == (ret = extension->operationHasDataPhase(opCode, hasDataPhase))) {
-            break;
+        if (extension->operationHasDataPhase(opCode, hasDataPhase)) {
+            return true;
         }
     }
-    return ret;
+    return false;
 }
 
 bool MTPExtensionManager::handleOperation(const MtpRequest &req, MtpResponse &resp) const
 {
-    bool ret = false;
     foreach (MTPExtension *extension, m_extensionList) {
-        if (true == (ret = extension->handleOperation(req, resp))) {
-            break;
+        if (extension->handleOperation(req, resp)) {
+            return true;
         }
     }
-    return ret;
+    return false;
 }
 
 bool MTPExtensionManager::getDevPropValue(MTPDevPropertyCode propCode, QVariant &val, MTPResponseCode &respCode) const
 {
-    bool ret = false;
     foreach (MTPExtension *extension, m_extensionList) {
-        if (true == (ret = extension->getDevPropValue(propCode, val, respCode))) {
-            break;
+        if (extension->getDevPropValue(propCode, val, respCode)) {
+            return true;
         }
     }
-    return ret;
+    return false;
 }
 
 bool MTPExtensionManager::setDevPropValue(MTPDevPropertyCode propCode, const QVariant &val,
                                           MTPResponseCode &respCode) const
 {
-    bool ret = false;
     foreach (MTPExtension *extension, m_extensionList) {
-        if (true == (ret = extension->setDevPropValue(propCode, val, respCode))) {
-            break;
+        if (extension->setDevPropValue(propCode, val, respCode)) {
+            return true;
         }
     }
-    return ret;
+    return false;
 }
 
 bool MTPExtensionManager::getObjPropValue(const QString &path, MTPObjPropertyCode propCode, QVariant &val,
                                           MTPResponseCode &respCode) const
 {
-    bool ret = false;
     foreach (MTPExtension *extension, m_extensionList) {
-        if (true == (ret = extension->getObjPropValue(path, propCode, val, respCode))) {
-            break;
+        if (extension->getObjPropValue(path, propCode, val, respCode)) {
+            return true;
         }
     }
-    return ret;
+    return false;
 }
 
 bool MTPExtensionManager::setObjPropValue(const QString &path, MTPObjPropertyCode propCode, const QVariant &val,
                                           MTPResponseCode &respCode) const
 {
-    bool ret = false;
     foreach (MTPExtension *extension, m_extensionList) {
-        if (true == (ret = extension->setObjPropValue(path, propCode, val, respCode))) {
-            break;
+        if (extension->setObjPropValue(path, propCode, val, respCode)) {
+            return true;
         }
     }
-    return ret;
+    return false;
 }
 
