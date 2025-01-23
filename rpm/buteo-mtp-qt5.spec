@@ -1,7 +1,7 @@
 Name:     buteo-mtp-qt5
 Version:  0.9.11
 Release:  1
-Summary:  MTP library
+Summary:  MTP Daemon
 License:  BSD and LGPLv2
 URL:      https://github.com/sailfishos/buteo-mtp
 Source0: %{name}-%{version}.tar.gz
@@ -33,17 +33,9 @@ Provides: mtp-vendor-configuration
 %description sample-vendor-configuration
 %{summary}.
 
-%package devel
-Summary: Development files for %{name}
-Requires: %{name} = %{version}-%{release}
-
-%description devel
-%{summary}.
-
 %package tests
 Summary: Tests for %{name}
 Requires: %{name} = %{version}-%{release}
-Conflicts: buteo-mtp-tests
 
 %description tests
 %{summary}.
@@ -73,6 +65,7 @@ groupadd-user mtp
 %files
 %{_libexecdir}/mtp_service
 %{_libdir}/*.so.*
+%exclude %{_libdir}/*.so
 %{_libdir}/mtp
 %{_userunitdir}/buteo-mtp.service
 %{_datadir}/mapplauncherd/privileges.d/*
@@ -89,10 +82,6 @@ groupadd-user mtp
 %{_datadir}/mtp/*.xml
 %{_datadir}/mtp/*.ico
 %config %{_sysconfdir}/fsstorage.d/*
-
-%files devel
-%{_includedir}/*
-%{_libdir}/*.so
 
 %files tests
 /opt/tests/buteo-mtp

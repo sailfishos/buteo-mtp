@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     QObject::connect(&app, SIGNAL(aboutToQuit()), Mts::getInstance(), SLOT(destroyInstance()));
 
     bool ok = Mts::getInstance()->activate();
-    if ( ok ) {
+    if (ok) {
         QEventLoop eLoop;
         eLoop.exec();
     } else {

@@ -35,9 +35,14 @@
 
 using namespace meegomtp1dot0;
 
-MTPContainer::MTPContainer() : m_expectedLength(0), m_accumulatedLength(0),
-    m_buffer(0), m_offset(MTP_HEADER_SIZE), m_bufferCapacity(0), m_extraLargeContainer(false),
-    m_container(0)
+MTPContainer::MTPContainer()
+    : m_expectedLength(0)
+    , m_accumulatedLength(0)
+    , m_buffer(0)
+    , m_offset(MTP_HEADER_SIZE)
+    , m_bufferCapacity(0)
+    , m_extraLargeContainer(false)
+    , m_container(0)
 {
 }
 
@@ -113,68 +118,67 @@ void MTPContainer::setExtraLargeContainer(bool isExtraLargeContainer)
 
 quint8 MTPContainer::getl8(const void *d)
 {
-    return *(quint8 *)d;
+    return *(quint8 *) d;
 }
 
 quint16 MTPContainer::getl16(const void *d)
 {
 #ifdef LITTLE_ENDIAN
-    return *(quint16 *)d;
+    return *(quint16 *) d;
 #else
-    return ((quint16)(getl8((quint8 *)d + 1)) << 8) | ((quint16)(getl8(d)));
+    return ((quint16) (getl8((quint8 *) d + 1)) << 8) | ((quint16) (getl8(d)));
 #endif
 }
 
 quint32 MTPContainer::getl32(const void *d)
 {
 #ifdef LITTLE_ENDIAN
-    return *(quint32 *)d;
+    return *(quint32 *) d;
 #else
-    return ((quint32)(getl16((quint8 *)d + 2)) << 16) | ((quint32)(getl16(d)));
+    return ((quint32) (getl16((quint8 *) d + 2)) << 16) | ((quint32) (getl16(d)));
 #endif
 }
 
 quint64 MTPContainer::getl64(const void *d)
 {
 #ifdef LITTLE_ENDIAN
-    return *(quint64 *)d;
+    return *(quint64 *) d;
 #else
-    return ((quint64)(getl32((quint8 *)d + 4)) << 32) | ((quint64)(getl32(d)));
+    return ((quint64) (getl32((quint8 *) d + 4)) << 32) | ((quint64) (getl32(d)));
 #endif
 }
 
 void MTPContainer::putl8(void *d, quint8 val)
 {
-    *(quint8 *)d = val;
+    *(quint8 *) d = val;
 }
 
 void MTPContainer::putl16(void *d, quint16 val)
 {
 #ifdef LITTLE_ENDIAN
-    *(quint16 *)d = val;
+    *(quint16 *) d = val;
 #else
-    putl8(d, (quint8)val);
-    putl8(((quint8 *)d + 1), (quint8)val >> 8);
+    putl8(d, (quint8) val);
+    putl8(((quint8 *) d + 1), (quint8) val >> 8);
 #endif
 }
 
 void MTPContainer::putl32(void *d, quint32 val)
 {
 #ifdef LITTLE_ENDIAN
-    *(quint32 *)d = val;
+    *(quint32 *) d = val;
 #else
-    putl16(d, (quint16)val);
-    putl16(((quint8 *)d + 2), (quint8)val >> 16);
+    putl16(d, (quint16) val);
+    putl16(((quint8 *) d + 2), (quint8) val >> 16);
 #endif
 }
 
 void MTPContainer::putl64(void *d, quint64 val)
 {
 #ifdef LITTLE_ENDIAN
-    *(quint64 *)d = val;
+    *(quint64 *) d = val;
 #else
-    putl32(d, (quint32)val);
-    putl32(((quint8 *)d + 4), (quint32)val >> 32);
+    putl32(d, (quint32) val);
+    putl32(((quint8 *) d + 4), (quint32) val >> 32);
 #endif
 }
-

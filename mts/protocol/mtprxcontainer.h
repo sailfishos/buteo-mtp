@@ -38,7 +38,6 @@ namespace meegomtp1dot0 {
 class MTPRxContainer : public MTPContainer
 {
 public:
-
     /// Constructor; Use this constructor for de-serialization of data
     /// incoming from the initiator.
     /// \param buffer [in] The data buffer.
@@ -152,4 +151,3 @@ private:
 };
 }
 #endif
-

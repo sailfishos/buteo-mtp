@@ -38,9 +38,11 @@ using namespace meegomtp1dot0;
 /******************************************
  * XMLHandler::XMLHandler
  *****************************************/
-XMLHandler::XMLHandler(MtpDeviceInfo *d) : m_state(DEFAULT), m_devInfo(d), m_devpropcode(MTP_DEV_PROPERTY_Undefined)
-{
-}
+XMLHandler::XMLHandler(MtpDeviceInfo *d)
+    : m_state(DEFAULT)
+    , m_devInfo(d)
+    , m_devpropcode(MTP_DEV_PROPERTY_Undefined)
+{}
 
 /******************************************
  * XMLHandler::~XMLHandler
@@ -52,10 +54,7 @@ XMLHandler::~XMLHandler()
 /******************************************
  * XMLHandler::startElement
  *****************************************/
-bool XMLHandler::startElement(const QString &,
-                              const QString &,
-                              const QString &aName,
-                              const QXmlAttributes &)
+bool XMLHandler::startElement(const QString &, const QString &, const QString &aName, const QXmlAttributes &)
 {
     if (aName == "DeviceInfo") {
         m_state = START;
@@ -150,9 +149,7 @@ bool XMLHandler::startElement(const QString &,
 /******************************************
  * XMLHandler::endElement
  *****************************************/
-bool XMLHandler::endElement(const QString &,
-                            const QString &,
-                            const QString &)
+bool XMLHandler::endElement(const QString &, const QString &, const QString &)
 {
     if (m_state == DEFAULT) {
         return false;
@@ -200,9 +197,10 @@ bool XMLHandler::characters(const QString &aStr)
          * currently supports -> better ignore this configuration
          * element altogether.
          */
-        if ( m_devInfo->m_mtpExtension != aStr ) {
-            MTP_LOG_INFO("Ignoring configured mtp extensions:" << aStr
-                         << "Using built in defaults:" << m_devInfo->m_mtpExtension);
+        if (m_devInfo->m_mtpExtension != aStr) {
+            MTP_LOG_INFO(
+                "Ignoring configured mtp extensions:" << aStr
+                                                      << "Using built in defaults:" << m_devInfo->m_mtpExtension);
         }
         result = true;
         break;
@@ -376,4 +374,3 @@ bool XMLHandler::characters(const QString &aStr)
     }
     return result;
 }
-

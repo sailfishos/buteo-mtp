@@ -30,4 +30,3 @@
 #include "trace.h"
 
 Q_LOGGING_CATEGORY(lcMtp, "buteo.mtp", QtWarningMsg)
-

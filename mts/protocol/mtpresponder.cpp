@@ -101,22 +101,23 @@ MTPResponder *MTPResponder::instance()
     return m_instance;
 }
 
-MTPResponder::MTPResponder(): m_storageServer(0),
-    m_transporter(0),
-    m_devInfoProvider(new DeviceInfoProvider),
-    m_propertyPod(PropertyPod::instance(m_devInfoProvider, m_extensionManager)),
-    m_extensionManager(new MTPExtensionManager),
-    m_copiedObjHandle(0),
-    m_containerToBeResent(false),
-    m_isLastPacket(false),
-    m_storageWaitDataComplete(false),
-    m_state_accessor_only(RESPONDER_IDLE),
-    m_prevState(RESPONDER_IDLE),
-    m_handler_idle_timer(0),
-    m_objPropListInfo(0),
-    m_sendObjectSequencePtr(0),
-    m_editObjectSequencePtr(nullptr),
-    m_transactionSequence(new MTPTransactionSequence)
+MTPResponder::MTPResponder()
+    : m_storageServer(0)
+    , m_transporter(0)
+    , m_devInfoProvider(new DeviceInfoProvider)
+    , m_propertyPod(PropertyPod::instance(m_devInfoProvider, m_extensionManager))
+    , m_extensionManager(new MTPExtensionManager)
+    , m_copiedObjHandle(0)
+    , m_containerToBeResent(false)
+    , m_isLastPacket(false)
+    , m_storageWaitDataComplete(false)
+    , m_state_accessor_only(RESPONDER_IDLE)
+    , m_prevState(RESPONDER_IDLE)
+    , m_handler_idle_timer(0)
+    , m_objPropListInfo(0)
+    , m_sendObjectSequencePtr(0)
+    , m_editObjectSequencePtr(nullptr)
+    , m_transactionSequence(new MTPTransactionSequence)
 {
     MTP_FUNC_TRACE();
 
@@ -134,7 +135,7 @@ MTPResponder::MTPResponder(): m_storageServer(0),
             this, &MTPResponder::onDevicePropertyChanged);
 }
 
-bool MTPResponder::initTransport( TransportType transport )
+bool MTPResponder::initTransport(TransportType transport)
 {
     bool transportOk = true;
     if (USB == transport) {
@@ -145,7 +146,7 @@ bool MTPResponder::initTransport( TransportType transport )
 #else
         transportOk = m_transporter->activate();
 #endif
-        if ( transportOk ) {
+        if (transportOk) {
             // Connect signals to the transporter
             QObject::connect(this, SIGNAL(sessionOpenChanged(bool)),
                              m_transporter, SLOT(sessionOpenChanged(bool)));
@@ -290,33 +291,32 @@ bool MTPResponder::sendContainer(MTPTxContainer &container, bool isLastPacket)
     int code = container.code();
     quint32 size = container.containerLength();
 
-    if ( type == MTP_CONTAINER_TYPE_RESPONSE && code != MTP_RESP_OK ) {
+    if (type == MTP_CONTAINER_TYPE_RESPONSE && code != MTP_RESP_OK) {
         MTP_LOG_WARNING(mtp_container_type_repr(type) << mtp_code_repr(code) << size << isLastPacket);
     } else {
         MTP_LOG_INFO(mtp_container_type_repr(type) << mtp_code_repr(code) << size << isLastPacket);
     }
 
-    if ( !m_transporter ) {
+    if (!m_transporter) {
         MTP_LOG_WARNING("Transporter not set; ignoring container");
         return false;
     }
 
-    if (MTP_CONTAINER_TYPE_RESPONSE == container.containerType()
-            || MTP_CONTAINER_TYPE_DATA == container.containerType()
-            || MTP_CONTAINER_TYPE_EVENT == container.containerType() ) {
+    if (MTP_CONTAINER_TYPE_RESPONSE == container.containerType() || MTP_CONTAINER_TYPE_DATA == container.containerType()
+        || MTP_CONTAINER_TYPE_EVENT == container.containerType()) {
         //m_transporter->disableRW();
         //QCoreApplication::processEvents();
         //m_transporter->enableRW();
-        if ( RESPONDER_TX_CANCEL == getResponderState() && MTP_CONTAINER_TYPE_EVENT != container.containerType()) {
+        if (RESPONDER_TX_CANCEL == getResponderState() && MTP_CONTAINER_TYPE_EVENT != container.containerType()) {
             return false;
         }
-        if ( RESPONDER_SUSPEND == getResponderState() ) {
+        if (RESPONDER_SUSPEND == getResponderState()) {
             MTP_LOG_WARNING("Received suspend while sending");
-            if ( MTP_CONTAINER_TYPE_EVENT != container.containerType() ) {
+            if (MTP_CONTAINER_TYPE_EVENT != container.containerType()) {
                 MTP_LOG_WARNING("Received suspend while sending data/response, wait for resume");
                 m_containerToBeResent = true;
                 m_resendBuffer = new quint8[container.bufferSize()];
-                memcpy( m_resendBuffer, container.buffer(), container.bufferSize() );
+                memcpy(m_resendBuffer, container.buffer(), container.bufferSize());
                 m_resendBufferSize = container.bufferSize();
                 m_isLastPacket = isLastPacket;
             }
@@ -426,7 +426,7 @@ void MTPResponder::receiveContainer(quint8 *data, quint32 dataLen, bool isFirstP
             m_transporter->reset();
             break;
         }
-        if ( isFirstPacket ) {
+        if (isFirstPacket) {
             emit deviceStatusBusy();
         }
         // This must be a data container
@@ -503,7 +503,7 @@ void MTPResponder::commandHandler()
     int code = reqContainer->code();
 
     quint32 ObjectHandle = 0;
-    switch ( code ) {
+    switch (code) {
     case MTP_OP_GetObjectInfo:
     case MTP_OP_GetObject:
     case MTP_OP_GetThumb:
@@ -530,8 +530,8 @@ void MTPResponder::commandHandler()
         ObjectHandle = params[1];
         break;
 
-    case MTP_OP_GetNumObjects:      // top object
-    case MTP_OP_GetObjectHandles:   // top object
+    case MTP_OP_GetNumObjects:    // top object
+    case MTP_OP_GetObjectHandles: // top object
         ObjectHandle = params[2];
         break;
 
@@ -539,12 +539,10 @@ void MTPResponder::commandHandler()
         break;
     }
     QString ObjectPath("n/a");
-    if ( ObjectHandle != 0x00000000 && ObjectHandle != 0xffffffff )
+    if (ObjectHandle != 0x00000000 && ObjectHandle != 0xffffffff)
         m_storageServer->getPath(ObjectHandle, ObjectPath);
 
-    MTP_LOG_INFO(mtp_container_type_repr(type)
-                 << mtp_code_repr(code)
-                 << ObjectPath);
+    MTP_LOG_INFO(mtp_container_type_repr(type) << mtp_code_repr(code) << ObjectPath);
 
     // preset the response code - to be changed if the handler of the operation
     // detects an error in the operation phase
@@ -564,9 +562,9 @@ void MTPResponder::commandHandler()
 
     if (m_opCodeTable.contains(reqContainer->code())) {
         (this->*(m_opCodeTable[reqContainer->code()]))();
-    } else if (true == m_extensionManager->operationHasDataPhase(reqContainer->code(), waitForDataPhase)) {
+    } else if (m_extensionManager->operationHasDataPhase(reqContainer->code(), waitForDataPhase)) {
         // Operation handled by an extension
-        if (false == waitForDataPhase) {
+        if (!waitForDataPhase) {
             // TODO: Check the return below? Can we assume that this will succeed as operationHasDataPhase has succeeded?
             //handleExtendedOperation();
             sendResponse(MTP_RESP_OperationNotSupported);
@@ -644,13 +642,14 @@ void MTPResponder::dataHandler(quint8 *data, quint32 dataLen, bool isFirstPacket
     MTPResponseCode respCode = m_transactionSequence->mtpResp;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
-    MTP_LOG_INFO("dataLen:" << dataLen << "isFirstPacket:" << isFirstPacket << "isLastPacket:" << isLastPacket <<
-                 "on entry:" << mtp_code_repr(m_transactionSequence->mtpResp));
+    MTP_LOG_INFO(
+        "dataLen:" << dataLen << "isFirstPacket:" << isFirstPacket << "isLastPacket:" << isLastPacket
+                   << "on entry:" << mtp_code_repr(m_transactionSequence->mtpResp));
 
     /* Except for potentially huge file content transfers, data packets
      * are concatenated into a full container block before processing.
      */
-    switch ( reqContainer->code() ) {
+    switch (reqContainer->code()) {
     case MTP_OP_SendObject:
     case MTP_OP_ANDROID_SendPartialObject64:
         // Each packet is passed through to file system as they come
@@ -667,7 +666,7 @@ void MTPResponder::dataHandler(quint8 *data, quint32 dataLen, bool isFirstPacket
             // Call append on the previously stored data container
             m_transactionSequence->dataContainer->append(data, dataLen);
         }
-        if ( !isLastPacket ) {
+        if (!isLastPacket) {
             // Return here and wait for the next segment in the data phase
             return;
         }
@@ -675,19 +674,19 @@ void MTPResponder::dataHandler(quint8 *data, quint32 dataLen, bool isFirstPacket
     }
 
     /* When applicable, sanity check container block */
-    if ( respCode == MTP_RESP_OK && m_transactionSequence->dataContainer ) {
+    if (respCode == MTP_RESP_OK && m_transactionSequence->dataContainer) {
         // Match the transaction IDs from the request phase
-        if ( m_transactionSequence->dataContainer->transactionId() != reqContainer->transactionId() ) {
+        if (m_transactionSequence->dataContainer->transactionId() != reqContainer->transactionId()) {
             respCode = MTP_RESP_InvalidTransID;
         }
         // check whether the opcode of the data container corresponds to the one of the operation phase
-        else if (m_transactionSequence->dataContainer->code() != reqContainer->code() ) {
+        else if (m_transactionSequence->dataContainer->code() != reqContainer->code()) {
             respCode = MTP_RESP_GeneralError;
         }
     }
 
     /* Command specific actions */
-    if ( respCode == MTP_RESP_OK ) {
+    if (respCode == MTP_RESP_OK) {
         switch (reqContainer->code()) {
         // For operations with no I->R data phases, we should never get
         // here!
@@ -725,7 +724,7 @@ void MTPResponder::dataHandler(quint8 *data, quint32 dataLen, bool isFirstPacket
         }
         default: {
             respCode = MTP_RESP_OperationNotSupported;
-            /*if(true == handleExtendedOperation())
+            /*if(handleExtendedOperation())
             {
                 // Response has been sent from the extended operation handler
                 return;
@@ -739,11 +738,12 @@ void MTPResponder::dataHandler(quint8 *data, quint32 dataLen, bool isFirstPacket
     // Update cached status
     m_transactionSequence->mtpResp = respCode;
 
-    MTP_LOG_INFO("dataLen:" << dataLen << "isFirstPacket:" << isFirstPacket << "isLastPacket:" << isLastPacket <<
-                 "on leave:" << mtp_code_repr(m_transactionSequence->mtpResp));
+    MTP_LOG_INFO(
+        "dataLen:" << dataLen << "isFirstPacket:" << isFirstPacket << "isLastPacket:" << isLastPacket
+                   << "on leave:" << mtp_code_repr(m_transactionSequence->mtpResp));
 
     // RESPONSE PHASE
-    if ( isLastPacket )
+    if (isLastPacket)
         sendResponse(respCode);
 }
 
@@ -763,12 +763,13 @@ bool MTPResponder::handleExtendedOperation()
             req.data = dataContainer->payload();
             req.dataLen = (dataContainer->containerLength() - MTP_HEADER_SIZE);
         }
-        if (true == (ret = m_extensionManager->handleOperation(req, resp))) {
+        if (m_extensionManager->handleOperation(req, resp)) {
+            ret = true;
             // Extension handled this operation successfully, send the data (if present)
             // and the response
             if (0 != resp.data && 0 < resp.dataLen) {
-                MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                             resp.dataLen);
+                MTPTxContainer dataContainer(
+                    MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), resp.dataLen);
                 memcpy(dataContainer.payload(), resp.data, resp.dataLen);
                 dataContainer.seek(resp.dataLen);
                 bool sent = sendContainer(dataContainer);
@@ -778,8 +779,11 @@ bool MTPResponder::handleExtendedOperation()
                 delete[] resp.data;
             }
             // Send response
-            MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, resp.respCode, reqContainer->transactionId(),
-                                         resp.params.size() * sizeof(MtpParam));
+            MTPTxContainer respContainer(
+                MTP_CONTAINER_TYPE_RESPONSE,
+                resp.respCode,
+                reqContainer->transactionId(),
+                resp.params.size() * sizeof(MtpParam));
             for (int i = 0; i < resp.params.size(); i++) {
                 respContainer << resp.params[i];
             }
@@ -851,37 +855,21 @@ void MTPResponder::getDeviceInfoReq()
     // Serial Number (string)
     QString serialNbr = m_devInfoProvider->serialNo();
 
-    payloadLength = sizeof(stdVer) +
-                    sizeof(vendorExtId) +
-                    sizeof(vendorExtVer) +
-                    sizeof(funcMode) +
-                    opsSupported.size() +    // For arrays, number of elements + total length
-                    opsSupported.size() * sizeof(quint16) +
-                    evsSupported.size() +
-                    evsSupported.size() * sizeof(quint16) +
-                    propsSupported.size() +
-                    propsSupported.size() * sizeof(quint16) +
-                    sizeof(captureFormatsNumElem) +
-                    captureFormatsLen +
-                    imageFormats.size() +
-                    imageFormats.size() * sizeof(quint16) +
-                    sizeof(quint8) +
-                    ( vendorExtDesc.length() + 1 ) * 2 +    // For strings, need to add 1 to accommodate the NULL terminator too
-                    sizeof(quint8) +
-                    ( manufacturer.length() + 1 ) * 2 +
-                    sizeof(quint8) +
-                    ( model.length() + 1 ) * 2 +
-                    sizeof(quint8) +
-                    ( devVersion.length() + 1 ) * 2 +
-                    sizeof(quint8) +
-                    ( serialNbr.length() + 1 ) * 2;
+    payloadLength = sizeof(stdVer) + sizeof(vendorExtId) + sizeof(vendorExtVer) + sizeof(funcMode) + opsSupported.size()
+                    + // For arrays, number of elements + total length
+                    opsSupported.size() * sizeof(quint16) + evsSupported.size() + evsSupported.size() * sizeof(quint16)
+                    + propsSupported.size() + propsSupported.size() * sizeof(quint16) + sizeof(captureFormatsNumElem)
+                    + captureFormatsLen + imageFormats.size() + imageFormats.size() * sizeof(quint16) + sizeof(quint8)
+                    + (vendorExtDesc.length() + 1) * 2
+                    + // For strings, need to add 1 to accommodate the NULL terminator too
+                    sizeof(quint8) + (manufacturer.length() + 1) * 2 + sizeof(quint8) + (model.length() + 1) * 2
+                    + sizeof(quint8) + (devVersion.length() + 1) * 2 + sizeof(quint8) + (serialNbr.length() + 1) * 2;
 
     // Create a container with the estimated buffer size
-    MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                 payloadLength);
+    MTPTxContainer
+        dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
 
-    dataContainer << stdVer << vendorExtId << vendorExtVer
-                  << vendorExtDesc << funcMode;
+    dataContainer << stdVer << vendorExtId << vendorExtVer << vendorExtDesc << funcMode;
 
     dataContainer << opsSupported;
     dataContainer << evsSupported;
@@ -889,8 +877,7 @@ void MTPResponder::getDeviceInfoReq()
     dataContainer << captureFormatsNumElem;
     dataContainer << imageFormats;
 
-    dataContainer << manufacturer << model << devVersion
-                  << serialNbr;
+    dataContainer << manufacturer << model << devVersion << serialNbr;
 
     bool sent = sendContainer(dataContainer);
     if (!sent) {
@@ -928,7 +915,7 @@ void MTPResponder::openSessionReq()
 void MTPResponder::closeSessionReq()
 {
     MTP_FUNC_TRACE();
-    quint16 code =  MTP_RESP_OK;
+    quint16 code = MTP_RESP_OK;
 
     if (MTP_INITIAL_SESSION_ID == m_transactionSequence->mtpSessionId) {
         code = MTP_RESP_SessionNotOpen;
@@ -951,7 +938,7 @@ void MTPResponder::closeSessionReq()
 void MTPResponder::getStorageIDReq()
 {
     MTP_FUNC_TRACE();
-    quint16 code =  MTP_RESP_OK;
+    quint16 code = MTP_RESP_OK;
     QVector<quint32> storageIds;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
@@ -968,8 +955,8 @@ void MTPResponder::getStorageIDReq()
     if (MTP_RESP_OK == code) {
         // DATA PHASE
         quint32 payloadLength = storageIds.size() * sizeof(quint32) + sizeof(quint32);
-        MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                     payloadLength);
+        MTPTxContainer
+            dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
         dataContainer << storageIds;
         sent = sendContainer(dataContainer);
         if (!sent) {
@@ -990,27 +977,27 @@ void MTPResponder::getStorageInfoReq()
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     bool sent = true;
-    if ( MTP_RESP_OK == code ) {
+    if (MTP_RESP_OK == code) {
         QVector<quint32> params;
         reqContainer->params(params);
         // check still if the StorageID is correct and the storage is OK
         quint32 storageId = params[0];
-        code = m_storageServer->checkStorage( storageId );
-        if ( MTP_RESP_OK == code ) {
+        code = m_storageServer->checkStorage(storageId);
+        if (MTP_RESP_OK == code) {
             MTPStorageInfo storageInfo;
 
             // get info from storage server
-            code = m_storageServer->storageInfo( storageId, storageInfo );
+            code = m_storageServer->storageInfo(storageId, storageInfo);
 
-            if ( MTP_RESP_OK == code ) {
+            if (MTP_RESP_OK == code) {
                 // all information for StorageInfo dataset retrieved from Storage Server
                 // determine total length of Storage Info dataset
-                payloadLength = MTP_STORAGE_INFO_SIZE + ( ( storageInfo.storageDescription.size() + 1 ) * 2 ) +
-                                ( ( storageInfo.volumeLabel.size() + 1 ) * 2 );
+                payloadLength = MTP_STORAGE_INFO_SIZE + ((storageInfo.storageDescription.size() + 1) * 2)
+                                + ((storageInfo.volumeLabel.size() + 1) * 2);
 
                 // Create data container
-                MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                             payloadLength);
+                MTPTxContainer dataContainer(
+                    MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
 
                 dataContainer << storageInfo.storageType << storageInfo.filesystemType << storageInfo.accessCapability
                               << storageInfo.maxCapacity << storageInfo.freeSpace << storageInfo.freeSpaceInObjects
@@ -1018,8 +1005,8 @@ void MTPResponder::getStorageInfoReq()
 
                 // Check the storage once more before entering the data phase
                 // if the storage factory returns an error the data phase will be skipped
-                code = m_storageServer->checkStorage( storageId );
-                if ( MTP_RESP_OK == code ) {
+                code = m_storageServer->checkStorage(storageId);
+                if (MTP_RESP_OK == code) {
                     sent = sendContainer(dataContainer);
                     if (!sent) {
                         MTP_LOG_CRITICAL("Could not send data");
@@ -1048,25 +1035,25 @@ void MTPResponder::getNumObjectsReq()
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
     // Check the validity of the operation params.
-    if ( MTP_RESP_OK == code ) {
+    if (MTP_RESP_OK == code) {
         // Check if the storage id sent is valid.
-        if ( 0xFFFFFFFF != params[0] ) {
-            code = m_storageServer->checkStorage( params[0] );
+        if (0xFFFFFFFF != params[0]) {
+            code = m_storageServer->checkStorage(params[0]);
         }
-        if ( MTP_RESP_OK == code ) {
+        if (MTP_RESP_OK == code) {
             // Check if the object format, if provided, is valid
             QVector<quint16> formats = m_devInfoProvider->supportedFormats();
-            if ( params[1] && !formats.contains( params[1] ) ) {
+            if (params[1] && !formats.contains(params[1])) {
                 code = MTP_RESP_Invalid_ObjectProp_Format;
             }
             // Check if the object handle, if provided is valid
-            if ( code == MTP_RESP_OK && 0x00000000 != params[2] && 0xFFFFFFFF != params[2] ) {
-                code = m_storageServer->checkHandle( params[2] );
+            if (code == MTP_RESP_OK && 0x00000000 != params[2] && 0xFFFFFFFF != params[2]) {
+                code = m_storageServer->checkHandle(params[2]);
             }
         }
     }
 
-    if ( MTP_RESP_OK == code ) {
+    if (MTP_RESP_OK == code) {
         // retrieve the number of objects from storage server
         code = m_storageServer->getObjectHandles(params[0], static_cast<MTPObjFormatCode>(params[1]), params[2], handles);
     }
@@ -1090,41 +1077,39 @@ void MTPResponder::getObjectHandlesReq()
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
     // Check the validity of the operation params.
-    if ( MTP_RESP_OK == code ) {
+    if (MTP_RESP_OK == code) {
         // Check if the storage id sent is valid.
-        if ( 0xFFFFFFFF != params[0] ) {
-            code = m_storageServer->checkStorage( params[0] );
+        if (0xFFFFFFFF != params[0]) {
+            code = m_storageServer->checkStorage(params[0]);
         }
-        if ( MTP_RESP_OK == code ) {
+        if (MTP_RESP_OK == code) {
             // Check if the object format, if provided, is valid
             QVector<quint16> formats = m_devInfoProvider->supportedFormats();
-            if ( params[1] && !formats.contains( params[1] ) ) {
+            if (params[1] && !formats.contains(params[1])) {
                 code = MTP_RESP_Invalid_ObjectProp_Format;
             }
             // Check if the object handle, if provided is valid
-            if ( code == MTP_RESP_OK && 0x00000000 != params[2] && 0xFFFFFFFF != params[2] ) {
-                code = m_storageServer->checkHandle( params[2] );
+            if (code == MTP_RESP_OK && 0x00000000 != params[2] && 0xFFFFFFFF != params[2]) {
+                code = m_storageServer->checkHandle(params[2]);
             }
         }
     }
 
-    if ( MTP_RESP_OK == code ) {
+    if (MTP_RESP_OK == code) {
         // retrieve the number of objects from storage server
-        code = m_storageServer->getObjectHandles(params[0],
-                                                 static_cast<MTPObjFormatCode>(params[1]),
-                                                 params[2], handles);
+        code = m_storageServer->getObjectHandles(params[0], static_cast<MTPObjFormatCode>(params[1]), params[2], handles);
     }
     bool sent = true;
-    if ( MTP_RESP_OK == code ) {
+    if (MTP_RESP_OK == code) {
         // At least one PTP client (iPhoto) only shows all pictures if
         // the handles are sorted. It's probably related to having parent
         // folders listed before the objects they contain.
         std::sort(handles.begin(), handles.end());
         MTP_LOG_INFO("handle count:" << handles.size());
         // DATA PHASE
-        payloadLength = ( handles.size() + 1 ) * sizeof(quint32);
-        MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                     payloadLength);
+        payloadLength = (handles.size() + 1) * sizeof(quint32);
+        MTPTxContainer
+            dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
         dataContainer << handles;
         sent = sendContainer(dataContainer);
         if (!sent) {
@@ -1154,12 +1139,12 @@ void MTPResponder::getObjectInfoReq()
         payloadLength = sizeof(MTPObjectInfo);
         // consider the variable part(strings) in the ObjectInfo dataset
         // for the length of the payload
-        payloadLength += ( objectInfo->mtpFileName.size() ? ( objectInfo->mtpFileName.size() + 1 ) * 2 : 0 );
-        payloadLength += ( objectInfo->mtpCaptureDate.size() ? ( objectInfo->mtpCaptureDate.size() + 1 ) * 2 : 0 );
-        payloadLength += ( objectInfo->mtpModificationDate.size() ? ( objectInfo->mtpModificationDate.size() + 1 ) * 2 : 0 );
+        payloadLength += (objectInfo->mtpFileName.size() ? (objectInfo->mtpFileName.size() + 1) * 2 : 0);
+        payloadLength += (objectInfo->mtpCaptureDate.size() ? (objectInfo->mtpCaptureDate.size() + 1) * 2 : 0);
+        payloadLength += (objectInfo->mtpModificationDate.size() ? (objectInfo->mtpModificationDate.size() + 1) * 2 : 0);
 
-        MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                     payloadLength);
+        MTPTxContainer
+            dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
 
         dataContainer << *objectInfo;
 
@@ -1185,24 +1170,24 @@ void MTPResponder::getObjectCommon(quint32 handle, quint64 offs, quint64 size)
     MTP_LOG_INFO("request - handle:" << handle << "offs:" << offs << "size:" << size);
 
     // check if everthing is ok, so that cmd can be processed
-    if ( code == MTP_RESP_OK )
+    if (code == MTP_RESP_OK)
         code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
     const MTPObjectInfo *objectInfo = nullptr;
 
-    if ( code == MTP_RESP_OK )
+    if (code == MTP_RESP_OK)
         code = m_storageServer->getObjectInfo(handle, objectInfo);
 
-    if ( code == MTP_RESP_OK ) {
+    if (code == MTP_RESP_OK) {
         quint64 tail = offs + size;
 
-        if ( objectInfo->mtpObjectFormat == MTP_OBF_FORMAT_Association ) {
+        if (objectInfo->mtpObjectFormat == MTP_OBF_FORMAT_Association) {
             MTP_LOG_WARNING("handle:" << handle << "is not a regular file");
             code = MTP_RESP_InvalidObjectHandle;
-        } else if ( offs > objectInfo->mtpObjectCompressedSize ) {
+        } else if (offs > objectInfo->mtpObjectCompressedSize) {
             MTP_LOG_WARNING("handle:" << handle << "read past file end");
             code = MTP_RESP_InvalidParameter;
-        } else if ( tail < offs ) {
+        } else if (tail < offs) {
             MTP_LOG_WARNING("handle:" << handle << "read span overflow");
             code = MTP_RESP_InvalidParameter;
         } else {
@@ -1216,17 +1201,16 @@ void MTPResponder::getObjectCommon(quint32 handle, quint64 offs, quint64 size)
             // Start data phase - response will be sent from sendObjectSegmented()
             sendReply = false;
             MTP_LOG_INFO("handle:" << handle << "start segmented data phase");
-            m_segmentedSender.objHandle    = handle;
-            m_segmentedSender.offsetNow    = offs;
-            m_segmentedSender.offsetEnd    = tail;
+            m_segmentedSender.objHandle = handle;
+            m_segmentedSender.offsetNow = offs;
+            m_segmentedSender.offsetEnd = tail;
             sendObjectSegmented();
         }
     }
 
-    if ( sendReply )
+    if (sendReply)
         sendResponse(code);
 }
-
 
 void MTPResponder::getObjectReq()
 {
@@ -1235,8 +1219,8 @@ void MTPResponder::getObjectReq()
     QVector<quint32> params;
     reqContainer->params(params);
     quint32 handle = params[0];
-    quint64 offs   = 0;
-    quint64 size   = MTP_MAX_CONTENT_SIZE;
+    quint64 offs = 0;
+    quint64 size = MTP_MAX_CONTENT_SIZE;
     getObjectCommon(handle, offs, size);
 }
 
@@ -1247,35 +1231,30 @@ void MTPResponder::getThumbReq()
     MTPResponseCode code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
-    code = preCheck(m_transactionSequence->mtpSessionId,
-                    reqContainer->transactionId());
-    if ( MTP_RESP_OK == code ) {
+    code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
+    if (MTP_RESP_OK == code) {
         QVector<quint32> params;
-        reqContainer->params( params );
+        reqContainer->params(params);
 
         const MtpObjPropDesc *propDesc = 0;
-        m_propertyPod->getObjectPropDesc( MTP_IMAGE_FORMAT,
-                                          MTP_OBJ_PROP_Rep_Sample_Data, propDesc );
+        m_propertyPod->getObjectPropDesc(MTP_IMAGE_FORMAT, MTP_OBJ_PROP_Rep_Sample_Data, propDesc);
 
         QList<MTPObjPropDescVal> propValList;
-        propValList.append( MTPObjPropDescVal ( propDesc ) );
+        propValList.append(MTPObjPropDescVal(propDesc));
 
-        code = m_storageServer->getObjectPropertyValue( params[0], propValList );
-        if ( MTP_RESP_OK == code ) {
-            QVector<quint8> thumbnailData =
-                propValList[0].propVal.value<QVector<quint8> >();
+        code = m_storageServer->getObjectPropertyValue(params[0], propValList);
+        if (MTP_RESP_OK == code) {
+            QVector<quint8> thumbnailData = propValList[0].propVal.value<QVector<quint8>>();
 
             int payloadLength = thumbnailData.size();
 
-            MTPTxContainer dataContainer( MTP_CONTAINER_TYPE_DATA,
-                                          reqContainer->code(), reqContainer->transactionId(),
-                                          payloadLength );
+            MTPTxContainer dataContainer(
+                MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
 
-            memcpy( dataContainer.payload(), thumbnailData.constData(),
-                    payloadLength );
+            memcpy(dataContainer.payload(), thumbnailData.constData(), payloadLength);
 
-            dataContainer.seek( payloadLength );
-            sent = sendContainer( dataContainer );
+            dataContainer.seek(payloadLength);
+            sent = sendContainer(dataContainer);
             if (!sent) {
                 MTP_LOG_CRITICAL("Could not send thumbnail data");
             }
@@ -1294,7 +1273,7 @@ void MTPResponder::deleteObjectReq()
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
-    if ( MTP_RESP_OK == code ) {
+    if (MTP_RESP_OK == code) {
         QVector<quint32> params;
         reqContainer->params(params);
         code = m_storageServer->deleteItem(params[0], static_cast<MTPObjFormatCode>(params[1]));
@@ -1323,11 +1302,11 @@ void MTPResponder::sendObjectReq()
 
     // check whether the used IDs are OK
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
-    if ( MTP_RESP_OK == code ) {
+    if (MTP_RESP_OK == code) {
         // check still whether a SendObjectInfo dataset or an objectproplist dataset exists
         // TODO Why was the 0 != size check added? It will be 0 for abstract objects like playlists
-        if ( ( !m_sendObjectSequencePtr
-                && !m_objPropListInfo )  /*|| (m_objPropListInfo && 0 == m_objPropListInfo->objectSize)*/ ) {
+        if ((!m_sendObjectSequencePtr
+             && !m_objPropListInfo) /*|| (m_objPropListInfo && 0 == m_objPropListInfo->objectSize)*/) {
             // Either there has been no SendObjectInfo taken place before
             // or an error occured in the SendObjectInfo, so that the
             // necessary ObjectInfo dataset does not exists */
@@ -1347,8 +1326,8 @@ void MTPResponder::getPartialObjectReq()
     QVector<quint32> params;
     reqContainer->params(params);
     quint32 handle = params[0];
-    quint64 offs   = params[1];
-    quint64 size   = params[2];
+    quint64 offs = params[1];
+    quint64 size = params[2];
     getObjectCommon(handle, offs, size);
 }
 
@@ -1369,15 +1348,15 @@ void MTPResponder::getDevicePropDescReq()
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     bool sent = true;
     //  enter data phase
-    if ( MTP_RESP_OK == code ) {
+    if (MTP_RESP_OK == code) {
         MtpDevPropDesc *propDesc = 0;
         quint32 payloadLength = sizeof(MtpDevPropDesc); // approximation
         QVector<quint32> params;
         reqContainer->params(params);
         code = m_propertyPod->getDevicePropDesc(params[0], &propDesc);
         if (MTP_RESP_OK == code && 0 != propDesc) {
-            MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                         payloadLength);
+            MTPTxContainer dataContainer(
+                MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
             dataContainer << *propDesc;
             sent = sendContainer(dataContainer);
             if (!sent) {
@@ -1396,21 +1375,21 @@ void MTPResponder::getDevicePropValueReq()
     MTP_FUNC_TRACE();
 
     quint32 payloadLength = sizeof(QVariant); // approximation
-    MTPResponseCode code =  MTP_RESP_OK;
+    MTPResponseCode code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     bool sent = true;
 
     // check if everything is ok, so that cmd can be processed
     code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
-    if ( MTP_RESP_OK == code ) {
+    if (MTP_RESP_OK == code) {
         QVector<quint32> params;
         reqContainer->params(params);
         MtpDevPropDesc *propDesc = 0;
         code = m_propertyPod->getDevicePropDesc(params[0], &propDesc);
 
         if (MTP_RESP_OK == code && 0 != propDesc) {
-            MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                         payloadLength);
+            MTPTxContainer dataContainer(
+                MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
             dataContainer.serializeVariantByType(propDesc->uDataType, propDesc->currentValue);
             sent = sendContainer(dataContainer);
             if (!sent) {
@@ -1427,11 +1406,11 @@ void MTPResponder::getDevicePropValueReq()
 void MTPResponder::setDevicePropValueReq()
 {
     MTP_FUNC_TRACE();
-    MTPResponseCode code =  MTP_RESP_OK;
+    MTPResponseCode code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     // check if everything is ok, so that cmd can be processed
-    code = preCheck( m_transactionSequence->mtpSessionId, reqContainer->transactionId() );
-    if ( MTP_RESP_OK == code ) {
+    code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
+    if (MTP_RESP_OK == code) {
         QVector<quint32> params;
         reqContainer->params(params);
         MTPDevPropertyCode propCode = static_cast<MTPDevPropertyCode>(params[0]);
@@ -1458,7 +1437,7 @@ void MTPResponder::resetDevicePropValueReq()
 void MTPResponder::moveObjectReq()
 {
     MTP_FUNC_TRACE();
-    quint16 code =  MTP_RESP_OK;
+    quint16 code = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
     // Check if the session id and transaction id are valid before proceeding further
@@ -1469,14 +1448,14 @@ void MTPResponder::moveObjectReq()
         QVector<quint32> params;
         reqContainer->params(params);
         // Check if the object handle passed to us is valid and exists in the storage passed to us
-        if ( MTP_RESP_OK != ( code = m_storageServer->checkHandle(params[0]) ) ) {
+        if (MTP_RESP_OK != (code = m_storageServer->checkHandle(params[0]))) {
         }
         // Check if storage handle that's passed to us exists, is not full, and is writable
-        else if ( MTP_RESP_OK != ( code = m_storageServer->checkStorage(params[1]) ) ) {
+        else if (MTP_RESP_OK != (code = m_storageServer->checkStorage(params[1]))) {
             // We came across a storage related error ;
         }
         // If the parent object handle is passed, check if that's valid
-        else if ( params[2] && MTP_RESP_OK != m_storageServer->checkHandle(params[2]) ) {
+        else if (params[2] && MTP_RESP_OK != m_storageServer->checkHandle(params[2])) {
             code = MTP_RESP_InvalidParentObject;
         }
         // Storage, object and parent handles are ok, proceed to copy the object
@@ -1491,7 +1470,7 @@ void MTPResponder::moveObjectReq()
 void MTPResponder::copyObjectReq()
 {
     MTP_FUNC_TRACE();
-    MTPResponseCode code =  MTP_RESP_OK;
+    MTPResponseCode code = MTP_RESP_OK;
     ObjHandle retHandle = 0;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
@@ -1503,14 +1482,14 @@ void MTPResponder::copyObjectReq()
         QVector<quint32> params;
         reqContainer->params(params);
         // Check if the object handle passed to us is valid and exists in the storage passed to us
-        if ( MTP_RESP_OK != ( code = m_storageServer->checkHandle(params[0]) ) ) {
+        if (MTP_RESP_OK != (code = m_storageServer->checkHandle(params[0]))) {
         }
         // Check if storage handle that's passed to us exists, is not full, and is writable
-        else if ( MTP_RESP_OK != ( code = m_storageServer->checkStorage(params[1]) ) ) {
+        else if (MTP_RESP_OK != (code = m_storageServer->checkStorage(params[1]))) {
             // We cam across a storage related error ;
         }
         // If the parent object handle is passed, check if that's valid
-        else if ( params[2] && MTP_RESP_OK != m_storageServer->checkHandle(params[2]) ) {
+        else if (params[2] && MTP_RESP_OK != m_storageServer->checkHandle(params[2])) {
             code = MTP_RESP_InvalidParentObject;
         }
         // Storage, object and parent handles are ok, proceed to copy the object
@@ -1519,7 +1498,7 @@ void MTPResponder::copyObjectReq()
         }
     }
 
-    if ( RESPONDER_TX_CANCEL == getResponderState() ) {
+    if (RESPONDER_TX_CANCEL == getResponderState()) {
         return;
     }
 
@@ -1540,8 +1519,8 @@ void MTPResponder::getPartialObject64Req()
     quint32 handle = params[0];
     quint32 offsLo = params[1];
     quint32 offsHi = params[2];
-    quint32 size   = params[3];
-    quint64 offs   = offsHi;
+    quint32 size = params[3];
+    quint64 offs = offsHi;
     offs <<= 32;
     offs |= offsLo;
     getObjectCommon(handle, offs, size);
@@ -1561,28 +1540,28 @@ void MTPResponder::sendPartialObject64Req()
     quint32 handle = params[0];
     quint32 offsLo = params[1];
     quint32 offsHi = params[2];
-    quint32 size   = params[3];
-    quint64 offs   = offsHi;
+    quint32 size = params[3];
+    quint64 offs = offsHi;
     offs <<= 32;
     offs |= offsLo;
 
     MTP_LOG_INFO("handle:" << handle << "offs:" << offs << "size:" << size);
 
     // check if everthing is ok, so that cmd can be processed
-    if ( code == MTP_RESP_OK )
+    if (code == MTP_RESP_OK)
         code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
     /* Must be in edit object mode */
-    if ( code == MTP_RESP_OK ) {
+    if (code == MTP_RESP_OK) {
         /* Check that appropriate beginEditObjectReq() has been made */
-        if ( !m_editObjectSequencePtr )
+        if (!m_editObjectSequencePtr)
             code = MTP_RESP_GeneralError;
-        else if ( m_editObjectSequencePtr->objHandle != handle )
+        else if (m_editObjectSequencePtr->objHandle != handle)
             code = MTP_RESP_InvalidObjectHandle;
     }
 
     /* Adjust write position used by data phase */
-    if ( code == MTP_RESP_OK )
+    if (code == MTP_RESP_OK)
         m_editObjectSequencePtr->writeOffset = offs;
 
     /* Data phase must be processed even if it is not going
@@ -1596,8 +1575,8 @@ void MTPResponder::sendPartialObject64Req()
     //    -> sendPartialObject64Data()
 }
 
-MTPResponseCode MTPResponder::sendPartialObject64Data(const quint8 *data, quint32 dataLen, bool isFirstPacket,
-                                                      bool isLastPacket)
+MTPResponseCode MTPResponder::sendPartialObject64Data(
+    const quint8 *data, quint32 dataLen, bool isFirstPacket, bool isLastPacket)
 {
     MTP_FUNC_TRACE();
     MTPResponseCode code = MTP_RESP_OK;
@@ -1605,25 +1584,28 @@ MTPResponseCode MTPResponder::sendPartialObject64Data(const quint8 *data, quint3
     MTP_LOG_INFO("dataLen:" << dataLen << "isFirstPacket:" << isFirstPacket << "isLastPacket:" << isLastPacket);
 
     /* Must be in edit object mode */
-    if ( code == MTP_RESP_OK ) {
-        if ( !m_editObjectSequencePtr )
+    if (code == MTP_RESP_OK) {
+        if (!m_editObjectSequencePtr)
             code = MTP_RESP_GeneralError;
     }
 
     /* Omit header bits included in the 1st packet */
-    if ( code == MTP_RESP_OK && isFirstPacket ) {
-        if ( dataLen < MTP_HEADER_SIZE )
+    if (code == MTP_RESP_OK && isFirstPacket) {
+        if (dataLen < MTP_HEADER_SIZE)
             code = MTP_RESP_GeneralError;
         else
             dataLen -= MTP_HEADER_SIZE, data += MTP_HEADER_SIZE;
     }
 
     /* Write content to file */
-    if ( code == MTP_RESP_OK ) {
-        code = m_storageServer->writePartialData(m_editObjectSequencePtr->objHandle,
-                                                 m_editObjectSequencePtr->writeOffset,
-                                                 data, dataLen,
-                                                 isFirstPacket, isLastPacket);
+    if (code == MTP_RESP_OK) {
+        code = m_storageServer->writePartialData(
+            m_editObjectSequencePtr->objHandle,
+            m_editObjectSequencePtr->writeOffset,
+            data,
+            dataLen,
+            isFirstPacket,
+            isLastPacket);
         m_editObjectSequencePtr->writeOffset += dataLen;
     }
 
@@ -1644,26 +1626,26 @@ void MTPResponder::truncateObject64Req()
     quint32 handle = params[0];
     quint32 offsLo = params[1];
     quint32 offsHi = params[2];
-    quint64 offs   = offsHi;
+    quint64 offs = offsHi;
     offs <<= 32;
     offs |= offsLo;
 
     MTP_LOG_INFO("handle:" << handle << "offs:" << offs);
 
     // check if everthing is ok, so that cmd can be processed
-    if ( code == MTP_RESP_OK )
+    if (code == MTP_RESP_OK)
         code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
     /* Must be in edit object mode */
-    if ( code == MTP_RESP_OK ) {
-        if ( !m_editObjectSequencePtr )
-            code =  MTP_RESP_GeneralError;
-        else if ( m_editObjectSequencePtr->objHandle != handle )
+    if (code == MTP_RESP_OK) {
+        if (!m_editObjectSequencePtr)
+            code = MTP_RESP_GeneralError;
+        else if (m_editObjectSequencePtr->objHandle != handle)
             code = MTP_RESP_InvalidObjectHandle;
     }
 
     /* Truncate file */
-    if ( code == MTP_RESP_OK )
+    if (code == MTP_RESP_OK)
         code = m_storageServer->truncateItem(handle, offs);
 
     sendResponse(code);
@@ -1685,14 +1667,14 @@ void MTPResponder::beginEditObjectReq()
     MTP_LOG_INFO("handle:" << handle);
 
     // check if everthing is ok, so that cmd can be processed
-    if ( code == MTP_RESP_OK )
+    if (code == MTP_RESP_OK)
         code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
-    if ( code == MTP_RESP_OK )
+    if (code == MTP_RESP_OK)
         code = m_storageServer->checkHandle(handle);
 
     /* Enter edit mode */
-    if ( code == MTP_RESP_OK ) {
+    if (code == MTP_RESP_OK) {
         // Note: Any ongoing non-terminated edit object session is abandoned
         delete m_editObjectSequencePtr;
         m_editObjectSequencePtr = new MTPEditObjectSequence;
@@ -1720,18 +1702,18 @@ void MTPResponder::endEditObjectReq()
     MTP_LOG_INFO("handle:" << handle);
 
     // check if everthing is ok, so that cmd can be processed
-    if ( code == MTP_RESP_OK )
+    if (code == MTP_RESP_OK)
         code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
-    if ( code == MTP_RESP_OK ) {
-        if ( !m_editObjectSequencePtr )
-            code =  MTP_RESP_GeneralError;
-        else if ( m_editObjectSequencePtr->objHandle != handle )
+    if (code == MTP_RESP_OK) {
+        if (!m_editObjectSequencePtr)
+            code = MTP_RESP_GeneralError;
+        else if (m_editObjectSequencePtr->objHandle != handle)
             code = MTP_RESP_InvalidObjectHandle;
     }
 
     /* Leave edit mode */
-    if ( code == MTP_RESP_OK ) {
+    if (code == MTP_RESP_OK) {
         // flush cached property values for the object
         m_storageServer->flushCachedObjectPropertyValues(handle);
 
@@ -1760,7 +1742,7 @@ void MTPResponder::getObjPropsSupportedReq()
     } else {
         QVector<quint32> params;
         reqContainer->params(params);
-        MTPObjectFormatCategory category = (MTPObjectFormatCategory)m_devInfoProvider->getFormatCodeCategory(params[0]);
+        MTPObjectFormatCategory category = (MTPObjectFormatCategory) m_devInfoProvider->getFormatCodeCategory(params[0]);
 
         QVector<MTPObjPropertyCode> propsSupported;
 
@@ -1769,8 +1751,8 @@ void MTPResponder::getObjPropsSupportedReq()
         // enter data phase if precondition has been OK
         if (MTP_RESP_OK == code) {
             quint32 payloadLength = propsSupported.size() * sizeof(MTPObjPropertyCode) + sizeof(quint32);
-            MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                         payloadLength);
+            MTPTxContainer dataContainer(
+                MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
             dataContainer << propsSupported;
             sent = sendContainer(dataContainer);
             if (!sent) {
@@ -1798,13 +1780,12 @@ void MTPResponder::getObjPropDescReq()
         reqContainer->params(params);
         MTPObjPropertyCode propCode = static_cast<MTPObjPropertyCode>(params[0]);
         MTPObjFormatCode formatCode = static_cast<MTPObjFormatCode>(params[1]);
-        MTPObjectFormatCategory category = (MTPObjectFormatCategory)m_devInfoProvider->getFormatCodeCategory(formatCode);
+        MTPObjectFormatCategory category = (MTPObjectFormatCategory) m_devInfoProvider->getFormatCodeCategory(
+            formatCode);
 
-        MTP_LOG_INFO(mtp_code_repr(propCode)
-                     << mtp_code_repr(formatCode)
-                     << mtp_format_category_repr(category));
+        MTP_LOG_INFO(mtp_code_repr(propCode) << mtp_code_repr(formatCode) << mtp_format_category_repr(category));
 
-        if ( MTP_UNSUPPORTED_FORMAT == category) {
+        if (MTP_UNSUPPORTED_FORMAT == category) {
             code = MTP_RESP_Invalid_ObjectProp_Format;
         } else {
             const MtpObjPropDesc *propDesc = 0;
@@ -1812,8 +1793,8 @@ void MTPResponder::getObjPropDescReq()
             if (MTP_RESP_OK == code) {
                 // Data phase
                 quint32 payloadLength = sizeof(MtpObjPropDesc); // approximation
-                MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                             payloadLength);
+                MTPTxContainer dataContainer(
+                    MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
                 dataContainer << *propDesc;
                 sent = sendContainer(dataContainer);
                 if (!sent) {
@@ -1836,7 +1817,7 @@ void MTPResponder::getObjPropValueReq()
     bool sent = true;
 
     // check if everthing is ok, so that cmd can be processed
-    code =  preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
+    code = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
     if (MTP_RESP_OK == code) {
         QVector<quint32> params;
         reqContainer->params(params);
@@ -1845,9 +1826,10 @@ void MTPResponder::getObjPropValueReq()
         const MTPObjectInfo *objectInfo;
         MTPObjectFormatCategory category;
         const MtpObjPropDesc *propDesc = 0;
-        code = m_storageServer->getObjectInfo( handle, objectInfo );
+        code = m_storageServer->getObjectInfo(handle, objectInfo);
         if (MTP_RESP_OK == code) {
-            category = static_cast<MTPObjectFormatCategory>(m_devInfoProvider->getFormatCodeCategory(objectInfo->mtpObjectFormat));
+            category = static_cast<MTPObjectFormatCategory>(
+                m_devInfoProvider->getFormatCodeCategory(objectInfo->mtpObjectFormat));
             code = m_propertyPod->getObjectPropDesc(category, propCode, propDesc);
         }
 
@@ -1868,8 +1850,8 @@ void MTPResponder::getObjPropValueReq()
             if (MTP_RESP_OK == code) {
                 // DATA PHASE
                 quint32 payloadLength = sizeof(QVariant); // approximation
-                MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                             payloadLength);
+                MTPTxContainer dataContainer(
+                    MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
                 if (1 == propValList.size()) {
                     dataContainer.serializeVariantByType(propDesc->uDataType, propValList[0].propVal);
                 } else {
@@ -1907,13 +1889,14 @@ void MTPResponder::setObjPropValueReq()
             return;
         }
         MTPObjFormatCode format = static_cast<MTPObjFormatCode>(objInfo->mtpObjectFormat);
-        MTPObjectFormatCategory category = static_cast<MTPObjectFormatCategory>(m_devInfoProvider->getFormatCodeCategory(
-                                                                                    format));
+        MTPObjectFormatCategory category = static_cast<MTPObjectFormatCategory>(
+            m_devInfoProvider->getFormatCodeCategory(format));
         MTPObjPropertyCode propCode = static_cast<MTPObjPropertyCode>(params[1]);
         const MtpObjPropDesc *propDesc = 0;
 
-        if (MTP_RESP_OK == (m_transactionSequence->mtpResp = m_propertyPod->getObjectPropDesc(category, propCode, propDesc))) {
-            if (false == propDesc->bGetSet) {
+        if (MTP_RESP_OK
+            == (m_transactionSequence->mtpResp = m_propertyPod->getObjectPropDesc(category, propCode, propDesc))) {
+            if (!propDesc->bGetSet) {
                 m_transactionSequence->mtpResp = MTP_RESP_AccessDenied;
             }
         }
@@ -1940,24 +1923,26 @@ void MTPResponder::getObjectPropListReq()
 
     resp = preCheck(m_transactionSequence->mtpSessionId, reqContainer->transactionId());
 
-    if ( MTP_RESP_OK == resp ) {
+    if (MTP_RESP_OK == resp) {
         if ((0 == objHandle) && (0 == depth)) {
             // return an empty data set
-            MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                         sizeof(quint32));
-            dataContainer << (quint32)0;
+            MTPTxContainer dataContainer(
+                MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), sizeof(quint32));
+            dataContainer << (quint32) 0;
             sent = sendContainer(dataContainer);
             if (!sent) {
                 MTP_LOG_CRITICAL("Could not send data");
             }
-        } else if ( (1 < depth) && (0xFFFFFFFF > depth) ) {
+        } else if ((1 < depth) && (0xFFFFFFFF > depth)) {
             // we do not support depth values between 1 and 0xFFFFFFFF
             resp = MTP_RESP_Specification_By_Depth_Unsupported;
         } else if (0 == propCode) {
             // propCode of 0 means we need the group code, but we do not support that
             resp = MTP_RESP_Specification_By_Group_Unsupported;
-        } else if ((0 != format)
-                   && (MTP_UNSUPPORTED_FORMAT == static_cast<MTPObjectFormatCategory>(m_devInfoProvider->getFormatCodeCategory(format)))) {
+        } else if (
+            (0 != format)
+            && (MTP_UNSUPPORTED_FORMAT
+                == static_cast<MTPObjectFormatCategory>(m_devInfoProvider->getFormatCodeCategory(format)))) {
             resp = MTP_RESP_InvalidCodeFormat;
         } else {
             QVector<ObjHandle> objHandles;
@@ -1988,12 +1973,12 @@ void MTPResponder::getObjectPropListReq()
             if (MTP_RESP_OK == resp) {
                 // TODO: The buffer max len needs to be decided
                 quint32 maxPayloadLen = BUFFER_MAX_LEN - MTP_HEADER_SIZE;
-                MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                             maxPayloadLen);
+                MTPTxContainer dataContainer(
+                    MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), maxPayloadLen);
 
                 // if there are no handles found an empty dataset will be sent
                 numHandles = objHandles.size();
-                MTP_LOG_TRACE( numHandles);
+                MTP_LOG_TRACE(numHandles);
                 dataContainer << numHandles; // Write the numHandles here for now, to advance the serializer's pointer
                 // go through the list of found ObjectHandles
                 for (quint32 i = 0; (i < numHandles && (MTP_RESP_OK == resp)); i++) {
@@ -2003,7 +1988,8 @@ void MTPResponder::getObjectPropListReq()
                     if (MTP_RESP_OK == resp) {
                         // find the format and the category of the object
                         objFormat = static_cast<MTPObjFormatCode>(objInfo->mtpObjectFormat);
-                        category = static_cast<MTPObjectFormatCategory>(m_devInfoProvider->getFormatCodeCategory(objFormat));
+                        category = static_cast<MTPObjectFormatCategory>(
+                            m_devInfoProvider->getFormatCodeCategory(objFormat));
 
                         // FIXME: Investigate if the below force assignment to common format is really needed
                         if (category == MTP_UNSUPPORTED_FORMAT) {
@@ -2048,9 +2034,9 @@ void MTPResponder::getObjectPropListReq()
                 }
             } else { //FIXME Is this needed?
                 // return an empty data set
-                MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                             sizeof(quint32));
-                dataContainer << (quint32)0;
+                MTPTxContainer dataContainer(
+                    MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), sizeof(quint32));
+                dataContainer << (quint32) 0;
                 sent = sendContainer(dataContainer);
                 if (!sent) {
                     MTP_LOG_CRITICAL("Could not send data");
@@ -2070,7 +2056,7 @@ void MTPResponder::getObjectPropListReq()
 void MTPResponder::setObjectPropListReq()
 {
     MTP_FUNC_TRACE();
-    MTPResponseCode respCode =  MTP_RESP_OK;
+    MTPResponseCode respCode = MTP_RESP_OK;
 
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     // check if everthing is ok, so that cmd can be processed
@@ -2091,7 +2077,7 @@ void MTPResponder::getInterdependentPropDescReq()
 void MTPResponder::sendObjectPropListReq()
 {
     MTP_FUNC_TRACE();
-    MTPResponseCode *respCode =  &m_transactionSequence->mtpResp;
+    MTPResponseCode *respCode = &m_transactionSequence->mtpResp;
     quint32 storageID = 0x00000000;
     quint64 objectSize = 0x00000000;
     ObjHandle parentHandle = 0x00000000;
@@ -2123,7 +2109,7 @@ void MTPResponder::sendObjectPropListReq()
                 quint64 lsb = params[4];
 
                 // Indicates that object is >= 4GB, we don't support this
-                if ( msb ) {
+                if (msb) {
                     *respCode = MTP_RESP_Object_Too_Large;
                 } else {
                     // If there's an existing object prop list info, free that
@@ -2146,7 +2132,7 @@ void MTPResponder::sendObjectPropListReq()
 void MTPResponder::getObjReferencesReq()
 {
     MTP_FUNC_TRACE();
-    MTPResponseCode respCode =  MTP_RESP_OK;
+    MTPResponseCode respCode = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     bool sent = true;
 
@@ -2160,8 +2146,8 @@ void MTPResponder::getObjReferencesReq()
         // enter data phase if precondition has been OK
         if (MTP_RESP_OK == respCode) {
             quint32 payloadLength = objReferences.size() * sizeof(ObjHandle) + sizeof(quint32);
-            MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(),
-                                         payloadLength);
+            MTPTxContainer dataContainer(
+                MTP_CONTAINER_TYPE_DATA, reqContainer->code(), reqContainer->transactionId(), payloadLength);
             dataContainer << objReferences;
             sent = sendContainer(dataContainer);
             if (!sent) {
@@ -2178,7 +2164,7 @@ void MTPResponder::getObjReferencesReq()
 void MTPResponder::setObjReferencesReq()
 {
     MTP_FUNC_TRACE();
-    quint16 respCode =  MTP_RESP_OK;
+    quint16 respCode = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
     // check if everthing is ok, so that cmd can be processed
@@ -2189,7 +2175,7 @@ void MTPResponder::setObjReferencesReq()
 void MTPResponder::skipReq()
 {
     MTP_FUNC_TRACE();
-    quint16 respCode =  MTP_RESP_OK;
+    quint16 respCode = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
 
     // check if everthing is ok, so that cmd can be processed
@@ -2207,7 +2193,7 @@ void MTPResponder::sendObjectInfoData()
     MTP_FUNC_TRACE();
 
     MTPObjectInfo objectInfo;
-    MTPResponseCode response =  m_transactionSequence->mtpResp;
+    MTPResponseCode response = m_transactionSequence->mtpResp;
     quint32 responseParams[3];
     MTPRxContainer *recvContainer = m_transactionSequence->dataContainer;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
@@ -2223,7 +2209,7 @@ void MTPResponder::sendObjectInfoData()
         *recvContainer >> objectInfo;
 
         // Indicates that object is >= 4GB, we don't support this
-        if ( 0xFFFFFFFF == objectInfo.mtpObjectCompressedSize ) {
+        if (0xFFFFFFFF == objectInfo.mtpObjectCompressedSize) {
             response = MTP_RESP_Object_Too_Large;
         } else {
             // get the requested StorageId
@@ -2233,12 +2219,11 @@ void MTPResponder::sendObjectInfoData()
             // some clients (Nautilus 3.4.2) send an info with blank parent
             objectInfo.mtpParentObject = params[1];
             // trigger creation of a file in Storage Server
-            response = m_storageServer->addItem(responseParams[0], responseParams[1], responseParams[2],
-                                                &objectInfo);
+            response = m_storageServer->addItem(responseParams[0], responseParams[1], responseParams[2], &objectInfo);
         }
 
         // creation of file was successful store information which are needed later temporarly
-        if ( MTP_RESP_OK == response ) {
+        if (MTP_RESP_OK == response) {
             // save the ObjectInfo temporarly
             m_sendObjectSequencePtr->objInfo = new MTPObjectInfo;
             *(m_sendObjectSequencePtr->objInfo) = objectInfo;
@@ -2253,9 +2238,9 @@ void MTPResponder::sendObjectInfoData()
     }
 
     // create and send container for response
-    MTPTxContainer respContainer(MTP_CONTAINER_TYPE_RESPONSE, response, reqContainer->transactionId(),
-                                 sizeof(responseParams));
-    if ( MTP_RESP_OK == response ) {
+    MTPTxContainer
+        respContainer(MTP_CONTAINER_TYPE_RESPONSE, response, reqContainer->transactionId(), sizeof(responseParams));
+    if (MTP_RESP_OK == response) {
         respContainer << responseParams[0] << responseParams[1] << responseParams[2];
     }
     bool sent = sendContainer(respContainer);
@@ -2269,18 +2254,18 @@ void MTPResponder::sendObjectData(quint8 *data, quint32 dataLen, bool isFirstPac
     MTP_FUNC_TRACE();
 
     quint32 objectLen = 0;
-    MTPResponseCode code =  MTP_RESP_OK;
+    MTPResponseCode code = MTP_RESP_OK;
     MTPContainerWrapper container(data);
     ObjHandle handle = 0;
 
     // error if no ObjectInfo or objectproplist dataset has been sent before
-    if ( !m_objPropListInfo && ( !m_sendObjectSequencePtr || !m_sendObjectSequencePtr->objInfo ) ) {
+    if (!m_objPropListInfo && (!m_sendObjectSequencePtr || !m_sendObjectSequencePtr->objInfo)) {
         code = MTP_RESP_NoValidObjectInfo;
     } else {
         quint8 *writeBuffer = 0;
         if (m_sendObjectSequencePtr) {
             handle = m_sendObjectSequencePtr->objHandle;
-        } else if ( m_objPropListInfo ) {
+        } else if (m_objPropListInfo) {
             handle = m_objPropListInfo->objectHandle;
         }
 
@@ -2299,16 +2284,16 @@ void MTPResponder::sendObjectData(quint8 *data, quint32 dataLen, bool isFirstPac
         }
 
         // write data
-        code = m_storageServer->writeData( handle, reinterpret_cast<char *>(writeBuffer), objectLen, isFirstPacket,
-                                           isLastPacket);
-        if ( MTP_RESP_OK == code ) {
+        code = m_storageServer
+                   ->writeData(handle, reinterpret_cast<char *>(writeBuffer), objectLen, isFirstPacket, isLastPacket);
+        if (MTP_RESP_OK == code) {
             code = sendObjectCheck(handle, objectLen, isLastPacket, code);
         }
     }
 
-    if ( MTP_RESP_Undefined != code ) {
+    if (MTP_RESP_Undefined != code) {
         // Delete the stored sendObjectInfo information
-        if ( m_sendObjectSequencePtr ) {
+        if (m_sendObjectSequencePtr) {
             delete m_sendObjectSequencePtr->objInfo;
             m_sendObjectSequencePtr->objInfo = nullptr;
 
@@ -2317,12 +2302,12 @@ void MTPResponder::sendObjectData(quint8 *data, quint32 dataLen, bool isFirstPac
         }
         // Apply object prop list if one was sent thru SendObjectPropList
         if (MTP_RESP_OK == code && m_objPropListInfo) {
-            MTPObjectFormatCategory category = m_devInfoProvider->getFormatCodeCategory(m_objPropListInfo->objectFormatCode);
+            MTPObjectFormatCategory category = m_devInfoProvider->getFormatCodeCategory(
+                m_objPropListInfo->objectFormatCode);
             QList<MTPObjPropDescVal> propValList;
             const MtpObjPropDesc *propDesc = 0;
-            for ( quint32 i = 0 ; i < m_objPropListInfo->noOfElements; i++) {
-                ObjPropListInfo::ObjectPropList &propList =
-                    m_objPropListInfo->objPropList[i];
+            for (quint32 i = 0; i < m_objPropListInfo->noOfElements; i++) {
+                ObjPropListInfo::ObjectPropList &propList = m_objPropListInfo->objPropList[i];
 
                 switch (propList.objectPropCode) {
                 case MTP_OBJ_PROP_Obj_File_Name:
@@ -2340,11 +2325,11 @@ void MTPResponder::sendObjectData(quint8 *data, quint32 dataLen, bool isFirstPac
                     // try extracting the name from the file's embedded
                     // metadata.
                     const MTPObjectInfo *info;
-                    if ( m_storageServer->getObjectInfo( handle, info ) != MTP_RESP_OK ) {
+                    if (m_storageServer->getObjectInfo(handle, info) != MTP_RESP_OK) {
                         break;
                     }
 
-                    if ( propList.value->toString() == info->mtpFileName ) {
+                    if (propList.value->toString() == info->mtpFileName) {
                         continue;
                     }
                     break;
@@ -2361,7 +2346,7 @@ void MTPResponder::sendObjectData(quint8 *data, quint32 dataLen, bool isFirstPac
             m_storageServer->setObjectPropertyValue(handle, propValList, true);
         }
         // Trigger close file in the storage server... ignore return here
-        m_storageServer->writeData( handle, 0, 0, false, true);
+        m_storageServer->writeData(handle, 0, 0, false, true);
         // create and send container for response
         sendResponse(code);
         // This is moved here intentionally : in case a cancel tx is received before sending the response above
@@ -2430,7 +2415,7 @@ void MTPResponder::sendObjectPropListData()
     MTP_FUNC_TRACE();
     quint32 respParam[4] = {0, 0, 0, 0};
     quint32 respSize = 0;
-    quint16 respCode =  MTP_RESP_OK;
+    quint16 respCode = MTP_RESP_OK;
     MTPObjectFormatCategory category = MTP_UNSUPPORTED_FORMAT;
     MTPObjPropertyCode propCode;
     const MtpObjPropDesc *propDesc = 0;
@@ -2453,7 +2438,7 @@ void MTPResponder::sendObjectPropListData()
     // Scan propertylist
     QString fileNameValue;
     int fileNameIndex = -1;
-    for (quint32 i = 0; i < m_objPropListInfo->noOfElements; i++ ) {
+    for (quint32 i = 0; i < m_objPropListInfo->noOfElements; i++) {
         m_objPropListInfo->objPropList[i].value = 0;
         // First, get the object handle
         *recvContainer >> m_objPropListInfo->objPropList[i].objectHandle;
@@ -2468,8 +2453,8 @@ void MTPResponder::sendObjectPropListData()
         // Next, get the object property code
         *recvContainer >> m_objPropListInfo->objPropList[i].objectPropCode;
 
-        category = static_cast<MTPObjectFormatCategory>(m_devInfoProvider->getFormatCodeCategory(
-                                                            m_objPropListInfo->objectFormatCode));
+        category = static_cast<MTPObjectFormatCategory>(
+            m_devInfoProvider->getFormatCodeCategory(m_objPropListInfo->objectFormatCode));
         propCode = static_cast<MTPObjPropertyCode>(m_objPropListInfo->objPropList[i].objectPropCode);
         // Check if the object property code is valid and that it can be "get"
         if (MTP_RESP_OK != m_propertyPod->getObjectPropDesc(category, propCode, propDesc)) {
@@ -2483,23 +2468,23 @@ void MTPResponder::sendObjectPropListData()
         *recvContainer >> m_objPropListInfo->objPropList[i].datatype;
 
         m_objPropListInfo->objPropList[i].value = new QVariant();
-        recvContainer->deserializeVariantByType(m_objPropListInfo->objPropList[i].datatype,
-                                                *m_objPropListInfo->objPropList[i].value);
+        recvContainer->deserializeVariantByType(
+            m_objPropListInfo->objPropList[i].datatype, *m_objPropListInfo->objPropList[i].value);
 
         // If this property is the filename, trigger object creation in the file system now
-        if ( MTP_OBJ_PROP_Obj_File_Name == m_objPropListInfo->objPropList[i].objectPropCode) {
+        if (MTP_OBJ_PROP_Obj_File_Name == m_objPropListInfo->objPropList[i].objectPropCode) {
             fileNameValue = m_objPropListInfo->objPropList[i].value->value<QString>();
             fileNameIndex = i;
         }
     }
 
-    if ( respCode != MTP_RESP_OK ) {
+    if (respCode != MTP_RESP_OK) {
         // Property list scanning failed
-    } else if ( fileNameIndex == -1 ) {
+    } else if (fileNameIndex == -1) {
         // Property list did not contain filename
         respCode = MTP_RESP_Invalid_Dataset;
     } else {
-        if ( fileNameValue.isEmpty() ) {
+        if (fileNameValue.isEmpty()) {
             // Invalid filename was specified
             respCode = MTP_RESP_Invalid_Dataset;
         } else {
@@ -2511,13 +2496,14 @@ void MTPResponder::sendObjectPropListData()
             objInfo.mtpObjectFormat = m_objPropListInfo->objectFormatCode;
             objInfo.mtpFileName = fileNameValue;
             // Get object handle
-            respCode = m_storageServer->addItem(m_objPropListInfo->storageId,
-                                                m_objPropListInfo->parentHandle,
-                                                m_objPropListInfo->objectHandle,
-                                                &objInfo);
+            respCode = m_storageServer->addItem(
+                m_objPropListInfo->storageId,
+                m_objPropListInfo->parentHandle,
+                m_objPropListInfo->objectHandle,
+                &objInfo);
         }
 
-        if ( respCode != MTP_RESP_OK ) {
+        if (respCode != MTP_RESP_OK) {
             respParam[3] = fileNameIndex;
             respSize = 4 * sizeof(quint32);
         } else {
@@ -2542,7 +2528,7 @@ void MTPResponder::setDevicePropValueData()
 {
     MTP_FUNC_TRACE();
 
-    quint16 response =  MTP_RESP_OK;
+    quint16 response = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     QVector<quint32> params;
     reqContainer->params(params);
@@ -2593,8 +2579,8 @@ void MTPResponder::setObjPropValueData()
         const MTPObjectInfo *objInfo;
         if (MTP_RESP_OK == (respCode = m_storageServer->getObjectInfo(objHandle, objInfo))) {
             MTPObjFormatCode format = static_cast<MTPObjFormatCode>(objInfo->mtpObjectFormat);
-            MTPObjectFormatCategory category = static_cast<MTPObjectFormatCategory>(m_devInfoProvider->getFormatCodeCategory(
-                                                                                        format));
+            MTPObjectFormatCategory category = static_cast<MTPObjectFormatCategory>(
+                m_devInfoProvider->getFormatCodeCategory(format));
             MTPObjPropertyCode propCode = static_cast<MTPObjPropertyCode>(params[1]);
             const MtpObjPropDesc *propDesc = 0;
 
@@ -2623,7 +2609,7 @@ void MTPResponder::setObjReferencesData()
 {
     MTP_FUNC_TRACE();
     QVector<quint32> references;
-    quint16 respCode =  MTP_RESP_OK;
+    quint16 respCode = MTP_RESP_OK;
     MTPRxContainer *reqContainer = m_transactionSequence->reqContainer;
     QVector<quint32> params;
     reqContainer->params(params);
@@ -2654,9 +2640,9 @@ void MTPResponder::deleteStoredRequest()
 MTPResponseCode MTPResponder::preCheck(quint32 sessionID, quint32 transactionID)
 {
     MTP_FUNC_TRACE();
-    if ( MTP_INITIAL_SESSION_ID == sessionID) {
+    if (MTP_INITIAL_SESSION_ID == sessionID) {
         return MTP_RESP_SessionNotOpen;
-    } else if ( transactionID == 0x00000000 || transactionID == 0xFFFFFFFF ) {
+    } else if (transactionID == 0x00000000 || transactionID == 0xFFFFFFFF) {
         return MTP_RESP_InvalidTransID;
     }
     return MTP_RESP_OK;
@@ -2678,42 +2664,41 @@ void MTPResponder::freeObjproplistInfo()
     }
 }
 
-MTPResponseCode MTPResponder::sendObjectCheck( ObjHandle handle, const quint32 dataLen, bool isLastPacket,
-                                               MTPResponseCode code )
+MTPResponseCode MTPResponder::sendObjectCheck(
+    ObjHandle handle, const quint32 dataLen, bool isLastPacket, MTPResponseCode code)
 {
     MTP_FUNC_TRACE();
     MTPResponseCode response = MTP_RESP_OK;
-    if ( MTP_RESP_OK == code && m_objPropListInfo ) {
+    if (MTP_RESP_OK == code && m_objPropListInfo) {
         // Update object size
         m_objPropListInfo->objectCurrSize += dataLen;
         if (m_objPropListInfo->objectSize > m_objPropListInfo->objectCurrSize) {
             if (isLastPacket) {
                 // Some data packets are missing
-                m_storageServer->truncateItem( handle, 0 );
-                response =  MTP_RESP_IncompleteTransfer;
+                m_storageServer->truncateItem(handle, 0);
+                response = MTP_RESP_IncompleteTransfer;
             } else {
                 // Prepare to receive the next data packet
                 response = MTP_RESP_Undefined;
             }
         }
-    } else if ( m_sendObjectSequencePtr ) {
+    } else if (m_sendObjectSequencePtr) {
         // SendObjectInfo case
         quint32 bytesWritten = m_sendObjectSequencePtr->sendObjBytesWritten;
         // update the total amount of written bytes */
         m_sendObjectSequencePtr->sendObjBytesWritten = bytesWritten + dataLen;
 
         // check if all parts of the object have been received
-        if ( m_sendObjectSequencePtr->objInfo->mtpObjectCompressedSize >
-                m_sendObjectSequencePtr->sendObjBytesWritten ) {
+        if (m_sendObjectSequencePtr->objInfo->mtpObjectCompressedSize > m_sendObjectSequencePtr->sendObjBytesWritten) {
             // check if there is an error in the container/data phase
-            if ( isLastPacket ) {
+            if (isLastPacket) {
                 // although not all bytes of the Object were sent, the container is indicated
                 // to be the last. Initiate the disposal of the data that has been written so far,
                 // so that the Initiator may resend the Object with a new SendObject operation.
                 //writing will start then from the beginning of the file
-                m_storageServer->truncateItem( handle, 0 );
+                m_storageServer->truncateItem(handle, 0);
                 // end the whole operation by responding with an error code
-                response =  MTP_RESP_IncompleteTransfer;
+                response = MTP_RESP_IncompleteTransfer;
             } else {
                 // leave here to receive the next part
                 response = MTP_RESP_Undefined;
@@ -2750,8 +2735,7 @@ void MTPResponder::fetchObjectSize(const quint8 *data, quint64 *objectSize)
         //If this is a data phase, the operation is SendObject
         //check if we still have a valid ObjectPropListInfo, if so return the object size.
         MTPContainerWrapper tempContainer(const_cast<quint8 *>(data));
-        if (MTP_CONTAINER_TYPE_DATA == tempContainer.containerType() &&
-                MTP_OP_SendObject == tempContainer.code()) {
+        if (MTP_CONTAINER_TYPE_DATA == tempContainer.containerType() && MTP_OP_SendObject == tempContainer.code()) {
             if (m_objPropListInfo) {
                 *objectSize = m_objPropListInfo->objectSize;
             }
@@ -2770,14 +2754,14 @@ void MTPResponder::handleResume()
 {
     MTP_LOG_WARNING("Received resume");
     setResponderState(m_prevState);
-    if ( m_containerToBeResent ) {
+    if (m_containerToBeResent) {
         m_containerToBeResent = false;
         //m_transporter->disableRW();
         //QCoreApplication::processEvents();
         //m_transporter->enableRW();
-        if ( RESPONDER_TX_CANCEL != getResponderState() ) {
+        if (RESPONDER_TX_CANCEL != getResponderState()) {
             MTP_LOG_WARNING("Resume sending");
-            m_transporter->sendData( m_resendBuffer, m_resendBufferSize, m_isLastPacket );
+            m_transporter->sendData(m_resendBuffer, m_resendBufferSize, m_isLastPacket);
         }
         delete[] m_resendBuffer;
     }
@@ -2790,61 +2774,71 @@ void MTPResponder::onDevicePropertyChanged(MTPDevPropertyCode property)
 
 void MTPResponder::handleCancelTransaction()
 {
-    if ( !m_transactionSequence->reqContainer ) {
+    if (!m_transactionSequence->reqContainer) {
         emit deviceStatusOK();
         MTP_LOG_CRITICAL("Received Cancel Transaction while in idle state : do nothing");
         //Nothing to do
         return;
     }
 
-    MTP_LOG_CRITICAL("Received Cancel Transaction for operation " << QString("0x%1").arg(
-                         m_transactionSequence->reqContainer->code(), 0, 16 ));
+    MTP_LOG_CRITICAL(
+        "Received Cancel Transaction for operation "
+        << QString("0x%1").arg(m_transactionSequence->reqContainer->code(), 0, 16));
 
     setResponderState(RESPONDER_TX_CANCEL);
-    switch ( m_transactionSequence->reqContainer->code() ) {
+    switch (m_transactionSequence->reqContainer->code()) {
     // Host initiated cancel for host to device data transfer
     case MTP_OP_SendObject:
     case MTP_OP_SendObjectPropList:
     case MTP_OP_SendObjectInfo: {
         ObjHandle handle = 0x00000000;
         // A SendObjectPropListInfo was used.
-        if ( m_objPropListInfo ) {
+        if (m_objPropListInfo) {
             handle = m_objPropListInfo->objectHandle;
         }
         // A SendObjectInfo was used.
-        else if ( m_sendObjectSequencePtr ) {
+        else if (m_sendObjectSequencePtr) {
             handle = m_sendObjectSequencePtr->objHandle;
         }
-        if ( 0x00000000 == handle ) {
-            MTP_LOG_CRITICAL("Received Cancel Transaction for host to device data xfer: No object to cancel the host to device data transfer for");
+        if (0x00000000 == handle) {
+            MTP_LOG_CRITICAL("Received Cancel Transaction for host to device data xfer: No object to cancel the host "
+                             "to device data transfer for");
         } else {
-            MTPResponseCode response = m_storageServer->deleteItem( handle, MTP_OBF_FORMAT_Undefined );
-            if ( MTP_RESP_OK != response ) {
-                MTP_LOG_CRITICAL("Received Cancel Transaction for host to device data xfer: Object could not be deleted " << response);
+            MTPResponseCode response = m_storageServer->deleteItem(handle, MTP_OBF_FORMAT_Undefined);
+            if (MTP_RESP_OK != response) {
+                MTP_LOG_CRITICAL(
+                    "Received Cancel Transaction for host to device data xfer: Object could not be deleted "
+                    << response);
             } else {
-                MTP_LOG_CRITICAL("Received Cancel Transaction for host to device data xfer: host to device data transfer cancelled");
+                MTP_LOG_CRITICAL(
+                    "Received Cancel Transaction for host to device data xfer: host to device data transfer cancelled");
             }
         }
 
-        if ( MTP_OP_SendObject == m_transactionSequence->reqContainer->code() && handle ) {
-            if ( m_objPropListInfo ) {
-                if ( m_objPropListInfo->objectSize > m_objPropListInfo->objectCurrSize ) {
-                    MTP_LOG_CRITICAL("Received Cancel Transaction for host to device data xfer before data xfer was completed");
+        if (MTP_OP_SendObject == m_transactionSequence->reqContainer->code() && handle) {
+            if (m_objPropListInfo) {
+                if (m_objPropListInfo->objectSize > m_objPropListInfo->objectCurrSize) {
+                    MTP_LOG_CRITICAL(
+                        "Received Cancel Transaction for host to device data xfer before data xfer was completed");
                 } else {
-                    MTP_LOG_CRITICAL("Received Cancel Transaction for host to device data xfer after data xfer was completed");
+                    MTP_LOG_CRITICAL(
+                        "Received Cancel Transaction for host to device data xfer after data xfer was completed");
                 }
-            } else if ( m_sendObjectSequencePtr ) {
-                if ( m_sendObjectSequencePtr->objInfo->mtpObjectCompressedSize > m_sendObjectSequencePtr->sendObjBytesWritten ) {
-                    MTP_LOG_CRITICAL("Received Cancel Transaction for host to device data xfer before data xfer was completed");
+            } else if (m_sendObjectSequencePtr) {
+                if (m_sendObjectSequencePtr->objInfo->mtpObjectCompressedSize
+                    > m_sendObjectSequencePtr->sendObjBytesWritten) {
+                    MTP_LOG_CRITICAL(
+                        "Received Cancel Transaction for host to device data xfer before data xfer was completed");
                 } else {
-                    MTP_LOG_CRITICAL("Received Cancel Transaction for host to device data xfer after data xfer was completed");
+                    MTP_LOG_CRITICAL(
+                        "Received Cancel Transaction for host to device data xfer after data xfer was completed");
                 }
             }
         }
 
-        if ( m_objPropListInfo ) {
+        if (m_objPropListInfo) {
             freeObjproplistInfo();
-        } else if ( m_sendObjectSequencePtr ) {
+        } else if (m_sendObjectSequencePtr) {
             delete m_sendObjectSequencePtr;
             m_sendObjectSequencePtr = 0;
         }
@@ -2867,8 +2861,8 @@ void MTPResponder::handleDeviceReset()
     emit deviceStatusOK();
 }
 
-quint32 MTPResponder::serializePropList(ObjHandle currentObj,
-                                        QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer)
+quint32 MTPResponder::serializePropList(
+    ObjHandle currentObj, QList<MTPObjPropDescVal> &propValList, MTPTxContainer &dataContainer)
 {
     MTP_FUNC_TRACE();
 
@@ -2881,8 +2875,9 @@ quint32 MTPResponder::serializePropList(ObjHandle currentObj,
 
         const MtpObjPropDesc *propDesc = i->propDesc;
 
-        MTP_LOG_INFO("object:" << currentObj << "prop:" << mtp_code_repr(propDesc->uPropCode) << "type:" << mtp_data_type_repr(
-                         propDesc->uDataType) << "data:" << i->propVal);
+        MTP_LOG_INFO(
+            "object:" << currentObj << "prop:" << mtp_code_repr(propDesc->uPropCode)
+                      << "type:" << mtp_data_type_repr(propDesc->uDataType) << "data:" << i->propVal);
 
         dataContainer << currentObj << propDesc->uPropCode << propDesc->uDataType;
         dataContainer.serializeVariantByType(propDesc->uDataType, i->propVal);
@@ -2908,27 +2903,27 @@ void MTPResponder::sendObjectSegmented()
     quint64 remainingLength = m_segmentedSender.offsetEnd - m_segmentedSender.offsetNow;
 
     // Send ptp header + initial part of file content
-    if ( respCode == MTP_RESP_OK && !headerSent ) {
+    if (respCode == MTP_RESP_OK && !headerSent) {
         // Calculate amount of data to send in initial frame
         quint32 contentLength = BUFFER_MAX_LEN - MTP_HEADER_SIZE;
-        if ( remainingLength < contentLength )
+        if (remainingLength < contentLength)
             contentLength = quint32(remainingLength);
 
         // Setup PTP header
         MTPTxContainer dataContainer(MTP_CONTAINER_TYPE_DATA, opCode, reqContainer->transactionId(), contentLength);
-        dataContainer.setContainerLength(remainingLength > MTP_MAX_CONTENT_SIZE
-                                         ? 0xFFFFFFFF
-                                         : quint32(MTP_HEADER_SIZE + remainingLength));
+        dataContainer.setContainerLength(
+            remainingLength > MTP_MAX_CONTENT_SIZE ? 0xFFFFFFFF : quint32(MTP_HEADER_SIZE + remainingLength));
 
         // Read file content
-        respCode = m_storageServer->readData(m_segmentedSender.objHandle,
-                                             reinterpret_cast<char *>(dataContainer.payload()),
-                                             contentLength,
-                                             m_segmentedSender.offsetNow);
-        if ( respCode == MTP_RESP_OK ) {
+        respCode = m_storageServer->readData(
+            m_segmentedSender.objHandle,
+            reinterpret_cast<char *>(dataContainer.payload()),
+            contentLength,
+            m_segmentedSender.offsetNow);
+        if (respCode == MTP_RESP_OK) {
             // Update container content length and send it
             dataContainer.seek(contentLength);
-            if ( !sendContainer(dataContainer, (contentLength == remainingLength)) ) {
+            if (!sendContainer(dataContainer, (contentLength == remainingLength))) {
                 MTP_LOG_CRITICAL("Could not send header");
             } else {
                 bytesSent += contentLength;
@@ -2940,24 +2935,23 @@ void MTPResponder::sendObjectSegmented()
         }
     }
 
-    while ( respCode == MTP_RESP_OK && headerSent && !contentSent ) {
+    while (respCode == MTP_RESP_OK && headerSent && !contentSent) {
         // Allocate buffer
-        if ( !buffer )
+        if (!buffer)
             buffer = new quint8[BUFFER_MAX_LEN];
 
         // Calculate amount of data to send in continuation frame
         quint32 contentLength = BUFFER_MAX_LEN;
-        if ( remainingLength < contentLength )
+        if (remainingLength < contentLength)
             contentLength = quint32(remainingLength);
 
         // Read file content
-        respCode = m_storageServer->readData(m_segmentedSender.objHandle,
-                                             (char *)buffer,
-                                             contentLength,
-                                             m_segmentedSender.offsetNow);
-        if ( respCode == MTP_RESP_OK ) {
+        respCode
+            = m_storageServer
+                  ->readData(m_segmentedSender.objHandle, (char *) buffer, contentLength, m_segmentedSender.offsetNow);
+        if (respCode == MTP_RESP_OK) {
             // Send raw data
-            if ( !m_transporter->sendData(buffer, contentLength, (contentLength == remainingLength)) ) {
+            if (!m_transporter->sendData(buffer, contentLength, (contentLength == remainingLength))) {
                 MTP_LOG_CRITICAL("Could not send content");
                 break;
             }
@@ -2966,7 +2960,6 @@ void MTPResponder::sendObjectSegmented()
             m_segmentedSender.offsetNow += contentLength;
             contentSent = (remainingLength == 0);
         }
-
     }
 
     /* Initiator expects to receive a valid container.
@@ -2982,10 +2975,10 @@ void MTPResponder::sendObjectSegmented()
      * and hope that initiator handles the situation somehow
      * e.g. via timeout.
      */
-    if ( headerSent && !contentSent ) {
+    if (headerSent && !contentSent) {
         MTP_LOG_CRITICAL("Could not finish data phase");
     } else {
-        switch ( opCode ) {
+        switch (opCode) {
         case MTP_OP_GetPartialObject:
             sendResponse(respCode, bytesSent > MTP_MAX_CONTENT_SIZE ? 0xFFFFFFFF : quint32(bytesSent));
             break;
@@ -2997,7 +2990,7 @@ void MTPResponder::sendObjectSegmented()
     delete[] buffer;
 }
 
-void MTPResponder::processTransportEvents( bool &txCancelled )
+void MTPResponder::processTransportEvents(bool &txCancelled)
 {
     m_transporter->disableRW();
     QCoreApplication::sendPostedEvents();
@@ -3006,7 +2999,7 @@ void MTPResponder::processTransportEvents( bool &txCancelled )
 
     txCancelled = RESPONDER_TX_CANCEL == getResponderState();
 
-    if ( RESPONDER_TX_CANCEL == getResponderState() ) {
+    if (RESPONDER_TX_CANCEL == getResponderState()) {
         MTP_LOG_WARNING("Received a request to process transport events - processed a cancel");
     }
 }
@@ -3023,9 +3016,9 @@ void MTPResponder::resume()
 
 void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &params)
 {
-    bool    filteringAllowed = true;
+    bool filteringAllowed = true;
     quint32 ObjectHandle = 0;
-    switch ( event ) {
+    switch (event) {
     case MTP_EV_ObjectAdded:
         filteringAllowed = false;
     // FALLTHRU
@@ -3040,7 +3033,7 @@ void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &par
 
     bool EventsEnabled(true);
     QString ObjectPath("n/a");
-    if ( ObjectHandle != 0x00000000 && ObjectHandle != 0xffffffff ) {
+    if (ObjectHandle != 0x00000000 && ObjectHandle != 0xffffffff) {
         /* NB: Unit tests can be executed in abnormal setup without storage server */
         if (m_storageServer) {
             m_storageServer->getPath(ObjectHandle, ObjectPath);
@@ -3048,7 +3041,7 @@ void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &par
         }
     }
 
-    if ( filteringAllowed && !EventsEnabled ) {
+    if (filteringAllowed && !EventsEnabled) {
         MTP_LOG_TRACE(mtp_code_repr(event) << ObjectPath << "[skipped]");
         return;
     }
@@ -3057,20 +3050,19 @@ void MTPResponder::dispatchEvent(MTPEventCode event, const QVector<quint32> &par
     foreach (quint32 param, params) {
         char hex[16];
         snprintf(hex, sizeof hex, "0x%x", param);
-        if ( !args.isEmpty() )
+        if (!args.isEmpty())
             args.append(" ");
         args.append(hex);
     }
 
     MTP_LOG_INFO(mtp_code_repr(event) << ObjectPath << args);
 
-    if ( !m_transporter ) {
+    if (!m_transporter) {
         MTP_LOG_WARNING("Transporter not set; event ignored");
         return;
     }
 
-    MTPTxContainer container(MTP_CONTAINER_TYPE_EVENT, event,
-                             MTP_NO_TRANSACTION_ID, params.size() * sizeof (quint32));
+    MTPTxContainer container(MTP_CONTAINER_TYPE_EVENT, event, MTP_NO_TRANSACTION_ID, params.size() * sizeof(quint32));
     foreach (quint32 param, params) {
         container << param;
     }
@@ -3167,17 +3159,16 @@ void MTPResponder::setResponderState(MTPResponder::ResponderState state)
 {
     MTPResponder::ResponderState prev = m_state_accessor_only;
 
-    if ( prev != state ) {
+    if (prev != state) {
         m_state_accessor_only = state;
 
-        MTP_LOG_INFO("state:" << responderStateName(prev)
-                     << "->" << responderStateName(state));
+        MTP_LOG_INFO("state:" << responderStateName(prev) << "->" << responderStateName(state));
 
-        bool wasBusy = (prev  != RESPONDER_IDLE);
-        bool isBusy  = (state != RESPONDER_IDLE);
+        bool wasBusy = (prev != RESPONDER_IDLE);
+        bool isBusy = (state != RESPONDER_IDLE);
 
-        if ( wasBusy != isBusy ) {
-            if ( isBusy ) {
+        if (wasBusy != isBusy) {
+            if (isBusy) {
                 m_handler_idle_timer->stop();
                 emit commandPending();
             } else {
@@ -3189,1583 +3180,1582 @@ void MTPResponder::setResponderState(MTPResponder::ResponderState state)
 }
 
 /* Helper functions for making human readable diagnostic logging */
-extern "C"
+extern "C" {
+const char *mtp_format_category_repr(int val)
 {
-    const char *mtp_format_category_repr(int val)
-    {
-        const char *res = "<unknown>";
-        switch (val) {
-        case MTP_UNSUPPORTED_FORMAT:
-            res = "UNSUPPORTED_FORMAT";
-            break;
-        case MTP_AUDIO_FORMAT:
-            res = "AUDIO_FORMAT";
-            break;
-        case MTP_VIDEO_FORMAT:
-            res = "VIDEO_FORMAT";
-            break;
-        case MTP_IMAGE_FORMAT:
-            res = "IMAGE_FORMAT";
-            break;
-        case MTP_COMMON_FORMAT:
-            res = "COMMON_FORMAT";
-            break;
-        }
-        return res;
+    const char *res = "<unknown>";
+    switch (val) {
+    case MTP_UNSUPPORTED_FORMAT:
+        res = "UNSUPPORTED_FORMAT";
+        break;
+    case MTP_AUDIO_FORMAT:
+        res = "AUDIO_FORMAT";
+        break;
+    case MTP_VIDEO_FORMAT:
+        res = "VIDEO_FORMAT";
+        break;
+    case MTP_IMAGE_FORMAT:
+        res = "IMAGE_FORMAT";
+        break;
+    case MTP_COMMON_FORMAT:
+        res = "COMMON_FORMAT";
+        break;
     }
-    const char *mtp_file_system_type_repr(int val)
-    {
-        const char *res = "<unknown>";
-        switch (val) {
-        case MTP_FILE_SYSTEM_TYPE_Undefined:
-            res = "Undefined";
-            break;
-        case MTP_FILE_SYSTEM_TYPE_GenFlat:
-            res = "GenFlat";
-            break;
-        case MTP_FILE_SYSTEM_TYPE_GenHier:
-            res = "GenHier";
-            break;
-        case MTP_FILE_SYSTEM_TYPE_DCF:
-            res = "DCF";
-            break;
-        }
-        return res;
+    return res;
+}
+const char *mtp_file_system_type_repr(int val)
+{
+    const char *res = "<unknown>";
+    switch (val) {
+    case MTP_FILE_SYSTEM_TYPE_Undefined:
+        res = "Undefined";
+        break;
+    case MTP_FILE_SYSTEM_TYPE_GenFlat:
+        res = "GenFlat";
+        break;
+    case MTP_FILE_SYSTEM_TYPE_GenHier:
+        res = "GenHier";
+        break;
+    case MTP_FILE_SYSTEM_TYPE_DCF:
+        res = "DCF";
+        break;
     }
-    const char *mtp_association_type_repr(int val)
-    {
-        const char *res = "<unknown>";
-        switch (val) {
-        case MTP_ASSOCIATION_TYPE_Undefined:
-            res = "Undefined";
-            break;
-        case MTP_ASSOCIATION_TYPE_GenFolder:
-            res = "GenFolder";
-            break;
-        case MTP_ASSOCIATION_TYPE_Album:
-            res = "Album";
-            break;
-        case MTP_ASSOCIATION_TYPE_TimeSeq:
-            res = "TimeSeq";
-            break;
-        case MTP_ASSOCIATION_TYPE_HorizontalPanoramic:
-            res = "HorizontalPanoramic";
-            break;
-        case MTP_ASSOCIATION_TYPE_VerticalPanoramic:
-            res = "VerticalPanoramic";
-            break;
-        case MTP_ASSOCIATION_TYPE_2DPanoramic:
-            res = "2DPanoramic";
-            break;
-        case MTP_ASSOCIATION_TYPE_AncillaryData:
-            res = "AncillaryData";
-            break;
-        }
-        return res;
+    return res;
+}
+const char *mtp_association_type_repr(int val)
+{
+    const char *res = "<unknown>";
+    switch (val) {
+    case MTP_ASSOCIATION_TYPE_Undefined:
+        res = "Undefined";
+        break;
+    case MTP_ASSOCIATION_TYPE_GenFolder:
+        res = "GenFolder";
+        break;
+    case MTP_ASSOCIATION_TYPE_Album:
+        res = "Album";
+        break;
+    case MTP_ASSOCIATION_TYPE_TimeSeq:
+        res = "TimeSeq";
+        break;
+    case MTP_ASSOCIATION_TYPE_HorizontalPanoramic:
+        res = "HorizontalPanoramic";
+        break;
+    case MTP_ASSOCIATION_TYPE_VerticalPanoramic:
+        res = "VerticalPanoramic";
+        break;
+    case MTP_ASSOCIATION_TYPE_2DPanoramic:
+        res = "2DPanoramic";
+        break;
+    case MTP_ASSOCIATION_TYPE_AncillaryData:
+        res = "AncillaryData";
+        break;
     }
-    const char *mtp_storage_access_repr(int val)
-    {
-        const char *res = "<unknown>";
-        switch (val) {
-        case MTP_STORAGE_ACCESS_ReadWrite:
-            res = "ReadWrite";
-            break;
-        case MTP_STORAGE_ACCESS_ReadOnly_NoDel:
-            res = "ReadOnly_NoDel";
-            break;
-        case MTP_STORAGE_ACCESS_ReadOnly_Del:
-            res = "ReadOnly_Del";
-            break;
-        }
-        return res;
+    return res;
+}
+const char *mtp_storage_access_repr(int val)
+{
+    const char *res = "<unknown>";
+    switch (val) {
+    case MTP_STORAGE_ACCESS_ReadWrite:
+        res = "ReadWrite";
+        break;
+    case MTP_STORAGE_ACCESS_ReadOnly_NoDel:
+        res = "ReadOnly_NoDel";
+        break;
+    case MTP_STORAGE_ACCESS_ReadOnly_Del:
+        res = "ReadOnly_Del";
+        break;
     }
-    const char *mtp_container_type_repr(int val)
-    {
-        const char *res = "<unknown>";
-        switch (val) {
-        case MTP_CONTAINER_TYPE_UNDEFINED:
-            res = "UNDEFINED";
-            break;
-        case MTP_CONTAINER_TYPE_COMMAND:
-            res = "COMMAND";
-            break;
-        case MTP_CONTAINER_TYPE_DATA:
-            res = "DATA";
-            break;
-        case MTP_CONTAINER_TYPE_RESPONSE:
-            res = "RESPONSE";
-            break;
-        case MTP_CONTAINER_TYPE_EVENT:
-            res = "EVENT";
-            break;
-        }
-        return res;
+    return res;
+}
+const char *mtp_container_type_repr(int val)
+{
+    const char *res = "<unknown>";
+    switch (val) {
+    case MTP_CONTAINER_TYPE_UNDEFINED:
+        res = "UNDEFINED";
+        break;
+    case MTP_CONTAINER_TYPE_COMMAND:
+        res = "COMMAND";
+        break;
+    case MTP_CONTAINER_TYPE_DATA:
+        res = "DATA";
+        break;
+    case MTP_CONTAINER_TYPE_RESPONSE:
+        res = "RESPONSE";
+        break;
+    case MTP_CONTAINER_TYPE_EVENT:
+        res = "EVENT";
+        break;
     }
-    const char *mtp_obj_prop_form_repr(int val)
-    {
-        const char *res = "<unknown>";
-        switch (val) {
-        case MTP_OBJ_PROP_FORM_None:
-            res = "None";
-            break;
-        case MTP_OBJ_PROP_FORM_Range:
-            res = "Range";
-            break;
-        case MTP_OBJ_PROP_FORM_Enumeration:
-            res = "Enumeration";
-            break;
-        case MTP_OBJ_PROP_FORM_DateTime:
-            res = "DateTime";
-            break;
-        case MTP_OBJ_PROP_FORM_Fixed_length_Array:
-            res = "Fixed_length_Array";
-            break;
-        case MTP_OBJ_PROP_FORM_Regular_Expression:
-            res = "Regular_Expression";
-            break;
-        case MTP_OBJ_PROP_FORM_ByteArray:
-            res = "ByteArray";
-            break;
-        case MTP_OBJ_PROP_FORM_LongString:
-            res = "LongString";
-            break;
-        }
-        return res;
+    return res;
+}
+const char *mtp_obj_prop_form_repr(int val)
+{
+    const char *res = "<unknown>";
+    switch (val) {
+    case MTP_OBJ_PROP_FORM_None:
+        res = "None";
+        break;
+    case MTP_OBJ_PROP_FORM_Range:
+        res = "Range";
+        break;
+    case MTP_OBJ_PROP_FORM_Enumeration:
+        res = "Enumeration";
+        break;
+    case MTP_OBJ_PROP_FORM_DateTime:
+        res = "DateTime";
+        break;
+    case MTP_OBJ_PROP_FORM_Fixed_length_Array:
+        res = "Fixed_length_Array";
+        break;
+    case MTP_OBJ_PROP_FORM_Regular_Expression:
+        res = "Regular_Expression";
+        break;
+    case MTP_OBJ_PROP_FORM_ByteArray:
+        res = "ByteArray";
+        break;
+    case MTP_OBJ_PROP_FORM_LongString:
+        res = "LongString";
+        break;
     }
-    const char *mtp_storage_type_repr(int val)
-    {
-        const char *res = "<unknown>";
-        switch (val) {
-        case MTP_STORAGE_TYPE_Undefined:
-            res = "Undefined";
-            break;
-        case MTP_STORAGE_TYPE_FixedROM:
-            res = "FixedROM";
-            break;
-        case MTP_STORAGE_TYPE_RemovableROM:
-            res = "RemovableROM";
-            break;
-        case MTP_STORAGE_TYPE_FixedRAM:
-            res = "FixedRAM";
-            break;
-        case MTP_STORAGE_TYPE_RemovableRAM:
-            res = "RemovableRAM";
-            break;
-        }
-        return res;
+    return res;
+}
+const char *mtp_storage_type_repr(int val)
+{
+    const char *res = "<unknown>";
+    switch (val) {
+    case MTP_STORAGE_TYPE_Undefined:
+        res = "Undefined";
+        break;
+    case MTP_STORAGE_TYPE_FixedROM:
+        res = "FixedROM";
+        break;
+    case MTP_STORAGE_TYPE_RemovableROM:
+        res = "RemovableROM";
+        break;
+    case MTP_STORAGE_TYPE_FixedRAM:
+        res = "FixedRAM";
+        break;
+    case MTP_STORAGE_TYPE_RemovableRAM:
+        res = "RemovableRAM";
+        break;
     }
-    const char *mtp_bitrate_type_repr(int val)
-    {
-        const char *res = "<unknown>";
-        switch (val) {
-        case MTP_BITRATE_TYPE_UNUSED:
-            res = "UNUSED";
-            break;
-        case MTP_BITRATE_TYPE_DISCRETE:
-            res = "DISCRETE";
-            break;
-        case MTP_BITRATE_TYPE_VARIABLE:
-            res = "VARIABLE";
-            break;
-        case MTP_BITRATE_TYPE_FREE:
-            res = "FREE";
-            break;
-        }
-        return res;
+    return res;
+}
+const char *mtp_bitrate_type_repr(int val)
+{
+    const char *res = "<unknown>";
+    switch (val) {
+    case MTP_BITRATE_TYPE_UNUSED:
+        res = "UNUSED";
+        break;
+    case MTP_BITRATE_TYPE_DISCRETE:
+        res = "DISCRETE";
+        break;
+    case MTP_BITRATE_TYPE_VARIABLE:
+        res = "VARIABLE";
+        break;
+    case MTP_BITRATE_TYPE_FREE:
+        res = "FREE";
+        break;
     }
-    const char *mtp_protection_repr(int val)
-    {
-        const char *res = "<unknown>";
-        switch (val) {
-        case MTP_PROTECTION_NoProtection:
-            res = "NoProtection";
-            break;
-        case MTP_PROTECTION_ReadOnly:
-            res = "ReadOnly";
-            break;
-        case MTP_PROTECTION_ReadOnlyData:
-            res = "ReadOnlyData";
-            break;
-        case MTP_PROTECTION_NonTransferrableData:
-            res = "NonTransferrableData";
-            break;
-        }
-        return res;
+    return res;
+}
+const char *mtp_protection_repr(int val)
+{
+    const char *res = "<unknown>";
+    switch (val) {
+    case MTP_PROTECTION_NoProtection:
+        res = "NoProtection";
+        break;
+    case MTP_PROTECTION_ReadOnly:
+        res = "ReadOnly";
+        break;
+    case MTP_PROTECTION_ReadOnlyData:
+        res = "ReadOnlyData";
+        break;
+    case MTP_PROTECTION_NonTransferrableData:
+        res = "NonTransferrableData";
+        break;
     }
-    const char *mtp_form_flag_repr(int val)
-    {
-        const char *res = "<unknown>";
-        switch (val) {
-        case MTP_FORM_FLAG_NONE:
-            res = "NONE";
-            break;
-        case MTP_FORM_FLAG_RANGE:
-            res = "RANGE";
-            break;
-        case MTP_FORM_FLAG_ENUM:
-            res = "ENUM";
-            break;
-        case MTP_FORM_FLAG_DATE_TIME:
-            res = "DATE_TIME";
-            break;
-        case MTP_FORM_FLAG_FIXED_ARRAY:
-            res = "FIXED_ARRAY";
-            break;
-        case MTP_FORM_FLAG_REGEX:
-            res = "REGEX";
-            break;
-        case MTP_FORM_FLAG_BYTE_ARRAY:
-            res = "BYTE_ARRAY";
-            break;
-        case MTP_FORM_FLAG_LONG_STRING:
-            res = "LONG_STRING";
-            break;
-        }
-        return res;
+    return res;
+}
+const char *mtp_form_flag_repr(int val)
+{
+    const char *res = "<unknown>";
+    switch (val) {
+    case MTP_FORM_FLAG_NONE:
+        res = "NONE";
+        break;
+    case MTP_FORM_FLAG_RANGE:
+        res = "RANGE";
+        break;
+    case MTP_FORM_FLAG_ENUM:
+        res = "ENUM";
+        break;
+    case MTP_FORM_FLAG_DATE_TIME:
+        res = "DATE_TIME";
+        break;
+    case MTP_FORM_FLAG_FIXED_ARRAY:
+        res = "FIXED_ARRAY";
+        break;
+    case MTP_FORM_FLAG_REGEX:
+        res = "REGEX";
+        break;
+    case MTP_FORM_FLAG_BYTE_ARRAY:
+        res = "BYTE_ARRAY";
+        break;
+    case MTP_FORM_FLAG_LONG_STRING:
+        res = "LONG_STRING";
+        break;
     }
-    const char *mtp_data_type_repr(int val)
-    {
-        const char *res = "<unknown>";
-        switch (val) {
-        case MTP_DATA_TYPE_UNDEF:
-            res = "UNDEF";
-            break;
-        case MTP_DATA_TYPE_INT8:
-            res = "INT8";
-            break;
-        case MTP_DATA_TYPE_UINT8:
-            res = "UINT8";
-            break;
-        case MTP_DATA_TYPE_INT16:
-            res = "INT16";
-            break;
-        case MTP_DATA_TYPE_UINT16:
-            res = "UINT16";
-            break;
-        case MTP_DATA_TYPE_INT32:
-            res = "INT32";
-            break;
-        case MTP_DATA_TYPE_UINT32:
-            res = "UINT32";
-            break;
-        case MTP_DATA_TYPE_INT64:
-            res = "INT64";
-            break;
-        case MTP_DATA_TYPE_UINT64:
-            res = "UINT64";
-            break;
-        case MTP_DATA_TYPE_INT128:
-            res = "INT128";
-            break;
-        case MTP_DATA_TYPE_UINT128:
-            res = "UINT128";
-            break;
-        case MTP_DATA_TYPE_AINT8:
-            res = "AINT8";
-            break;
-        case MTP_DATA_TYPE_AUINT8:
-            res = "AUINT8";
-            break;
-        case MTP_DATA_TYPE_AINT16:
-            res = "AINT16";
-            break;
-        case MTP_DATA_TYPE_AUINT16:
-            res = "AUINT16";
-            break;
-        case MTP_DATA_TYPE_AINT32:
-            res = "AINT32";
-            break;
-        case MTP_DATA_TYPE_AUINT32:
-            res = "AUINT32";
-            break;
-        case MTP_DATA_TYPE_AINT64:
-            res = "AINT64";
-            break;
-        case MTP_DATA_TYPE_AUINT64:
-            res = "AUINT64";
-            break;
-        case MTP_DATA_TYPE_AINT128:
-            res = "AINT128";
-            break;
-        case MTP_DATA_TYPE_AUINT128:
-            res = "AUINT128";
-            break;
-        case MTP_DATA_TYPE_STR:
-            res = "STR";
-            break;
-        }
-        return res;
+    return res;
+}
+const char *mtp_data_type_repr(int val)
+{
+    const char *res = "<unknown>";
+    switch (val) {
+    case MTP_DATA_TYPE_UNDEF:
+        res = "UNDEF";
+        break;
+    case MTP_DATA_TYPE_INT8:
+        res = "INT8";
+        break;
+    case MTP_DATA_TYPE_UINT8:
+        res = "UINT8";
+        break;
+    case MTP_DATA_TYPE_INT16:
+        res = "INT16";
+        break;
+    case MTP_DATA_TYPE_UINT16:
+        res = "UINT16";
+        break;
+    case MTP_DATA_TYPE_INT32:
+        res = "INT32";
+        break;
+    case MTP_DATA_TYPE_UINT32:
+        res = "UINT32";
+        break;
+    case MTP_DATA_TYPE_INT64:
+        res = "INT64";
+        break;
+    case MTP_DATA_TYPE_UINT64:
+        res = "UINT64";
+        break;
+    case MTP_DATA_TYPE_INT128:
+        res = "INT128";
+        break;
+    case MTP_DATA_TYPE_UINT128:
+        res = "UINT128";
+        break;
+    case MTP_DATA_TYPE_AINT8:
+        res = "AINT8";
+        break;
+    case MTP_DATA_TYPE_AUINT8:
+        res = "AUINT8";
+        break;
+    case MTP_DATA_TYPE_AINT16:
+        res = "AINT16";
+        break;
+    case MTP_DATA_TYPE_AUINT16:
+        res = "AUINT16";
+        break;
+    case MTP_DATA_TYPE_AINT32:
+        res = "AINT32";
+        break;
+    case MTP_DATA_TYPE_AUINT32:
+        res = "AUINT32";
+        break;
+    case MTP_DATA_TYPE_AINT64:
+        res = "AINT64";
+        break;
+    case MTP_DATA_TYPE_AUINT64:
+        res = "AUINT64";
+        break;
+    case MTP_DATA_TYPE_AINT128:
+        res = "AINT128";
+        break;
+    case MTP_DATA_TYPE_AUINT128:
+        res = "AUINT128";
+        break;
+    case MTP_DATA_TYPE_STR:
+        res = "STR";
+        break;
     }
-    const char *mtp_ch_conf_repr(int val)
-    {
-        const char *res = "<unknown>";
-        switch (val) {
-        case MTP_CH_CONF_UNUSED:
-            res = "UNUSED";
-            break;
-        case MTP_CH_CONF_MONO:
-            res = "MONO";
-            break;
-        case MTP_CH_CONF_STEREO:
-            res = "STEREO";
-            break;
-        case MTP_CH_CONF_2_1_CH:
-            res = "2_1_CH";
-            break;
-        case MTP_CH_CONF_3_CH:
-            res = "3_CH";
-            break;
-        case MTP_CH_CONF_3_1_CH:
-            res = "3_1_CH";
-            break;
-        case MTP_CH_CONF_4_CH:
-            res = "4_CH";
-            break;
-        case MTP_CH_CONF_4_1_CH:
-            res = "4_1_CH";
-            break;
-        case MTP_CH_CONF_5_CH:
-            res = "5_CH";
-            break;
-        case MTP_CH_CONF_5_1_CH:
-            res = "5_1_CH";
-            break;
-        case MTP_CH_CONF_6_CH:
-            res = "6_CH";
-            break;
-        case MTP_CH_CONF_6_1_CH:
-            res = "6_1_CH";
-            break;
-        case MTP_CH_CONF_7_CH:
-            res = "7_CH";
-            break;
-        case MTP_CH_CONF_7_1_CH:
-            res = "7_1_CH";
-            break;
-        case MTP_CH_CONF_8_CH:
-            res = "8_CH";
-            break;
-        case MTP_CH_CONF_8_1_CH:
-            res = "8_1_CH";
-            break;
-        case MTP_CH_CONF_9_CH:
-            res = "9_CH";
-            break;
-        case MTP_CH_CONF_9_1_CH:
-            res = "9_1_CH";
-            break;
-        case MTP_CH_CONF_5_2_CH:
-            res = "5_2_CH";
-            break;
-        case MTP_CH_CONF_6_2_CH:
-            res = "6_2_CH";
-            break;
-        case MTP_CH_CONF_7_2_CH:
-            res = "7_2_CH";
-            break;
-        case MTP_CH_CONF_8_2_CH:
-            res = "8_2_CH";
-            break;
-        }
-        return res;
+    return res;
+}
+const char *mtp_ch_conf_repr(int val)
+{
+    const char *res = "<unknown>";
+    switch (val) {
+    case MTP_CH_CONF_UNUSED:
+        res = "UNUSED";
+        break;
+    case MTP_CH_CONF_MONO:
+        res = "MONO";
+        break;
+    case MTP_CH_CONF_STEREO:
+        res = "STEREO";
+        break;
+    case MTP_CH_CONF_2_1_CH:
+        res = "2_1_CH";
+        break;
+    case MTP_CH_CONF_3_CH:
+        res = "3_CH";
+        break;
+    case MTP_CH_CONF_3_1_CH:
+        res = "3_1_CH";
+        break;
+    case MTP_CH_CONF_4_CH:
+        res = "4_CH";
+        break;
+    case MTP_CH_CONF_4_1_CH:
+        res = "4_1_CH";
+        break;
+    case MTP_CH_CONF_5_CH:
+        res = "5_CH";
+        break;
+    case MTP_CH_CONF_5_1_CH:
+        res = "5_1_CH";
+        break;
+    case MTP_CH_CONF_6_CH:
+        res = "6_CH";
+        break;
+    case MTP_CH_CONF_6_1_CH:
+        res = "6_1_CH";
+        break;
+    case MTP_CH_CONF_7_CH:
+        res = "7_CH";
+        break;
+    case MTP_CH_CONF_7_1_CH:
+        res = "7_1_CH";
+        break;
+    case MTP_CH_CONF_8_CH:
+        res = "8_CH";
+        break;
+    case MTP_CH_CONF_8_1_CH:
+        res = "8_1_CH";
+        break;
+    case MTP_CH_CONF_9_CH:
+        res = "9_CH";
+        break;
+    case MTP_CH_CONF_9_1_CH:
+        res = "9_1_CH";
+        break;
+    case MTP_CH_CONF_5_2_CH:
+        res = "5_2_CH";
+        break;
+    case MTP_CH_CONF_6_2_CH:
+        res = "6_2_CH";
+        break;
+    case MTP_CH_CONF_7_2_CH:
+        res = "7_2_CH";
+        break;
+    case MTP_CH_CONF_8_2_CH:
+        res = "8_2_CH";
+        break;
     }
-    const char *mtp_code_repr(int val)
-    {
-        const char *res = 0;
-        switch (val) {
-        case MTP_OP_GetDeviceInfo:
-            res = "OP_GetDeviceInfo";
-            break;
-        case MTP_OP_OpenSession:
-            res = "OP_OpenSession";
-            break;
-        case MTP_OP_CloseSession:
-            res = "OP_CloseSession";
-            break;
-        case MTP_OP_GetStorageIDs:
-            res = "OP_GetStorageIDs";
-            break;
-        case MTP_OP_GetStorageInfo:
-            res = "OP_GetStorageInfo";
-            break;
-        case MTP_OP_GetNumObjects:
-            res = "OP_GetNumObjects";
-            break;
-        case MTP_OP_GetObjectHandles:
-            res = "OP_GetObjectHandles";
-            break;
-        case MTP_OP_GetObjectInfo:
-            res = "OP_GetObjectInfo";
-            break;
-        case MTP_OP_GetObject:
-            res = "OP_GetObject";
-            break;
-        case MTP_OP_GetThumb:
-            res = "OP_GetThumb";
-            break;
-        case MTP_OP_DeleteObject:
-            res = "OP_DeleteObject";
-            break;
-        case MTP_OP_SendObjectInfo:
-            res = "OP_SendObjectInfo";
-            break;
-        case MTP_OP_SendObject:
-            res = "OP_SendObject";
-            break;
-        case MTP_OP_InitiateCapture:
-            res = "OP_InitiateCapture";
-            break;
-        case MTP_OP_FormatStore:
-            res = "OP_FormatStore";
-            break;
-        case MTP_OP_ResetDevice:
-            res = "OP_ResetDevice";
-            break;
-        case MTP_OP_SelfTest:
-            res = "OP_SelfTest";
-            break;
-        case MTP_OP_SetObjectProtection:
-            res = "OP_SetObjectProtection";
-            break;
-        case MTP_OP_PowerDown:
-            res = "OP_PowerDown";
-            break;
-        case MTP_OP_GetDevicePropDesc:
-            res = "OP_GetDevicePropDesc";
-            break;
-        case MTP_OP_GetDevicePropValue:
-            res = "OP_GetDevicePropValue";
-            break;
-        case MTP_OP_SetDevicePropValue:
-            res = "OP_SetDevicePropValue";
-            break;
-        case MTP_OP_ResetDevicePropValue:
-            res = "OP_ResetDevicePropValue";
-            break;
-        case MTP_OP_TerminateOpenCapture:
-            res = "OP_TerminateOpenCapture";
-            break;
-        case MTP_OP_MoveObject:
-            res = "OP_MoveObject";
-            break;
-        case MTP_OP_CopyObject:
-            res = "OP_CopyObject";
-            break;
-        case MTP_OP_GetPartialObject:
-            res = "OP_GetPartialObject";
-            break;
-        case MTP_OP_InitiateOpenCapture:
-            res = "OP_InitiateOpenCapture";
-            break;
-        case MTP_RESP_Undefined:
-            res = "RESP_Undefined";
-            break;
-        case MTP_RESP_OK:
-            res = "RESP_OK";
-            break;
-        case MTP_RESP_GeneralError:
-            res = "RESP_GeneralError";
-            break;
-        case MTP_RESP_SessionNotOpen:
-            res = "RESP_SessionNotOpen";
-            break;
-        case MTP_RESP_InvalidTransID:
-            res = "RESP_InvalidTransID";
-            break;
-        case MTP_RESP_OperationNotSupported:
-            res = "RESP_OperationNotSupported";
-            break;
-        case MTP_RESP_ParameterNotSupported:
-            res = "RESP_ParameterNotSupported";
-            break;
-        case MTP_RESP_IncompleteTransfer:
-            res = "RESP_IncompleteTransfer";
-            break;
-        case MTP_RESP_InvalidStorageID:
-            res = "RESP_InvalidStorageID";
-            break;
-        case MTP_RESP_InvalidObjectHandle:
-            res = "RESP_InvalidObjectHandle";
-            break;
-        case MTP_RESP_DevicePropNotSupported:
-            res = "RESP_DevicePropNotSupported";
-            break;
-        case MTP_RESP_InvalidObjectFormatCode:
-            res = "RESP_InvalidObjectFormatCode";
-            break;
-        case MTP_RESP_StoreFull:
-            res = "RESP_StoreFull";
-            break;
-        case MTP_RESP_ObjectWriteProtected:
-            res = "RESP_ObjectWriteProtected";
-            break;
-        case MTP_RESP_StoreReadOnly:
-            res = "RESP_StoreReadOnly";
-            break;
-        case MTP_RESP_AccessDenied:
-            res = "RESP_AccessDenied";
-            break;
-        case MTP_RESP_NoThumbnailPresent:
-            res = "RESP_NoThumbnailPresent";
-            break;
-        case MTP_RESP_SelfTestFailed:
-            res = "RESP_SelfTestFailed";
-            break;
-        case MTP_RESP_PartialDeletion:
-            res = "RESP_PartialDeletion";
-            break;
-        case MTP_RESP_StoreNotAvailable:
-            res = "RESP_StoreNotAvailable";
-            break;
-        case MTP_RESP_SpecByFormatUnsupported:
-            res = "RESP_SpecByFormatUnsupported";
-            break;
-        case MTP_RESP_NoValidObjectInfo:
-            res = "RESP_NoValidObjectInfo";
-            break;
-        case MTP_RESP_InvalidCodeFormat:
-            res = "RESP_InvalidCodeFormat";
-            break;
-        case MTP_RESP_UnknowVendorCode:
-            res = "RESP_UnknowVendorCode";
-            break;
-        case MTP_RESP_CaptureAlreadyTerminated:
-            res = "RESP_CaptureAlreadyTerminated";
-            break;
-        case MTP_RESP_DeviceBusy:
-            res = "RESP_DeviceBusy";
-            break;
-        case MTP_RESP_InvalidParentObject:
-            res = "RESP_InvalidParentObject";
-            break;
-        case MTP_RESP_InvalidDevicePropFormat:
-            res = "RESP_InvalidDevicePropFormat";
-            break;
-        case MTP_RESP_InvalidDevicePropValue:
-            res = "RESP_InvalidDevicePropValue";
-            break;
-        case MTP_RESP_InvalidParameter:
-            res = "RESP_InvalidParameter";
-            break;
-        case MTP_RESP_SessionAlreadyOpen:
-            res = "RESP_SessionAlreadyOpen";
-            break;
-        case MTP_RESP_TransactionCancelled:
-            res = "RESP_TransactionCancelled";
-            break;
-        case MTP_RESP_SpecificationOfDestinationUnsupported:
-            res = "RESP_SpecificationOfDestinationUnsupported";
-            break;
-        case MTP_OBF_FORMAT_Undefined:
-            res = "OBF_FORMAT_Undefined";
-            break;
-        case MTP_OBF_FORMAT_Association:
-            res = "OBF_FORMAT_Association";
-            break;
-        case MTP_OBF_FORMAT_Script:
-            res = "OBF_FORMAT_Script";
-            break;
-        case MTP_OBF_FORMAT_Executable:
-            res = "OBF_FORMAT_Executable";
-            break;
-        case MTP_OBF_FORMAT_Text:
-            res = "OBF_FORMAT_Text";
-            break;
-        case MTP_OBF_FORMAT_HTML:
-            res = "OBF_FORMAT_HTML";
-            break;
-        case MTP_OBF_FORMAT_DPOF:
-            res = "OBF_FORMAT_DPOF";
-            break;
-        case MTP_OBF_FORMAT_AIFF:
-            res = "OBF_FORMAT_AIFF";
-            break;
-        case MTP_OBF_FORMAT_WAV:
-            res = "OBF_FORMAT_WAV";
-            break;
-        case MTP_OBF_FORMAT_MP3:
-            res = "OBF_FORMAT_MP3";
-            break;
-        case MTP_OBF_FORMAT_AVI:
-            res = "OBF_FORMAT_AVI";
-            break;
-        case MTP_OBF_FORMAT_MPEG:
-            res = "OBF_FORMAT_MPEG";
-            break;
-        case MTP_OBF_FORMAT_ASF:
-            res = "OBF_FORMAT_ASF";
-            break;
-        case MTP_OBF_FORMAT_Unknown_Image_Object:
-            res = "OBF_FORMAT_Unknown_Image_Object";
-            break;
-        case MTP_OBF_FORMAT_EXIF_JPEG:
-            res = "OBF_FORMAT_EXIF_JPEG";
-            break;
-        case MTP_OBF_FORMAT_TIFF_EP:
-            res = "OBF_FORMAT_TIFF_EP";
-            break;
-        case MTP_OBF_FORMAT_FlashPix:
-            res = "OBF_FORMAT_FlashPix";
-            break;
-        case MTP_OBF_FORMAT_BMP:
-            res = "OBF_FORMAT_BMP";
-            break;
-        case MTP_OBF_FORMAT_CIFF:
-            res = "OBF_FORMAT_CIFF";
-            break;
-        case MTP_OBF_FORMAT_GIF:
-            res = "OBF_FORMAT_GIF";
-            break;
-        case MTP_OBF_FORMAT_JFIF:
-            res = "OBF_FORMAT_JFIF";
-            break;
-        case MTP_OBF_FORMAT_PCD:
-            res = "OBF_FORMAT_PCD";
-            break;
-        case MTP_OBF_FORMAT_PICT:
-            res = "OBF_FORMAT_PICT";
-            break;
-        case MTP_OBF_FORMAT_PNG:
-            res = "OBF_FORMAT_PNG";
-            break;
-        case MTP_OBF_FORMAT_TIFF:
-            res = "OBF_FORMAT_TIFF";
-            break;
-        case MTP_OBF_FORMAT_TIFF_IT:
-            res = "OBF_FORMAT_TIFF_IT";
-            break;
-        case MTP_OBF_FORMAT_JP2:
-            res = "OBF_FORMAT_JP2";
-            break;
-        case MTP_OBF_FORMAT_JPX:
-            res = "OBF_FORMAT_JPX";
-            break;
-        case MTP_OBF_FORMAT_M4A:
-            res = "OBF_FORMAT_M4A";
-            break;
-        case MTP_EV_Undefined:
-            res = "EV_Undefined";
-            break;
-        case MTP_EV_CancelTransaction:
-            res = "EV_CancelTransaction";
-            break;
-        case MTP_EV_ObjectAdded:
-            res = "EV_ObjectAdded";
-            break;
-        case MTP_EV_ObjectRemoved:
-            res = "EV_ObjectRemoved";
-            break;
-        case MTP_EV_StoreAdded:
-            res = "EV_StoreAdded";
-            break;
-        case MTP_EV_StoreRemoved:
-            res = "EV_StoreRemoved";
-            break;
-        case MTP_EV_DevicePropChanged:
-            res = "EV_DevicePropChanged";
-            break;
-        case MTP_EV_ObjectInfoChanged:
-            res = "EV_ObjectInfoChanged";
-            break;
-        case MTP_EV_DeviceInfoChanged:
-            res = "EV_DeviceInfoChanged";
-            break;
-        case MTP_EV_RequestObjectTransfer:
-            res = "EV_RequestObjectTransfer";
-            break;
-        case MTP_EV_StoreFull:
-            res = "EV_StoreFull";
-            break;
-        case MTP_EV_DeviceReset:
-            res = "EV_DeviceReset";
-            break;
-        case MTP_EV_StorageInfoChanged:
-            res = "EV_StorageInfoChanged";
-            break;
-        case MTP_EV_CaptureComplete:
-            res = "EV_CaptureComplete";
-            break;
-        case MTP_EV_UnreportedStatus:
-            res = "EV_UnreportedStatus";
-            break;
-        case MTP_DEV_PROPERTY_Undefined:
-            res = "DEV_PROPERTY_Undefined";
-            break;
-        case MTP_DEV_PROPERTY_BatteryLevel:
-            res = "DEV_PROPERTY_BatteryLevel";
-            break;
-        case MTP_DEV_PROPERTY_FunctionalMode:
-            res = "DEV_PROPERTY_FunctionalMode";
-            break;
-        case MTP_DEV_PROPERTY_ImageSize:
-            res = "DEV_PROPERTY_ImageSize";
-            break;
-        case MTP_DEV_PROPERTY_CompressionSetting:
-            res = "DEV_PROPERTY_CompressionSetting";
-            break;
-        case MTP_DEV_PROPERTY_WhiteBalance:
-            res = "DEV_PROPERTY_WhiteBalance";
-            break;
-        case MTP_DEV_PROPERTY_RGB_Gain:
-            res = "DEV_PROPERTY_RGB_Gain";
-            break;
-        case MTP_DEV_PROPERTY_F_Number:
-            res = "DEV_PROPERTY_F_Number";
-            break;
-        case MTP_DEV_PROPERTY_FocalLength:
-            res = "DEV_PROPERTY_FocalLength";
-            break;
-        case MTP_DEV_PROPERTY_FocusDistance:
-            res = "DEV_PROPERTY_FocusDistance";
-            break;
-        case MTP_DEV_PROPERTY_FocusMod:
-            res = "DEV_PROPERTY_FocusMod";
-            break;
-        case MTP_DEV_PROPERTY_ExposureMeteringMode:
-            res = "DEV_PROPERTY_ExposureMeteringMode";
-            break;
-        case MTP_DEV_PROPERTY_FlashMode:
-            res = "DEV_PROPERTY_FlashMode";
-            break;
-        case MTP_DEV_PROPERTY_ExposureTime:
-            res = "DEV_PROPERTY_ExposureTime";
-            break;
-        case MTP_DEV_PROPERTY_ExposureProgramMode:
-            res = "DEV_PROPERTY_ExposureProgramMode";
-            break;
-        case MTP_DEV_PROPERTY_ExposureInde:
-            res = "DEV_PROPERTY_ExposureInde";
-            break;
-        case MTP_DEV_PROPERTY_ExposureBiasCompensation:
-            res = "DEV_PROPERTY_ExposureBiasCompensation";
-            break;
-        case MTP_DEV_PROPERTY_DateTime:
-            res = "DEV_PROPERTY_DateTime";
-            break;
-        case MTP_DEV_PROPERTY_CaptureDelay:
-            res = "DEV_PROPERTY_CaptureDelay";
-            break;
-        case MTP_DEV_PROPERTY_StillCaptureMode:
-            res = "DEV_PROPERTY_StillCaptureMode";
-            break;
-        case MTP_DEV_PROPERTY_Contrast:
-            res = "DEV_PROPERTY_Contrast";
-            break;
-        case MTP_DEV_PROPERTY_Sharpness:
-            res = "DEV_PROPERTY_Sharpness";
-            break;
-        case MTP_DEV_PROPERTY_DigitalZoom:
-            res = "DEV_PROPERTY_DigitalZoom";
-            break;
-        case MTP_DEV_PROPERTY_EffectMode:
-            res = "DEV_PROPERTY_EffectMode";
-            break;
-        case MTP_DEV_PROPERTY_BurstNumber:
-            res = "DEV_PROPERTY_BurstNumber";
-            break;
-        case MTP_DEV_PROPERTY_BurstInterval:
-            res = "DEV_PROPERTY_BurstInterval";
-            break;
-        case MTP_DEV_PROPERTY_TimelapseNumber:
-            res = "DEV_PROPERTY_TimelapseNumber";
-            break;
-        case MTP_DEV_PROPERTY_TimelapseInterval:
-            res = "DEV_PROPERTY_TimelapseInterval";
-            break;
-        case MTP_DEV_PROPERTY_FocusMeteringMode:
-            res = "DEV_PROPERTY_FocusMeteringMode";
-            break;
-        case MTP_DEV_PROPERTY_UploadURL:
-            res = "DEV_PROPERTY_UploadURL";
-            break;
-        case MTP_DEV_PROPERTY_Artist:
-            res = "DEV_PROPERTY_Artist";
-            break;
-        case MTP_DEV_PROPERTY_CopyrightInfo:
-            res = "DEV_PROPERTY_CopyrightInfo";
-            break;
-        case MTP_OP_ANDROID_GetPartialObject64:
-            res = "OP_ANDROID_GetPartialObject64";
-            break;
-        case MTP_OP_ANDROID_SendPartialObject64:
-            res = "OP_ANDROID_SendPartialObject64";
-            break;
-        case MTP_OP_ANDROID_TruncateObject64:
-            res = "OP_ANDROID_TruncateObject64";
-            break;
-        case MTP_OP_ANDROID_BeginEditObject:
-            res = "OP_ANDROID_BeginEditObject";
-            break;
-        case MTP_OP_ANDROID_EndEditObject:
-            res = "OP_ANDROID_EndEditObject";
-            break;
-        case MTP_OP_GetObjectPropsSupported:
-            res = "OP_GetObjectPropsSupported";
-            break;
-        case MTP_OP_GetObjectPropDesc:
-            res = "OP_GetObjectPropDesc";
-            break;
-        case MTP_OP_GetObjectPropValue:
-            res = "OP_GetObjectPropValue";
-            break;
-        case MTP_OP_SetObjectPropValue:
-            res = "OP_SetObjectPropValue";
-            break;
-        case MTP_OP_GetObjectPropList:
-            res = "OP_GetObjectPropList";
-            break;
-        case MTP_OP_SetObjectPropList:
-            res = "OP_SetObjectPropList";
-            break;
-        case MTP_OP_GetInterdependentPropDesc:
-            res = "OP_GetInterdependentPropDesc";
-            break;
-        case MTP_OP_SendObjectPropList:
-            res = "OP_SendObjectPropList";
-            break;
-        case MTP_OP_GetObjectReferences:
-            res = "OP_GetObjectReferences";
-            break;
-        case MTP_OP_SetObjectReferences:
-            res = "OP_SetObjectReferences";
-            break;
-        case MTP_OP_Skip:
-            res = "OP_Skip";
-            break;
-        case MTP_RESP_Invalid_ObjectPropCode:
-            res = "RESP_Invalid_ObjectPropCode";
-            break;
-        case MTP_RESP_Invalid_ObjectProp_Format:
-            res = "RESP_Invalid_ObjectProp_Format";
-            break;
-        case MTP_RESP_Invalid_ObjectProp_Value:
-            res = "RESP_Invalid_ObjectProp_Value";
-            break;
-        case MTP_RESP_Invalid_ObjectReference:
-            res = "RESP_Invalid_ObjectReference";
-            break;
-        case MTP_RESP_Invalid_Dataset:
-            res = "RESP_Invalid_Dataset";
-            break;
-        case MTP_RESP_Specification_By_Group_Unsupported:
-            res = "RESP_Specification_By_Group_Unsupported";
-            break;
-        case MTP_RESP_Specification_By_Depth_Unsupported:
-            res = "RESP_Specification_By_Depth_Unsupported";
-            break;
-        case MTP_RESP_Object_Too_Large:
-            res = "RESP_Object_Too_Large";
-            break;
-        case MTP_RESP_ObjectProp_Not_Supported:
-            res = "RESP_ObjectProp_Not_Supported";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Firmware:
-            res = "OBF_FORMAT_Undefined_Firmware";
-            break;
-        case MTP_OBF_FORMAT_Windows_Image_Format:
-            res = "OBF_FORMAT_Windows_Image_Format";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Audio:
-            res = "OBF_FORMAT_Undefined_Audio";
-            break;
-        case MTP_OBF_FORMAT_WMA:
-            res = "OBF_FORMAT_WMA";
-            break;
-        case MTP_OBF_FORMAT_OGG:
-            res = "OBF_FORMAT_OGG";
-            break;
-        case MTP_OBF_FORMAT_AAC:
-            res = "OBF_FORMAT_AAC";
-            break;
-        case MTP_OBF_FORMAT_Audible:
-            res = "OBF_FORMAT_Audible";
-            break;
-        case MTP_OBF_FORMAT_FLAC:
-            res = "OBF_FORMAT_FLAC";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Video:
-            res = "OBF_FORMAT_Undefined_Video";
-            break;
-        case MTP_OBF_FORMAT_WMV:
-            res = "OBF_FORMAT_WMV";
-            break;
-        case MTP_OBF_FORMAT_MP4_Container:
-            res = "OBF_FORMAT_MP4_Container";
-            break;
-        case MTP_OBF_FORMAT_3GP_Container:
-            res = "OBF_FORMAT_3GP_Container";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Collection:
-            res = "OBF_FORMAT_Undefined_Collection";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Multimedia_Album:
-            res = "OBF_FORMAT_Abstract_Multimedia_Album";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Image_Album:
-            res = "OBF_FORMAT_Abstract_Image_Album";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Audio_Album:
-            res = "OBF_FORMAT_Abstract_Audio_Album";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Video_Album:
-            res = "OBF_FORMAT_Abstract_Video_Album";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist:
-            res = "OBF_FORMAT_Abstract_Audio_Video_Playlist";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Contact_Group:
-            res = "OBF_FORMAT_Abstract_Contact_Group";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Message_Folder:
-            res = "OBF_FORMAT_Abstract_Message_Folder";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Chaptered_Production:
-            res = "OBF_FORMAT_Abstract_Chaptered_Production";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Audio_Playlist:
-            res = "OBF_FORMAT_Abstract_Audio_Playlist";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Video_Playlist:
-            res = "OBF_FORMAT_Abstract_Video_Playlist";
-            break;
-        case MTP_OBF_FORMAT_WPL_Playlist:
-            res = "OBF_FORMAT_WPL_Playlist";
-            break;
-        case MTP_OBF_FORMAT_M3U_Playlist:
-            res = "OBF_FORMAT_M3U_Playlist";
-            break;
-        case MTP_OBF_FORMAT_MPL_Playlist:
-            res = "OBF_FORMAT_MPL_Playlist";
-            break;
-        case MTP_OBF_FORMAT_ASX_Playlist:
-            res = "OBF_FORMAT_ASX_Playlist";
-            break;
-        case MTP_OBF_FORMAT_PLS_Playlist:
-            res = "OBF_FORMAT_PLS_Playlist";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Document:
-            res = "OBF_FORMAT_Undefined_Document";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Document:
-            res = "OBF_FORMAT_Abstract_Document";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Message:
-            res = "OBF_FORMAT_Undefined_Message";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Message:
-            res = "OBF_FORMAT_Abstract_Message";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Contact:
-            res = "OBF_FORMAT_Undefined_Contact";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Contact:
-            res = "OBF_FORMAT_Abstract_Contact";
-            break;
-        case MTP_OBF_FORMAT_vCard2:
-            res = "OBF_FORMAT_vCard2";
-            break;
-        case MTP_OBF_FORMAT_vCard3:
-            res = "OBF_FORMAT_vCard3";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Calendar_Item:
-            res = "OBF_FORMAT_Undefined_Calendar_Item";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Calendar_Item:
-            res = "OBF_FORMAT_Abstract_Calendar_Item";
-            break;
-        case MTP_OBF_FORMAT_vCal1:
-            res = "OBF_FORMAT_vCal1";
-            break;
-        case MTP_OBF_FORMAT_vCal2:
-            res = "OBF_FORMAT_vCal2";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Windows_Executable:
-            res = "OBF_FORMAT_Undefined_Windows_Executable";
-            break;
-        case MTP_OBF_FORMAT_WBMP:
-            res = "OBF_FORMAT_WBMP";
-            break;
-        case MTP_OBF_FORMAT_JPEG_XR:
-            res = "OBF_FORMAT_JPEG_XR";
-            break;
-        case MTP_OBF_FORMAT_QCELP:
-            res = "OBF_FORMAT_QCELP";
-            break;
-        case MTP_OBF_FORMAT_AMR:
-            res = "OBF_FORMAT_AMR";
-            break;
-        case MTP_OBF_FORMAT_MP2:
-            res = "OBF_FORMAT_MP2";
-            break;
-        case MTP_OBF_FORMAT_3G2:
-            res = "OBF_FORMAT_3G2";
-            break;
-        case MTP_OBF_FORMAT_AVCHD:
-            res = "OBF_FORMAT_AVCHD";
-            break;
-        case MTP_OBF_FORMAT_ATSC_TS:
-            res = "OBF_FORMAT_ATSC_TS";
-            break;
-        case MTP_OBF_FORMAT_DVB_TS:
-            res = "OBF_FORMAT_DVB_TS";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Mediacast:
-            res = "OBF_FORMAT_Abstract_Mediacast";
-            break;
-        case MTP_OBF_FORMAT_XML_Document:
-            res = "OBF_FORMAT_XML_Document";
-            break;
-        case MTP_OBF_FORMAT_Microsoft_Word_Document:
-            res = "OBF_FORMAT_Microsoft_Word_Document";
-            break;
-        case MTP_OBF_FORMAT_MHT_Compiled_HTML_Document:
-            res = "OBF_FORMAT_MHT_Compiled_HTML_Document";
-            break;
-        case MTP_OBF_FORMAT_Microsoft_Excel_spreadsheet:
-            res = "OBF_FORMAT_Microsoft_Excel_spreadsheet";
-            break;
-        case MTP_OBF_FORMAT_Microsoft_Powerpoint_presentation:
-            res = "OBF_FORMAT_Microsoft_Powerpoint_presentation";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Bookmark:
-            res = "OBF_FORMAT_Undefined_Bookmark";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Bookmark:
-            res = "OBF_FORMAT_Abstract_Bookmark";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Appointment:
-            res = "OBF_FORMAT_Undefined_Appointment";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Appointment:
-            res = "OBF_FORMAT_Abstract_Appointment";
-            break;
-        case MTP_OBF_FORMAT_vCalendar_1_0:
-            res = "OBF_FORMAT_vCalendar_1_0";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Task:
-            res = "OBF_FORMAT_Undefined_Task";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Task:
-            res = "OBF_FORMAT_Abstract_Task";
-            break;
-        case MTP_OBF_FORMAT_iCalendar:
-            res = "OBF_FORMAT_iCalendar";
-            break;
-        case MTP_OBF_FORMAT_Undefined_Note:
-            res = "OBF_FORMAT_Undefined_Note";
-            break;
-        case MTP_OBF_FORMAT_Abstract_Note:
-            res = "OBF_FORMAT_Abstract_Note";
-            break;
-        case MTP_EV_ObjectPropChanged:
-            res = "EV_ObjectPropChanged";
-            break;
-        case MTP_EV_ObjectPropDescChanged:
-            res = "EV_ObjectPropDescChanged";
-            break;
-        case MTP_DEV_PROPERTY_Synchronization_Partner:
-            res = "DEV_PROPERTY_Synchronization_Partner";
-            break;
-        case MTP_DEV_PROPERTY_Device_Friendly_Name:
-            res = "DEV_PROPERTY_Device_Friendly_Name";
-            break;
-        case MTP_DEV_PROPERTY_Volume:
-            res = "DEV_PROPERTY_Volume";
-            break;
-        case MTP_DEV_PROPERTY_Supported_Formats_Ordered:
-            res = "DEV_PROPERTY_Supported_Formats_Ordered";
-            break;
-        case MTP_DEV_PROPERTY_DeviceIcon:
-            res = "DEV_PROPERTY_DeviceIcon";
-            break;
-        case MTP_DEV_PROPERTY_Perceived_Device_Type:
-            res = "DEV_PROPERTY_Perceived_Device_Type";
-            break;
-        case MTP_OBJ_PROP_Purchase_Album:
-            res = "OBJ_PROP_Purchase_Album";
-            break;
-        case MTP_OBJ_PROP_StorageID:
-            res = "OBJ_PROP_StorageID";
-            break;
-        case MTP_OBJ_PROP_Obj_Format:
-            res = "OBJ_PROP_Obj_Format";
-            break;
-        case MTP_OBJ_PROP_Protection_Status:
-            res = "OBJ_PROP_Protection_Status";
-            break;
-        case MTP_OBJ_PROP_Obj_Size:
-            res = "OBJ_PROP_Obj_Size";
-            break;
-        case MTP_OBJ_PROP_Association_Type:
-            res = "OBJ_PROP_Association_Type";
-            break;
-        case MTP_OBJ_PROP_Association_Desc:
-            res = "OBJ_PROP_Association_Desc";
-            break;
-        case MTP_OBJ_PROP_Obj_File_Name:
-            res = "OBJ_PROP_Obj_File_Name";
-            break;
-        case MTP_OBJ_PROP_Date_Created:
-            res = "OBJ_PROP_Date_Created";
-            break;
-        case MTP_OBJ_PROP_Date_Modified:
-            res = "OBJ_PROP_Date_Modified";
-            break;
-        case MTP_OBJ_PROP_Keywords:
-            res = "OBJ_PROP_Keywords";
-            break;
-        case MTP_OBJ_PROP_Parent_Obj:
-            res = "OBJ_PROP_Parent_Obj";
-            break;
-        case MTP_OBJ_PROP_Allowed_Folder_Contents:
-            res = "OBJ_PROP_Allowed_Folder_Contents";
-            break;
-        case MTP_OBJ_PROP_Hidden:
-            res = "OBJ_PROP_Hidden";
-            break;
-        case MTP_OBJ_PROP_Sys_Obj:
-            res = "OBJ_PROP_Sys_Obj";
-            break;
-        case MTP_OBJ_PROP_Persistent_Unique_ObjId:
-            res = "OBJ_PROP_Persistent_Unique_ObjId";
-            break;
-        case MTP_OBJ_PROP_SyncID:
-            res = "OBJ_PROP_SyncID";
-            break;
-        case MTP_OBJ_PROP_Property_Bag:
-            res = "OBJ_PROP_Property_Bag";
-            break;
-        case MTP_OBJ_PROP_Name:
-            res = "OBJ_PROP_Name";
-            break;
-        case MTP_OBJ_PROP_Created_By:
-            res = "OBJ_PROP_Created_By";
-            break;
-        case MTP_OBJ_PROP_Artist:
-            res = "OBJ_PROP_Artist";
-            break;
-        case MTP_OBJ_PROP_Date_Authored:
-            res = "OBJ_PROP_Date_Authored";
-            break;
-        case MTP_OBJ_PROP_Description:
-            res = "OBJ_PROP_Description";
-            break;
-        case MTP_OBJ_PROP_URL_Reference:
-            res = "OBJ_PROP_URL_Reference";
-            break;
-        case MTP_OBJ_PROP_Language_Locale:
-            res = "OBJ_PROP_Language_Locale";
-            break;
-        case MTP_OBJ_PROP_Copyright_Information:
-            res = "OBJ_PROP_Copyright_Information";
-            break;
-        case MTP_OBJ_PROP_Source:
-            res = "OBJ_PROP_Source";
-            break;
-        case MTP_OBJ_PROP_Origin_Location:
-            res = "OBJ_PROP_Origin_Location";
-            break;
-        case MTP_OBJ_PROP_Date_Added:
-            res = "OBJ_PROP_Date_Added";
-            break;
-        case MTP_OBJ_PROP_Non_Consumable:
-            res = "OBJ_PROP_Non_Consumable";
-            break;
-        case MTP_OBJ_PROP_Corrupt_Unplayable:
-            res = "OBJ_PROP_Corrupt_Unplayable";
-            break;
-        case MTP_OBJ_PROP_Rep_Sample_Format:
-            res = "OBJ_PROP_Rep_Sample_Format";
-            break;
-        case MTP_OBJ_PROP_Rep_Sample_Size:
-            res = "OBJ_PROP_Rep_Sample_Size";
-            break;
-        case MTP_OBJ_PROP_Rep_Sample_Height:
-            res = "OBJ_PROP_Rep_Sample_Height";
-            break;
-        case MTP_OBJ_PROP_Rep_Sample_Width:
-            res = "OBJ_PROP_Rep_Sample_Width";
-            break;
-        case MTP_OBJ_PROP_Rep_Sample_Duration:
-            res = "OBJ_PROP_Rep_Sample_Duration";
-            break;
-        case MTP_OBJ_PROP_Rep_Sample_Data:
-            res = "OBJ_PROP_Rep_Sample_Data";
-            break;
-        case MTP_OBJ_PROP_Width:
-            res = "OBJ_PROP_Width";
-            break;
-        case MTP_OBJ_PROP_Height:
-            res = "OBJ_PROP_Height";
-            break;
-        case MTP_OBJ_PROP_Duration:
-            res = "OBJ_PROP_Duration";
-            break;
-        case MTP_OBJ_PROP_Rating:
-            res = "OBJ_PROP_Rating";
-            break;
-        case MTP_OBJ_PROP_Track:
-            res = "OBJ_PROP_Track";
-            break;
-        case MTP_OBJ_PROP_Genre:
-            res = "OBJ_PROP_Genre";
-            break;
-        case MTP_OBJ_PROP_Credits:
-            res = "OBJ_PROP_Credits";
-            break;
-        case MTP_OBJ_PROP_Lyrics:
-            res = "OBJ_PROP_Lyrics";
-            break;
-        case MTP_OBJ_PROP_Subscription_Content_ID:
-            res = "OBJ_PROP_Subscription_Content_ID";
-            break;
-        case MTP_OBJ_PROP_Produced_By:
-            res = "OBJ_PROP_Produced_By";
-            break;
-        case MTP_OBJ_PROP_Use_Count:
-            res = "OBJ_PROP_Use_Count";
-            break;
-        case MTP_OBJ_PROP_Skip_Count:
-            res = "OBJ_PROP_Skip_Count";
-            break;
-        case MTP_OBJ_PROP_Last_Accessed:
-            res = "OBJ_PROP_Last_Accessed";
-            break;
-        case MTP_OBJ_PROP_Parental_Rating:
-            res = "OBJ_PROP_Parental_Rating";
-            break;
-        case MTP_OBJ_PROP_Meta_Genre:
-            res = "OBJ_PROP_Meta_Genre";
-            break;
-        case MTP_OBJ_PROP_Composer:
-            res = "OBJ_PROP_Composer";
-            break;
-        case MTP_OBJ_PROP_Effective_Rating:
-            res = "OBJ_PROP_Effective_Rating";
-            break;
-        case MTP_OBJ_PROP_Subtitle:
-            res = "OBJ_PROP_Subtitle";
-            break;
-        case MTP_OBJ_PROP_Original_Release_Date:
-            res = "OBJ_PROP_Original_Release_Date";
-            break;
-        case MTP_OBJ_PROP_Album_Name:
-            res = "OBJ_PROP_Album_Name";
-            break;
-        case MTP_OBJ_PROP_Album_Artist:
-            res = "OBJ_PROP_Album_Artist";
-            break;
-        case MTP_OBJ_PROP_Mood:
-            res = "OBJ_PROP_Mood";
-            break;
-        case MTP_OBJ_PROP_DRM_Status:
-            res = "OBJ_PROP_DRM_Status";
-            break;
-        case MTP_OBJ_PROP_Sub_Description:
-            res = "OBJ_PROP_Sub_Description";
-            break;
-        case MTP_OBJ_PROP_Is_Cropped:
-            res = "OBJ_PROP_Is_Cropped";
-            break;
-        case MTP_OBJ_PROP_Is_Colour_Corrected:
-            res = "OBJ_PROP_Is_Colour_Corrected";
-            break;
-        case MTP_OBJ_PROP_Exposure_Time:
-            res = "OBJ_PROP_Exposure_Time";
-            break;
-        case MTP_OBJ_PROP_Exposure_Index:
-            res = "OBJ_PROP_Exposure_Index";
-            break;
-        case MTP_OBJ_PROP_Display_Name:
-            res = "OBJ_PROP_Display_Name";
-            break;
-        case MTP_OBJ_PROP_Body_Text:
-            res = "OBJ_PROP_Body_Text";
-            break;
-        case MTP_OBJ_PROP_Subject:
-            res = "OBJ_PROP_Subject";
-            break;
-        case MTP_OBJ_PROP_Priority:
-            res = "OBJ_PROP_Priority";
-            break;
-        case MTP_OBJ_PROP_Given_Name:
-            res = "OBJ_PROP_Given_Name";
-            break;
-        case MTP_OBJ_PROP_Middle_Names:
-            res = "OBJ_PROP_Middle_Names";
-            break;
-        case MTP_OBJ_PROP_Family_Name:
-            res = "OBJ_PROP_Family_Name";
-            break;
-        case MTP_OBJ_PROP_Prefix:
-            res = "OBJ_PROP_Prefix";
-            break;
-        case MTP_OBJ_PROP_Suffix:
-            res = "OBJ_PROP_Suffix";
-            break;
-        case MTP_OBJ_PROP_Phonetic_Given_Name:
-            res = "OBJ_PROP_Phonetic_Given_Name";
-            break;
-        case MTP_OBJ_PROP_Phonetic_Family_Name:
-            res = "OBJ_PROP_Phonetic_Family_Name";
-            break;
-        case MTP_OBJ_PROP_Email_Primary:
-            res = "OBJ_PROP_Email_Primary";
-            break;
-        case MTP_OBJ_PROP_Email_Personal1:
-            res = "OBJ_PROP_Email_Personal1";
-            break;
-        case MTP_OBJ_PROP_Email_Personal2:
-            res = "OBJ_PROP_Email_Personal2";
-            break;
-        case MTP_OBJ_PROP_Email_Business1:
-            res = "OBJ_PROP_Email_Business1";
-            break;
-        case MTP_OBJ_PROP_Email_Business2:
-            res = "OBJ_PROP_Email_Business2";
-            break;
-        case MTP_OBJ_PROP_Email_Others:
-            res = "OBJ_PROP_Email_Others";
-            break;
-        case MTP_OBJ_PROP_Phone_Nbr_Primary:
-            res = "OBJ_PROP_Phone_Nbr_Primary";
-            break;
-        case MTP_OBJ_PROP_Phone_Nbr_Personal:
-            res = "OBJ_PROP_Phone_Nbr_Personal";
-            break;
-        case MTP_OBJ_PROP_Phone_Nbr_Personal2:
-            res = "OBJ_PROP_Phone_Nbr_Personal2";
-            break;
-        case MTP_OBJ_PROP_Phone_Nbr_Business:
-            res = "OBJ_PROP_Phone_Nbr_Business";
-            break;
-        case MTP_OBJ_PROP_Phone_Nbr_Business2:
-            res = "OBJ_PROP_Phone_Nbr_Business2";
-            break;
-        case MTP_OBJ_PROP_Phone_Nbr_Mobile:
-            res = "OBJ_PROP_Phone_Nbr_Mobile";
-            break;
-        case MTP_OBJ_PROP_Phone_Nbr_Mobile2:
-            res = "OBJ_PROP_Phone_Nbr_Mobile2";
-            break;
-        case MTP_OBJ_PROP_Fax_Nbr_Primary:
-            res = "OBJ_PROP_Fax_Nbr_Primary";
-            break;
-        case MTP_OBJ_PROP_Fax_Nbr_Personal:
-            res = "OBJ_PROP_Fax_Nbr_Personal";
-            break;
-        case MTP_OBJ_PROP_Fax_Nbr_Business:
-            res = "OBJ_PROP_Fax_Nbr_Business";
-            break;
-        case MTP_OBJ_PROP_Pager_Nbr:
-            res = "OBJ_PROP_Pager_Nbr";
-            break;
-        case MTP_OBJ_PROP_Phone_Nbr_Others:
-            res = "OBJ_PROP_Phone_Nbr_Others";
-            break;
-        case MTP_OBJ_PROP_Primary_Web_Addr:
-            res = "OBJ_PROP_Primary_Web_Addr";
-            break;
-        case MTP_OBJ_PROP_Personal_Web_Addr:
-            res = "OBJ_PROP_Personal_Web_Addr";
-            break;
-        case MTP_OBJ_PROP_Business_Web_Addr:
-            res = "OBJ_PROP_Business_Web_Addr";
-            break;
-        case MTP_OBJ_PROP_Instant_Messenger_Addr:
-            res = "OBJ_PROP_Instant_Messenger_Addr";
-            break;
-        case MTP_OBJ_PROP_Instant_Messenger_Addr2:
-            res = "OBJ_PROP_Instant_Messenger_Addr2";
-            break;
-        case MTP_OBJ_PROP_Instant_Messenger_Addr3:
-            res = "OBJ_PROP_Instant_Messenger_Addr3";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Personal_Full:
-            res = "OBJ_PROP_Post_Addr_Personal_Full";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Personal_Line1:
-            res = "OBJ_PROP_Post_Addr_Personal_Line1";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Personal_Line2:
-            res = "OBJ_PROP_Post_Addr_Personal_Line2";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Personal_City:
-            res = "OBJ_PROP_Post_Addr_Personal_City";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Personal_Region:
-            res = "OBJ_PROP_Post_Addr_Personal_Region";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Personal_Post_Code:
-            res = "OBJ_PROP_Post_Addr_Personal_Post_Code";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Personal_Country:
-            res = "OBJ_PROP_Post_Addr_Personal_Country";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Business_Full:
-            res = "OBJ_PROP_Post_Addr_Business_Full";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Business_Line1:
-            res = "OBJ_PROP_Post_Addr_Business_Line1";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Business_Line2:
-            res = "OBJ_PROP_Post_Addr_Business_Line2";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Business_City:
-            res = "OBJ_PROP_Post_Addr_Business_City";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Business_Region:
-            res = "OBJ_PROP_Post_Addr_Business_Region";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Business_Post_Code:
-            res = "OBJ_PROP_Post_Addr_Business_Post_Code";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Business_Country:
-            res = "OBJ_PROP_Post_Addr_Business_Country";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Other_Full:
-            res = "OBJ_PROP_Post_Addr_Other_Full";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Other_Line1:
-            res = "OBJ_PROP_Post_Addr_Other_Line1";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Other_Line2:
-            res = "OBJ_PROP_Post_Addr_Other_Line2";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Other_City:
-            res = "OBJ_PROP_Post_Addr_Other_City";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Other_Region:
-            res = "OBJ_PROP_Post_Addr_Other_Region";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Other_Post_Code:
-            res = "OBJ_PROP_Post_Addr_Other_Post_Code";
-            break;
-        case MTP_OBJ_PROP_Post_Addr_Other_Country:
-            res = "OBJ_PROP_Post_Addr_Other_Country";
-            break;
-        case MTP_OBJ_PROP_Organization_Name:
-            res = "OBJ_PROP_Organization_Name";
-            break;
-        case MTP_OBJ_PROP_Phonetic_Organization_Name:
-            res = "OBJ_PROP_Phonetic_Organization_Name";
-            break;
-        case MTP_OBJ_PROP_Role:
-            res = "OBJ_PROP_Role";
-            break;
-        case MTP_OBJ_PROP_Birthdate:
-            res = "OBJ_PROP_Birthdate";
-            break;
-        case MTP_OBJ_PROP_Message_To:
-            res = "OBJ_PROP_Message_To";
-            break;
-        case MTP_OBJ_PROP_Message_CC:
-            res = "OBJ_PROP_Message_CC";
-            break;
-        case MTP_OBJ_PROP_Message_BCC:
-            res = "OBJ_PROP_Message_BCC";
-            break;
-        case MTP_OBJ_PROP_Message_Read:
-            res = "OBJ_PROP_Message_Read";
-            break;
-        case MTP_OBJ_PROP_Message_Received_Time:
-            res = "OBJ_PROP_Message_Received_Time";
-            break;
-        case MTP_OBJ_PROP_Message_Sender:
-            res = "OBJ_PROP_Message_Sender";
-            break;
-        case MTP_OBJ_PROP_Activity_Begin_Time:
-            res = "OBJ_PROP_Activity_Begin_Time";
-            break;
-        case MTP_OBJ_PROP_Activity_End_Time:
-            res = "OBJ_PROP_Activity_End_Time";
-            break;
-        case MTP_OBJ_PROP_Activity_Location:
-            res = "OBJ_PROP_Activity_Location";
-            break;
-        case MTP_OBJ_PROP_Activity_Required_Attendees:
-            res = "OBJ_PROP_Activity_Required_Attendees";
-            break;
-        case MTP_OBJ_PROP_Activity_Optional_Attendees:
-            res = "OBJ_PROP_Activity_Optional_Attendees";
-            break;
-        case MTP_OBJ_PROP_Activity_Resources:
-            res = "OBJ_PROP_Activity_Resources";
-            break;
-        case MTP_OBJ_PROP_Activity_Accepted:
-            res = "OBJ_PROP_Activity_Accepted";
-            break;
-        case MTP_OBJ_PROP_Activity_Tentative:
-            res = "OBJ_PROP_Activity_Tentative";
-            break;
-        case MTP_OBJ_PROP_Activity_Declined:
-            res = "OBJ_PROP_Activity_Declined";
-            break;
-        case MTP_OBJ_PROP_Activity_Reminder_Time:
-            res = "OBJ_PROP_Activity_Reminder_Time";
-            break;
-        case MTP_OBJ_PROP_Activity_Owner:
-            res = "OBJ_PROP_Activity_Owner";
-            break;
-        case MTP_OBJ_PROP_Activity_Status:
-            res = "OBJ_PROP_Activity_Status";
-            break;
-        case MTP_OBJ_PROP_Media_GUID:
-            res = "OBJ_PROP_Media_GUID";
-            break;
-        case MTP_OBJ_PROP_Total_BitRate:
-            res = "OBJ_PROP_Total_BitRate";
-            break;
-        case MTP_OBJ_PROP_Bitrate_Type:
-            res = "OBJ_PROP_Bitrate_Type";
-            break;
-        case MTP_OBJ_PROP_Sample_Rate:
-            res = "OBJ_PROP_Sample_Rate";
-            break;
-        case MTP_OBJ_PROP_Nbr_Of_Channels:
-            res = "OBJ_PROP_Nbr_Of_Channels";
-            break;
-        case MTP_OBJ_PROP_Audio_BitDepth:
-            res = "OBJ_PROP_Audio_BitDepth";
-            break;
-        case MTP_OBJ_PROP_Scan_Type:
-            res = "OBJ_PROP_Scan_Type";
-            break;
-        case MTP_OBJ_PROP_Audio_WAVE_Codec:
-            res = "OBJ_PROP_Audio_WAVE_Codec";
-            break;
-        case MTP_OBJ_PROP_Audio_BitRate:
-            res = "OBJ_PROP_Audio_BitRate";
-            break;
-        case MTP_OBJ_PROP_Video_FourCC_Codec:
-            res = "OBJ_PROP_Video_FourCC_Codec";
-            break;
-        case MTP_OBJ_PROP_Video_BitRate:
-            res = "OBJ_PROP_Video_BitRate";
-            break;
-        case MTP_OBJ_PROP_Frames_Per_Thousand_Secs:
-            res = "OBJ_PROP_Frames_Per_Thousand_Secs";
-            break;
-        case MTP_OBJ_PROP_KeyFrame_Distance:
-            res = "OBJ_PROP_KeyFrame_Distance";
-            break;
-        case MTP_OBJ_PROP_Buffer_Size:
-            res = "OBJ_PROP_Buffer_Size";
-            break;
-        case MTP_OBJ_PROP_Encoding_Quality:
-            res = "OBJ_PROP_Encoding_Quality";
-            break;
-        case MTP_OBJ_PROP_Encoding_Profile:
-            res = "OBJ_PROP_Encoding_Profile";
-            break;
-        }
+    return res;
+}
+const char *mtp_code_repr(int val)
+{
+    const char *res = 0;
+    switch (val) {
+    case MTP_OP_GetDeviceInfo:
+        res = "OP_GetDeviceInfo";
+        break;
+    case MTP_OP_OpenSession:
+        res = "OP_OpenSession";
+        break;
+    case MTP_OP_CloseSession:
+        res = "OP_CloseSession";
+        break;
+    case MTP_OP_GetStorageIDs:
+        res = "OP_GetStorageIDs";
+        break;
+    case MTP_OP_GetStorageInfo:
+        res = "OP_GetStorageInfo";
+        break;
+    case MTP_OP_GetNumObjects:
+        res = "OP_GetNumObjects";
+        break;
+    case MTP_OP_GetObjectHandles:
+        res = "OP_GetObjectHandles";
+        break;
+    case MTP_OP_GetObjectInfo:
+        res = "OP_GetObjectInfo";
+        break;
+    case MTP_OP_GetObject:
+        res = "OP_GetObject";
+        break;
+    case MTP_OP_GetThumb:
+        res = "OP_GetThumb";
+        break;
+    case MTP_OP_DeleteObject:
+        res = "OP_DeleteObject";
+        break;
+    case MTP_OP_SendObjectInfo:
+        res = "OP_SendObjectInfo";
+        break;
+    case MTP_OP_SendObject:
+        res = "OP_SendObject";
+        break;
+    case MTP_OP_InitiateCapture:
+        res = "OP_InitiateCapture";
+        break;
+    case MTP_OP_FormatStore:
+        res = "OP_FormatStore";
+        break;
+    case MTP_OP_ResetDevice:
+        res = "OP_ResetDevice";
+        break;
+    case MTP_OP_SelfTest:
+        res = "OP_SelfTest";
+        break;
+    case MTP_OP_SetObjectProtection:
+        res = "OP_SetObjectProtection";
+        break;
+    case MTP_OP_PowerDown:
+        res = "OP_PowerDown";
+        break;
+    case MTP_OP_GetDevicePropDesc:
+        res = "OP_GetDevicePropDesc";
+        break;
+    case MTP_OP_GetDevicePropValue:
+        res = "OP_GetDevicePropValue";
+        break;
+    case MTP_OP_SetDevicePropValue:
+        res = "OP_SetDevicePropValue";
+        break;
+    case MTP_OP_ResetDevicePropValue:
+        res = "OP_ResetDevicePropValue";
+        break;
+    case MTP_OP_TerminateOpenCapture:
+        res = "OP_TerminateOpenCapture";
+        break;
+    case MTP_OP_MoveObject:
+        res = "OP_MoveObject";
+        break;
+    case MTP_OP_CopyObject:
+        res = "OP_CopyObject";
+        break;
+    case MTP_OP_GetPartialObject:
+        res = "OP_GetPartialObject";
+        break;
+    case MTP_OP_InitiateOpenCapture:
+        res = "OP_InitiateOpenCapture";
+        break;
+    case MTP_RESP_Undefined:
+        res = "RESP_Undefined";
+        break;
+    case MTP_RESP_OK:
+        res = "RESP_OK";
+        break;
+    case MTP_RESP_GeneralError:
+        res = "RESP_GeneralError";
+        break;
+    case MTP_RESP_SessionNotOpen:
+        res = "RESP_SessionNotOpen";
+        break;
+    case MTP_RESP_InvalidTransID:
+        res = "RESP_InvalidTransID";
+        break;
+    case MTP_RESP_OperationNotSupported:
+        res = "RESP_OperationNotSupported";
+        break;
+    case MTP_RESP_ParameterNotSupported:
+        res = "RESP_ParameterNotSupported";
+        break;
+    case MTP_RESP_IncompleteTransfer:
+        res = "RESP_IncompleteTransfer";
+        break;
+    case MTP_RESP_InvalidStorageID:
+        res = "RESP_InvalidStorageID";
+        break;
+    case MTP_RESP_InvalidObjectHandle:
+        res = "RESP_InvalidObjectHandle";
+        break;
+    case MTP_RESP_DevicePropNotSupported:
+        res = "RESP_DevicePropNotSupported";
+        break;
+    case MTP_RESP_InvalidObjectFormatCode:
+        res = "RESP_InvalidObjectFormatCode";
+        break;
+    case MTP_RESP_StoreFull:
+        res = "RESP_StoreFull";
+        break;
+    case MTP_RESP_ObjectWriteProtected:
+        res = "RESP_ObjectWriteProtected";
+        break;
+    case MTP_RESP_StoreReadOnly:
+        res = "RESP_StoreReadOnly";
+        break;
+    case MTP_RESP_AccessDenied:
+        res = "RESP_AccessDenied";
+        break;
+    case MTP_RESP_NoThumbnailPresent:
+        res = "RESP_NoThumbnailPresent";
+        break;
+    case MTP_RESP_SelfTestFailed:
+        res = "RESP_SelfTestFailed";
+        break;
+    case MTP_RESP_PartialDeletion:
+        res = "RESP_PartialDeletion";
+        break;
+    case MTP_RESP_StoreNotAvailable:
+        res = "RESP_StoreNotAvailable";
+        break;
+    case MTP_RESP_SpecByFormatUnsupported:
+        res = "RESP_SpecByFormatUnsupported";
+        break;
+    case MTP_RESP_NoValidObjectInfo:
+        res = "RESP_NoValidObjectInfo";
+        break;
+    case MTP_RESP_InvalidCodeFormat:
+        res = "RESP_InvalidCodeFormat";
+        break;
+    case MTP_RESP_UnknowVendorCode:
+        res = "RESP_UnknowVendorCode";
+        break;
+    case MTP_RESP_CaptureAlreadyTerminated:
+        res = "RESP_CaptureAlreadyTerminated";
+        break;
+    case MTP_RESP_DeviceBusy:
+        res = "RESP_DeviceBusy";
+        break;
+    case MTP_RESP_InvalidParentObject:
+        res = "RESP_InvalidParentObject";
+        break;
+    case MTP_RESP_InvalidDevicePropFormat:
+        res = "RESP_InvalidDevicePropFormat";
+        break;
+    case MTP_RESP_InvalidDevicePropValue:
+        res = "RESP_InvalidDevicePropValue";
+        break;
+    case MTP_RESP_InvalidParameter:
+        res = "RESP_InvalidParameter";
+        break;
+    case MTP_RESP_SessionAlreadyOpen:
+        res = "RESP_SessionAlreadyOpen";
+        break;
+    case MTP_RESP_TransactionCancelled:
+        res = "RESP_TransactionCancelled";
+        break;
+    case MTP_RESP_SpecificationOfDestinationUnsupported:
+        res = "RESP_SpecificationOfDestinationUnsupported";
+        break;
+    case MTP_OBF_FORMAT_Undefined:
+        res = "OBF_FORMAT_Undefined";
+        break;
+    case MTP_OBF_FORMAT_Association:
+        res = "OBF_FORMAT_Association";
+        break;
+    case MTP_OBF_FORMAT_Script:
+        res = "OBF_FORMAT_Script";
+        break;
+    case MTP_OBF_FORMAT_Executable:
+        res = "OBF_FORMAT_Executable";
+        break;
+    case MTP_OBF_FORMAT_Text:
+        res = "OBF_FORMAT_Text";
+        break;
+    case MTP_OBF_FORMAT_HTML:
+        res = "OBF_FORMAT_HTML";
+        break;
+    case MTP_OBF_FORMAT_DPOF:
+        res = "OBF_FORMAT_DPOF";
+        break;
+    case MTP_OBF_FORMAT_AIFF:
+        res = "OBF_FORMAT_AIFF";
+        break;
+    case MTP_OBF_FORMAT_WAV:
+        res = "OBF_FORMAT_WAV";
+        break;
+    case MTP_OBF_FORMAT_MP3:
+        res = "OBF_FORMAT_MP3";
+        break;
+    case MTP_OBF_FORMAT_AVI:
+        res = "OBF_FORMAT_AVI";
+        break;
+    case MTP_OBF_FORMAT_MPEG:
+        res = "OBF_FORMAT_MPEG";
+        break;
+    case MTP_OBF_FORMAT_ASF:
+        res = "OBF_FORMAT_ASF";
+        break;
+    case MTP_OBF_FORMAT_Unknown_Image_Object:
+        res = "OBF_FORMAT_Unknown_Image_Object";
+        break;
+    case MTP_OBF_FORMAT_EXIF_JPEG:
+        res = "OBF_FORMAT_EXIF_JPEG";
+        break;
+    case MTP_OBF_FORMAT_TIFF_EP:
+        res = "OBF_FORMAT_TIFF_EP";
+        break;
+    case MTP_OBF_FORMAT_FlashPix:
+        res = "OBF_FORMAT_FlashPix";
+        break;
+    case MTP_OBF_FORMAT_BMP:
+        res = "OBF_FORMAT_BMP";
+        break;
+    case MTP_OBF_FORMAT_CIFF:
+        res = "OBF_FORMAT_CIFF";
+        break;
+    case MTP_OBF_FORMAT_GIF:
+        res = "OBF_FORMAT_GIF";
+        break;
+    case MTP_OBF_FORMAT_JFIF:
+        res = "OBF_FORMAT_JFIF";
+        break;
+    case MTP_OBF_FORMAT_PCD:
+        res = "OBF_FORMAT_PCD";
+        break;
+    case MTP_OBF_FORMAT_PICT:
+        res = "OBF_FORMAT_PICT";
+        break;
+    case MTP_OBF_FORMAT_PNG:
+        res = "OBF_FORMAT_PNG";
+        break;
+    case MTP_OBF_FORMAT_TIFF:
+        res = "OBF_FORMAT_TIFF";
+        break;
+    case MTP_OBF_FORMAT_TIFF_IT:
+        res = "OBF_FORMAT_TIFF_IT";
+        break;
+    case MTP_OBF_FORMAT_JP2:
+        res = "OBF_FORMAT_JP2";
+        break;
+    case MTP_OBF_FORMAT_JPX:
+        res = "OBF_FORMAT_JPX";
+        break;
+    case MTP_OBF_FORMAT_M4A:
+        res = "OBF_FORMAT_M4A";
+        break;
+    case MTP_EV_Undefined:
+        res = "EV_Undefined";
+        break;
+    case MTP_EV_CancelTransaction:
+        res = "EV_CancelTransaction";
+        break;
+    case MTP_EV_ObjectAdded:
+        res = "EV_ObjectAdded";
+        break;
+    case MTP_EV_ObjectRemoved:
+        res = "EV_ObjectRemoved";
+        break;
+    case MTP_EV_StoreAdded:
+        res = "EV_StoreAdded";
+        break;
+    case MTP_EV_StoreRemoved:
+        res = "EV_StoreRemoved";
+        break;
+    case MTP_EV_DevicePropChanged:
+        res = "EV_DevicePropChanged";
+        break;
+    case MTP_EV_ObjectInfoChanged:
+        res = "EV_ObjectInfoChanged";
+        break;
+    case MTP_EV_DeviceInfoChanged:
+        res = "EV_DeviceInfoChanged";
+        break;
+    case MTP_EV_RequestObjectTransfer:
+        res = "EV_RequestObjectTransfer";
+        break;
+    case MTP_EV_StoreFull:
+        res = "EV_StoreFull";
+        break;
+    case MTP_EV_DeviceReset:
+        res = "EV_DeviceReset";
+        break;
+    case MTP_EV_StorageInfoChanged:
+        res = "EV_StorageInfoChanged";
+        break;
+    case MTP_EV_CaptureComplete:
+        res = "EV_CaptureComplete";
+        break;
+    case MTP_EV_UnreportedStatus:
+        res = "EV_UnreportedStatus";
+        break;
+    case MTP_DEV_PROPERTY_Undefined:
+        res = "DEV_PROPERTY_Undefined";
+        break;
+    case MTP_DEV_PROPERTY_BatteryLevel:
+        res = "DEV_PROPERTY_BatteryLevel";
+        break;
+    case MTP_DEV_PROPERTY_FunctionalMode:
+        res = "DEV_PROPERTY_FunctionalMode";
+        break;
+    case MTP_DEV_PROPERTY_ImageSize:
+        res = "DEV_PROPERTY_ImageSize";
+        break;
+    case MTP_DEV_PROPERTY_CompressionSetting:
+        res = "DEV_PROPERTY_CompressionSetting";
+        break;
+    case MTP_DEV_PROPERTY_WhiteBalance:
+        res = "DEV_PROPERTY_WhiteBalance";
+        break;
+    case MTP_DEV_PROPERTY_RGB_Gain:
+        res = "DEV_PROPERTY_RGB_Gain";
+        break;
+    case MTP_DEV_PROPERTY_F_Number:
+        res = "DEV_PROPERTY_F_Number";
+        break;
+    case MTP_DEV_PROPERTY_FocalLength:
+        res = "DEV_PROPERTY_FocalLength";
+        break;
+    case MTP_DEV_PROPERTY_FocusDistance:
+        res = "DEV_PROPERTY_FocusDistance";
+        break;
+    case MTP_DEV_PROPERTY_FocusMod:
+        res = "DEV_PROPERTY_FocusMod";
+        break;
+    case MTP_DEV_PROPERTY_ExposureMeteringMode:
+        res = "DEV_PROPERTY_ExposureMeteringMode";
+        break;
+    case MTP_DEV_PROPERTY_FlashMode:
+        res = "DEV_PROPERTY_FlashMode";
+        break;
+    case MTP_DEV_PROPERTY_ExposureTime:
+        res = "DEV_PROPERTY_ExposureTime";
+        break;
+    case MTP_DEV_PROPERTY_ExposureProgramMode:
+        res = "DEV_PROPERTY_ExposureProgramMode";
+        break;
+    case MTP_DEV_PROPERTY_ExposureInde:
+        res = "DEV_PROPERTY_ExposureInde";
+        break;
+    case MTP_DEV_PROPERTY_ExposureBiasCompensation:
+        res = "DEV_PROPERTY_ExposureBiasCompensation";
+        break;
+    case MTP_DEV_PROPERTY_DateTime:
+        res = "DEV_PROPERTY_DateTime";
+        break;
+    case MTP_DEV_PROPERTY_CaptureDelay:
+        res = "DEV_PROPERTY_CaptureDelay";
+        break;
+    case MTP_DEV_PROPERTY_StillCaptureMode:
+        res = "DEV_PROPERTY_StillCaptureMode";
+        break;
+    case MTP_DEV_PROPERTY_Contrast:
+        res = "DEV_PROPERTY_Contrast";
+        break;
+    case MTP_DEV_PROPERTY_Sharpness:
+        res = "DEV_PROPERTY_Sharpness";
+        break;
+    case MTP_DEV_PROPERTY_DigitalZoom:
+        res = "DEV_PROPERTY_DigitalZoom";
+        break;
+    case MTP_DEV_PROPERTY_EffectMode:
+        res = "DEV_PROPERTY_EffectMode";
+        break;
+    case MTP_DEV_PROPERTY_BurstNumber:
+        res = "DEV_PROPERTY_BurstNumber";
+        break;
+    case MTP_DEV_PROPERTY_BurstInterval:
+        res = "DEV_PROPERTY_BurstInterval";
+        break;
+    case MTP_DEV_PROPERTY_TimelapseNumber:
+        res = "DEV_PROPERTY_TimelapseNumber";
+        break;
+    case MTP_DEV_PROPERTY_TimelapseInterval:
+        res = "DEV_PROPERTY_TimelapseInterval";
+        break;
+    case MTP_DEV_PROPERTY_FocusMeteringMode:
+        res = "DEV_PROPERTY_FocusMeteringMode";
+        break;
+    case MTP_DEV_PROPERTY_UploadURL:
+        res = "DEV_PROPERTY_UploadURL";
+        break;
+    case MTP_DEV_PROPERTY_Artist:
+        res = "DEV_PROPERTY_Artist";
+        break;
+    case MTP_DEV_PROPERTY_CopyrightInfo:
+        res = "DEV_PROPERTY_CopyrightInfo";
+        break;
+    case MTP_OP_ANDROID_GetPartialObject64:
+        res = "OP_ANDROID_GetPartialObject64";
+        break;
+    case MTP_OP_ANDROID_SendPartialObject64:
+        res = "OP_ANDROID_SendPartialObject64";
+        break;
+    case MTP_OP_ANDROID_TruncateObject64:
+        res = "OP_ANDROID_TruncateObject64";
+        break;
+    case MTP_OP_ANDROID_BeginEditObject:
+        res = "OP_ANDROID_BeginEditObject";
+        break;
+    case MTP_OP_ANDROID_EndEditObject:
+        res = "OP_ANDROID_EndEditObject";
+        break;
+    case MTP_OP_GetObjectPropsSupported:
+        res = "OP_GetObjectPropsSupported";
+        break;
+    case MTP_OP_GetObjectPropDesc:
+        res = "OP_GetObjectPropDesc";
+        break;
+    case MTP_OP_GetObjectPropValue:
+        res = "OP_GetObjectPropValue";
+        break;
+    case MTP_OP_SetObjectPropValue:
+        res = "OP_SetObjectPropValue";
+        break;
+    case MTP_OP_GetObjectPropList:
+        res = "OP_GetObjectPropList";
+        break;
+    case MTP_OP_SetObjectPropList:
+        res = "OP_SetObjectPropList";
+        break;
+    case MTP_OP_GetInterdependentPropDesc:
+        res = "OP_GetInterdependentPropDesc";
+        break;
+    case MTP_OP_SendObjectPropList:
+        res = "OP_SendObjectPropList";
+        break;
+    case MTP_OP_GetObjectReferences:
+        res = "OP_GetObjectReferences";
+        break;
+    case MTP_OP_SetObjectReferences:
+        res = "OP_SetObjectReferences";
+        break;
+    case MTP_OP_Skip:
+        res = "OP_Skip";
+        break;
+    case MTP_RESP_Invalid_ObjectPropCode:
+        res = "RESP_Invalid_ObjectPropCode";
+        break;
+    case MTP_RESP_Invalid_ObjectProp_Format:
+        res = "RESP_Invalid_ObjectProp_Format";
+        break;
+    case MTP_RESP_Invalid_ObjectProp_Value:
+        res = "RESP_Invalid_ObjectProp_Value";
+        break;
+    case MTP_RESP_Invalid_ObjectReference:
+        res = "RESP_Invalid_ObjectReference";
+        break;
+    case MTP_RESP_Invalid_Dataset:
+        res = "RESP_Invalid_Dataset";
+        break;
+    case MTP_RESP_Specification_By_Group_Unsupported:
+        res = "RESP_Specification_By_Group_Unsupported";
+        break;
+    case MTP_RESP_Specification_By_Depth_Unsupported:
+        res = "RESP_Specification_By_Depth_Unsupported";
+        break;
+    case MTP_RESP_Object_Too_Large:
+        res = "RESP_Object_Too_Large";
+        break;
+    case MTP_RESP_ObjectProp_Not_Supported:
+        res = "RESP_ObjectProp_Not_Supported";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Firmware:
+        res = "OBF_FORMAT_Undefined_Firmware";
+        break;
+    case MTP_OBF_FORMAT_Windows_Image_Format:
+        res = "OBF_FORMAT_Windows_Image_Format";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Audio:
+        res = "OBF_FORMAT_Undefined_Audio";
+        break;
+    case MTP_OBF_FORMAT_WMA:
+        res = "OBF_FORMAT_WMA";
+        break;
+    case MTP_OBF_FORMAT_OGG:
+        res = "OBF_FORMAT_OGG";
+        break;
+    case MTP_OBF_FORMAT_AAC:
+        res = "OBF_FORMAT_AAC";
+        break;
+    case MTP_OBF_FORMAT_Audible:
+        res = "OBF_FORMAT_Audible";
+        break;
+    case MTP_OBF_FORMAT_FLAC:
+        res = "OBF_FORMAT_FLAC";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Video:
+        res = "OBF_FORMAT_Undefined_Video";
+        break;
+    case MTP_OBF_FORMAT_WMV:
+        res = "OBF_FORMAT_WMV";
+        break;
+    case MTP_OBF_FORMAT_MP4_Container:
+        res = "OBF_FORMAT_MP4_Container";
+        break;
+    case MTP_OBF_FORMAT_3GP_Container:
+        res = "OBF_FORMAT_3GP_Container";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Collection:
+        res = "OBF_FORMAT_Undefined_Collection";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Multimedia_Album:
+        res = "OBF_FORMAT_Abstract_Multimedia_Album";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Image_Album:
+        res = "OBF_FORMAT_Abstract_Image_Album";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Audio_Album:
+        res = "OBF_FORMAT_Abstract_Audio_Album";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Video_Album:
+        res = "OBF_FORMAT_Abstract_Video_Album";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist:
+        res = "OBF_FORMAT_Abstract_Audio_Video_Playlist";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Contact_Group:
+        res = "OBF_FORMAT_Abstract_Contact_Group";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Message_Folder:
+        res = "OBF_FORMAT_Abstract_Message_Folder";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Chaptered_Production:
+        res = "OBF_FORMAT_Abstract_Chaptered_Production";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Audio_Playlist:
+        res = "OBF_FORMAT_Abstract_Audio_Playlist";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Video_Playlist:
+        res = "OBF_FORMAT_Abstract_Video_Playlist";
+        break;
+    case MTP_OBF_FORMAT_WPL_Playlist:
+        res = "OBF_FORMAT_WPL_Playlist";
+        break;
+    case MTP_OBF_FORMAT_M3U_Playlist:
+        res = "OBF_FORMAT_M3U_Playlist";
+        break;
+    case MTP_OBF_FORMAT_MPL_Playlist:
+        res = "OBF_FORMAT_MPL_Playlist";
+        break;
+    case MTP_OBF_FORMAT_ASX_Playlist:
+        res = "OBF_FORMAT_ASX_Playlist";
+        break;
+    case MTP_OBF_FORMAT_PLS_Playlist:
+        res = "OBF_FORMAT_PLS_Playlist";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Document:
+        res = "OBF_FORMAT_Undefined_Document";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Document:
+        res = "OBF_FORMAT_Abstract_Document";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Message:
+        res = "OBF_FORMAT_Undefined_Message";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Message:
+        res = "OBF_FORMAT_Abstract_Message";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Contact:
+        res = "OBF_FORMAT_Undefined_Contact";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Contact:
+        res = "OBF_FORMAT_Abstract_Contact";
+        break;
+    case MTP_OBF_FORMAT_vCard2:
+        res = "OBF_FORMAT_vCard2";
+        break;
+    case MTP_OBF_FORMAT_vCard3:
+        res = "OBF_FORMAT_vCard3";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Calendar_Item:
+        res = "OBF_FORMAT_Undefined_Calendar_Item";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Calendar_Item:
+        res = "OBF_FORMAT_Abstract_Calendar_Item";
+        break;
+    case MTP_OBF_FORMAT_vCal1:
+        res = "OBF_FORMAT_vCal1";
+        break;
+    case MTP_OBF_FORMAT_vCal2:
+        res = "OBF_FORMAT_vCal2";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Windows_Executable:
+        res = "OBF_FORMAT_Undefined_Windows_Executable";
+        break;
+    case MTP_OBF_FORMAT_WBMP:
+        res = "OBF_FORMAT_WBMP";
+        break;
+    case MTP_OBF_FORMAT_JPEG_XR:
+        res = "OBF_FORMAT_JPEG_XR";
+        break;
+    case MTP_OBF_FORMAT_QCELP:
+        res = "OBF_FORMAT_QCELP";
+        break;
+    case MTP_OBF_FORMAT_AMR:
+        res = "OBF_FORMAT_AMR";
+        break;
+    case MTP_OBF_FORMAT_MP2:
+        res = "OBF_FORMAT_MP2";
+        break;
+    case MTP_OBF_FORMAT_3G2:
+        res = "OBF_FORMAT_3G2";
+        break;
+    case MTP_OBF_FORMAT_AVCHD:
+        res = "OBF_FORMAT_AVCHD";
+        break;
+    case MTP_OBF_FORMAT_ATSC_TS:
+        res = "OBF_FORMAT_ATSC_TS";
+        break;
+    case MTP_OBF_FORMAT_DVB_TS:
+        res = "OBF_FORMAT_DVB_TS";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Mediacast:
+        res = "OBF_FORMAT_Abstract_Mediacast";
+        break;
+    case MTP_OBF_FORMAT_XML_Document:
+        res = "OBF_FORMAT_XML_Document";
+        break;
+    case MTP_OBF_FORMAT_Microsoft_Word_Document:
+        res = "OBF_FORMAT_Microsoft_Word_Document";
+        break;
+    case MTP_OBF_FORMAT_MHT_Compiled_HTML_Document:
+        res = "OBF_FORMAT_MHT_Compiled_HTML_Document";
+        break;
+    case MTP_OBF_FORMAT_Microsoft_Excel_spreadsheet:
+        res = "OBF_FORMAT_Microsoft_Excel_spreadsheet";
+        break;
+    case MTP_OBF_FORMAT_Microsoft_Powerpoint_presentation:
+        res = "OBF_FORMAT_Microsoft_Powerpoint_presentation";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Bookmark:
+        res = "OBF_FORMAT_Undefined_Bookmark";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Bookmark:
+        res = "OBF_FORMAT_Abstract_Bookmark";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Appointment:
+        res = "OBF_FORMAT_Undefined_Appointment";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Appointment:
+        res = "OBF_FORMAT_Abstract_Appointment";
+        break;
+    case MTP_OBF_FORMAT_vCalendar_1_0:
+        res = "OBF_FORMAT_vCalendar_1_0";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Task:
+        res = "OBF_FORMAT_Undefined_Task";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Task:
+        res = "OBF_FORMAT_Abstract_Task";
+        break;
+    case MTP_OBF_FORMAT_iCalendar:
+        res = "OBF_FORMAT_iCalendar";
+        break;
+    case MTP_OBF_FORMAT_Undefined_Note:
+        res = "OBF_FORMAT_Undefined_Note";
+        break;
+    case MTP_OBF_FORMAT_Abstract_Note:
+        res = "OBF_FORMAT_Abstract_Note";
+        break;
+    case MTP_EV_ObjectPropChanged:
+        res = "EV_ObjectPropChanged";
+        break;
+    case MTP_EV_ObjectPropDescChanged:
+        res = "EV_ObjectPropDescChanged";
+        break;
+    case MTP_DEV_PROPERTY_Synchronization_Partner:
+        res = "DEV_PROPERTY_Synchronization_Partner";
+        break;
+    case MTP_DEV_PROPERTY_Device_Friendly_Name:
+        res = "DEV_PROPERTY_Device_Friendly_Name";
+        break;
+    case MTP_DEV_PROPERTY_Volume:
+        res = "DEV_PROPERTY_Volume";
+        break;
+    case MTP_DEV_PROPERTY_Supported_Formats_Ordered:
+        res = "DEV_PROPERTY_Supported_Formats_Ordered";
+        break;
+    case MTP_DEV_PROPERTY_DeviceIcon:
+        res = "DEV_PROPERTY_DeviceIcon";
+        break;
+    case MTP_DEV_PROPERTY_Perceived_Device_Type:
+        res = "DEV_PROPERTY_Perceived_Device_Type";
+        break;
+    case MTP_OBJ_PROP_Purchase_Album:
+        res = "OBJ_PROP_Purchase_Album";
+        break;
+    case MTP_OBJ_PROP_StorageID:
+        res = "OBJ_PROP_StorageID";
+        break;
+    case MTP_OBJ_PROP_Obj_Format:
+        res = "OBJ_PROP_Obj_Format";
+        break;
+    case MTP_OBJ_PROP_Protection_Status:
+        res = "OBJ_PROP_Protection_Status";
+        break;
+    case MTP_OBJ_PROP_Obj_Size:
+        res = "OBJ_PROP_Obj_Size";
+        break;
+    case MTP_OBJ_PROP_Association_Type:
+        res = "OBJ_PROP_Association_Type";
+        break;
+    case MTP_OBJ_PROP_Association_Desc:
+        res = "OBJ_PROP_Association_Desc";
+        break;
+    case MTP_OBJ_PROP_Obj_File_Name:
+        res = "OBJ_PROP_Obj_File_Name";
+        break;
+    case MTP_OBJ_PROP_Date_Created:
+        res = "OBJ_PROP_Date_Created";
+        break;
+    case MTP_OBJ_PROP_Date_Modified:
+        res = "OBJ_PROP_Date_Modified";
+        break;
+    case MTP_OBJ_PROP_Keywords:
+        res = "OBJ_PROP_Keywords";
+        break;
+    case MTP_OBJ_PROP_Parent_Obj:
+        res = "OBJ_PROP_Parent_Obj";
+        break;
+    case MTP_OBJ_PROP_Allowed_Folder_Contents:
+        res = "OBJ_PROP_Allowed_Folder_Contents";
+        break;
+    case MTP_OBJ_PROP_Hidden:
+        res = "OBJ_PROP_Hidden";
+        break;
+    case MTP_OBJ_PROP_Sys_Obj:
+        res = "OBJ_PROP_Sys_Obj";
+        break;
+    case MTP_OBJ_PROP_Persistent_Unique_ObjId:
+        res = "OBJ_PROP_Persistent_Unique_ObjId";
+        break;
+    case MTP_OBJ_PROP_SyncID:
+        res = "OBJ_PROP_SyncID";
+        break;
+    case MTP_OBJ_PROP_Property_Bag:
+        res = "OBJ_PROP_Property_Bag";
+        break;
+    case MTP_OBJ_PROP_Name:
+        res = "OBJ_PROP_Name";
+        break;
+    case MTP_OBJ_PROP_Created_By:
+        res = "OBJ_PROP_Created_By";
+        break;
+    case MTP_OBJ_PROP_Artist:
+        res = "OBJ_PROP_Artist";
+        break;
+    case MTP_OBJ_PROP_Date_Authored:
+        res = "OBJ_PROP_Date_Authored";
+        break;
+    case MTP_OBJ_PROP_Description:
+        res = "OBJ_PROP_Description";
+        break;
+    case MTP_OBJ_PROP_URL_Reference:
+        res = "OBJ_PROP_URL_Reference";
+        break;
+    case MTP_OBJ_PROP_Language_Locale:
+        res = "OBJ_PROP_Language_Locale";
+        break;
+    case MTP_OBJ_PROP_Copyright_Information:
+        res = "OBJ_PROP_Copyright_Information";
+        break;
+    case MTP_OBJ_PROP_Source:
+        res = "OBJ_PROP_Source";
+        break;
+    case MTP_OBJ_PROP_Origin_Location:
+        res = "OBJ_PROP_Origin_Location";
+        break;
+    case MTP_OBJ_PROP_Date_Added:
+        res = "OBJ_PROP_Date_Added";
+        break;
+    case MTP_OBJ_PROP_Non_Consumable:
+        res = "OBJ_PROP_Non_Consumable";
+        break;
+    case MTP_OBJ_PROP_Corrupt_Unplayable:
+        res = "OBJ_PROP_Corrupt_Unplayable";
+        break;
+    case MTP_OBJ_PROP_Rep_Sample_Format:
+        res = "OBJ_PROP_Rep_Sample_Format";
+        break;
+    case MTP_OBJ_PROP_Rep_Sample_Size:
+        res = "OBJ_PROP_Rep_Sample_Size";
+        break;
+    case MTP_OBJ_PROP_Rep_Sample_Height:
+        res = "OBJ_PROP_Rep_Sample_Height";
+        break;
+    case MTP_OBJ_PROP_Rep_Sample_Width:
+        res = "OBJ_PROP_Rep_Sample_Width";
+        break;
+    case MTP_OBJ_PROP_Rep_Sample_Duration:
+        res = "OBJ_PROP_Rep_Sample_Duration";
+        break;
+    case MTP_OBJ_PROP_Rep_Sample_Data:
+        res = "OBJ_PROP_Rep_Sample_Data";
+        break;
+    case MTP_OBJ_PROP_Width:
+        res = "OBJ_PROP_Width";
+        break;
+    case MTP_OBJ_PROP_Height:
+        res = "OBJ_PROP_Height";
+        break;
+    case MTP_OBJ_PROP_Duration:
+        res = "OBJ_PROP_Duration";
+        break;
+    case MTP_OBJ_PROP_Rating:
+        res = "OBJ_PROP_Rating";
+        break;
+    case MTP_OBJ_PROP_Track:
+        res = "OBJ_PROP_Track";
+        break;
+    case MTP_OBJ_PROP_Genre:
+        res = "OBJ_PROP_Genre";
+        break;
+    case MTP_OBJ_PROP_Credits:
+        res = "OBJ_PROP_Credits";
+        break;
+    case MTP_OBJ_PROP_Lyrics:
+        res = "OBJ_PROP_Lyrics";
+        break;
+    case MTP_OBJ_PROP_Subscription_Content_ID:
+        res = "OBJ_PROP_Subscription_Content_ID";
+        break;
+    case MTP_OBJ_PROP_Produced_By:
+        res = "OBJ_PROP_Produced_By";
+        break;
+    case MTP_OBJ_PROP_Use_Count:
+        res = "OBJ_PROP_Use_Count";
+        break;
+    case MTP_OBJ_PROP_Skip_Count:
+        res = "OBJ_PROP_Skip_Count";
+        break;
+    case MTP_OBJ_PROP_Last_Accessed:
+        res = "OBJ_PROP_Last_Accessed";
+        break;
+    case MTP_OBJ_PROP_Parental_Rating:
+        res = "OBJ_PROP_Parental_Rating";
+        break;
+    case MTP_OBJ_PROP_Meta_Genre:
+        res = "OBJ_PROP_Meta_Genre";
+        break;
+    case MTP_OBJ_PROP_Composer:
+        res = "OBJ_PROP_Composer";
+        break;
+    case MTP_OBJ_PROP_Effective_Rating:
+        res = "OBJ_PROP_Effective_Rating";
+        break;
+    case MTP_OBJ_PROP_Subtitle:
+        res = "OBJ_PROP_Subtitle";
+        break;
+    case MTP_OBJ_PROP_Original_Release_Date:
+        res = "OBJ_PROP_Original_Release_Date";
+        break;
+    case MTP_OBJ_PROP_Album_Name:
+        res = "OBJ_PROP_Album_Name";
+        break;
+    case MTP_OBJ_PROP_Album_Artist:
+        res = "OBJ_PROP_Album_Artist";
+        break;
+    case MTP_OBJ_PROP_Mood:
+        res = "OBJ_PROP_Mood";
+        break;
+    case MTP_OBJ_PROP_DRM_Status:
+        res = "OBJ_PROP_DRM_Status";
+        break;
+    case MTP_OBJ_PROP_Sub_Description:
+        res = "OBJ_PROP_Sub_Description";
+        break;
+    case MTP_OBJ_PROP_Is_Cropped:
+        res = "OBJ_PROP_Is_Cropped";
+        break;
+    case MTP_OBJ_PROP_Is_Colour_Corrected:
+        res = "OBJ_PROP_Is_Colour_Corrected";
+        break;
+    case MTP_OBJ_PROP_Exposure_Time:
+        res = "OBJ_PROP_Exposure_Time";
+        break;
+    case MTP_OBJ_PROP_Exposure_Index:
+        res = "OBJ_PROP_Exposure_Index";
+        break;
+    case MTP_OBJ_PROP_Display_Name:
+        res = "OBJ_PROP_Display_Name";
+        break;
+    case MTP_OBJ_PROP_Body_Text:
+        res = "OBJ_PROP_Body_Text";
+        break;
+    case MTP_OBJ_PROP_Subject:
+        res = "OBJ_PROP_Subject";
+        break;
+    case MTP_OBJ_PROP_Priority:
+        res = "OBJ_PROP_Priority";
+        break;
+    case MTP_OBJ_PROP_Given_Name:
+        res = "OBJ_PROP_Given_Name";
+        break;
+    case MTP_OBJ_PROP_Middle_Names:
+        res = "OBJ_PROP_Middle_Names";
+        break;
+    case MTP_OBJ_PROP_Family_Name:
+        res = "OBJ_PROP_Family_Name";
+        break;
+    case MTP_OBJ_PROP_Prefix:
+        res = "OBJ_PROP_Prefix";
+        break;
+    case MTP_OBJ_PROP_Suffix:
+        res = "OBJ_PROP_Suffix";
+        break;
+    case MTP_OBJ_PROP_Phonetic_Given_Name:
+        res = "OBJ_PROP_Phonetic_Given_Name";
+        break;
+    case MTP_OBJ_PROP_Phonetic_Family_Name:
+        res = "OBJ_PROP_Phonetic_Family_Name";
+        break;
+    case MTP_OBJ_PROP_Email_Primary:
+        res = "OBJ_PROP_Email_Primary";
+        break;
+    case MTP_OBJ_PROP_Email_Personal1:
+        res = "OBJ_PROP_Email_Personal1";
+        break;
+    case MTP_OBJ_PROP_Email_Personal2:
+        res = "OBJ_PROP_Email_Personal2";
+        break;
+    case MTP_OBJ_PROP_Email_Business1:
+        res = "OBJ_PROP_Email_Business1";
+        break;
+    case MTP_OBJ_PROP_Email_Business2:
+        res = "OBJ_PROP_Email_Business2";
+        break;
+    case MTP_OBJ_PROP_Email_Others:
+        res = "OBJ_PROP_Email_Others";
+        break;
+    case MTP_OBJ_PROP_Phone_Nbr_Primary:
+        res = "OBJ_PROP_Phone_Nbr_Primary";
+        break;
+    case MTP_OBJ_PROP_Phone_Nbr_Personal:
+        res = "OBJ_PROP_Phone_Nbr_Personal";
+        break;
+    case MTP_OBJ_PROP_Phone_Nbr_Personal2:
+        res = "OBJ_PROP_Phone_Nbr_Personal2";
+        break;
+    case MTP_OBJ_PROP_Phone_Nbr_Business:
+        res = "OBJ_PROP_Phone_Nbr_Business";
+        break;
+    case MTP_OBJ_PROP_Phone_Nbr_Business2:
+        res = "OBJ_PROP_Phone_Nbr_Business2";
+        break;
+    case MTP_OBJ_PROP_Phone_Nbr_Mobile:
+        res = "OBJ_PROP_Phone_Nbr_Mobile";
+        break;
+    case MTP_OBJ_PROP_Phone_Nbr_Mobile2:
+        res = "OBJ_PROP_Phone_Nbr_Mobile2";
+        break;
+    case MTP_OBJ_PROP_Fax_Nbr_Primary:
+        res = "OBJ_PROP_Fax_Nbr_Primary";
+        break;
+    case MTP_OBJ_PROP_Fax_Nbr_Personal:
+        res = "OBJ_PROP_Fax_Nbr_Personal";
+        break;
+    case MTP_OBJ_PROP_Fax_Nbr_Business:
+        res = "OBJ_PROP_Fax_Nbr_Business";
+        break;
+    case MTP_OBJ_PROP_Pager_Nbr:
+        res = "OBJ_PROP_Pager_Nbr";
+        break;
+    case MTP_OBJ_PROP_Phone_Nbr_Others:
+        res = "OBJ_PROP_Phone_Nbr_Others";
+        break;
+    case MTP_OBJ_PROP_Primary_Web_Addr:
+        res = "OBJ_PROP_Primary_Web_Addr";
+        break;
+    case MTP_OBJ_PROP_Personal_Web_Addr:
+        res = "OBJ_PROP_Personal_Web_Addr";
+        break;
+    case MTP_OBJ_PROP_Business_Web_Addr:
+        res = "OBJ_PROP_Business_Web_Addr";
+        break;
+    case MTP_OBJ_PROP_Instant_Messenger_Addr:
+        res = "OBJ_PROP_Instant_Messenger_Addr";
+        break;
+    case MTP_OBJ_PROP_Instant_Messenger_Addr2:
+        res = "OBJ_PROP_Instant_Messenger_Addr2";
+        break;
+    case MTP_OBJ_PROP_Instant_Messenger_Addr3:
+        res = "OBJ_PROP_Instant_Messenger_Addr3";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Personal_Full:
+        res = "OBJ_PROP_Post_Addr_Personal_Full";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Personal_Line1:
+        res = "OBJ_PROP_Post_Addr_Personal_Line1";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Personal_Line2:
+        res = "OBJ_PROP_Post_Addr_Personal_Line2";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Personal_City:
+        res = "OBJ_PROP_Post_Addr_Personal_City";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Personal_Region:
+        res = "OBJ_PROP_Post_Addr_Personal_Region";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Personal_Post_Code:
+        res = "OBJ_PROP_Post_Addr_Personal_Post_Code";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Personal_Country:
+        res = "OBJ_PROP_Post_Addr_Personal_Country";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Business_Full:
+        res = "OBJ_PROP_Post_Addr_Business_Full";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Business_Line1:
+        res = "OBJ_PROP_Post_Addr_Business_Line1";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Business_Line2:
+        res = "OBJ_PROP_Post_Addr_Business_Line2";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Business_City:
+        res = "OBJ_PROP_Post_Addr_Business_City";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Business_Region:
+        res = "OBJ_PROP_Post_Addr_Business_Region";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Business_Post_Code:
+        res = "OBJ_PROP_Post_Addr_Business_Post_Code";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Business_Country:
+        res = "OBJ_PROP_Post_Addr_Business_Country";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Other_Full:
+        res = "OBJ_PROP_Post_Addr_Other_Full";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Other_Line1:
+        res = "OBJ_PROP_Post_Addr_Other_Line1";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Other_Line2:
+        res = "OBJ_PROP_Post_Addr_Other_Line2";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Other_City:
+        res = "OBJ_PROP_Post_Addr_Other_City";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Other_Region:
+        res = "OBJ_PROP_Post_Addr_Other_Region";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Other_Post_Code:
+        res = "OBJ_PROP_Post_Addr_Other_Post_Code";
+        break;
+    case MTP_OBJ_PROP_Post_Addr_Other_Country:
+        res = "OBJ_PROP_Post_Addr_Other_Country";
+        break;
+    case MTP_OBJ_PROP_Organization_Name:
+        res = "OBJ_PROP_Organization_Name";
+        break;
+    case MTP_OBJ_PROP_Phonetic_Organization_Name:
+        res = "OBJ_PROP_Phonetic_Organization_Name";
+        break;
+    case MTP_OBJ_PROP_Role:
+        res = "OBJ_PROP_Role";
+        break;
+    case MTP_OBJ_PROP_Birthdate:
+        res = "OBJ_PROP_Birthdate";
+        break;
+    case MTP_OBJ_PROP_Message_To:
+        res = "OBJ_PROP_Message_To";
+        break;
+    case MTP_OBJ_PROP_Message_CC:
+        res = "OBJ_PROP_Message_CC";
+        break;
+    case MTP_OBJ_PROP_Message_BCC:
+        res = "OBJ_PROP_Message_BCC";
+        break;
+    case MTP_OBJ_PROP_Message_Read:
+        res = "OBJ_PROP_Message_Read";
+        break;
+    case MTP_OBJ_PROP_Message_Received_Time:
+        res = "OBJ_PROP_Message_Received_Time";
+        break;
+    case MTP_OBJ_PROP_Message_Sender:
+        res = "OBJ_PROP_Message_Sender";
+        break;
+    case MTP_OBJ_PROP_Activity_Begin_Time:
+        res = "OBJ_PROP_Activity_Begin_Time";
+        break;
+    case MTP_OBJ_PROP_Activity_End_Time:
+        res = "OBJ_PROP_Activity_End_Time";
+        break;
+    case MTP_OBJ_PROP_Activity_Location:
+        res = "OBJ_PROP_Activity_Location";
+        break;
+    case MTP_OBJ_PROP_Activity_Required_Attendees:
+        res = "OBJ_PROP_Activity_Required_Attendees";
+        break;
+    case MTP_OBJ_PROP_Activity_Optional_Attendees:
+        res = "OBJ_PROP_Activity_Optional_Attendees";
+        break;
+    case MTP_OBJ_PROP_Activity_Resources:
+        res = "OBJ_PROP_Activity_Resources";
+        break;
+    case MTP_OBJ_PROP_Activity_Accepted:
+        res = "OBJ_PROP_Activity_Accepted";
+        break;
+    case MTP_OBJ_PROP_Activity_Tentative:
+        res = "OBJ_PROP_Activity_Tentative";
+        break;
+    case MTP_OBJ_PROP_Activity_Declined:
+        res = "OBJ_PROP_Activity_Declined";
+        break;
+    case MTP_OBJ_PROP_Activity_Reminder_Time:
+        res = "OBJ_PROP_Activity_Reminder_Time";
+        break;
+    case MTP_OBJ_PROP_Activity_Owner:
+        res = "OBJ_PROP_Activity_Owner";
+        break;
+    case MTP_OBJ_PROP_Activity_Status:
+        res = "OBJ_PROP_Activity_Status";
+        break;
+    case MTP_OBJ_PROP_Media_GUID:
+        res = "OBJ_PROP_Media_GUID";
+        break;
+    case MTP_OBJ_PROP_Total_BitRate:
+        res = "OBJ_PROP_Total_BitRate";
+        break;
+    case MTP_OBJ_PROP_Bitrate_Type:
+        res = "OBJ_PROP_Bitrate_Type";
+        break;
+    case MTP_OBJ_PROP_Sample_Rate:
+        res = "OBJ_PROP_Sample_Rate";
+        break;
+    case MTP_OBJ_PROP_Nbr_Of_Channels:
+        res = "OBJ_PROP_Nbr_Of_Channels";
+        break;
+    case MTP_OBJ_PROP_Audio_BitDepth:
+        res = "OBJ_PROP_Audio_BitDepth";
+        break;
+    case MTP_OBJ_PROP_Scan_Type:
+        res = "OBJ_PROP_Scan_Type";
+        break;
+    case MTP_OBJ_PROP_Audio_WAVE_Codec:
+        res = "OBJ_PROP_Audio_WAVE_Codec";
+        break;
+    case MTP_OBJ_PROP_Audio_BitRate:
+        res = "OBJ_PROP_Audio_BitRate";
+        break;
+    case MTP_OBJ_PROP_Video_FourCC_Codec:
+        res = "OBJ_PROP_Video_FourCC_Codec";
+        break;
+    case MTP_OBJ_PROP_Video_BitRate:
+        res = "OBJ_PROP_Video_BitRate";
+        break;
+    case MTP_OBJ_PROP_Frames_Per_Thousand_Secs:
+        res = "OBJ_PROP_Frames_Per_Thousand_Secs";
+        break;
+    case MTP_OBJ_PROP_KeyFrame_Distance:
+        res = "OBJ_PROP_KeyFrame_Distance";
+        break;
+    case MTP_OBJ_PROP_Buffer_Size:
+        res = "OBJ_PROP_Buffer_Size";
+        break;
+    case MTP_OBJ_PROP_Encoding_Quality:
+        res = "OBJ_PROP_Encoding_Quality";
+        break;
+    case MTP_OBJ_PROP_Encoding_Profile:
+        res = "OBJ_PROP_Encoding_Profile";
+        break;
+    }
 
-        if ( !res ) {
-            static char buf[32];
-            snprintf(buf, sizeof buf, "<unknown_%04x>", val);
-            res = buf;
-        }
-
-        return res;
+    if (!res) {
+        static char buf[32];
+        snprintf(buf, sizeof buf, "<unknown_%04x>", val);
+        res = buf;
     }
+
+    return res;
+}
 };

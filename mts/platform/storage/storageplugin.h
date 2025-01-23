@@ -38,6 +38,7 @@
 #include <QHash>
 #include <QVector>
 #include <QList>
+
 #include "mtptypes.h"
 
 /// StoragePlugin is a base class for MTP storage plug-ins.
@@ -53,7 +54,9 @@ class StoragePlugin : public QObject
 
 public:
     /// Constructor.
-    StoragePlugin(quint32 storageId): m_storageId(storageId) {}
+    StoragePlugin(quint32 storageId)
+        : m_storageId(storageId)
+    {}
 
     /// Destructor.
     virtual ~StoragePlugin() {}
@@ -65,7 +68,6 @@ public:
 
     /// Stop sending change events for all objects
     virtual void disableObjectEvents() = 0;
-
 
     /// Enumerate the storage.
     /// \return true or false depending on whether storage succeeded or failed.
@@ -79,14 +81,14 @@ public:
     /// for this item.
     ///
     /// \return MTP response.
-    virtual MTPResponseCode addItem( ObjHandle &parentHandle, ObjHandle &handle, MTPObjectInfo *info ) = 0;
+    virtual MTPResponseCode addItem(ObjHandle &parentHandle, ObjHandle &handle, MTPObjectInfo *info) = 0;
 
     /// Deletes an item from the storage.
     ///
     /// \param handle [in] the handle of the object that needs to be deleted.
     /// \param formatCode [in] this optional arg can be used to delete all objects of a certain format.
     /// \return MTP response.
-    virtual MTPResponseCode deleteItem( const ObjHandle &handle, const MTPObjFormatCode &formatCode ) = 0;
+    virtual MTPResponseCode deleteItem(const ObjHandle &handle, const MTPObjFormatCode &formatCode) = 0;
 
     /// Recursively copies objects from another storage.
     ///
@@ -101,8 +103,7 @@ public:
     ///               that will become parent of the copied object hierarchy.
     ///
     /// \return MTP response.
-    virtual MTPResponseCode copyHandle( StoragePlugin *sourceStorage,
-                                        ObjHandle source, ObjHandle parent ) = 0;
+    virtual MTPResponseCode copyHandle(StoragePlugin *sourceStorage, ObjHandle source, ObjHandle parent) = 0;
 
     /// Fills a collection with handles of child object of a given association
     /// (folder).
@@ -114,33 +115,34 @@ public:
     ///                      requested object handles.
     ///
     /// \return MTP response.
-    virtual MTPResponseCode getObjectHandles( const MTPObjFormatCode &formatCode, const quint32 &associationHandle,
-                                              QVector<ObjHandle> &objectHandles ) const = 0;
+    virtual MTPResponseCode getObjectHandles(
+        const MTPObjFormatCode &formatCode, const quint32 &associationHandle, QVector<ObjHandle> &objectHandles) const
+        = 0;
 
     /// Searches for the given object handle in this storage.
     ///
     /// \param handle [in] the object handle.
     ///
     /// \return true if this object handle exists, false otherwise.
-    virtual bool checkHandle( const ObjHandle &handle ) const = 0;
+    virtual bool checkHandle(const ObjHandle &handle) const = 0;
 
     /// Gets the storage info.
     /// \param storageId [in] storage id.
     /// \param storageType [out] populated storage info structure.
     /// \return MTP response.
-    virtual MTPResponseCode storageInfo( MTPStorageInfo &info ) = 0;
+    virtual MTPResponseCode storageInfo(MTPStorageInfo &info) = 0;
 
     /// Given an object handle, gets the objects referenced by this object in a storage.
     /// \param handle [in] object handle.
     /// \param references [out] list of object references.
     /// \return MTP response.
-    virtual MTPResponseCode getReferences( const ObjHandle &handle, QVector<ObjHandle> &references ) = 0;
+    virtual MTPResponseCode getReferences(const ObjHandle &handle, QVector<ObjHandle> &references) = 0;
 
     /// For an object handle, sets objects references in a storage.
     /// \param handle [in] object handle.
     /// \param references [in] list of object references.
     /// \return MTP response.
-    virtual MTPResponseCode setReferences( const ObjHandle &handle, const QVector<ObjHandle> &references ) = 0;
+    virtual MTPResponseCode setReferences(const ObjHandle &handle, const QVector<ObjHandle> &references) = 0;
 
     /// Copies an object within or across storages.
     /// \param handle [in] object to be copied.
@@ -149,30 +151,39 @@ public:
     ///                           happens within a single storage.
     /// \param copiedObjectHandle [out] The handle to the copied object is returned in this
     /// \param recursionCounter [in] The recursion depth
-    virtual MTPResponseCode copyObject( const ObjHandle &handle, const ObjHandle &parentHandle,
-                                        StoragePlugin *destinationStorage, ObjHandle &copiedObjectHandle, quint32 recursionDepth = 0) = 0;
+    virtual MTPResponseCode copyObject(
+        const ObjHandle &handle,
+        const ObjHandle &parentHandle,
+        StoragePlugin *destinationStorage,
+        ObjHandle &copiedObjectHandle,
+        quint32 recursionDepth = 0)
+        = 0;
 
     /// Moves an object within or across storages.
     /// \param handle [in] object to be moved.
     /// \param parentHandle [in] parent in destination location.
     /// \param destinationStorage [in] destination storage.
-    virtual MTPResponseCode moveObject( const ObjHandle &handle, const ObjHandle &parentHandle,
-                                        StoragePlugin *destinationStorage, bool movePhysically = true ) = 0;
+    virtual MTPResponseCode moveObject(
+        const ObjHandle &handle,
+        const ObjHandle &parentHandle,
+        StoragePlugin *destinationStorage,
+        bool movePhysically = true)
+        = 0;
 
     /// Given an object handle, provides it's absolute path in its storage.
     /// \param handle [in] object handle.
     /// \param path [out] the absolute path.
     /// \return MTP response.
-    virtual MTPResponseCode getPath( const quint32 &handle, QString &path ) const = 0;
+    virtual MTPResponseCode getPath(const quint32 &handle, QString &path) const = 0;
 
-    virtual MTPResponseCode getEventsEnabled( const quint32 &handle, bool &eventsEnabled ) const = 0;
-    virtual MTPResponseCode setEventsEnabled( const quint32 &handle, bool eventsEnabled ) const = 0;
+    virtual MTPResponseCode getEventsEnabled(const quint32 &handle, bool &eventsEnabled) const = 0;
+    virtual MTPResponseCode setEventsEnabled(const quint32 &handle, bool eventsEnabled) const = 0;
 
     /// Given an object handle, provides the object's objectinfo dataset.
     /// \param handle [in] the object handle.
     /// \param objectInfo [out] pointer to a structure holding the objectinfo dataset.
     /// \return MTP response.
-    virtual MTPResponseCode getObjectInfo( const ObjHandle &handle, const MTPObjectInfo *&objectInfo ) = 0;
+    virtual MTPResponseCode getObjectInfo(const ObjHandle &handle, const MTPObjectInfo *&objectInfo) = 0;
 
     /// Writes data onto a storage item.
     /// \param handle [in] the object handle.
@@ -182,10 +193,17 @@ public:
     ///                       a multi-segment write operation
     /// \param isLastSegment [in] If true, this is the final segment in
     ///                      a multi-segment write operation
-    virtual MTPResponseCode writeData( const ObjHandle &handle, const char *writeBuffer, quint32 bufferLen, bool isFirstSegment,
-                                       bool isLastSegment ) = 0;
-    virtual MTPResponseCode writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent,
-                                             quint32 dataLength, bool isFirstSegment, bool isLastSegment) = 0;
+    virtual MTPResponseCode writeData(
+        const ObjHandle &handle, const char *writeBuffer, quint32 bufferLen, bool isFirstSegment, bool isLastSegment)
+        = 0;
+    virtual MTPResponseCode writePartialData(
+        const ObjHandle &handle,
+        quint64 offset,
+        const quint8 *dataContent,
+        quint32 dataLength,
+        bool isFirstSegment,
+        bool isLastSegment)
+        = 0;
 
     /// Reads data from a storage item.
     /// \param handle [in] the object handle.
@@ -193,13 +211,13 @@ public:
     ///                   allocated by the caller.
     /// \param readBufferLen [in] number of bytes to read
     /// \param readOffset [in] The offset, in bytes, into the object to start reading from
-    virtual MTPResponseCode readData( const ObjHandle &handle, char *readBuffer, quint32 readBufferLen,
-                                      quint64 readOffset ) = 0;
+    virtual MTPResponseCode readData(const ObjHandle &handle, char *readBuffer, quint32 readBufferLen, quint64 readOffset)
+        = 0;
 
     /// Truncates an item to a certain size.
     /// \param handle [in] the object handle.
     /// \size [in] the size in bytes.
-    virtual MTPResponseCode truncateItem( const ObjHandle &handle, const quint64 &size ) = 0;
+    virtual MTPResponseCode truncateItem(const ObjHandle &handle, const quint64 &size) = 0;
 
     /// Retrieves the values of given object properties.
     ///
@@ -210,11 +228,11 @@ public:
     ///                    which will be filled by the method.
     ///
     /// \return MTP response.
-    virtual MTPResponseCode getObjectPropertyValue(const ObjHandle &handle,
-                                                   QList<MTPObjPropDescVal> &propValList) = 0;
+    virtual MTPResponseCode getObjectPropertyValue(const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList) = 0;
 
-    virtual MTPResponseCode setObjectPropertyValue( const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList,
-                                                    bool sendObjectPropList = false ) = 0;
+    virtual MTPResponseCode setObjectPropertyValue(
+        const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool sendObjectPropList = false)
+        = 0;
 
     /// Retrieves the values of given object properties for all child objects of
     /// given association.
@@ -225,9 +243,9 @@ public:
     ///               result, where keys are handles of child objects and values
     ///               are the properties of the object in the same order as the
     ///               descriptions in the \c properties list have.
-    virtual MTPResponseCode getChildPropertyValues(ObjHandle handle,
-                                                   const QList<const MtpObjPropDesc *> &properties,
-                                                   QMap<ObjHandle, QList<QVariant> > &values) = 0;
+    virtual MTPResponseCode getChildPropertyValues(
+        ObjHandle handle, const QList<const MtpObjPropDesc *> &properties, QMap<ObjHandle, QList<QVariant>> &values)
+        = 0;
 
 signals:
     /// Emitted whenever the storage plugin generates an MTP event.
@@ -244,16 +262,16 @@ signals:
     /// Since object handles need to be unique across storages, the storage factory assigns them to different storages.
     /// this handle, this would be a case when handles are maintained across sessions.
     /// \param handle [out] the assigned object handle
-    void objectHandle( ObjHandle &handle );
+    void objectHandle(ObjHandle &handle);
 
     /// A storage plug-in emits this signal when it needs to get a puoid to assign to one of it's objects.
     /// \param puoid[out] the largest puoid assigned to any object handle in this storage plug-in.
-    void puoid( MtpInt128 &puoid );
+    void puoid(MtpInt128 &puoid);
 
     /// This signal is emitted for now to check if a transaction is cancelled.
     /// TODO If needed this can be generalized to receive other transport specific events
     /// \param txCancelled [out] If set to true, this indicates that the current MTP tx got cancelled.
-    void checkTransportEvents( bool &txCancelled );
+    void checkTransportEvents(bool &txCancelled);
 
     /// The plugin emits this signal when it is done with enumeration.
     void storagePluginReady(quint32 storageId);
@@ -262,7 +280,7 @@ public Q_SLOTS:
     /// This slot gets called when the storage factory needs to know the value of the largest
     /// puoid used for any object in a storage plug-in.
     /// \param puoid[out] the largest puoid assigned to any object handle in this storage plug-in.
-    virtual void getLargestPuoid( MtpInt128 &puoid ) = 0;
+    virtual void getLargestPuoid(MtpInt128 &puoid) = 0;
 
 protected:
     /// Copies data between two storages and objects.
@@ -271,15 +289,13 @@ protected:
     /// \param source [in] handle of an object from which to copy data.
     /// \param destinationStorage [in] StoragePlugin into which to copy.
     /// \param destination [in] handle of an object to be filled with data.
-    static MTPResponseCode copyData(StoragePlugin *sourceStorage,
-                                    ObjHandle source, StoragePlugin *destinationStorage,
-                                    ObjHandle destination);
+    static MTPResponseCode copyData(
+        StoragePlugin *sourceStorage, ObjHandle source, StoragePlugin *destinationStorage, ObjHandle destination);
 
     /// Storage id assigned to this storage by the storage factory.
     quint32 m_storageId;
     MTPStorageInfo m_storageInfo;
-    QHash<ObjHandle, QVector<ObjHandle> >
-    m_objectReferencesMap; ///< this map maintains references (if any) for each object.
+    QHash<ObjHandle, QVector<ObjHandle>> m_objectReferencesMap; ///< this map maintains references (if any) for each object.
 };
 }
 

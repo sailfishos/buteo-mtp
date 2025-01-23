@@ -33,7 +33,6 @@
 #ifndef PROPERTYPOD_H
 #define PROPERTYPOD_H
 
-
 #include "mtptypes.h"
 
 namespace meegomtp1dot0 {
@@ -92,52 +91,47 @@ public:
 private:
     PropertyPod(MtpDeviceInfo *devInfoProvider, MTPExtensionManager *extManager); ///< Private ctor
 
-    PropertyPod(const PropertyPod &) {}                                           ///< Disable copying
+    PropertyPod(const PropertyPod &) {} ///< Disable copying
 
-    static PropertyPod *m_instance;                                               ///< Singleton instance
+    static PropertyPod *m_instance; ///< Singleton instance
 
-    MtpDeviceInfo *m_provider;                                                    ///< The device info provider
+    MtpDeviceInfo *m_provider; ///< The device info provider
 
-    MTPExtensionManager *m_extManager;                                            ///< Extensions manager class
+    MTPExtensionManager *m_extManager; ///< Extensions manager class
 
-    static MtpObjPropDesc
-    m_commonPropDesc[];                                   ///< Array of property descriptors common to all categories
+    static MtpObjPropDesc m_commonPropDesc[]; ///< Array of property descriptors common to all categories
 
-    static MtpObjPropDesc
-    m_imagePropDesc[];                                    ///< Array of property descriptors for image category
+    static MtpObjPropDesc m_imagePropDesc[]; ///< Array of property descriptors for image category
 
-    static MtpObjPropDesc
-    m_audioPropDesc[];                                    ///< Array of property descriptors for audio category
+    static MtpObjPropDesc m_audioPropDesc[]; ///< Array of property descriptors for audio category
 
-    static MtpObjPropDesc
-    m_videoPropDesc[];                                    ///< Array of property descriptors for video category
+    static MtpObjPropDesc m_videoPropDesc[]; ///< Array of property descriptors for video category
 
-    static MtpDevPropDesc
-    m_devicePropDesc[];                                   ///< Array of descriptors for device properties
+    static MtpDevPropDesc m_devicePropDesc[]; ///< Array of descriptors for device properties
 
     QMap<MTPObjPropertyCode, MtpObjPropDesc *>
-    m_objPropMapCommon;            ///< Maps the object property code to the property description
+        m_objPropMapCommon; ///< Maps the object property code to the property description
 
     QMap<MTPObjPropertyCode, MtpObjPropDesc *>
-    m_objPropMapImage;             ///< Maps the object property code to the property description
+        m_objPropMapImage; ///< Maps the object property code to the property description
 
     QMap<MTPObjPropertyCode, MtpObjPropDesc *>
-    m_objPropMapAudio;             ///< Maps the object property code to the property description
+        m_objPropMapAudio; ///< Maps the object property code to the property description
 
     QMap<MTPObjPropertyCode, MtpObjPropDesc *>
-    m_objPropMapVideo;             ///< Maps the object property code to the property description
+        m_objPropMapVideo; ///< Maps the object property code to the property description
 
-    QMap<MTPDevPropertyCode, MtpDevPropDesc *>
-    m_devPropMap;                  ///< Maps the device property code to the property description
+    QMap<MTPDevPropertyCode, MtpDevPropDesc *> m_devPropMap; ///< Maps the device property code to the property description
 
-    void populateEnumDesc(MtpObjPropDesc *desc,
-                          MTPObjectFormatCategory category); ///< Populates enum form flag into the property desc
+    void populateEnumDesc(
+        MtpObjPropDesc *desc,
+        MTPObjectFormatCategory category); ///< Populates enum form flag into the property desc
 
-    void populateTechObjPropDesc(MtpObjPropDesc *desc,
-                                 MTPObjectFormatCategory category); ///< Populates property desc for audio and video types
+    void populateTechObjPropDesc(
+        MtpObjPropDesc *desc,
+        MTPObjectFormatCategory category); ///< Populates property desc for audio and video types
 
     bool isTechObjProp(MTPObjPropertyCode code); ///< Returns true if the property code refers to a tech. object property
 };
 }
 #endif
-

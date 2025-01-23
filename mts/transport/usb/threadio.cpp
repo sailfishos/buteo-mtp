@@ -94,7 +94,7 @@ static void handleUSR1(int signum)
     Q_UNUSED(signum);
 
     static const char m[] = "***USR1***\n";
-    if ( write(2, m, sizeof m - 1) == -1 ) {
+    if (write(2, m, sizeof m - 1) == -1) {
         // dontcare
     }
 
@@ -115,7 +115,10 @@ static void catchUSR1()
 }
 
 IOThread::IOThread(QObject *parent)
-    : QThread(parent), m_fd(0), m_shouldExit(false), m_handle(0)
+    : QThread(parent)
+    , m_fd(0)
+    , m_shouldExit(false)
+    , m_handle(0)
 {}
 
 void IOThread::setFd(int fd)
@@ -185,10 +188,9 @@ void IOThread::run()
 }
 
 ControlReaderThread::ControlReaderThread(QObject *parent)
-    : IOThread(parent),  m_state(0)
-{
-
-}
+    : IOThread(parent)
+    , m_state(0)
+{}
 
 ControlReaderThread::~ControlReaderThread()
 {
@@ -208,8 +210,8 @@ void ControlReaderThread::execute()
             continue;
         }
         count = readSize / (sizeof(struct usb_functionfs_event));
-        event = (struct usb_functionfs_event *)readBuffer;
-        for (int i = 0; i < count; i++ )
+        event = (struct usb_functionfs_event *) readBuffer;
+        for (int i = 0; i < count; i++)
             handleEvent(event + i);
     }
 
@@ -222,7 +224,7 @@ void ControlReaderThread::sendStatus()
 
     int bytesWritten = 0;
     int dataLen = 4; /* TODO: If status size is ever above 0x4 */
-    char *dataptr = (char *)&status_data[m_status];
+    char *dataptr = (char *) &status_data[m_status];
 
     do {
         bytesWritten = MTP_WRITE(m_fd, dataptr, dataLen, false);
@@ -265,7 +267,7 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
         emit unbindUSB();
         break;
     case FUNCTIONFS_SETUP:
-        setupRequest((void *)event);
+        setupRequest((void *) event);
         break;
     default:
         break;
@@ -274,7 +276,7 @@ void ControlReaderThread::handleEvent(struct usb_functionfs_event *event)
 
 void ControlReaderThread::setupRequest(void *data)
 {
-    struct usb_functionfs_event *e = (struct usb_functionfs_event *)data;
+    struct usb_functionfs_event *e = (struct usb_functionfs_event *) data;
 
     /* USB Still Image Capture Device Definition, Section 5 */
     /* www.usb.org/developers/devclass_docs/usb_still_img10.pdf */
@@ -304,7 +306,6 @@ void ControlReaderThread::setupRequest(void *data)
         break;
     }
 }
-
 
 BulkReaderThread::BulkReaderThread(QObject *parent)
     : IOThread(parent)
@@ -496,7 +497,7 @@ void BulkWriterThread::execute()
     // Call setData before starting the thread.
 
     int bytesWritten = 0;
-    char *dataptr = (char *)m_buffer;
+    char *dataptr = (char *) m_buffer;
     // PTP compatibility requires that a transfer is terminated by a
     // "short packet" (a packet of less than maximum length). This
     // happens naturally for most transfers, but if the transfer size
@@ -512,7 +513,7 @@ void BulkWriterThread::execute()
         quint32 writeNow = (m_dataLen < writeMax) ? m_dataLen : writeMax;
         bytesWritten = MTP_WRITE(m_fd, dataptr, writeNow, false);
         if (bytesWritten == -1) {
-            if (errno == EIO && writeMax > PTP_HS_DATA_PKT_SIZE ) {
+            if (errno == EIO && writeMax > PTP_HS_DATA_PKT_SIZE) {
                 writeMax >>= 1;
                 MTP_LOG_WARNING("BulkWriterThread limit writes to: " << writeMax);
                 continue;
@@ -577,12 +578,11 @@ void InterruptWriterThread::sendOne()
     m_wait.wakeAll();
 }
 
-
 void InterruptWriterThread::flushData()
 {
     QMutexLocker locker(&m_lock);
 
-    while (m_buffers.count() ) {
+    while (m_buffers.count()) {
         QPair<quint8 *, int> pair = m_buffers.takeFirst();
         free(pair.first);
     }
@@ -592,7 +592,7 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 {
     QMutexLocker locker(&m_lock);
 
-    quint8 *copy = (quint8 *)malloc(dataLen);
+    quint8 *copy = (quint8 *) malloc(dataLen);
     if (copy == NULL) {
         MTP_LOG_CRITICAL("Couldn't allocate memory for events");
         return;
@@ -602,7 +602,7 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
     // This is here in case the interrupt writing thread cannot keep up
     // with the events. It removes the oldest events.
     if (m_buffers.count() >= MAX_EVENTS_STORED) {
-        if ( !m_eventBufferFull ) {
+        if (!m_eventBufferFull) {
             m_eventBufferFull = true;
             MTP_LOG_CRITICAL("event buffer full - events will be lost");
         }
@@ -612,7 +612,7 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
             free(pair.first);
         } while (m_buffers.count() >= MAX_EVENTS_STORED);
     } else {
-        if ( m_eventBufferFull ) {
+        if (m_eventBufferFull) {
             m_eventBufferFull = false;
             MTP_LOG_CRITICAL("event buffer no longer full");
         }
@@ -626,13 +626,12 @@ void InterruptWriterThread::addData(const quint8 *buffer, quint32 dataLen)
 void InterruptWriterThread::execute()
 {
     quint8 *dataptr = 0;
-    int     dataLen = 0;
+    int dataLen = 0;
 
     /* Lock on entry */
     m_lock.lock();
 
     while (!m_shouldExit) {
-
         /* Waiting happens in locked state, but the lock is
          * released for the duration of the wait itself. */
         MTP_LOG_TRACE("intr writer - waiting");
@@ -644,7 +643,7 @@ void InterruptWriterThread::execute()
         }
 
         /* Make sure we have data to write */
-        if ( !dataptr ) {
+        if (!dataptr) {
             if (m_buffers.isEmpty()) {
                 /* We should really not get here. Log it and emit
                  * failure in order not to block the upper layers. */
@@ -658,7 +657,7 @@ void InterruptWriterThread::execute()
             dataLen = pair.second;
         }
 
-        if ( !dataptr || !dataLen ) {
+        if (!dataptr || !dataLen) {
             MTP_LOG_WARNING("empty event data packet; ignored");
             continue;
         }
@@ -684,7 +683,7 @@ void InterruptWriterThread::execute()
                 goto EXIT;
             }
         } else {
-            if ( rc != dataLen ) {
+            if (rc != dataLen) {
                 /* Assumption is that for interrupt endpoints the kernel
                  * should accept the whole packet or nothing at all. */
                 MTP_LOG_CRITICAL("partial write" << rc << "/" << dataLen << "bytes");

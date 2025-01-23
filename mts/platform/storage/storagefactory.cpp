@@ -46,9 +46,12 @@ using namespace meegomtp1dot0;
 /*******************************************************
  * StorageFactory::StorageFactory
  ******************************************************/
-StorageFactory::StorageFactory(): m_storageId(0),
-    m_storagePluginsPath(pluginLocation), m_newObjectHandle(0),
-    m_newPuoid(0), m_objectPropertyCache(new ObjectPropertyCache)
+StorageFactory::StorageFactory()
+    : m_storageId(0)
+    , m_storagePluginsPath(pluginLocation)
+    , m_newObjectHandle(0)
+    , m_newPuoid(0)
+    , m_objectPropertyCache(new ObjectPropertyCache)
 {
     //TODO For now handle only the file system storage plug-in. As we have more storages
     // make this generic.
@@ -97,27 +100,27 @@ StorageFactory::StorageFactory(): m_storageId(0),
     QString pluginFullPath = m_storagePluginsPath + "/libfsstorage.so";
     QByteArray ba = pluginFullPath.toUtf8();
 
-    pluginHandle = dlopen( ba.constData(), RTLD_NOW );
-    if ( !pluginHandle ) {
+    pluginHandle = dlopen(ba.constData(), RTLD_NOW);
+    if (!pluginHandle) {
         MTP_LOG_WARNING("Failed to dlopen::" << pluginFullPath << dlerror());
     } else {
         ba = CREATE_STORAGE_PLUGINS.toUtf8();
-        CREATE_STORAGE_PLUGINS_FPTR createStoragePluginsFptr =
-            ( CREATE_STORAGE_PLUGINS_FPTR )dlsym( pluginHandle, ba.constData() );
-        if ( char *error = dlerror() ) {
+        CREATE_STORAGE_PLUGINS_FPTR createStoragePluginsFptr
+            = (CREATE_STORAGE_PLUGINS_FPTR) dlsym(pluginHandle, ba.constData());
+        if (char *error = dlerror()) {
             MTP_LOG_WARNING("Failed to dlsym because " << error);
-            dlclose( pluginHandle );
+            dlclose(pluginHandle);
         } else {
             quint32 storageId = assignStorageId(1, 1);
             QList<StoragePlugin *> storages = (*createStoragePluginsFptr)(storageId);
-            for ( quint8 i = 0; i < storages.count(); ++i ) {
+            for (quint8 i = 0; i < storages.count(); ++i) {
                 // Add this storage to all storages list.
                 m_allStorages[storageId + i] = storages[i];
 
                 PluginHandlesInfo_ pluginHandlesInfo;
                 pluginHandlesInfo.storagePluginPtr = storages[i];
                 pluginHandlesInfo.storagePluginHandle = pluginHandle;
-                m_pluginHandlesInfoVector.append( pluginHandlesInfo );
+                m_pluginHandlesInfoVector.append(pluginHandlesInfo);
             }
         }
     }
@@ -133,20 +136,19 @@ StorageFactory::~StorageFactory()
     // only once.
     QSet<void *> handlesToDlClose;
 
-    for ( int i = 0; i < m_pluginHandlesInfoVector.count() ; ++i ) {
+    for (int i = 0; i < m_pluginHandlesInfoVector.count(); ++i) {
         PluginHandlesInfo_ &pluginHandlesInfo = m_pluginHandlesInfoVector[i];
 
         handlesToDlClose.insert(pluginHandlesInfo.storagePluginHandle);
 
-        DESTROY_STORAGE_PLUGIN_FPTR destroyStoragePluginFptr =
-            ( DESTROY_STORAGE_PLUGIN_FPTR )dlsym( pluginHandlesInfo.storagePluginHandle,
-                                                  DESTROY_STORAGE_PLUGIN.toUtf8().constData() );
-        if ( char *error = dlerror() ) {
-            MTP_LOG_WARNING( "Failed to destroy storage because" << error );
+        DESTROY_STORAGE_PLUGIN_FPTR destroyStoragePluginFptr = (DESTROY_STORAGE_PLUGIN_FPTR)
+            dlsym(pluginHandlesInfo.storagePluginHandle, DESTROY_STORAGE_PLUGIN.toUtf8().constData());
+        if (char *error = dlerror()) {
+            MTP_LOG_WARNING("Failed to destroy storage because" << error);
             continue;
         }
 
-        (*destroyStoragePluginFptr)( pluginHandlesInfo.storagePluginPtr );
+        (*destroyStoragePluginFptr)(pluginHandlesInfo.storagePluginPtr);
     }
 
     foreach (void *pluginHandle, handlesToDlClose) {
@@ -219,7 +221,7 @@ void StorageFactory::onStoragePluginReady(quint32 storageId)
 
 void StorageFactory::sessionOpenChanged(bool isOpen)
 {
-    if ( !isOpen ) {
+    if (!isOpen) {
         /* Clear object changes need to be notified flags on session close */
         foreach (StoragePlugin *storage, m_allStorages) {
             storage->disableObjectEvents();
@@ -230,10 +232,10 @@ void StorageFactory::sessionOpenChanged(bool isOpen)
 /*******************************************************
  * quint32 StorageFactory::assignStorageId
  ******************************************************/
-quint32 StorageFactory::assignStorageId( quint16 storageNo, quint16 partitionNo ) const
+quint32 StorageFactory::assignStorageId(quint16 storageNo, quint16 partitionNo) const
 {
     quint32 storageId = storageNo;
-    storageId = ( storageId << 16 ) | partitionNo;
+    storageId = (storageId << 16) | partitionNo;
     return storageId;
 }
 
@@ -251,8 +253,8 @@ StoragePlugin *StorageFactory::storageOfHandle(ObjHandle handle) const
 /*******************************************************
  * MTPResponseCode StorageFactory::addItem
  ******************************************************/
-MTPResponseCode StorageFactory::addItem( quint32 &storageId, ObjHandle &parentHandle, ObjHandle &handle,
-                                         MTPObjectInfo *info ) const
+MTPResponseCode StorageFactory::addItem(
+    quint32 &storageId, ObjHandle &parentHandle, ObjHandle &handle, MTPObjectInfo *info) const
 {
     MTPResponseCode response = MTP_RESP_GeneralError;
 
@@ -262,9 +264,9 @@ MTPResponseCode StorageFactory::addItem( quint32 &storageId, ObjHandle &parentHa
         // FIXME Not a good idea to just pick the first storage. Maybe we should choose one has enough available space, etc.
         storageId = assignStorageId(1, 1);
     }
-    StoragePlugin *storagePlugin =  m_allStorages.value(storageId);
-    if ( storagePlugin ) {
-        response = storagePlugin->addItem( parentHandle, handle, info );
+    StoragePlugin *storagePlugin = m_allStorages.value(storageId);
+    if (storagePlugin) {
+        response = storagePlugin->addItem(parentHandle, handle, info);
     }
     return response;
 }
@@ -272,15 +274,15 @@ MTPResponseCode StorageFactory::addItem( quint32 &storageId, ObjHandle &parentHa
 /*******************************************************
  * MTPResponseCode StorageFactory::deleteItem
  ******************************************************/
-MTPResponseCode StorageFactory::deleteItem( const ObjHandle &handle, const MTPObjFormatCode &formatCode ) const
+MTPResponseCode StorageFactory::deleteItem(const ObjHandle &handle, const MTPObjFormatCode &formatCode) const
 {
     MTPResponseCode response = MTP_RESP_GeneralError;
     QHash<quint32, StoragePlugin *>::const_iterator itr = m_allStorages.constBegin();
     // a handle of 0xFFFFFFFF means delete everthing in all storages.
-    for ( ; itr != m_allStorages.constEnd(); ++itr ) {
-        if ( 0xFFFFFFFF == handle || itr.value()->checkHandle( handle ) ) {
-            response =  itr.value()->deleteItem( handle, formatCode );
-            if ( 0xFFFFFFFF != handle ) {
+    for (; itr != m_allStorages.constEnd(); ++itr) {
+        if (0xFFFFFFFF == handle || itr.value()->checkHandle(handle)) {
+            response = itr.value()->deleteItem(handle, formatCode);
+            if (0xFFFFFFFF != handle) {
                 break;
             }
         }
@@ -294,27 +296,29 @@ MTPResponseCode StorageFactory::deleteItem( const ObjHandle &handle, const MTPOb
 /*******************************************************
  * MTPResponseCode StorageFactory::getObjectHandles
  ******************************************************/
-MTPResponseCode StorageFactory::getObjectHandles( const quint32 &storageId, const MTPObjFormatCode &formatCode,
-                                                  const quint32 &associationHandle,
-                                                  QVector<ObjHandle> &objectHandles ) const
+MTPResponseCode StorageFactory::getObjectHandles(
+    const quint32 &storageId,
+    const MTPObjFormatCode &formatCode,
+    const quint32 &associationHandle,
+    QVector<ObjHandle> &objectHandles) const
 {
     MTPResponseCode response = MTP_RESP_InvalidStorageID;
     // Get the total count across all storages.
-    if ( 0xFFFFFFFF == storageId ) {
+    if (0xFFFFFFFF == storageId) {
         QHash<quint32, StoragePlugin *>::const_iterator itr = m_allStorages.constBegin();
-        for ( ; itr != m_allStorages.constEnd(); ++itr ) {
+        for (; itr != m_allStorages.constEnd(); ++itr) {
             QVector<ObjHandle> handles;
-            response = itr.value()->getObjectHandles( formatCode, associationHandle, handles );
-            if ( MTP_RESP_OK != response ) {
+            response = itr.value()->getObjectHandles(formatCode, associationHandle, handles);
+            if (MTP_RESP_OK != response) {
                 break;
             }
             objectHandles += handles;
         }
     } else {
         //Get the no. of objects from the requested storage.
-        StoragePlugin *storagePlugin =  m_allStorages.value(storageId);
-        if ( storagePlugin ) {
-            response = storagePlugin->getObjectHandles( formatCode, associationHandle, objectHandles );
+        StoragePlugin *storagePlugin = m_allStorages.value(storageId);
+        if (storagePlugin) {
+            response = storagePlugin->getObjectHandles(formatCode, associationHandle, objectHandles);
         }
     }
 
@@ -325,11 +329,11 @@ MTPResponseCode StorageFactory::getObjectHandles( const quint32 &storageId, cons
 /*******************************************************
  * static MTPResponseCode StorageFactory::storageIds
  ******************************************************/
-MTPResponseCode StorageFactory::storageIds( QVector<quint32> &storageIds )
+MTPResponseCode StorageFactory::storageIds(QVector<quint32> &storageIds)
 {
     // Return a list of id's of all created storages.
     QHash<quint32, StoragePlugin *>::const_iterator itr = m_allStorages.constBegin();
-    for ( ; itr != m_allStorages.constEnd(); ++itr ) {
+    for (; itr != m_allStorages.constEnd(); ++itr) {
         storageIds.append(itr.key());
     }
     return MTP_RESP_OK;
@@ -338,16 +342,16 @@ MTPResponseCode StorageFactory::storageIds( QVector<quint32> &storageIds )
 /*******************************************************
  * MTPResponseCode StorageFactory::checkStorage
  ******************************************************/
-MTPResponseCode StorageFactory::checkStorage( quint32 storageId ) const
+MTPResponseCode StorageFactory::checkStorage(quint32 storageId) const
 {
     // Check if the given storage is created
-    return m_allStorages.contains( storageId ) ? MTP_RESP_OK : MTP_RESP_InvalidStorageID;
+    return m_allStorages.contains(storageId) ? MTP_RESP_OK : MTP_RESP_InvalidStorageID;
 }
 
 /*******************************************************
  * MTPResponseCode StorageFactory::checkHandle
  ******************************************************/
-MTPResponseCode StorageFactory::checkHandle( const ObjHandle &handle ) const
+MTPResponseCode StorageFactory::checkHandle(const ObjHandle &handle) const
 {
     return storageOfHandle(handle) ? MTP_RESP_OK : MTP_RESP_InvalidObjectHandle;
 }
@@ -355,11 +359,11 @@ MTPResponseCode StorageFactory::checkHandle( const ObjHandle &handle ) const
 /*******************************************************
  * MTPResponseCode StorageFactory::storageType
  ******************************************************/
-MTPResponseCode StorageFactory::storageInfo( const quint32 &storageId, MTPStorageInfo &info )
+MTPResponseCode StorageFactory::storageInfo(const quint32 &storageId, MTPStorageInfo &info)
 {
-    StoragePlugin *storagePlugin =  m_allStorages.value(storageId);
-    if ( storagePlugin ) {
-        return storagePlugin->storageInfo( info );
+    StoragePlugin *storagePlugin = m_allStorages.value(storageId);
+    if (storagePlugin) {
+        return storagePlugin->storageInfo(info);
     }
     return MTP_RESP_InvalidStorageID;
 }
@@ -367,7 +371,7 @@ MTPResponseCode StorageFactory::storageInfo( const quint32 &storageId, MTPStorag
 /*******************************************************
  * MTPResponseCode StorageFactory::getReferences
  ******************************************************/
-MTPResponseCode StorageFactory::getReferences( const ObjHandle &handle, QVector<ObjHandle> &references ) const
+MTPResponseCode StorageFactory::getReferences(const ObjHandle &handle, QVector<ObjHandle> &references) const
 {
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
@@ -380,7 +384,7 @@ MTPResponseCode StorageFactory::getReferences( const ObjHandle &handle, QVector<
 /*******************************************************
  * MTPResponseCode StorageFactory::setReferences
  ******************************************************/
-MTPResponseCode StorageFactory::setReferences( const ObjHandle &handle, const QVector<ObjHandle> &references ) const
+MTPResponseCode StorageFactory::setReferences(const ObjHandle &handle, const QVector<ObjHandle> &references) const
 {
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
@@ -393,17 +397,20 @@ MTPResponseCode StorageFactory::setReferences( const ObjHandle &handle, const QV
 /*******************************************************
  * MTPResponseCode StorageFactory::copyObject
  ******************************************************/
-MTPResponseCode StorageFactory::copyObject( const ObjHandle &handle, const ObjHandle &parentHandle,
-                                            const quint32 &destinationStorageId, ObjHandle &copiedObjectHandle ) const
+MTPResponseCode StorageFactory::copyObject(
+    const ObjHandle &handle,
+    const ObjHandle &parentHandle,
+    const quint32 &destinationStorageId,
+    ObjHandle &copiedObjectHandle) const
 {
-    if ( !m_allStorages.contains( destinationStorageId ) ) {
+    if (!m_allStorages.contains(destinationStorageId)) {
         return MTP_RESP_InvalidStorageID;
     }
 
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
-        MTPResponseCode response = storage->copyObject(handle, parentHandle,
-                                                       m_allStorages[destinationStorageId], copiedObjectHandle);
+        MTPResponseCode response
+            = storage->copyObject(handle, parentHandle, m_allStorages[destinationStorageId], copiedObjectHandle);
         if (response == MTP_RESP_StoreFull) {
             // Cleanup.
             deleteItem(copiedObjectHandle, MTP_OBF_FORMAT_Undefined);
@@ -417,17 +424,16 @@ MTPResponseCode StorageFactory::copyObject( const ObjHandle &handle, const ObjHa
 /*******************************************************
  * MTPResponseCode StorageFactory::moveObject
  ******************************************************/
-MTPResponseCode StorageFactory::moveObject( const ObjHandle &handle, const ObjHandle &parentHandle,
-                                            const quint32 &destinationStorageId ) const
+MTPResponseCode StorageFactory::moveObject(
+    const ObjHandle &handle, const ObjHandle &parentHandle, const quint32 &destinationStorageId) const
 {
-    if ( !m_allStorages.contains( destinationStorageId ) ) {
+    if (!m_allStorages.contains(destinationStorageId)) {
         return MTP_RESP_InvalidStorageID;
     }
 
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
-        MTPResponseCode response = storage->moveObject(handle, parentHandle,
-                                                       m_allStorages[destinationStorageId]);
+        MTPResponseCode response = storage->moveObject(handle, parentHandle, m_allStorages[destinationStorageId]);
         if (response == MTP_RESP_OK) {
             // Invalidate the parent handle property in the cache. The other
             // properties do not change.
@@ -443,7 +449,7 @@ MTPResponseCode StorageFactory::moveObject( const ObjHandle &handle, const ObjHa
 /*******************************************************
  * MTPResponseCode StorageFactory::getPath
  ******************************************************/
-MTPResponseCode StorageFactory::getPath( const quint32 &handle, QString &path ) const
+MTPResponseCode StorageFactory::getPath(const quint32 &handle, QString &path) const
 {
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
@@ -456,7 +462,7 @@ MTPResponseCode StorageFactory::getPath( const quint32 &handle, QString &path ) 
 /*******************************************************
  * MTPResponseCode StorageFactory::getEventsEnabled
  ******************************************************/
-MTPResponseCode StorageFactory::getEventsEnabled( const quint32 &handle, bool &eventsEnabled ) const
+MTPResponseCode StorageFactory::getEventsEnabled(const quint32 &handle, bool &eventsEnabled) const
 {
     MTPResponseCode result = MTP_RESP_InvalidObjectHandle;
     StoragePlugin *storage = storageOfHandle(handle);
@@ -468,7 +474,7 @@ MTPResponseCode StorageFactory::getEventsEnabled( const quint32 &handle, bool &e
 /*******************************************************
  * MTPResponseCode StorageFactory::setEventsEnabled
  ******************************************************/
-MTPResponseCode StorageFactory::setEventsEnabled( const quint32 &handle, bool eventsEnabled ) const
+MTPResponseCode StorageFactory::setEventsEnabled(const quint32 &handle, bool eventsEnabled) const
 {
     MTPResponseCode result = MTP_RESP_InvalidObjectHandle;
     StoragePlugin *storage = storageOfHandle(handle);
@@ -480,7 +486,7 @@ MTPResponseCode StorageFactory::setEventsEnabled( const quint32 &handle, bool ev
 /*******************************************************
  * MTPResponseCode StorageFactory::getObjectInfo
  ******************************************************/
-MTPResponseCode StorageFactory::getObjectInfo( const ObjHandle &handle, const MTPObjectInfo *&objectInfo ) const
+MTPResponseCode StorageFactory::getObjectInfo(const ObjHandle &handle, const MTPObjectInfo *&objectInfo) const
 {
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
@@ -493,8 +499,8 @@ MTPResponseCode StorageFactory::getObjectInfo( const ObjHandle &handle, const MT
 /*******************************************************
  * MTPResponseCode StorageFactory::writeData
  ******************************************************/
-MTPResponseCode StorageFactory::writeData( const ObjHandle &handle, const char *writeBuffer, quint32 bufferLen,
-                                           bool isFirstSegment, bool isLastSegment ) const
+MTPResponseCode StorageFactory::writeData(
+    const ObjHandle &handle, const char *writeBuffer, quint32 bufferLen, bool isFirstSegment, bool isLastSegment) const
 {
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
@@ -507,8 +513,13 @@ MTPResponseCode StorageFactory::writeData( const ObjHandle &handle, const char *
 /*******************************************************
  * MTPResponseCode StorageFactory::writePartialData
  ******************************************************/
-MTPResponseCode StorageFactory::writePartialData(const ObjHandle &handle, quint64 offset, const quint8 *dataContent,
-                                                 quint32 dataLength, bool isFirstSegment, bool isLastSegment) const
+MTPResponseCode StorageFactory::writePartialData(
+    const ObjHandle &handle,
+    quint64 offset,
+    const quint8 *dataContent,
+    quint32 dataLength,
+    bool isFirstSegment,
+    bool isLastSegment) const
 {
     MTPResponseCode result = MTP_RESP_InvalidObjectHandle;
     StoragePlugin *storage = storageOfHandle(handle);
@@ -517,11 +528,10 @@ MTPResponseCode StorageFactory::writePartialData(const ObjHandle &handle, quint6
     return result;
 }
 
-
 /*******************************************************
  * MTPResponseCode StorageFactory::truncateItem
  ******************************************************/
-MTPResponseCode StorageFactory::truncateItem( const ObjHandle &handle, const quint64 &size ) const
+MTPResponseCode StorageFactory::truncateItem(const ObjHandle &handle, const quint64 &size) const
 {
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
@@ -534,8 +544,8 @@ MTPResponseCode StorageFactory::truncateItem( const ObjHandle &handle, const qui
 /*******************************************************
  * MTPResponseCode StorageFactory::readData
  ******************************************************/
-MTPResponseCode StorageFactory::readData( const ObjHandle &handle, char *readBuffer, quint32 readBufferLen,
-                                          quint64 readOffset ) const
+MTPResponseCode StorageFactory::readData(
+    const ObjHandle &handle, char *readBuffer, quint32 readBufferLen, quint64 readOffset) const
 {
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
@@ -545,8 +555,7 @@ MTPResponseCode StorageFactory::readData( const ObjHandle &handle, char *readBuf
     return MTP_RESP_InvalidObjectHandle;
 }
 
-MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle,
-                                                       QList<MTPObjPropDescVal> &propValList)
+MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList)
 {
     QList<MTPObjPropDescVal> notFoundList;
 
@@ -571,8 +580,7 @@ MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle,
             return response;
         }
 
-        if (m_massQueriedAssociations.contains(info->mtpParentObject) ||
-                handle == 0) {
+        if (m_massQueriedAssociations.contains(info->mtpParentObject) || handle == 0) {
             // We've done one mass query on this object's parent. For
             // performance reasons revert now to querying individual objects, as
             // repeated big queries would rather degrade the performance than
@@ -592,9 +600,8 @@ MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle,
                 properties.append(propVal.propDesc);
             }
 
-            QMap<ObjHandle, QList<QVariant> > values;
-            response = storage->getChildPropertyValues(info->mtpParentObject,
-                                                       properties, values);
+            QMap<ObjHandle, QList<QVariant>> values;
+            response = storage->getChildPropertyValues(info->mtpParentObject, properties, values);
             if (response != MTP_RESP_OK) {
                 return response;
             }
@@ -604,14 +611,13 @@ MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle,
             propValList += notFoundList;
 
             // Feed the object property cache.
-            QMap<ObjHandle, QList<QVariant> >::iterator it;
+            QMap<ObjHandle, QList<QVariant>>::iterator it;
             for (it = values.begin(); it != values.end(); ++it) {
                 const ObjHandle &childHandle = it.key();
                 const QList<QVariant> &childValues = it.value();
 
                 for (int i = 0; i != properties.count(); ++i) {
-                    m_objectPropertyCache->add(childHandle,
-                                               properties[i]->uPropCode, childValues[i]);
+                    m_objectPropertyCache->add(childHandle, properties[i]->uPropCode, childValues[i]);
                 }
             }
 
@@ -624,14 +630,12 @@ MTPResponseCode StorageFactory::getObjectPropertyValue(const ObjHandle &handle,
     return MTP_RESP_InvalidObjectHandle;
 }
 
-MTPResponseCode StorageFactory::setObjectPropertyValue( const ObjHandle &handle,
-                                                        QList<MTPObjPropDescVal> &propValList,
-                                                        bool sendObjectPropList /*= false*/)
+MTPResponseCode StorageFactory::setObjectPropertyValue(
+    const ObjHandle &handle, QList<MTPObjPropDescVal> &propValList, bool sendObjectPropList /*= false*/)
 {
     StoragePlugin *storage = storageOfHandle(handle);
     if (storage) {
-        MTPResponseCode response =
-            storage->setObjectPropertyValue(handle, propValList, sendObjectPropList);
+        MTPResponseCode response = storage->setObjectPropertyValue(handle, propValList, sendObjectPropList);
         if (response == MTP_RESP_OK) {
             m_objectPropertyCache->add(handle, propValList);
         }
@@ -664,14 +668,14 @@ void StorageFactory::onStorageEvent(MTPEventCode event, const QVector<quint32> &
     }
 }
 
-void StorageFactory::getObjectHandle( ObjHandle &handle )
+void StorageFactory::getObjectHandle(ObjHandle &handle)
 {
     //TODO : Handle the case when object handle surpasses 0xFFFFFFFF,
     //but the no. of objects doesn't.
-    handle =  ++m_newObjectHandle == 0xFFFFFFFF ? 1 : m_newObjectHandle;
+    handle = ++m_newObjectHandle == 0xFFFFFFFF ? 1 : m_newObjectHandle;
 }
 
-void StorageFactory::getPuoid( MtpInt128 &puoid )
+void StorageFactory::getPuoid(MtpInt128 &puoid)
 {
     puoid = ++m_newPuoid;
 }

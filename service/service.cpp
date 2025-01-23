@@ -75,7 +75,7 @@ int main(int argc, char **argv)
     struct sigaction action;
 
     action.sa_sigaction = signalHandler;
-    action.sa_flags     = SA_SIGINFO | SA_RESTART;
+    action.sa_flags = SA_SIGINFO | SA_RESTART;
     sigemptyset(&action.sa_mask);
 
     if (sigaction(SIGINT, &action, NULL) < 0)
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
     QObject::connect(&app, SIGNAL(aboutToQuit()), Mts::getInstance(), SLOT(destroyInstance()));
 
     bool ok = Mts::getInstance()->activate();
-    if ( ok ) {
+    if (ok) {
         QLoggingCategory lcMtp("buteo.mtp");
         lcMtp.setEnabled(QtDebugMsg, Mts::getInstance()->debugLogsEnabled());
         app.exec();

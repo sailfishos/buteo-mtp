@@ -48,7 +48,7 @@ class MTPResponder_test : public QObject
     Q_OBJECT
 
 public slots:
-    void processReceivedData( quint8 *data, quint32 len, bool, bool );
+    void processReceivedData(quint8 *data, quint32 len, bool, bool);
 
 private slots:
     void initTestCase();

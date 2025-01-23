@@ -40,7 +40,7 @@ bool Mts::m_debugLogsEnabled = true;
 Mts *Mts::getInstance()
 {
     if (!mts_instance) {
-        mts_instance =  new Mts;
+        mts_instance = new Mts;
     }
     return mts_instance;
 }
@@ -51,9 +51,8 @@ Mts::Mts()
 
 bool Mts::activate()
 {
-    bool ok;
     m_MTPResponder = MTPResponder::instance();
-    ok = m_MTPResponder->initTransport(USB);
+    bool ok = m_MTPResponder->initTransport(USB);
     if (ok)
         ok = m_MTPResponder->initStorages();
     return ok;

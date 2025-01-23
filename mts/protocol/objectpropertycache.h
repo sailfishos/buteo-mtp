@@ -57,43 +57,43 @@ public:
     /// \param handle [in] the object handle which needs to be added/modified
     /// \param propertyCode [in] object property code
     /// \param value [in] object property value
-    void add( ObjHandle handle, MTPObjPropertyCode propertyCode, const QVariant &value );
+    void add(ObjHandle handle, MTPObjPropertyCode propertyCode, const QVariant &value);
 
     /// Add/Modify from an MTPObjectPropDesc structure
     /// \param handle [in] the object handle which needs to be added/modified
     /// \propDescVal [in] reference to a propDescVal structure
-    void add( ObjHandle handle, const MTPObjPropDescVal &propDescVal );
+    void add(ObjHandle handle, const MTPObjPropDescVal &propDescVal);
 
     /// Add/Modify from a list of MTPObjectPropDesc structures
     /// \param handle [in] the object handle which needs to be added/modified
     /// \propDescValList [in] list of propDescVal structures
-    void add( ObjHandle handle, QList<MTPObjPropDescVal> propDescValList );
+    void add(ObjHandle handle, QList<MTPObjPropDescVal> propDescValList);
 
     /// Remove a property-value pair for an object from the cache.
     /// If there's no code specified then the object itself is removed
     /// If this was the last property in the cache then the object itself is removed
     /// \param handle [in] the object handle
     /// \param propertyCode [in] object property code
-    void remove( ObjHandle handle, MTPObjPropertyCode propertyCode = 0x0000 );
+    void remove(ObjHandle handle, MTPObjPropertyCode propertyCode = 0x0000);
 
     /// Remove from cached based on a MTPObjPropDescVal
     /// If this was the only property in the cache then the object itself is removed
     /// \param handle [in] the object handle
     /// \propDescVal [in] reference to a propDescVal structure
-    void remove( ObjHandle handle, const MTPObjPropDescVal &propDescVal );
+    void remove(ObjHandle handle, const MTPObjPropDescVal &propDescVal);
 
     /// Remove a set of properties from cache based on a list of MTPObjPropDescVal
     /// If these were the last set of properties in the cache then the object itself is removed
     /// \param handle [in] the object handle which needs to be added/modified
     /// \propDescValList [in] list of propDescVal structures
-    void remove( ObjHandle handle, QList<MTPObjPropDescVal> propDescValList );
+    void remove(ObjHandle handle, QList<MTPObjPropDescVal> propDescValList);
 
     /// Get the value for an object given the handle and the object property code.
     /// \param handle [in] the object handle
     /// \param propertyCode [in] the object property code
     /// \param value [out] the object property code's value
     /// \return bool true if this property was cached and found, false otherwise
-    bool get( ObjHandle handle, MTPObjPropertyCode propertyCode, QVariant &value );
+    bool get(ObjHandle handle, MTPObjPropertyCode propertyCode, QVariant &value);
 
     /// Get the value for an object given the handle and a reference to a MTPObjPropDescVal structure.
     /// The value is populated in the structure.
@@ -101,7 +101,7 @@ public:
     /// \param propDescVal [in/out] the object property code
     /// \param value [out] the object property code's value
     /// \return bool true if this property in the MTPObjPropDescVal structure was cached and found, false otherwise
-    bool get( ObjHandle handle, MTPObjPropDescVal &propDescVal );
+    bool get(ObjHandle handle, MTPObjPropDescVal &propDescVal);
 
     /// Retrieves multiple property values of given object from the cache.
     ///
@@ -117,8 +117,7 @@ public:
     ///
     /// \return \c true if the cache was able to fill in all the properties
     ///         (i.e. notFoundList is empty), otherwise \c false.
-    bool get(ObjHandle handle, QList<MTPObjPropDescVal> &propDescValList,
-             QList<MTPObjPropDescVal> &notFoundList);
+    bool get(ObjHandle handle, QList<MTPObjPropDescVal> &propDescValList, QList<MTPObjPropDescVal> &notFoundList);
 
     /// clear everything in the cache
     void clear();

@@ -42,9 +42,10 @@ namespace meegomtp1dot0 {
 class Mts : public QObject
 {
     Q_OBJECT
-public:
 
+public:
     static Mts *getInstance();
+
     bool activate();
     bool deactivate();
     void toggleDebugLogs();
@@ -56,14 +57,14 @@ public slots:
     static void destroyInstance();
 
 private:
-
     Mts();
     ~Mts();
+
     static Mts *mts_instance;
+
     static bool m_debugLogsEnabled;
     meegomtp1dot0::MTPResponder *m_MTPResponder;
 };
 }
 
 #endif
-
