@@ -2043,7 +2043,7 @@ MTPResponseCode FSStoragePlugin::writeData(
         return MTP_RESP_GeneralError;
     }
 
-    if (isLastSegment && (0 == writeBuffer)) {
+    if (isLastSegment && !writeBuffer) {
         m_writeObjectHandle = 0;
         if (m_dataFile) {
             /* Truncate at current write offset */
@@ -2404,15 +2404,16 @@ MTPResponseCode FSStoragePlugin::getReferences(const ObjHandle &handle, QVector<
 MTPResponseCode FSStoragePlugin::setReferences(const ObjHandle &handle, const QVector<ObjHandle> &references)
 {
     StorageItem *playlist = m_objectHandlesMap.value(handle);
-    StorageItem *reference = 0;
-    if (0 == playlist || 0 == playlist->m_objectInfo) {
+
+    if (!playlist || !playlist->m_objectInfo) {
         return MTP_RESP_InvalidObjectHandle;
     }
+
     bool savePlaylist = (MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == playlist->m_objectInfo->mtpObjectFormat);
     QStringList entries;
     for (int i = 0; i < references.size(); ++i) {
-        reference = m_objectHandlesMap.value(references[i]);
-        if (0 == reference || 0 == reference->m_objectInfo) {
+        StorageItem *reference = m_objectHandlesMap.value(references[i]);
+        if (!reference || !reference->m_objectInfo) {
             return MTP_RESP_Invalid_ObjectReference;
         }
         if (savePlaylist) {
@@ -2461,7 +2462,6 @@ void FSStoragePlugin::storeObjectReferences()
 
     qint32 bytesWritten = -1;
     QFile file(m_objectReferencesDbPath);
-    StorageItem *item = 0;
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         return;
@@ -2481,8 +2481,8 @@ void FSStoragePlugin::storeObjectReferences()
         ObjHandle handle = i.key();
         // Get the object PUOID from the object handle (we need to store PUOIDs
         // in the ref DB as it is persistent, not object handles)
-        item = m_objectHandlesMap.value(handle);
-        if (0 == item || (MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == item->m_objectInfo->mtpObjectFormat)) {
+        StorageItem *item = m_objectHandlesMap.value(handle);
+        if (!item || (MTP_OBF_FORMAT_Abstract_Audio_Video_Playlist == item->m_objectInfo->mtpObjectFormat)) {
             // Possibly, the handle was removed from the objectHandles map, but
             // still lingers in the object references map (It is cleared lazily
             // in getObjectReferences). Ignore this handle.
@@ -2510,7 +2510,7 @@ void FSStoragePlugin::storeObjectReferences()
             ObjHandle reference = (i.value())[j];
             // Get PUOID from the reference
             item = m_objectHandlesMap.value(reference);
-            if (0 == item) {
+            if (!item) {
                 // Ignore this handle...
                 noOfRefs--;
                 continue;
