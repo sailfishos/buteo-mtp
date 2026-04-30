@@ -32,7 +32,7 @@
 #include <QStringList>
 #include <QTimer>
 #include <QLoggingCategory>
-#include <MGConfItem>
+#include <MDConfItem>
 #include "mts.h"
 
 using namespace meegomtp1dot0;
@@ -50,7 +50,7 @@ void signalHandler(int signum, siginfo_t *info, void *context)
 
 static void setupSymLinkPolicy()
 {
-    MGConfItem confItem("/desktop/sailfish/buteo-mtp/symlink_policy");
+    MDConfItem confItem("/desktop/sailfish/buteo-mtp/symlink_policy");
     QString symLinkPolicy(confItem.value().toString());
 
     /* Note that we override value that might be existing in env,
