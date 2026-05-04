@@ -54,6 +54,8 @@
 #include <QDateTime>
 #include <QMetaObject>
 #include <QLocale>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 
 #ifndef UT_ON
 #include <blkid.h>
@@ -68,7 +70,7 @@ const quint32 THUMB_WIDTH = 100;
 const quint32 THUMB_HEIGHT = 100;
 
 static quint32 fourcc_wmv3 = 0x574D5633;
-static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x0000-\\x001F]");
+static const QString FILENAMES_FILTER_REGEX("[<>:\\\"\\/\\\\\\|\\?\\*\\x00-\\x1F]");
 
 /* ========================================================================= *
  * Timestamp helpers
@@ -3147,8 +3149,14 @@ bool FSStoragePlugin::isFileNameValid(const QString &fileName, const StorageItem
 {
     // Check if the file name contains illegal characters, or if the file with
     // the same name is already present under the parent
-    if (fileName.contains(QRegExp(FILENAMES_FILTER_REGEX)) || QRegExp("[\\.]+").exactMatch(fileName)) {
-        // Illegal characters, or all .'s
+    if (fileName.contains(QRegularExpression(FILENAMES_FILTER_REGEX))) {
+        // illegal characters
+        return false;
+    }
+
+    QRegularExpressionMatch match = QRegularExpression("[\\.]+").match(fileName);
+    if (match.capturedLength() == fileName.length()) {
+        // all '.'s
         return false;
     }
     if (m_pathNamesMap.contains(parent->m_path + "/" + fileName)) {
